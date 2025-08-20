@@ -1,0 +1,148 @@
+.commucontainer {
+  min-width: 1500px;
+}
+
+.commufooter {
+  display: flex;
+  width: 1200px;
+  margin: 2.5rem auto;
+  justify-content: center;
+}
+
+.boardarea {
+  width: 1000px;
+  margin: auto;
+}
+
+.boardtable {
+  border-collapse: collapse;
+}
+
+.tableheader {
+  border-top: solid 2px;
+  border-bottom: solid 1px;
+}
+
+.tableheader td {
+  padding-top: 14px;
+  padding-bottom: 15px;
+  font-weight: bold;
+  background-color: rgb(220, 220, 220);
+}
+
+.tablemain td {
+  font-size: 14px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: solid 1px rgb(171, 171, 171);
+}
+.tablemain a {
+  font-size: 15px;
+  text-decoration: none;
+  color: black;
+}
+
+.boardsearch {
+  border: solid 1px gray;
+  border-left: none;
+  width: 20rem;
+}
+
+.boardsearchbtn {
+  width: 60px;
+  height: 30px;
+  border: solid 1px gray;
+  border-left: 0;
+  cursor: pointer;
+}
+
+.boardmain {
+  display: flex;
+  justify-content: center;
+  margin: 10rem auto 2rem auto;
+}
+
+.boardmain table {
+  width: 1200px;
+}
+
+.boardindex {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  font-size: 16px;
+  gap: 2rem;
+}
+
+.boardindex a {
+  text-decoration: none;
+  color: black;
+}
+
+.boardindex a:hover {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.writebtn {
+  display: flex;
+  margin-bottom: 30px;
+  justify-content: flex-end;
+}
+
+.writebtn button {
+  font-size: 16px;
+  width: 80px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.writebtn a {
+  text-decoration: none;
+  color: rgb(109, 81, 81);
+}
+
+.selector {
+  text-align: center;
+}
+
+.highlightlink {
+  font-weight: bold;
+  text-decoration: underline !important;
+  color: crimson;
+}
+
+.selectcontainer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modalclosebtn {
+  width: 20px;
+  height: 20px;
+  float: right;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: solid 1px rgb(214, 214, 214);
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.requirelogin {
+  width: 400px;
+  height: 100px;
+}
+
+.modaltext {
+  text-align: center;
+  transform: translateY(170%);
+  font-weight: bold;
+}

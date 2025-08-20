@@ -1,0 +1,44 @@
+.MealsArea {
+  margin: auto;
+  /* border: solid 1px blue; */
+  min-width: 1500px;
+}
+
+.displayheader {
+  margin: 5rem 5rem;
+}
+
+.displayheader a {
+  text-decoration: none;
+  color: rgb(41, 104, 54);
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.displayheader p {
+  font-size: 24px;
+}
+.dropdownbox {
+  margin-top: 30px;
+}
+
+.selectbox {
+  width: 80px;
+  height: 30px;
+}
+
+.sharebtn {
+  width: 200px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background-color: rgb(100, 147, 54);
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.sharebtn:hover {
+  cursor: pointer;
+  background-color: rgb(61, 91, 42);
+}

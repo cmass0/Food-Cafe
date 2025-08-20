@@ -1,0 +1,108 @@
+.postcontainer {
+  min-width: 1500px;
+  padding-bottom: 70px;
+}
+
+.BoardSection {
+  min-height: 300px;
+  height: auto;
+  padding-right: 15px;
+  box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.2);
+  max-width: 60rem;
+  margin: 3rem auto 1rem;
+}
+
+.BoardHeader {
+  padding-top: 5px;
+  margin-left: 15px;
+  padding-bottom: 10px;
+  border-bottom: solid 2px rgb(43, 78, 28);
+}
+
+.HeaderInfo {
+  display: flex;
+  gap: 10px;
+}
+
+.BoardMain {
+  margin-left: 15px;
+  margin-top: 3rem;
+}
+.BoardMain img {
+  max-width: 70%;
+  height: auto;
+}
+
+.btnarea {
+  display: flex;
+  max-width: 60rem;
+  margin: auto;
+  gap: 20px;
+
+  justify-content: flex-end;
+}
+
+.btnarea button {
+  background-color: rgb(54, 106, 21);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  width: 60px;
+  height: 30px;
+}
+
+.btnarea button:hover {
+  background-color: rgb(47, 71, 32);
+  cursor: pointer;
+}
+
+.CommentArea {
+  width: 80%;
+  margin: auto;
+}
+
+.requirelogin {
+  width: 400px;
+  height: 100px;
+}
+
+.modalclosebtn {
+  width: 20px;
+  height: 20px;
+  float: right;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: solid 1px rgb(214, 214, 214);
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.modaltext {
+  text-align: center;
+  transform: translateY(170%);
+  font-weight: bold;
+}
+
+.deletebtnbox {
+  display: flex;
+  justify-content: end;
+  align-items: flex-end;
+  height: 80px;
+  gap: 10px;
+}
+
+.deleteselectbtn {
+  background-color: rgb(54, 106, 21);
+  cursor: pointer;
+  height: 25px;
+  border: none;
+  color: white;
+  border-radius: 3px;
+}
+
+.deleteselectbtn:hover {
+  background-color: rgb(47, 71, 32);
+}

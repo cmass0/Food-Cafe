@@ -1,0 +1,29 @@
+.searchmeal {
+  margin-left: 5px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.searchmeal span {
+  color: rgb(3, 77, 3);
+}
+
+.mealsarea {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  border-bottom: solid 1px gray;
+  width: 90%;
+  margin: 50px auto 50px;
+  padding-right: 0;
+}
+
+/* .hrbar {
+  margin: 20px 0;
+} */
+
+.postarea {
+  padding-left: 0;
+  width: 90%;
+  margin: 50px auto 50px;
+}
