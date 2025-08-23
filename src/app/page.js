@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import style from "./page.module.css";
 import Link from "next/link";
 import SlideShow from "@/component/main-slide";

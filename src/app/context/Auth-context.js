@@ -6,8 +6,7 @@ import {
   GoogleAuthProvider,
 } from "firebase/auth";
 import { Auth, db } from "@/data/firestore";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { async } from "@firebase/util";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 

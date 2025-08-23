@@ -1,19 +1,8 @@
-// /** @type {import('next').NextConfig} */
-// const nextConfig = {
-//     async redirects() {
-//       return [
-//         {
-//           source: '/',
-//           destination: 'https://www.google.com',
-//           permanent: false,
-//         },
-//       ];
-//     },
-//   };
-
-//   module.exports = nextConfig;
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
-    domains: ["firebasestorage.googleapis.com"], // 여기에 사용하고자 하는 호스트 추가
+    domains: ["firebasestorage.googleapis.com"],
   },
 };
+
+module.exports = nextConfig;
