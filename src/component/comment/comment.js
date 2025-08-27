@@ -1,9 +1,7 @@
 "use client";
 
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 import { fetchUser } from "@/data/user";
-import { async } from "@firebase/util";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Modal from "../modal/modal";
@@ -29,7 +27,7 @@ export default function CommentArea({ type }) {
   const [deleteid, setDeleteId] = useState("");
   const [commentdata, setCommentData] = useState([]);
   const [confirmtext, setConfirmText] = useState("");
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   async function getcommet() {
     const commentlist = await fetchComment();

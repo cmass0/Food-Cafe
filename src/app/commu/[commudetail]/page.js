@@ -8,7 +8,7 @@ import LoadingPage from "@/app/loading";
 import { useRouter } from "next/navigation";
 import Modal from "@/component/modal/modal";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 import { fetchUser } from "@/data/user";
 
 export default function CommuDetailPage({ params }) {
@@ -19,7 +19,7 @@ export default function CommuDetailPage({ params }) {
   const [userName, setUserName] = useState("");
 
   const router = useRouter();
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     if (user) {

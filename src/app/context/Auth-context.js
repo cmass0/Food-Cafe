@@ -1,3 +1,5 @@
+"use client";
+
 import { useContext, createContext, useState, useEffect } from "react";
 import {
   signInWithPopup,
@@ -5,7 +7,7 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { Auth, db } from "@/data/firestore";
+import { auth, db } from "@/lib/firebase/client";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
@@ -15,15 +17,15 @@ export function AuthProvider({ children }) {
 
   function googleLogin() {
     const Googleprovider = new GoogleAuthProvider();
-    signInWithPopup(Auth, Googleprovider);
+    signInWithPopup(auth, Googleprovider);
   }
 
   function logout() {
-    signOut(Auth);
+    signOut(auth);
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(Auth, async (curUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (curUser) => {
       if (curUser) {
         const userref = doc(db, "User", curUser.uid);
         const userSnap = await getDoc(userref);

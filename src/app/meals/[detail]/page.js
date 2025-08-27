@@ -7,11 +7,10 @@ import like from "@/assets/like.png";
 import btn from "@/assets/right.png";
 import CommentArea from "@/component/comment/comment";
 import { useEffect, useState } from "react";
-import { async } from "@firebase/util";
 import { usePathname, useRouter } from "next/navigation";
 import LoadingPage from "@/app/loading";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth, db } from "@/data/firestore";
+import { auth, db } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
 import { fetchUser } from "@/data/user";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
@@ -43,7 +42,7 @@ export default async function SomethingMealspage({ params }) {
   const [btnconfirmtext, setBtnConfirmText] = useState("");
   const router = useRouter();
 
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     if (user) {

@@ -8,7 +8,7 @@ import style from "./page.module.css";
 
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 import { fetchUser } from "@/data/user";
 import Modal from "@/component/modal/modal";
 
@@ -18,7 +18,7 @@ export default function PostForm({ params }) {
   const [userName, setUserName] = useState("");
   const [isModal, setIsModal] = useState(false);
   const router = useRouter();
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
   console.log(content);
   console.log(title);
 

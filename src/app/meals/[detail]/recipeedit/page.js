@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
-import { Router } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { Auth } from "@/lib/firebase/client";
 import { fetchUser } from "@/data/user";
 import Modal from "@/component/modal/modal";
 

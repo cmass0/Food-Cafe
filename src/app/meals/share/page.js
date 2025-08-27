@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
-import { Router } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { Auth } from "@/lib/firebase/client";
 import { useEffect } from "react";
 import { fetchUser } from "@/data/user";
 

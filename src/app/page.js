@@ -7,10 +7,10 @@ import FooterSlide from "@/component/footer/footer-slide";
 
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 
 export default function Home() {
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
   const router = useRouter();
 
   function shareHD() {

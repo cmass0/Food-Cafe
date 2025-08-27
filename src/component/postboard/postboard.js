@@ -4,15 +4,12 @@ import style from "./postboard.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, MenuItem } from "@nextui-org/react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 import Modal from "../modal/modal";
-import LoadingPage from "@/app/loading";
-import { async } from "@firebase/util";
 
 export default function BoardMain({ data }, maxnum) {
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   let initarr = [];
   let startarr = [];

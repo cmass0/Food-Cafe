@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import style from "./page.module.css";
-import { Auth } from "@/data/firestore";
+import { Auth } from "@/lib/firebase/client";
 import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { useState } from "react";
-import { async } from "@firebase/util";
 import { useRouter } from "next/navigation";
 import { AuthUser } from "@/app/context/Auth-context";
-import GoogleLoginButton from "@/component/googlebtn";
 // import { Auth, browserSessionPersistence, setPersistence } from "firebase/auth";
 
 export default function LoginPage() {
@@ -62,8 +60,6 @@ export default function LoginPage() {
       console.error(err);
     }
   }
-
-  
 
   return (
     <div className={style.loginpagebox}>

@@ -2,10 +2,9 @@
 
 import style from "./page.module.css";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { Auth } from "@/lib/firebase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { setDoc } from "firebase/firestore";
 import { checkDuplicate } from "@/Authlogic/nicknamecheck";
 import classNames from "classnames";
 

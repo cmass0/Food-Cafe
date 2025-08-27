@@ -8,7 +8,7 @@ import style from "./page.module.css";
 
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { Auth } from "@/lib/firebase/client";
 import { fetchUser } from "@/data/user";
 import LoadingPage from "@/app/loading";
 

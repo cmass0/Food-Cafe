@@ -1,5 +1,5 @@
 import { collection, query, where, getDoc, getDocs } from "firebase/firestore";
-import { db } from "@/data/firestore";
+import { db } from "@/lib/firebase/client";
 
 async function checkDuplicate(username) {
   const userRef = collection(db, "User");

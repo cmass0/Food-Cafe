@@ -7,17 +7,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/data/firestore";
+import { auth } from "@/lib/firebase/client";
 import { getAuth, signOut } from "firebase/auth";
-import { AuthUser } from "@/app/context/Auth-context";
-import { User } from "@nextui-org/react";
 import { fetchUser } from "@/data/user";
 
 export default function Navbar(props) {
   const [isModal, setIsmodal] = useState(false); // loginform 이동
   const [searchtext, setsearchText] = useState("");
   const [userName, setUserName] = useState("");
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
   const router = useRouter();
 
   // const userSesstion = sessionStorage.getItem("user");
