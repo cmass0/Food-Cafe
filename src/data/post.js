@@ -1,41 +1,24 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  Timestamp,
-  deleteDoc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
-import { app, db, Auth } from "./firestore";
+import { adminDb } from "@/lib/firebase/server";
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
 
 // 모든 post get
 async function fetchPosts() {
-  const querySnapshot = await getDocs(collection(db, "Post")); // 오타 수정: "Recipe" -> "Recipe"
+  const querySnapshot = await adminDb.collection('Post').orderBy('date', 'desc').get();
   if (querySnapshot.empty) {
     return []; // 쿼리 결과가 비어있을 때 빈 배열 반환
   }
 
   const PostData = [];
-
   querySnapshot.forEach((doc) => {
-    console.log(doc.id, " => ", doc.data());
     const aPost = {
       id: doc.id,
-      date: doc.data()["date"].toDate(),
+      date: doc.data()?.date?.toDate?.() ?? null,
       title: doc.data()["title"],
       content: doc.data()["content"],
       writer: doc.data()["writer"],
-      number: doc.data()["number"],
-      check: doc.data()["check"],
-      type: doc.data()["type"],
+      number: doc.data()?.number ?? 0,
+      check: doc.data()?.check ?? 0,
+      type: doc.data()?.type ?? 'board',
     };
     // .toLocaleTimeString("ko")
     PostData.push(aPost);
@@ -50,8 +33,7 @@ async function fetchPost(id) {
     return null;
   }
 
-  const PostdocRef = doc(db, "Post", id);
-  const PostdocSnap = await getDoc(PostdocRef);
+  const PostdocSnap = await adminDb.collection('Post').doc(id).get();
 
   if (PostdocSnap.exists()) {
     console.log("Document data:", PostdocSnap.data());
@@ -63,8 +45,8 @@ async function fetchPost(id) {
       content: PostdocSnap.data()["content"] || "null",
       number: PostdocSnap.data()["number"] || "null",
       writer: PostdocSnap.data()["writer"] || "null",
-      check: PostdocSnap.data()["check"] || "null",
-      type: PostdocSnap.data()["check"] || "null"
+      check: PostdocSnap.data()["check"] ?? 0,
+      type: PostdocSnap.data()["type"] ?? "board",
     };
 
     return fetchedPost;
@@ -77,13 +59,18 @@ async function fetchPost(id) {
 
 // add
 async function addPost({ writer, title, content, check, number }) {
-  const postdata = query(collection(db, "Post"));
-  const newPostRef = doc(collection(db, "Post"));
-  const querySnapshot = await getDocs(postdata);
-  const totalpost = querySnapshot.size;
+
+  const col = adminDb.collection("Post");
+  const newPostRef = col.doc();
+  const totalpostSnap = await col.count().get?.().catch(async () => {
+    const snap = await col.get();
+    return { data: () => ({ count: snap.size }) };
+  });
+  const totalpost = totalpostSnap?.data?.().count ?? 0;
   // const number = totalpost + 1;
 
-  const createAT = Timestamp.fromDate(new Date());
+  
+  const createAT = Timestamp.now();
 
   const newPostData = {
     id: newPostRef.id,
@@ -91,14 +78,13 @@ async function addPost({ writer, title, content, check, number }) {
     writer,
     content,
     title,
-    number,
-    check: check || 0,
+    number: number ?? totalpost + 1,
+    check: check ?? 0,
     type: 'board',
   };
 
   // later...
-  await setDoc(newPostRef, newPostData);
-  console.log("totalpost: ", totalpost);
+  await newPostRef.set(newPostData);
 
   return {
     id: newPostRef.id,
@@ -106,7 +92,7 @@ async function addPost({ writer, title, content, check, number }) {
     writer,
     title,
     content,
-    number,
+    number: newPostData.number,
   };
 }
 
@@ -118,7 +104,7 @@ async function deleteAPost(id) {
     return null;
   }
 
-  await deleteDoc(doc(db, "Post", id));
+  await adminDb.collection("Post").doc(id).delete();
 
   return fetchedPost;
 }
@@ -131,7 +117,7 @@ async function editAPost(id, { title, writer, content, check }) {
     return null;
   }
 
-  const PostRef = doc(db, "Post", id);
+  const PostRef = adminDb.collection("Post").doc(id);
 
   // Set the "capital" field of the city 'DC'
 
@@ -142,9 +128,9 @@ async function editAPost(id, { title, writer, content, check }) {
   };
 
   if (check === "increment") {
-    updatedata.check = increment(1);
+    updatedata.check = FieldValue.increment(1);
   }
-  await updateDoc(PostRef, updatedata);
+  await PostRef.update(updatedata);
 
   return {
     id,
@@ -152,7 +138,7 @@ async function editAPost(id, { title, writer, content, check }) {
     title,
     writer,
     check: updatedata.check,
-    date: fetchPost.date,
+    date: fetchedPost.date,
   };
 }
 

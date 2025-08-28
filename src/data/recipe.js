@@ -1,10 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
-  getFirestore,
   collection,
-  query,
-  where,
   getDocs,
   getDoc,
   doc,
@@ -14,7 +11,7 @@ import {
   updateDoc,
   increment,
 } from "firebase/firestore";
-import { app, db, Auth } from "./firestore";
+import {db } from "./firestore";
 
 // 모든 레시피 get
 async function fetchRecipes() {

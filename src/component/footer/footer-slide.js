@@ -1,23 +1,15 @@
 "use client";
 
-import bread from "@/assets/bread.jpg";
-import soup from "@/assets/goulash-soup.jpg";
-import poke from "@/assets/poke.jpeg";
-import sandwich from "@/assets/sandwich.jpeg";
-import spicychickensoup from "@/assets/spicy-braised-chicken.jpeg";
-import tteokbokki from "@/assets/tteok-bokki.jpeg";
 import leftbtn from "@/assets/left.png";
 import rightbtn from "@/assets/right.png";
 import style from "./footer-slider.module.css";
 import FooterRecipe from "./footer-recipe";
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import ranking1 from "@/assets/1st.png";
 import ranking2 from "@/assets/2nd.png";
 import ranking3 from "@/assets/3rd.png";
-import { async } from "@firebase/util";
-import { TopRecipe } from "@/toprecipe/toprecipe";
+
 
 export default function FooterSlide() {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
