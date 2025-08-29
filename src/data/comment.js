@@ -1,43 +1,31 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  Timestamp,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { app, db, Auth } from "./firestore";
+import { adminDb } from "@/lib/firebase/server";
+import { Timestamp } from "firebase-admin/firestore";
 
 // 모든 post get
 async function fetchcommets() {
-  const querySnapshot = await getDocs(collection(db, "Comment"));
+  const querySnapshot = await adminDb
+    .collection("comment")
+    .orderBy("date", "desc")
+    .get();
+
   if (querySnapshot.empty) {
     return [];
   }
 
-  const CommentData = [];
+  const commentData = [];
 
   querySnapshot.forEach((doc) => {
-    console.log(doc.id, " => ", doc.data());
-    const aComment = {
+    const data = doc.data();
+    commentData.push({
       id: doc.id,
-      date: doc.data()["date"].toDate(),
-      comment: doc.data()["comment"] || null,
-      writer: doc.data()["writer"] || null,
-      type: doc.data()["type"] || null,
-    };
-    // .toLocaleTimeString("ko")
-    CommentData.push(aComment);
+      date: data.date?.toDate?.() ?? null,
+      comment: data.comment ?? null,
+      writer: data.writer ?? null,
+      type: data.type ?? null,
+    });
   });
 
-  return CommentData;
+  return commentData;
 }
 
 // post 단일 get
@@ -46,95 +34,95 @@ async function fetchcomment(id) {
     return null;
   }
 
-  const CommentdocRef = doc(db, "Comment", id);
-  const Commentdocsnap = await getDoc(CommentdocRef);
+  const CommentSnap = await adminDb.collection("Comment").doc(id).get();
 
-  if (Commentdocsnap.exists()) {
-    console.log("Document data:", Commentdocsnap.data());
-
-    const fetchedcomment = {
-      id: Commentdocsnap.id || "null",
-      date: Commentdocsnap.data()["date"].toDate() || "null",
-      email: Commentdocsnap.data()["email"] || "null",
-    };
-
-    return fetchedcomment;
-  } else {
-    // docSnap.data() will be undefined in this case
-    console.log("No such document!");
-    return null;
-  }
+  if (!CommentSnap.exists) return null;
+  const data = CommentSnap.data();
+  return {
+    id: snapshot.id,
+    date: data.date?.toDate?.() ?? null,
+    email: data.email ?? null,
+    writer: data.writer ?? null,
+    comment: data.comment ?? null,
+    type: data.type ?? null,
+  };
 }
 
 //레시피 add
 async function addcomment({ comment, writer, type }) {
   // Add a new document with a generated id
-  const newCommentRef = doc(collection(db, "Comment"));
-
-  const createAT = Timestamp.fromDate(new Date());
+  const CommentRef = adminDb.collection("Comment");
+  const newRef = CommentRef.doc();
+  const now = Timestamp.now();
 
   const newCommentData = {
-    id: newCommentRef.id,
-    date: createAT,
-    comment: comment || null,
-    writer: writer || null,
-    type: type || null,
+    id: newRef.id,
+    date: now,
+    comment: comment ?? null,
+    writer: writer ?? null,
+    type: type ?? null,
   };
 
   // later...
-  await setDoc(newCommentRef, newCommentData);
+  await newRef.set(newCommentData);
 
   return {
-    id: newCommentRef.id,
-    date: createAT.toDate(),
-    comment: comment || null,
-    writer: writer || null,
-    type: type || null,
+    id: newRef.id,
+    date: now.toDate(),
+    comment: comment ?? null,
+    writer: writer ?? null,
+    type: type ?? null,
   };
 }
 
 // post 단일 삭제
 async function deletecomment(id) {
-  const fetchedcomment = await fetchcomment(id);
+  const snap = await adminDb.collection("Comment").doc(id).get();
+  if (!snap.exists) return null;
 
-  if (!fetchedcomment) {
-    return null;
-  }
-
-  await deleteDoc(doc(db, "Comment", id));
-
-  return fetchedcomment;
+  const data = snap.data();
+  await adminDb.collection("Comment").doc(id).delete();
+  return {
+    id,
+    date: data.date?.toDate?.() ?? null,
+    comment: data.comment ?? null,
+    writer: data.writer ?? null,
+    type: data.type ?? null,
+  };
 }
 
 // post 단일 수정
 async function editcomment(id, { email, name, title, summary, recipe, image }) {
-  const fetchedcomment = await fetchcomment(id);
+  // const fetchedcomment = await fetchcomment(id);
 
-  if (!fetchedcomment) {
-    return null;
-  }
+  // if (!fetchedcomment) {
+  //   return null;
+  // }
 
-  const RacipeRef = doc(db, "Recipe", id);
-
+  const ref = adminDb.collection("Comment").doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
   // Set the "capital" field of the city 'DC'
-  await updateDoc(RacipeRef, {
-    image,
-    email,
-    name,
-    title,
-    summary,
-    recipe,
-  });
+  const updateData = {
+    email: email ?? snap.data().email,
+    name: name ?? snap.data().name,
+    title: title ?? snap.data().title,
+    summary: summary ?? snap.data().summary,
+    recipe: recipe ?? snap.data().recipe,
+    image: image ?? snap.data().image,
+  };
+  await ref.update(updateData);
+  const updatedData = (await ref.get()).data();
 
   return {
     id,
-    email,
-    name,
-    title,
-    summary,
-    recipe,
-    image,
-    date: fetchcomment.date,
+    email: updatedData.email ?? null,
+    name: updatedData.name ?? null,
+    title: updatedData.title ?? null,
+    summary: updatedData.summary ?? null,
+    recipe: updatedData.recipe ?? null,
+    image: updatedData.image ?? null,
+    date: updatedData.date.toDate?.() ?? null,
   };
 }
 
