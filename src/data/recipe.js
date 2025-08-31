@@ -1,42 +1,32 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import {
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  Timestamp,
-  deleteDoc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
-import {db } from "./firestore";
+import { adminDb } from "@/lib/firebase/server";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // 모든 레시피 get
 async function fetchRecipes() {
-  const querySnapshot = await getDocs(collection(db, "Recipe"));
+  const querySnapshot = await adminDb.collection('Recipe').orderBy('date', 'desc').get();
+
   if (querySnapshot.empty) {
+    console.log('No matching documents.');
     return [];
   }
-
+  
   const RecipeData = [];
 
   querySnapshot.forEach((doc) => {
-    console.log(doc.id, " => ", doc.data());
+    const data = doc.data();
     const aRecipe = {
       id: doc.id,
-      date: doc.data()["date"].toDate(),
-      email: doc.data()["email"] || "이메일 없음",
-      name: doc.data()["name"] || "이름 없음",
-      title: doc.data()["title"],
-      recipe: doc.data()["recipe"],
-      summary: doc.data()["summary"],
-      image: doc.data()["image"] || null,
-      like: doc.data()["like"] || 0,
-      check: doc.data()["check"],
-      lastlike: doc.data()["lastlike"],
-      type: doc.data()["type"],
+      date: data?.date?.toDate?.() ?? null,
+      email: data.email ?? null,
+      name: data.name ?? null,
+      title: data.title ?? "",
+      recipe: data.recipe ?? "",
+      summary: data.summary ?? "",
+      image: data.image ?? null,
+      like: data.like ?? 0,
+      check: data.check ?? 0,
+      lastlike: data.lastlike ?? null,
+      type: data.type ?? "recipe",
     };
 
     RecipeData.push(aRecipe);
@@ -47,36 +37,32 @@ async function fetchRecipes() {
 
 // 레시피 단일 get
 async function fetchRecipe(id) {
-  if (id === null) {
+  if (!id) {
     return null;
   }
 
-  const RecipedocRef = doc(db, "Recipe", id);
-  const RecipedocSnap = await getDoc(RecipedocRef);
+  const RecipedocRef = adminDb.collection("Recipe").doc(id);
+  const doc = await RecipedocRef.get();
 
-  if (RecipedocSnap.exists()) {
-    console.log("Document data:", RecipedocSnap.data());
-
-    const fetchedRecipe = {
-      id: RecipedocSnap.id || "null",
-      date: RecipedocSnap.data()["date"].toDate() || "null",
-      email: RecipedocSnap.data()["email"] || "null",
-      name: RecipedocSnap.data()["name"] || "null",
-      title: RecipedocSnap.data()["title"] || "null",
-      recipe: RecipedocSnap.data()["recipe"] || "null",
-      summary: RecipedocSnap.data()["summary"] || "null",
-      image: RecipedocSnap.data()["image"] || "null",
-      like: RecipedocSnap.data()["like"] || 0,
-      check: RecipedocSnap.data()["check"] || "null",
-      lastlike: RecipedocSnap.data()["lastlike"] || "null",
-      type: RecipedocSnap.data()["type"] || "null",
-    };
-
-    return fetchedRecipe;
-  } else {
-    console.log("No such document!");
+  if (!doc.exists) {
     return null;
-  }
+  }  
+    
+  const data = doc.data() ?? {};
+    return {
+      id: doc.id,
+      date: data.date?.toDate?.() ?? null,
+      email: data.email ?? null,
+      name: data.name ?? null,
+      title: data.title ?? "",
+      recipe: data.recipe ?? "",
+      summary: data.summary ?? "",
+      image: data.image ?? null,
+      like: data.like ?? 0,
+      check: data.check ?? 0,
+      lastlike: data.lastlike ?? null,
+      type: data.type ?? "recipe",
+    }
 }
 
 //레시피 add
@@ -90,42 +76,45 @@ async function addRecipe({
   like,
   check,
 }) {
-  const newRecipeRef = doc(collection(db, "Recipe"));
-
-  const createAT = Timestamp.fromDate(new Date());
+  const RecipeRef = adminDb.collection("Recipe").doc();
+  const now = Timestamp.now();
+  
 
   const newRecipeData = {
-    id: newRecipeRef.id,
-    date: createAT,
-    email: email || null,
-    name: name || null,
-    title: title || null,
-    recipe: recipe || null,
-    summary: summary || null,
-    image: image || null,
-    like: like || 0,
-    check: check || 0,
+    id: RecipeRef.id,
+    date: now,
+    email: email ?? null,
+    name: name ?? null,
+    title: title ?? "",
+    recipe: recipe ?? "",
+    summary: summary ?? "",
+    image: image ?? null,
+    like: like ?? 0,
+    check: check ?? 0,
     lastlike: null,
-    type: "meal",
+    type: "recipe",
   };
 
-  // later...
-  await setDoc(newRecipeRef, newRecipeData);
 
-  return {
-    id: newRecipeRef.id,
-    date: createAT.toDate(),
-    email: email || null,
-    name: name || null,
-    title: title || null,
-    recipe: recipe || null,
-    summary: summary || null,
-    image: image || null,
-    like: like || 0,
+  await RecipeRef.set(newRecipeData);
+
+   return {
+    id: RecipeRef.id,
+    date: now.toDate(),      
+    email: newRecipeData.email,
+    name: newRecipeData.name,
+    title: newRecipeData.title,
+    recipe: newRecipeData.recipe,
+    summary: newRecipeData.summary,
+    image: newRecipeData.image,
+    like: newRecipeData.like,
+    check: newRecipeData.check,
+    lastlike: newRecipeData.lastlike,
+    type: newRecipeData.type,
   };
 }
 
-// 레시피 단일ㅇ 삭제
+// 레시피 단일 삭제
 async function deleteARecipe(id) {
   const fetchedrecipe = await fetchRecipe(id);
 
@@ -133,7 +122,7 @@ async function deleteARecipe(id) {
     return null;
   }
 
-  await deleteDoc(doc(db, "Recipe", id));
+  await adminDb.collection("Recipe").doc(id).delete();
 
   return fetchedrecipe;
 }
@@ -149,37 +138,44 @@ async function editARecipe(
     return null;
   }
 
-  const RacipeRef = doc(db, "Recipe", id);
+  const RecipeRef = adminDb.collection("Recipe").doc(id); 
 
-  // Set the "capital" field of the city 'DC'
+ 
 
   const updatedata = {
-    email: email !== undefined ? email : fetchedrecipe.email,
-    name: name !== undefined ? name : fetchedrecipe.name,
-    title: title !== undefined ? title : fetchedrecipe.title,
-    summary: summary !== undefined ? summary : fetchedrecipe.summary,
-    recipe: recipe !== undefined ? recipe : fetchedrecipe.recipe,
-    image: image !== undefined ? image : fetchedrecipe.image,
-    like: like !== undefined ? like : fetchedrecipe.like,
-    lastlike: lastlike !== undefined ? lastlike : fetchedrecipe.lastlike,
+    ...(email   !== undefined ? { email }   : {}),
+    ...(name    !== undefined ? { name }    : {}),
+    ...(title   !== undefined ? { title }   : {}),
+    ...(summary !== undefined ? { summary } : {}),
+    ...(recipe  !== undefined ? { recipe }  : {}),
+    ...(image   !== undefined ? { image }   : {}),
+    ...(like    !== undefined ? { like }    : {}),
+    ...(lastlike!== undefined ? { lastlike }: {}),
   };
 
   if (check === "increment") {
-    updatedata.check = increment(1);
+    updatedata.check = FieldValue.increment(1);
+  } else if (check !== undefined){
+    updatedata.check = check;
   }
-  await updateDoc(RacipeRef, updatedata);
+  await RecipeRef.update(updatedata);
+
+  const afterSnap = await RecipeRef.get();
+  const data = afterSnap.data() ?? {};
 
   return {
-    id,
-    email,
-    name,
-    title,
-    summary,
-    recipe,
-    image,
-    like,
-    date: fetchRecipe.date,
-    check: updatedata.check,
+     id,
+    date: data.date?.toDate?.() ?? null,
+    email: data.email ?? null,
+    name: data.name ?? null,
+    title: data.title ?? "",
+    recipe: data.recipe ?? "",
+    summary: data.summary ?? "",
+    image: data.image ?? null,
+    like: data.like ?? 0,
+    check: data.check ?? 0,
+    lastlike: data.lastlike ?? null,
+    type: data.type ?? "recipe",
   };
 }
 
