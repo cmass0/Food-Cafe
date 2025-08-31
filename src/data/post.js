@@ -35,7 +35,7 @@ async function fetchPost(id) {
 
   const PostdocSnap = await adminDb.collection('Post').doc(id).get();
 
-  if (PostdocSnap.exists()) {
+  if (PostdocSnap.exists) {
     console.log("Document data:", PostdocSnap.data());
 
     const fetchedPost = {
