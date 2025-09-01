@@ -1,21 +1,16 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import {
-  getDoc,
-  doc,
-  setDoc,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
 import { adminDb } from "@/lib/firebase/server";
 import { Timestamp } from "firebase-admin/firestore";
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
 
 // 모든 user get
 async function fetchUsers() {
-  const querySnapshot = await adminDb.collection("User").orderBy("date", "desc").get();
+  const querySnapshot = await adminDb
+    .collection("User")
+    .orderBy("date", "desc")
+    .get();
 
   if (querySnapshot.empty) {
-    console.log('No matching documents.');
+    console.log("No matching documents.");
     return [];
   }
 
@@ -42,35 +37,32 @@ async function fetchUser(id) {
     return null;
   }
 
-  const Userdocref = adminDb.collection("User").doc(id);
-  const UserdocSnap = await Userdocref.get();
+  const Userref = adminDb.collection("User").doc(id);
+  const UserSnap = await Userref.get();
 
-  if (UserdocSnap.exist) {
-    const data = UserdocSnap.data();
+  if (!UserSnap.exists) return null;
 
-    const fetchUser = {
-      username: data.username ?? "null",
-      likerecipe: data.likerecipe ?? "null",
-    };
+  const data = UserSnap.data() || {};
 
-    return fetchUser;
-  } else {
-    console.log("No such document!");
-    return null;
-  }
+  return {
+    id: UserSnap.id,
+    date: data.date?.toDate?.() ?? null,
+    email: data.email ?? null,
+    username: data.username ?? null,
+    likerecipe: data.likerecipe ?? 0,
+  };
 }
 
 // 추가
 async function addUser({ email, username, password, likerecipe }) {
-
-   const createuser = await getAdminAuth().createUser({
+  const createuser = await getAdminAuth().createUser({
     email,
     password,
     displayName: username ?? undefined,
     disabled: false,
   });
 
-  const newUserRef = adminDb.collection('User').doc(createuser.uid);
+  const newUserRef = adminDb.collection("User").doc(createuser.uid);
   const now = Timestamp.now();
 
   const newUserData = {
@@ -85,7 +77,7 @@ async function addUser({ email, username, password, likerecipe }) {
 
   return {
     id: createuser.uid,
-    name: username,
+    username: username,
     date: now,
     email: email ?? null,
   };
@@ -93,47 +85,51 @@ async function addUser({ email, username, password, likerecipe }) {
 
 //  삭제
 async function deleteAUser(id) {
-  const fetchUser = await fetchRecipe(id);
+  const fetchedUser = await fetchUser(id);
 
-  if (!fetchUser) {
+  if (!fetchedUser) {
     return null;
   }
 
-  await deleteDoc(doc(db, "Recipe", id));
+  await adminDb.collection("User").doc(id).delete();
 
-  return fetchUser;
+  return fetchedUser;
 }
 
 // 단일 수정
-async function editAUser(id, { email, name, title, summary, recipe, image }) {
-  const fetchUser = await fetchRecipe(id);
+// async function editAUser(id, { email, name, title, summary, recipe, image }) {
+//   const fetchUser = await fetchRecipe(id);
 
-  if (!fetchUser) {
-    return null;
-  }
+//   if (!fetchUser) {
+//     return null;
+//   }
 
-  const RacipeRef = doc(db, "Recipe", id);
+//   const RecipeRef = adminDb.collection("Recipe").doc(id);
 
-  // Set the "capital" field of the city 'DC'
-  await updateDoc(RacipeRef, {
-    image,
-    email,
-    name,
-    title,
-    summary,
-    recipe,
-  });
+//   const updatedata = {
+//     ...(image !== undefined ? { image } : {}),
+//     ...(name !== undefined ? { name } : {}),
+//     ...(title !== undefined ? { title } : {}),
+//     ...(summary !== undefined ? { summary } : {}),
+//     ...(recipe !== undefined ? { recipe } : {}),
+//     ...(email !== undefined ? { email } : {}),
+//   };
 
-  return {
-    id,
-    email,
-    name,
-    title,
-    summary,
-    recipe,
-    image,
-    date: fetchRecipe.date,
-  };
-}
+//   await RecipeRef.update(updatedata);
 
-export { fetchUsers, fetchUser, addUser, deleteAUser, editAUser };
+//   const afterSnap = await RecipeRef.get();
+//   const data = afterSnap.data() ?? {};
+
+//   return {
+//     id,
+//     date: fetchRecipe.date,
+//     email,
+//     name,
+//     title,
+//     summary,
+//     recipe,
+//     image,
+//   };
+// }
+
+export { fetchUsers, fetchUser, addUser, deleteAUser };

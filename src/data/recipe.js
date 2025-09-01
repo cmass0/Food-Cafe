@@ -3,13 +3,16 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // 모든 레시피 get
 async function fetchRecipes() {
-  const querySnapshot = await adminDb.collection('Recipe').orderBy('date', 'desc').get();
+  const querySnapshot = await adminDb
+    .collection("Recipe")
+    .orderBy("date", "desc")
+    .get();
 
   if (querySnapshot.empty) {
-    console.log('No matching documents.');
+    console.log("No matching documents.");
     return [];
   }
-  
+
   const RecipeData = [];
 
   querySnapshot.forEach((doc) => {
@@ -46,23 +49,23 @@ async function fetchRecipe(id) {
 
   if (!doc.exists) {
     return null;
-  }  
-    
+  }
+
   const data = doc.data() ?? {};
-    return {
-      id: doc.id,
-      date: data.date?.toDate?.() ?? null,
-      email: data.email ?? null,
-      name: data.name ?? null,
-      title: data.title ?? "",
-      recipe: data.recipe ?? "",
-      summary: data.summary ?? "",
-      image: data.image ?? null,
-      like: data.like ?? 0,
-      check: data.check ?? 0,
-      lastlike: data.lastlike ?? null,
-      type: data.type ?? "recipe",
-    }
+  return {
+    id: doc.id,
+    date: data.date?.toDate?.() ?? null,
+    email: data.email ?? null,
+    name: data.name ?? null,
+    title: data.title ?? "",
+    recipe: data.recipe ?? "",
+    summary: data.summary ?? "",
+    image: data.image ?? null,
+    like: data.like ?? 0,
+    check: data.check ?? 0,
+    lastlike: data.lastlike ?? null,
+    type: data.type ?? "recipe",
+  };
 }
 
 //레시피 add
@@ -78,7 +81,6 @@ async function addRecipe({
 }) {
   const RecipeRef = adminDb.collection("Recipe").doc();
   const now = Timestamp.now();
-  
 
   const newRecipeData = {
     id: RecipeRef.id,
@@ -95,12 +97,11 @@ async function addRecipe({
     type: "recipe",
   };
 
-
   await RecipeRef.set(newRecipeData);
 
-   return {
+  return {
     id: RecipeRef.id,
-    date: now.toDate(),      
+    date: now.toDate(),
     email: newRecipeData.email,
     name: newRecipeData.name,
     title: newRecipeData.title,
@@ -138,24 +139,22 @@ async function editARecipe(
     return null;
   }
 
-  const RecipeRef = adminDb.collection("Recipe").doc(id); 
-
- 
+  const RecipeRef = adminDb.collection("Recipe").doc(id);
 
   const updatedata = {
-    ...(email   !== undefined ? { email }   : {}),
-    ...(name    !== undefined ? { name }    : {}),
-    ...(title   !== undefined ? { title }   : {}),
+    ...(email !== undefined ? { email } : {}),
+    ...(name !== undefined ? { name } : {}),
+    ...(title !== undefined ? { title } : {}),
     ...(summary !== undefined ? { summary } : {}),
-    ...(recipe  !== undefined ? { recipe }  : {}),
-    ...(image   !== undefined ? { image }   : {}),
-    ...(like    !== undefined ? { like }    : {}),
-    ...(lastlike!== undefined ? { lastlike }: {}),
+    ...(recipe !== undefined ? { recipe } : {}),
+    ...(image !== undefined ? { image } : {}),
+    ...(like !== undefined ? { like } : {}),
+    ...(lastlike !== undefined ? { lastlike } : {}),
   };
 
   if (check === "increment") {
     updatedata.check = FieldValue.increment(1);
-  } else if (check !== undefined){
+  } else if (check !== undefined) {
     updatedata.check = check;
   }
   await RecipeRef.update(updatedata);
@@ -164,7 +163,7 @@ async function editARecipe(
   const data = afterSnap.data() ?? {};
 
   return {
-     id,
+    id,
     date: data.date?.toDate?.() ?? null,
     email: data.email ?? null,
     name: data.name ?? null,

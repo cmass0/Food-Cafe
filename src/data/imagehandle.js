@@ -1,14 +1,6 @@
-// import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-// import { storage } from "./firestore";
+"use client";
 
-// export default async function uploadImage(file) {
-//   const storageRef = ref(storage, `images/${file.name}`);
-//   const snapshot = await uploadBytes(storageRef, file);
-//   const imageUrl = await getDownloadURL(snapshot.ref);
-//   return imageUrl;
-// }
-
-import { storage } from "./firestore";
+import { storage } from "../lib/firebase/client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default async function uploadImage(imageFile) {

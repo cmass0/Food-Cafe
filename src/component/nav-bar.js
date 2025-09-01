@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
-import { getAuth, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { fetchUser } from "@/data/user";
 
 export default function Navbar(props) {
@@ -17,8 +17,6 @@ export default function Navbar(props) {
   const [userName, setUserName] = useState("");
   const [user] = useAuthState(auth);
   const router = useRouter();
-
-  // const userSesstion = sessionStorage.getItem("user");
 
   useEffect(() => {
     if (user) {
