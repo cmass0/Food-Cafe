@@ -1,47 +1,39 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
   getDoc,
   doc,
   setDoc,
-  Timestamp,
   deleteDoc,
   updateDoc,
 } from "firebase/firestore";
-import { app, db, Auth } from "./firestore";
+import { adminDb } from "@/lib/firebase/server";
+import { Timestamp } from "firebase-admin/firestore";
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 // 모든 user get
 async function fetchUsers() {
-  const querySnapshot = await getDocs(collection(db, "Recipe"));
+  const querySnapshot = await adminDb.collection("User").orderBy("date", "desc").get();
+
   if (querySnapshot.empty) {
+    console.log('No matching documents.');
     return [];
   }
 
-  const RecipeData = [];
+  const UserData = [];
 
   querySnapshot.forEach((doc) => {
-    console.log(doc.id, " => ", doc.data());
-    const aRecipe = {
+    const data = doc.data();
+    const User = {
       id: doc.id,
-      date: doc.data()["date"].toDate(),
-      email: doc.data()["email"] || "이메일 없음",
-      name: doc.data()["name"] || "이름 없음",
-      title: doc.data()["title"],
-      recipe: doc.data()["recipe"],
-      summary: doc.data()["summary"],
-      image: doc.data()["image"] || null,
-      likerecipe: doc.data()["likeracipe"],
+      date: data?.date?.toDate?.() ?? null,
+      email: data.email ?? null,
+      username: data.username ?? null,
+      likerecipe: data.likerecipe ?? 0,
     };
-    // .toLocaleTimeString("ko")
-    RecipeData.push(aRecipe);
+    UserData.push(User);
   });
 
-  return RecipeData;
+  return UserData;
 }
 
 // 단일 get
@@ -50,20 +42,19 @@ async function fetchUser(id) {
     return null;
   }
 
-  const Userdocref = doc(db, "User", id);
-  const UserdocSnap = await getDoc(Userdocref);
+  const Userdocref = adminDb.collection("User").doc(id);
+  const UserdocSnap = await Userdocref.get();
 
-  if (UserdocSnap.exists()) {
-    console.log("Document data:", UserdocSnap.data());
+  if (UserdocSnap.exist) {
+    const data = UserdocSnap.data();
 
     const fetchUser = {
-      username: UserdocSnap.data()["username"] || "null",
-      likerecipe: UserdocSnap.data()["likerecipe"] || "null",
+      username: data.username ?? "null",
+      likerecipe: data.likerecipe ?? "null",
     };
 
     return fetchUser;
   } else {
-    // docSnap.data() will be undefined in this case
     console.log("No such document!");
     return null;
   }
@@ -71,37 +62,32 @@ async function fetchUser(id) {
 
 // 추가
 async function addUser({ email, username, password, likerecipe }) {
-  // Add a new document with a generated id
-  // const newUserRef = doc(collection(db, "User"));
 
-  const createuser = await createUserWithEmailAndPassword(
-    Auth,
+   const createuser = await getAdminAuth().createUser({
     email,
-    password
-  );
-  // sessionStorage.setItem("user", true);
+    password,
+    displayName: username ?? undefined,
+    disabled: false,
+  });
 
-  const user = createuser.user;
-
-  const newUserRef = doc(db, "User", user.uid);
-  const createAT = Timestamp.fromDate(new Date());
+  const newUserRef = adminDb.collection('User').doc(createuser.uid);
+  const now = Timestamp.now();
 
   const newUserData = {
-    id: user.uid,
-    username: username || null,
-    email: email || null,
-    date: createAT,
+    id: createuser.uid,
+    username: username ?? null,
+    email: email ?? null,
+    date: now,
     likerecipe,
   };
 
-  // later...
-  await setDoc(newUserRef, newUserData);
+  await newUserRef.set(newUserData);
 
   return {
-    id: user.uid,
+    id: createuser.uid,
     name: username,
-    date: createAT.toDate(),
-    email: email || null,
+    date: now,
+    email: email ?? null,
   };
 }
 
