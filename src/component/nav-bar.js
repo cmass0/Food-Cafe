@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
-import { fetchUser } from "@/data/user";
+import { getDoc } from "firebase/firestore";
 
 export default function Navbar(props) {
   const [isModal, setIsmodal] = useState(false); // loginform 이동
@@ -24,12 +24,9 @@ export default function Navbar(props) {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
-
-          if (profile) {
-            setUserName(profile.username);
-          }
+          const Usersnap = await getDoc(doc(db, "User", user.uid));
+          const Userdata = Usersnap.exists() ? Usersnap.data() : null;
+          setUserName(Userdata?.username ?? "user");
         } else {
           setUserName(user.displayName || "user");
         }
@@ -85,7 +82,7 @@ export default function Navbar(props) {
           {user && (
             <button
               onClick={() => {
-                signOut(Auth);
+                signOut(auth);
                 sessionStorage.removeItem("user");
                 window.location.reload();
               }}
