@@ -3,17 +3,78 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
+    function isSignedIn() { return request.auth != null; }
+    function isOwnerBy(data) {
+      // writerUid가 있으면 그걸 우선, 없으면 과거 필드(writer)에 uid가 들어갔던 경우만 허용
+      return isSignedIn() && (
+        (data.writerUid != null && data.writerUid == request.auth.uid) ||
+        (data.writer == request.auth.uid)
+      );
+    }
+
+    // Users: 본인 문서만 읽기/쓰기 허용
+    match /User/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn()
+        && request.resource.id == request.auth.uid
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 2
+        && request.resource.data.username.size() <= 20;
+
+      allow update, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Post: 공개 읽기, 소유자만 쓰기/수정/삭제
+    match /Post/{postId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && (
+          (request.resource.data.writerUid != null
+            && request.resource.data.writerUid == request.auth.uid)
+          || (request.resource.data.writer == request.auth.uid)
+        )
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.date <= request.time;
+
+      allow update, delete: if isOwnerBy(resource.data);
+    }
+
+    // Recipe: 공개 읽기, 소유자만 변경
+    match /Recipe/{recipeId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && (
+          (request.resource.data.writerUid != null
+            && request.resource.data.writerUid == request.auth.uid)
+          || (request.resource.data.writer == request.auth.uid)
+        )
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0;
+
+      allow update, delete: if isOwnerBy(resource.data);
+    }
+
+    // Comment: 공개 읽기, 작성자만 변경
+    match /Comment/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && (
+          (request.resource.data.writerUid != null
+            && request.resource.data.writerUid == request.auth.uid)
+          || (request.resource.data.writer == request.auth.uid)
+        )
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() > 0;
+
+      allow update, delete: if isOwnerBy(resource.data);
+    }
+
+    // 나머지는 기본 거절
     match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2024, 6, 25);
+      allow read, write: if false;
     }
   }
 }
+
