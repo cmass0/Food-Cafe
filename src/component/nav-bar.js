@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
-import { getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Navbar(props) {
   const [isModal, setIsmodal] = useState(false); // loginform 이동
@@ -20,12 +20,12 @@ export default function Navbar(props) {
 
   useEffect(() => {
     if (user) {
-      console.log(user.uid);
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
           const Usersnap = await getDoc(doc(db, "User", user.uid));
           const Userdata = Usersnap.exists() ? Usersnap.data() : null;
+
           setUserName(Userdata?.username ?? "user");
         } else {
           setUserName(user.displayName || "user");

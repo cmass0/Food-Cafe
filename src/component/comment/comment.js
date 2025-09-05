@@ -1,11 +1,11 @@
 "use client";
 
 import { auth } from "@/lib/firebase/client";
-import { fetchUser } from "@/data/user";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Modal from "../modal/modal";
 import style from "./comment.module.css";
+import { doc, getDoc } from "firebase/firestore";
 
 async function fetchComment() {
   const getcomment = await fetch(
@@ -31,8 +31,6 @@ export default function CommentArea({ type }) {
 
   async function getcommet() {
     const commentlist = await fetchComment();
-    // console.log(commentlist);
-    // console.log(type);
     const filterdata = commentlist.data.filter(
       (comment) => comment.type === type
     );
@@ -40,7 +38,6 @@ export default function CommentArea({ type }) {
     const sortdata = filterdata.sort(
       (a, b) => new Date(a.date) - new Date(b.date)
     );
-    // console.log(filterdata);
     setCommentData(sortdata);
   }
 
@@ -50,17 +47,15 @@ export default function CommentArea({ type }) {
     if (user) {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
-
-          if (profile) {
-            setUserName(profile.username);
-          }
-        } else {
-          setUserName(user.displayName);
-        }
-      }
+              if (loginIdentifier === "password") {
+                const Usersnap = await getDoc(doc(db, "User", user.uid));
+                const Userdata = Usersnap.exists() ? Usersnap.data() : null;
+      
+                setUserName(Userdata?.username ?? "user");
+              } else {
+                setUserName(user.displayName || "user");
+              }
+            }
       ReadUserData();
     }
   }, []);
