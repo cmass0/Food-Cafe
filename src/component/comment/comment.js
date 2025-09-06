@@ -43,21 +43,27 @@ export default function CommentArea({ type }) {
 
   useEffect(() => {
     getcommet();
-
-    if (user) {
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-              if (loginIdentifier === "password") {
-                const Usersnap = await getDoc(doc(db, "User", user.uid));
-                const Userdata = Usersnap.exists() ? Usersnap.data() : null;
-      
-                setUserName(Userdata?.username ?? "user");
-              } else {
-                setUserName(user.displayName || "user");
-              }
-            }
-      ReadUserData();
-    }
+     let cancelled = false;
+    
+        (async () => {
+          if (!user) {
+            if (!cancelled) setUserName("user");
+            return;
+          }
+          const isPassword = user.providerData?.some(p => p?.providerId === "password");
+          if (!isPassword) {
+            if (!cancelled) setUserName(user.displayName ?? "user");
+            return;
+          }
+          try {
+            const name = await fetchUsernameByUid(user.uid);
+            if (!cancelled) setUserName(name ?? user.displayName ?? "user");
+          } catch {
+            if (!cancelled) setUserName(user.displayName ?? "user");
+          }
+        })();
+    
+        return () => { cancelled = true; };
   }, []);
 
   async function writecommentHD() {

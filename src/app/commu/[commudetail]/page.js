@@ -8,7 +8,8 @@ import { useRouter } from "next/navigation";
 import Modal from "@/component/modal/modal";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
-import { doc, getDoc } from "firebase/firestore";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
+
 
 export default function CommuDetailPage({ params }) {
   const [detailinfo, setDetailInfo] = useState(null);
@@ -21,22 +22,30 @@ export default function CommuDetailPage({ params }) {
   const [user] = useAuthState(auth);
 
   useEffect(() => {
-    if (user) {
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-         if (loginIdentifier === "password") {
-            const Usersnap = await getDoc(doc(db, "User", user.uid));
-            const Userdata = Usersnap.exists() ? Usersnap.data() : null;
-            setUserName(Userdata?.username ?? "user");
-        } else {
-            setUserName(user.displayName || "user");
-        }
+    let cancelled = false;
+
+    (async () => {
+      if (!user) {
+        if (!cancelled) setUserName("user");
+        return;
       }
-      ReadUserData();
-    }
+      const isPassword = user.providerData?.some(p => p?.providerId === "password");
+      if (!isPassword) {
+        if (!cancelled) setUserName(user.displayName ?? "user");
+        return;
+      }
+      try {
+        const name = await fetchUsernameByUid(user.uid);
+        if (!cancelled) setUserName(name ?? user.displayName ?? "user");
+      } catch {
+        if (!cancelled) setUserName(user.displayName ?? "user");
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [user]);
 
-  function editHD(e) {
+  function editHD() {
     router.push(`/commu/${params.commudetail}/editform`);
   }
   function updateHD() {
@@ -44,7 +53,6 @@ export default function CommuDetailPage({ params }) {
     setIsModal(true);
     setConfirmText("정말로 수정하시겠습니까?");
   }
-
   function deleteHD() {
     setBtnConfirmText("삭제");
     setIsModal(true);
@@ -55,32 +63,24 @@ export default function CommuDetailPage({ params }) {
     const fetchpost = async () => {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/post/${params.commudetail}`,
-        {
-          cache: "no-store",
-        }
+        { cache: "no-store" }
       );
-
       const responseonj = await response.json();
-      const detailinfo = responseonj.data;
-      setDetailInfo(detailinfo);
+      setDetailInfo(responseonj.data);
     };
     fetchpost();
   }, [params.commudetail]);
 
   async function deleteokHD() {
     setIsModal(false);
-
-    const response = await fetch(
+    await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}/api/post/${params.commudetail}`,
       {
         method: "delete",
-        body: JSON.stringify({
-          id: params.commudetail,
-        }),
+        body: JSON.stringify({ id: params.commudetail }),
         cache: "no-store",
       }
     );
-    console.log(response);
     router.push("/commu");
   }
 
@@ -88,9 +88,7 @@ export default function CommuDetailPage({ params }) {
     setIsModal(false);
   }
 
-  if (detailinfo === null) {
-    return <LoadingPage></LoadingPage>;
-  }
+  if (detailinfo === null) return <LoadingPage />;
 
   return (
     <div className={style.postcontainer}>
@@ -100,7 +98,6 @@ export default function CommuDetailPage({ params }) {
           <div className={style.HeaderInfo}>
             <div>작성자: {detailinfo.writer}</div>
             <div>|</div>
-
             <div>조회: {detailinfo.check}</div>
             <div>|</div>
             <div>{detailinfo.date.substring(0, 10)}</div>
@@ -110,6 +107,7 @@ export default function CommuDetailPage({ params }) {
           <div dangerouslySetInnerHTML={{ __html: detailinfo.content }} />
         </article>
       </section>
+
       <div className={style.btnarea}>
         {detailinfo.writer === userName && (
           <>
@@ -118,12 +116,11 @@ export default function CommuDetailPage({ params }) {
           </>
         )}
       </div>
+
       {isModal && (
         <Modal onclose={onclose}>
           <div className={style.requirelogin}>
-            <button className={style.modalclosebtn} onClick={onclose}>
-              X
-            </button>
+            <button className={style.modalclosebtn} onClick={onclose}>X</button>
             <div className={style.modaltext}>{confirmtext}</div>
             <div className={style.deletebtnbox}>
               {btnconfirmtext === "삭제" && (
@@ -140,6 +137,7 @@ export default function CommuDetailPage({ params }) {
           </div>
         </Modal>
       )}
+
       <article className={style.CommentArea}>
         <CommentArea type={params.commudetail} />
       </article>
