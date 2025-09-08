@@ -1,13 +1,11 @@
 import { fetchPosts } from "@/data/post";
 export const revalidate = 0;
 
-export default async function PostResults({
-  searchParams,
-}: {
-  searchParams: { query?: string | string[] };
-}) {
+export default async function PostResults({searchParams,}: 
+    {searchParams: { query?: string | string[] };}) {
+        
   const raw = searchParams?.query ?? "";
-  const q = Array.isArray(raw) ? raw[0] : raw;
+  const q: string = (Array.isArray(raw) ? raw[0] : raw) ?? ""; 
   const keyword = q.trim().toLowerCase();
 
   const all = await fetchPosts();

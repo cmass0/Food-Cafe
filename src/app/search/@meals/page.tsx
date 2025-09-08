@@ -7,7 +7,7 @@ export default async function MealsResults({
   searchParams: { query?: string | string[] };
 }) {
   const raw = searchParams?.query ?? "";
-  const q = Array.isArray(raw) ? raw[0] : raw;
+const q: string = (Array.isArray(raw) ? raw[0] : raw) ?? ""; 
   const keyword = q.trim().toLowerCase();
 
   const all = await fetchRecipes();
