@@ -5,8 +5,6 @@ export default function SearchList({ data, keyFn, children, query }) {
     JSON.stringify(contents).toLowerCase().includes(query.toLowerCase())
   );
 
-  // console.log(data);
-  // console.log(searchresults);
   return (
     <div className={style.searchlist}>
       <ul>
