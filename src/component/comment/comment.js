@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import Modal from "../modal/modal";
 import style from "./comment.module.css";
 import { doc, getDoc } from "firebase/firestore";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
 async function fetchComment() {
   const getcomment = await fetch(
