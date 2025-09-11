@@ -7,7 +7,7 @@ import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
 import { useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
@@ -24,7 +24,7 @@ export default function EditMeal({ params }) {
   const [recipe, setRecipe] = useState("");
   const [imgselect, setImageSelect] = useState(false);
   const router = useRouter();
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     if (user) {

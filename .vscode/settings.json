@@ -1,4 +1,9 @@
 {
-    "chatgpt.openOnStartup": true,
-    "chatgpt.commentCodeLensEnabled": true
+  "chatgpt.openOnStartup": true,
+  "chatgpt.commentCodeLensEnabled": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.wordWrap": "on",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true
 }

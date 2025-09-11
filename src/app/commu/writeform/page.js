@@ -2,13 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ReactQuill, { Quill } from "react-quill";
+import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import style from "./page.module.css";
 
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Auth } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import LoadingPage from "@/app/loading";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
@@ -26,7 +26,7 @@ export default function PostForm() {
   const [loading, setloading] = useState(true);
   const [maxnum, setMaxNum] = useState(0);
   const router = useRouter();
-  const [user] = useAuthState(Auth);
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     if (user) {
@@ -193,3 +193,4 @@ export default function PostForm() {
     </div>
   );
 }
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });

@@ -2,13 +2,13 @@
 
 import style from "./page.module.css";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { Auth } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkDuplicate } from "@/Authlogic/nicknamecheck";
 import classNames from "classnames";
 
-export default function signupPage() {
+export default function SignupPage() {
   const [UserName, setUserName] = useState("");
   const [UserEmail, setUserEmail] = useState("");
   const [UserPassword, setUserPassword] = useState("");
@@ -23,7 +23,7 @@ export default function signupPage() {
   const router = useRouter();
 
   const [createUserWithEmailAndPassword, user, loading, error] =
-    useCreateUserWithEmailAndPassword(Auth);
+    useCreateUserWithEmailAndPassword(auth);
 
   async function SignupHD(data) {
     data.preventDefault();

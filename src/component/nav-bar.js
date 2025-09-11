@@ -11,7 +11,7 @@ import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import ThemeToggle from "@/component/theme-toggle";
-import { Input } from "@heroui/input";
+import { Input } from "@heroui/react";
 import { SearchIcon } from "lucide-react";
 import { searchInputClassNames } from "@/styles/input/searchUI";
 

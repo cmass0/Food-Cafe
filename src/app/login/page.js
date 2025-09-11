@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import style from "./page.module.css";
-import { Auth } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [InputEmail, setInputEmail] = useState("");
   const [InputPassword, setInputPassword] = useState("");
   const [KeepSignIn, setKeepSignIn] = useState(false);
-  const [signinWithEmailAndPassword] = useSignInWithEmailAndPassword(Auth);
+  const [signinWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
   const [errormsg, setErrorMsg] = useState("");
   const router = useRouter();
   const { userAuthData, googleLogin, logout } = AuthUser();
