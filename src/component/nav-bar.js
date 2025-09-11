@@ -11,6 +11,9 @@ import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import ThemeToggle from "@/component/theme-toggle";
+import { Input } from "@heroui/input";
+import { SearchIcon } from "lucide-react";
+import { searchInputClassNames } from "@/styles/input/searchUI";
 
 export default function Navbar(props) {
   const [isModal, setIsmodal] = useState(false); // loginform 이동
@@ -61,13 +64,28 @@ export default function Navbar(props) {
           </Link>
         </div>
         <form onSubmit={SearchHD} className={style.searchcontainer}>
-          <input
-            className={style.search}
-            type="search"
-            placeholder="검색"
-            size="30"
-            onChange={SearchTextHD}
-          ></input>
+          <div className="">
+            <Input
+              value={searchtext}
+              onValueChange={setsearchText}
+              onClear={() => {
+                setsearchText("");
+                router.push("/search");
+              }}
+              isClearable
+              classNames={searchInputClassNames}
+              label="Search"
+              placeholder="Type to search..."
+              radius="lg"
+              startContent={
+                <SearchIcon
+                  size={16}
+                  className="text-foreground/60"
+                  strokeWidth={1.75}
+                />
+              }
+            />
+          </div>
         </form>
         <div className={style.nav}>
           <ThemeToggle />

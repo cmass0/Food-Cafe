@@ -42,9 +42,6 @@ export default function Home() {
               <button className={style["main-headerbtn"]} onClick={shareHD}>
                 커뮤니티 참여하기
               </button>
-              <Button color="primary" variant="shadow">
-                Shadow
-              </Button>
               <button className={style["main-headerbtn"]} onClick={shareHD}>
                 음식 공유하기
               </button>
