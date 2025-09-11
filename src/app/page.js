@@ -8,6 +8,7 @@ import FooterSlide from "@/component/footer/footer-slide";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
+import { Button, ButtonGroup } from "@heroui/button";
 
 export default function Home() {
   const [user] = useAuthState(auth);
@@ -38,11 +39,9 @@ export default function Home() {
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
-              <Link href="/commu">
-                <button className={style["main-headerbtn"]}>
-                  커뮤니티에 참여하기
-                </button>
-              </Link>
+              <Button as={Link} href="/commu" color="primary" variant="shadow">
+                커뮤니티 참여하기
+              </Button>
 
               <button className={style["main-headerbtn"]} onClick={shareHD}>
                 음식 공유하기

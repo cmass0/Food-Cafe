@@ -1,7 +1,5 @@
 @plugin "@heroui/theme";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Reset */
 /* * { box-sizing: border-box; } */
