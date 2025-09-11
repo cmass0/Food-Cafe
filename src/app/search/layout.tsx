@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import style from "./page.module.css";
+import style from "./layout.module.css";
 
 export default function SearchLayout({
   children,
@@ -11,11 +11,10 @@ export default function SearchLayout({
   posts: ReactNode;
 }) {
   return (
-    <section>
-      {children}
-      <div>
-        <div>{meals}</div>
-        <div>{posts}</div>
+    <section className={style.wrap}>
+      <div className={style.columns}>
+        <div className={style.section}>{meals}</div>
+        <div className={style.section}>{posts}</div>
       </div>
     </section>
   );

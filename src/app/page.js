@@ -39,10 +39,12 @@ export default function Home() {
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
-              <Button as={Link} href="/commu" color="primary" variant="shadow">
+              <button className={style["main-headerbtn"]} onClick={shareHD}>
                 커뮤니티 참여하기
+              </button>
+              <Button color="primary" variant="shadow">
+                Shadow
               </Button>
-
               <button className={style["main-headerbtn"]} onClick={shareHD}>
                 음식 공유하기
               </button>

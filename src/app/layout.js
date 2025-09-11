@@ -1,7 +1,7 @@
 "use client";
 
-import { Inter } from "next/font/google";
 import "./globals.css";
+import { Inter } from "next/font/google";
 import Navbar from "@/component/nav-bar";
 import { AuthProvider } from "./context/Auth-context";
 import { HeroUIProvider } from "@heroui/react";
