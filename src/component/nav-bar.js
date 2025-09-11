@@ -10,6 +10,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import ThemeToggle from "@/component/theme-toggle";
 
 export default function Navbar(props) {
   const [isModal, setIsmodal] = useState(false); // loginform 이동
@@ -69,6 +70,7 @@ export default function Navbar(props) {
           ></input>
         </form>
         <div className={style.nav}>
+          <ThemeToggle />
           <NavLink href="/meals">음식 및 레시피 공유</NavLink>
           <NavLink href="/commu">커뮤니티</NavLink>
           {/* <NavLink href="/ranking">랭킹</NavLink> */}

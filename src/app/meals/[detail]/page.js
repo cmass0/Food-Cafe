@@ -2,17 +2,15 @@
 
 import Image from "next/image";
 import style from "./page.module.css";
-import poke from "@/assets/poke.jpeg";
 import like from "@/assets/like.png";
-import btn from "@/assets/right.png";
 import CommentArea from "@/component/comment/comment";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import LoadingPage from "@/app/loading";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
-import { fetchUser } from "@/data/user";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 
 async function alreadyclick(userid, recipeid, detailinfo) {
@@ -33,7 +31,7 @@ async function alreadyclick(userid, recipeid, detailinfo) {
   return { pass: true };
 }
 
-export default async function SomethingMealspage({ params }) {
+export default function SomethingMealspage({ params }) {
   const [detailinfo, setDetailInfo] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
   const [isModal, setIsModal] = useState(false);
@@ -50,11 +48,9 @@ export default async function SomethingMealspage({ params }) {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
-
-          if (profile) {
-            setUserName(profile.username);
+          const username = await fetchUsernameByUid(user.uid);
+          if (username) {
+            setUserName(username);
           }
         } else {
           setUserName(user.displayName || "user");
@@ -167,7 +163,7 @@ export default async function SomethingMealspage({ params }) {
     <div className={style.detailcontainer}>
       <header className={style.header}>
         <div className={style.image}>
-          <Image src={detailinfo.image} fill />
+          <Image src={detailinfo.image} fill alt={detailinfo.title || "recipe"} />
         </div>
         <div className={style.headerText}>
           <h1>{detailinfo.title}</h1>

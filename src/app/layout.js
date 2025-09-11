@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/component/nav-bar";
 import { AuthProvider } from "./context/Auth-context";
+import { HeroUIProvider } from "@heroui/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,11 +16,13 @@ const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          <Navbar></Navbar>
-          {children}
-        </AuthProvider>
+      <body className="bg-background text-foreground min-h-screen antialiased">
+        <HeroUIProvider>
+          <AuthProvider>
+            <Navbar></Navbar>
+            {children}
+          </AuthProvider>
+        </HeroUIProvider>
       </body>
     </html>
   );

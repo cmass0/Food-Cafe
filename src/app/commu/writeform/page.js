@@ -9,8 +9,8 @@ import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Auth } from "@/lib/firebase/client";
-import { fetchUser } from "@/data/user";
 import LoadingPage from "@/app/loading";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
 async function fetchpost() {
   const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
@@ -34,11 +34,10 @@ export default function PostForm() {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
+          const username = await fetchUsernameByUid(user.uid);
 
-          if (profile) {
-            setUserName(profile.username);
+          if (username) {
+            setUserName(username);
           }
         } else {
           setUserName(user.displayName || "user");

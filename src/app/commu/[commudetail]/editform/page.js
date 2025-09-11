@@ -9,8 +9,8 @@ import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
-import { fetchUser } from "@/data/user";
 import Modal from "@/component/modal/modal";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
 export default function PostForm({ params }) {
   const [title, setTitle] = useState("");
@@ -28,11 +28,11 @@ export default function PostForm({ params }) {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
+          const username = await fetchUsernameByUid(user.uid);
+          console.log(username);
 
-          if (profile) {
-            setUserName(profile.username);
+          if (username) {
+            setUserName(username);
           }
         } else {
           setUserName(user.displayName || "user");

@@ -8,7 +8,7 @@ import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { Auth } from "@/lib/firebase/client";
 import { useEffect } from "react";
-import { fetchUser } from "@/data/user";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
 //useFormStatus 사용
 //componet로 이동
@@ -25,11 +25,9 @@ export default function ShareMeal() {
       const loginIdentifier = user.providerData[0]?.providerId;
       async function ReadUserData() {
         if (loginIdentifier === "password") {
-          const profile = await fetchUser(user.uid);
-          console.log(profile);
-
-          if (profile) {
-            setUserName(profile.username);
+          const username = await fetchUsernameByUid(user.uid);
+          if (username) {
+            setUserName(username);
           }
         } else {
           setUserName(user.displayName || "user");
