@@ -1,3 +1,4 @@
+@plugin "@heroui/theme";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
