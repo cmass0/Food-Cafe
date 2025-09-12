@@ -2,15 +2,17 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import style from "./page.module.css";
-
+import "react-quill/dist/quill.snow.css";
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import dynamic from "next/dynamic";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function PostForm({ params }) {
   const [title, setTitle] = useState("");
@@ -64,9 +66,7 @@ export default function PostForm({ params }) {
       }
 
       readpost();
-    },
-    { params }
-  );
+    },[params.commudetail]);
 
   async function handleSubmit(data) {
     data.preventDefault();
@@ -111,22 +111,22 @@ export default function PostForm({ params }) {
     setIsModal(false);
   }
 
-  function saveImage() {
+   const imageHandler = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*");
-    input.click();
-
     input.onchange = async () => {
-      const file = input.files[0];
-      console.log(file);
-      if (file) {
-        const imageurl = await uploadImage(file);
-        const range = this.quill.getSelection();
-        this.quill.insertEmbed(range.index, "image", imageurl);
-      }
+      const file = input.files?.[0];
+      if (!file) return;
+      const imageurl = await uploadImage(file);
+      const editor = quillRef.current?.getEditor?.();
+      if (!editor) return;
+      const range = editor.getSelection(true);
+      editor.insertEmbed(range.index, "image", imageurl, "user");
+      editor.setSelection(range.index + 1, 0, "user");
     };
-  }
+    input.click();
+  }, []);
 
   const modules = useMemo(() => {
     return {
@@ -140,11 +140,11 @@ export default function PostForm({ params }) {
           ["clean"],
         ],
         handlers: {
-          image: saveImage,
+          image: imageHandler,
         },
       },
     };
-  }, []);
+  }, [imageHandler]);
 
   return (
     <div className={style.container}>
@@ -169,6 +169,7 @@ export default function PostForm({ params }) {
             내용
           </label>
           <ReactQuill
+            theme="snow"
             value={content}
             onChange={setContent}
             modules={modules}
