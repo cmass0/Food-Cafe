@@ -1,19 +1,14 @@
 "use client";
 
 import { useContext, createContext, useState, useEffect } from "react";
-import {
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-} from "firebase/auth";
+import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
 import { auth, db } from "@/lib/firebase/client";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [userAuthData, setUserAuthData] = useState("userK");
+  const [userAuthData, setUserAuthData] = useState(null);
 
   function googleLogin() {
     const Googleprovider = new GoogleAuthProvider();
@@ -38,12 +33,13 @@ export function AuthProvider({ children }) {
           });
         }
         setUserAuthData(curUser);
+      } else {
+        setUserAuthData(null);
       }
-      setUserAuthData(null);
     });
 
-    return () => unsubscribe;
-  }, [userAuthData]);
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ userAuthData, googleLogin, logout }}>

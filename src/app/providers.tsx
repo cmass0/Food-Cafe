@@ -1,6 +1,5 @@
 "use client";
 
-import "@heroui/react/styles.css";
 import { HeroUIProvider } from "@heroui/react";
 import { AuthProvider } from "./context/Auth-context";
 import Navbar from "@/component/nav-bar";

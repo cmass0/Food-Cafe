@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/client";
+import { auth, db } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import ThemeToggle from "@/component/theme-toggle";
@@ -78,11 +78,7 @@ export default function Navbar(props) {
               placeholder="Type to search..."
               radius="lg"
               startContent={
-                <SearchIcon
-                  size={16}
-                  className="text-foreground/60"
-                  strokeWidth={1.75}
-                />
+                <SearchIcon size={16} className="text-foreground/60" strokeWidth={1.75} />
               }
             />
           </div>

@@ -2,9 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import "react-quill/dist/quill.snow.css";
 import style from "./page.module.css";
-import "react-quill/dist/quill.snow.css";
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
@@ -44,29 +42,28 @@ export default function PostForm({ params }) {
     }
   }, [user]);
 
-  useEffect(
-    () => {
-      async function readpost() {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/api/post/${params.commudetail}`,
-            {
-              cache: "no-store",
-            }
-          );
+  useEffect(() => {
+    async function readpost() {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/post/${params.commudetail}`,
+          {
+            cache: "no-store",
+          }
+        );
 
-          const responseonj = await response.json();
-          const responsedata = responseonj.data;
-          console.log(responsedata);
-          setTitle(responsedata.title);
-          setContent(responsedata.content);
-        } catch (err) {
-          console.error("읽기 실패: ", err);
-        }
+        const responseonj = await response.json();
+        const responsedata = responseonj.data;
+        console.log(responsedata);
+        setTitle(responsedata.title);
+        setContent(responsedata.content);
+      } catch (err) {
+        console.error("읽기 실패: ", err);
       }
+    }
 
-      readpost();
-    },[params.commudetail]);
+    readpost();
+  }, [params.commudetail]);
 
   async function handleSubmit(data) {
     data.preventDefault();
@@ -111,7 +108,7 @@ export default function PostForm({ params }) {
     setIsModal(false);
   }
 
-   const imageHandler = useCallback(() => {
+  const imageHandler = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*");
