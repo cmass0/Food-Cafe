@@ -1,5 +1,5 @@
 // src/app/api/users/[id]/route.ts
-import { NextResponse } from "next/server";
+import { UserUpdateSchema } from "@/features/user/types";
 import * as repo from "@/features/user/repository.server";
 
 export const runtime = "nodejs";
@@ -9,25 +9,29 @@ type Ctx = { params: { id: string } };
 
 export async function GET(_: Request, { params }: Ctx) {
   const user = await repo.getUser(params.id);
-  if (!user) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-  return NextResponse.json({ data: user }, { headers: { "Cache-Control": "no-store" } });
+  if (!user) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  return Response.json({ data: user }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function PUT(req: Request, { params }: Ctx) {
   try {
-    const body = await req.json();
-    const updated = await repo.updateUser(params.id, {
-      username: body?.username ?? undefined,
-    });
-    if (!updated) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-    return NextResponse.json({ data: updated });
+    const json = await req.json();
+    const parsed = UserUpdateSchema.safeParse(json);
+    if (!parsed.success)
+      return Response.json(
+        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    const updated = await repo.updateUser(params.id, parsed.data);
+    if (!updated) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+    return Response.json({ data: updated });
   } catch {
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
 export async function DELETE(_: Request, { params }: Ctx) {
   await repo.deleteUser(params.id);
-  return NextResponse.json(null, { status: 204 });
+  return Response.json(null, { status: 204 });
 }
 

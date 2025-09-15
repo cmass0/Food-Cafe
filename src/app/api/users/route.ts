@@ -1,29 +1,35 @@
 // src/app/api/users/route.ts
-import { NextResponse } from "next/server";
+import { UserCreateSchema } from "@/features/user/types";
 import * as repo from "@/features/user/repository.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // P0.5 안정화 동안
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const data = await repo.listUsers();
-    return NextResponse.json({ data }, { headers: { "Cache-Control": "no-store" } });
+    const url = new URL(req.url);
+    const limit = Number(url.searchParams.get("limit") ?? "20");
+    const cursor = url.searchParams.get("cursor") ?? undefined;
+    const data = await repo.listUsers({ limit, cursor });
+    return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch {
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const created = await repo.createUser({
-      email: String(body?.email ?? ""),
-      username: String(body?.username ?? ""),
-    });
-    return NextResponse.json({ data: created }, { status: 201 });
+    const json = await req.json();
+    const parsed = UserCreateSchema.safeParse(json);
+    if (!parsed.success)
+      return Response.json(
+        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    const created = await repo.createUser(parsed.data);
+    return Response.json({ data: created }, { status: 201 });
   } catch {
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 

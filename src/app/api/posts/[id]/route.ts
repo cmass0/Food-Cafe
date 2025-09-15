@@ -1,5 +1,5 @@
 // src/app/api/posts/[id]/route.ts
-import { NextResponse } from "next/server";
+import { PostUpdateSchema } from "@/features/post/types";
 import * as repo from "@/features/post/repository.server";
 
 export const runtime = "nodejs";
@@ -9,23 +9,29 @@ type Ctx = { params: { id: string } };
 
 export async function GET(_: Request, { params }: Ctx) {
   const item = await repo.getPost(params.id);
-  if (!item) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-  return NextResponse.json({ data: item }, { headers: { "Cache-Control": "no-store" } });
+  if (!item) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  return Response.json({ data: item }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function PUT(req: Request, { params }: Ctx) {
   try {
-    const body = await req.json();
-    const updated = await repo.updatePost(params.id, body);
-    if (!updated) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-    return NextResponse.json({ data: updated });
+    const json = await req.json();
+    const parsed = PostUpdateSchema.safeParse(json);
+    if (!parsed.success)
+      return Response.json(
+        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    const updated = await repo.updatePost(params.id, parsed.data);
+    if (!updated) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+    return Response.json({ data: updated });
   } catch {
-    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
 export async function DELETE(_: Request, { params }: Ctx) {
   await repo.deletePost(params.id);
-  return NextResponse.json(null, { status: 204 });
+  return Response.json(null, { status: 204 });
 }
 
