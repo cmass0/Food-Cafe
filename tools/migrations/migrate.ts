@@ -10,6 +10,7 @@
  *   ts-node tools/migrations/migrate.ts
  */
 
+import 'dotenv/config';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import {
   FieldValue,
