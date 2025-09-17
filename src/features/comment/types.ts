@@ -4,7 +4,7 @@ export const CommentCreateSchema = z.object({
   comment: z.string().min(1),
   writerName: z.string().min(1),
   writerUid: z.string().min(1).optional(),
-  type: z.string().min(1), // e.g., 'home', 'detail', etc.
+  type: z.string().min(1), 
 });
 
 export const CommentUpdateSchema = z.object({
