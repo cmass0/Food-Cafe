@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
 import style from "./page.module.css";
 
 import uploadImage from "@/data/imagehandle";
@@ -73,23 +72,20 @@ export default function PostForm() {
     setTitle("");
     setContent("");
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/post`,
-        {
-          method: "post",
-          body: JSON.stringify({
-            title,
-            content,
-            writer: userName,
-            number: maxnum + 1,
-          }),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
+        method: "post",
+        body: JSON.stringify({
+          title,
+          content,
+          writer: userName,
+          number: maxnum + 1,
+        }),
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        }
-      );
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
 
       const post = await response.json();
       console.log(`post 추가 완료: ${post}`);
@@ -107,22 +103,22 @@ export default function PostForm() {
     // router.refresh();
   }
 
-  function saveImage() {
+  const imageHandler = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*");
-    input.click();
-
     input.onchange = async () => {
-      const file = input.files[0];
-      // const readedimg = new FileReader();
-      if (file) {
-        const imageurl = await uploadImage(file);
-        const range = this.quill.getSelection();
-        this.quill.insertEmbed(range.index, "image", imageurl);
-      }
+      const file = input.files?.[0];
+      if (!file) return;
+      const imageurl = await uploadImage(file);
+      const editor = quillRef.current?.getEditor?.();
+      if (!editor) return;
+      const range = editor.getSelection(true);
+      editor.insertEmbed(range.index, "image", imageurl, "user");
+      editor.setSelection(range.index + 1, 0, "user");
     };
-  }
+    input.click();
+  }, []);
 
   const modules = useMemo(() => {
     return {
@@ -136,11 +132,11 @@ export default function PostForm() {
           ["clean"],
         ],
         handlers: {
-          image: saveImage,
+          image: imageHandler,
         },
       },
     };
-  }, []);
+  }, [imageHandler]);
 
   if (loading) {
     return <LoadingPage></LoadingPage>;
@@ -178,11 +174,7 @@ export default function PostForm() {
         </div>
         <div className={style.preview}></div>
         <div className={style.btnarea}>
-          <button
-            type="submit"
-            className={style.button}
-            onClick={PostSubmitBtnHD}
-          >
+          <button type="submit" className={style.button} onClick={PostSubmitBtnHD}>
             게시글 작성
           </button>
           <button className={style.canclebtn} onClick={CanCleBtnHD}>

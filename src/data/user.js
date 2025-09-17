@@ -1,4 +1,4 @@
-import { adminDb } from "@/lib/firebase/server";
+import { adminDb } from "@/lib/firebase/admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 

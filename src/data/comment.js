@@ -1,4 +1,4 @@
-import { adminDb } from "@/lib/firebase/server";
+import { adminDb } from "@/lib/firebase/admin";
 import { Timestamp } from "firebase-admin/firestore";
 
 // 모든 post get

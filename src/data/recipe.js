@@ -1,4 +1,4 @@
-import { adminDb } from "@/lib/firebase/server";
+import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 // 모든 레시피 get
