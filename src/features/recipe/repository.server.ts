@@ -35,12 +35,23 @@ function mapDocToRecipe(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseF
   const writerUid = typeof rawWriterUid === "string" && rawWriterUid.length > 0 ? rawWriterUid : null;
 
   const rawWriterName = (data?.writerName ?? (data as any)?.name) as string | undefined;
+  const imagesRaw = (data as any)?.images;
+  const images = Array.isArray(imagesRaw)
+    ? imagesRaw.filter((item: unknown): item is string => typeof item === "string" && item.length > 0)
+    : undefined;
+
+  const primaryImage =
+    typeof data?.image === "string" && data.image.length > 0
+      ? data.image
+      : images?.[0] ?? null;
+
 
   return {
     id: doc.id,
     title: (data?.title as string) ?? "",
     summary: (data?.summary as string | null | undefined) ?? null,
-    image: (data?.image as string | null | undefined) ?? null,
+    image: primaryImage,
+    images,
     recipe: (data?.recipe as string) ?? "",
     writerUid,
     writerName: rawWriterName ?? "",

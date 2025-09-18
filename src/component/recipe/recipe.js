@@ -10,7 +10,7 @@ export default function Recipe({ data }) {
     try {
       await updateRecipe(id, { viewCountIncrement: true });
     } catch (err) {
-      console.error("조회수 업데이트에 실패했습니다.", err);
+      console.error("議고쉶???낅뜲?댄듃???ㅽ뙣?덉뒿?덈떎.", err);
     }
   }
 
@@ -24,7 +24,7 @@ export default function Recipe({ data }) {
         {data.image ? (
           <Image src={data.image} alt="displayed food" fill />
         ) : (
-          <div className={style.loadingmsg}>이미지가 존재하지 않습니다.</div>
+          <div className={style.loadingmsg}>?대?吏媛 議댁옱?섏? ?딆뒿?덈떎.</div>
         )}
       </header>
       <div className={style.recipemain}>
@@ -37,12 +37,12 @@ export default function Recipe({ data }) {
         </div>
         <div className={style.detailLink}>
           <div className={style.checkandlikebox}>
-            <div>조회: {viewLabel}</div>
-            <div>좋아요: {likeLabel}</div>
+            <div>議고쉶: {viewLabel}</div>
+            <div>醫뗭븘?? {likeLabel}</div>
           </div>
 
           <Link href={`/meals/${data.id}`} onClick={() => recipeclickHD(data.id)}>
-            상세보기
+            ?곸꽭蹂닿린
           </Link>
         </div>
       </div>

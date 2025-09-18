@@ -26,6 +26,7 @@ export interface Recipe {
   title: string;
   summary?: string | null;
   image?: string | null;
+  images?: string[];
   recipe: string;
   writerUid?: string | null;
   writerName: string;
