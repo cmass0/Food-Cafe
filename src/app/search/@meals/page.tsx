@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Card, CardBody, CardFooter, Image } from "@heroui/react";
 import { fetchRecipes } from "@/data/recipe";
 

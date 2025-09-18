@@ -1,4 +1,4 @@
-import "server-only";
+﻿import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { Recipe, RecipeCreateDTO, RecipeUpdateDTO } from "./types";
@@ -160,5 +160,6 @@ export async function updateRecipe(id: string, patch: RecipeUpdateDTO): Promise<
 export async function deleteRecipe(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
+
 
 

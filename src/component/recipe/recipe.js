@@ -1,51 +1,72 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
-import style from "./recipe.module.css";
 import Link from "next/link";
-import { updateRecipe } from "@/features/recipe/api";
+import { Card, CardBody, CardFooter, CardHeader, Button, Chip } from "@heroui/react";
+import { Eye, Heart } from "lucide-react";
+import style from "./recipe.module.css";
 
 export default function Recipe({ data }) {
-  async function recipeclickHD(id) {
-    try {
-      await updateRecipe(id, { viewCountIncrement: true });
-    } catch (err) {
-      console.error("議고쉶???낅뜲?댄듃???ㅽ뙣?덉뒿?덈떎.", err);
-    }
-  }
-
   const likeLabel = data.likeCount ?? data.like ?? 0;
   const viewLabel = data.viewCount ?? data.check ?? 0;
   const writerName = data.writerName ?? data.name ?? "";
+  const imageSrc = data.image ?? (Array.isArray(data.images) ? data.images[0] : null);
 
   return (
-    <div className={style.recipebox}>
-      <header className={style.recipeheader}>
-        {data.image ? (
-          <Image src={data.image} alt="displayed food" fill />
+    <Card shadow="lg" radius="lg" className={style.card} isPressable>
+      <CardHeader className={style.header}>
+        {imageSrc ? (
+          <div className={style.imageWrapper}>
+            <Image
+              src={imageSrc}
+              alt={data.title || "recipe"}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={style.image}
+            />
+          </div>
         ) : (
-          <div className={style.loadingmsg}>?대?吏媛 議댁옱?섏? ?딆뒿?덈떎.</div>
+          <div className={style.imageFallback}>이미지가 존재하지 않습니다.</div>
         )}
-      </header>
-      <div className={style.recipemain}>
-        <div className={style.recipemaincontent}>
-          <h3>{data.title}</h3>
-          <div>
-            <span className={style.creatortext}>Creator</span>: {writerName}
-          </div>
-          <p>{data.summary}</p>
+      </CardHeader>
+      <CardBody className={style.body}>
+        <span className={style.writer}>{writerName || "익명 셰프"}</span>
+        <h3 className={style.title}>{data.title}</h3>
+        <p className={style.summary}>{data.summary || "설명이 준비되지 않았습니다."}</p>
+      </CardBody>
+      <CardFooter className={style.footer}>
+        <div className={style.metrics}>
+          <Chip
+            className={style.metricChip}
+            startContent={<Heart size={14} />}
+            variant="flat"
+            radius="full"
+            size="sm"
+          >
+            {likeLabel}
+          </Chip>
+          <Chip
+            className={style.metricChip}
+            startContent={<Eye size={14} />}
+            variant="flat"
+            radius="full"
+            size="sm"
+          >
+            {viewLabel}
+          </Chip>
         </div>
-        <div className={style.detailLink}>
-          <div className={style.checkandlikebox}>
-            <div>議고쉶: {viewLabel}</div>
-            <div>醫뗭븘?? {likeLabel}</div>
-          </div>
-
-          <Link href={`/meals/${data.id}`} onClick={() => recipeclickHD(data.id)}>
-            ?곸꽭蹂닿린
-          </Link>
-        </div>
-      </div>
-    </div>
+        <Button
+          as={Link}
+          href={`/meals/${data.id}`}
+          size="sm"
+          color="primary"
+          radius="full"
+          variant="flat"
+        >
+          자세히 보기
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
+

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { fetchPosts } from "@/data/post";
 import { fetchcommets } from "@/data/comment";
 
@@ -10,13 +11,7 @@ export default async function PostResults({ searchParams }: { searchParams: SP }
   const q: string = (Array.isArray(raw) ? raw[0] : raw) ?? "";
   const keyword = q.trim().toLowerCase();
 
-  const [all, comments] = await Promise.all([fetchPosts(), fetchcommets()]);
-
-  const commentCounts = comments.reduce<Record<string, number>>((acc, c: any) => {
-    if (c?.type) acc[c.type] = (acc[c.type] ?? 0) + 1;
-    return acc;
-  }, {});
-
+  const all = await fetchPosts();
   const results = all.filter((p: any) => {
     const hay = `${p.title ?? ""} ${p.writer ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
@@ -25,26 +20,12 @@ export default async function PostResults({ searchParams }: { searchParams: SP }
   if (results.length === 0) return <p>검색 결과가 없습니다.</p>;
 
   return (
-    <section aria-label="게시글 검색 결과">
+    <ul>
       {results.map((p: any) => (
-        <a
-          key={p.id}
-          href={`/commu/${p.id}`}
-          style={{
-            display: "block",
-            padding: "12px 14px",
-            border: "1px solid #eee",
-            borderRadius: 8,
-            marginBottom: 10,
-            textDecoration: "none",
-          }}
-        >
-          <div style={{ fontWeight: 600, color: "inherit" }}>{p.title ?? "제목 없음"}</div>
-          <small style={{ color: "#666" }}>
-            {p.writer ?? "작성자"} · 댓글 {commentCounts[p.id] ?? 0}
-          </small>
-        </a>
+        <li key={p.id} style={{ padding: "6px 0" }}>
+          <Link href={`/commu/${p.id}`}>{p.title}</Link>
+        </li>
       ))}
-    </section>
+    </ul>
   );
 }

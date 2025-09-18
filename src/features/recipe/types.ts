@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const RecipeCreateSchema = z.object({
   title: z.string().min(1).max(100),
@@ -37,3 +37,4 @@ export interface Recipe {
   createdAt: Date | null;
   updatedAt: Date | null;
 }
+

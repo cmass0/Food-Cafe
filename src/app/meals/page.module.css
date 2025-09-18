@@ -1,44 +1,64 @@
-.MealsArea {
-  margin: auto;
-  /* border: solid 1px blue; */
-  min-width: 1500px;
+﻿.wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.displayheader {
-  margin: 5rem 5rem;
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.displayheader a {
-  text-decoration: none;
-  color: rgb(41, 104, 54);
-  font-weight: bold;
-  font-size: 18px;
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.displayheader p {
-  font-size: 24px;
-}
-.dropdownbox {
-  margin-top: 30px;
-}
-
-.selectbox {
-  width: 80px;
-  height: 30px;
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.sharebtn {
-  width: 200px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background-color: rgb(100, 147, 54);
-  color: white;
-  cursor: pointer;
-  font-size: 18px;
+.title {
+  font-size: clamp(1.8rem, 1.2vw + 1.6rem, 2.6rem);
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.92);
 }
 
-.sharebtn:hover {
-  cursor: pointer;
-  background-color: rgb(61, 91, 42);
+.subtitle {
+  font-size: 1rem;
+  color: rgba(15, 23, 42, 0.62);
 }
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gridSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .title {
+    color: rgba(226, 232, 240, 0.96);
+  }
+
+  .subtitle {
+    color: rgba(148, 163, 184, 0.78);
+  }
+}
+
