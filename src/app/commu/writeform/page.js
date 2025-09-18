@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import style from "./page.module.css";
@@ -11,10 +11,17 @@ import { auth } from "@/lib/firebase/client";
 import LoadingPage from "@/app/loading";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
-async function fetchpost() {
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+async function fetchPosts() {
   const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
     cache: "no-store",
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load posts: ${response.status}`);
+  }
+
   return response.json();
 }
 
@@ -22,106 +29,74 @@ export default function PostForm() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [userName, setUserName] = useState("");
-  const [loading, setloading] = useState(true);
-  const [maxnum, setMaxNum] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [maxNumber, setMaxNumber] = useState(0);
   const router = useRouter();
   const [user] = useAuthState(auth);
+  const quillRef = useRef(null);
 
   useEffect(() => {
-    if (user) {
-      console.log(user.uid);
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const username = await fetchUsernameByUid(user.uid);
+    if (!user) return;
 
-          if (username) {
-            setUserName(username);
-          }
-        } else {
-          setUserName(user.displayName || "user");
+    const providerId = user.providerData[0]?.providerId;
+
+    async function resolveDisplayName() {
+      if (providerId === "password") {
+        const username = await fetchUsernameByUid(user.uid);
+        if (username) {
+          setUserName(username);
+          return;
         }
       }
-      ReadUserData();
+
+      setUserName(user.displayName || "user");
     }
+
+    resolveDisplayName().catch((err) => {
+      console.error("Failed to resolve display name", err);
+    });
   }, [user]);
 
   useEffect(() => {
-    async function fetchpostdata() {
+    async function loadPosts() {
       try {
-        const data = await fetchpost();
-        const sortData = data.data.sort((a, b) => a.number - b.number);
-        const maxnum = sortData[sortData.length - 1].number;
-        setMaxNum(maxnum);
-        console.log(maxnum);
-        setloading(false);
-      } catch (err) {
-        console.error("err: ", err);
-        setloading(false);
+        const data = await fetchPosts();
+        const sorted = [...(data?.data ?? [])].sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
+        const last = sorted[sorted.length - 1];
+        setMaxNumber(last?.number ?? 0);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     }
 
-    fetchpostdata();
+    loadPosts();
   }, []);
-
-  async function handleSubmit(data) {
-    data.preventDefault();
-    const newPost = new FormData(data.target);
-    console.log(newPost);
-
-    setTitle("");
-    setContent("");
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
-        method: "post",
-        body: JSON.stringify({
-          title,
-          content,
-          writer: userName,
-          number: maxnum + 1,
-        }),
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      });
-
-      const post = await response.json();
-      console.log(`post 추가 완료: ${post}`);
-      router.push("/commu");
-    } catch (err) {
-      console.error("err: ", err);
-    }
-  }
-
-  function CanCleBtnHD(e) {
-    router.back();
-  }
-
-  function PostSubmitBtnHD(e) {
-    // router.refresh();
-  }
 
   const imageHandler = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*");
+
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      const imageurl = await uploadImage(file);
+
+      const imageUrl = await uploadImage(file);
       const editor = quillRef.current?.getEditor?.();
       if (!editor) return;
+
       const range = editor.getSelection(true);
-      editor.insertEmbed(range.index, "image", imageurl, "user");
+      editor.insertEmbed(range.index, "image", imageUrl, "user");
       editor.setSelection(range.index + 1, 0, "user");
     };
+
     input.click();
   }, []);
 
-  const modules = useMemo(() => {
-    return {
+  const modules = useMemo(
+    () => ({
       toolbar: {
         container: [
           [{ header: [1, 2, 3, false] }],
@@ -131,58 +106,86 @@ export default function PostForm() {
           ["link", "image"],
           ["clean"],
         ],
-        handlers: {
-          image: imageHandler,
-        },
+        handlers: { image: imageHandler },
       },
-    };
-  }, [imageHandler]);
+    }),
+    [imageHandler]
+  );
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          title,
+          content,
+          writer: userName,
+          number: maxNumber + 1,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create post: ${response.status}`);
+      }
+
+      await response.json();
+      setTitle("");
+      setContent("");
+      router.push("/commu");
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   if (loading) {
-    return <LoadingPage></LoadingPage>;
+    return <LoadingPage />;
   }
 
   return (
     <div className={style.container}>
-      <h2 className={style.heading}>게시글 작성하기</h2>
+      <h2 className={style.heading}>Create Post</h2>
       <form onSubmit={handleSubmit} className={style.form}>
         <div className={style.formGroup}>
           <label htmlFor="title" className={style.label}>
-            제목
+            Title
           </label>
           <input
             type="text"
             id="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
             className={style.input}
-            placeholder="제목을 입력하세요"
+            placeholder="Enter the title"
             required
           />
         </div>
         <div className={style.formGroup}>
           <label htmlFor="content" className={style.label}>
-            내용
+            Content
           </label>
           <ReactQuill
+            ref={quillRef}
             value={content}
             onChange={setContent}
             modules={modules}
             className={style.editor}
-            placeholder="내용을 입력하세요"
+            placeholder="Write your post here"
           />
         </div>
         <div className={style.preview}></div>
         <div className={style.btnarea}>
-          <button type="submit" className={style.button} onClick={PostSubmitBtnHD}>
-            게시글 작성
+          <button type="submit" className={style.button}>
+            Publish
           </button>
-          <button className={style.canclebtn} onClick={CanCleBtnHD}>
-            취소
+          <button type="button" className={style.canclebtn} onClick={() => router.back()}>
+            Cancel
           </button>
         </div>
       </form>
     </div>
   );
 }
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
