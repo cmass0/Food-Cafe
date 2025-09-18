@@ -3,38 +3,27 @@
 import Image from "next/image";
 import style from "./recipe.module.css";
 import Link from "next/link";
+import { updateRecipe } from "@/features/recipe/api";
 
-export default function Recipe({ data }, id) {
+export default function Recipe({ data }) {
   async function recipeclickHD(id) {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            check: "increment",
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("check fail");
-      }
+      await updateRecipe(id, { viewCountIncrement: true });
     } catch (err) {
-      console.error("err: ", err);
+      console.error("조회수 업데이트에 실패했습니다.", err);
     }
   }
+
+  const likeLabel = data.likeCount ?? data.like ?? 0;
+  const viewLabel = data.viewCount ?? data.check ?? 0;
+  const writerName = data.writerName ?? data.name ?? "";
 
   return (
     <div className={style.recipebox}>
       <header className={style.recipeheader}>
-        {data.image && (
-          <Image src={data.image} alt="displayed food" key={id} fill />
-        )}
-        {data.image && (
+        {data.image ? (
+          <Image src={data.image} alt="displayed food" fill />
+        ) : (
           <div className={style.loadingmsg}>이미지가 존재하지 않습니다.</div>
         )}
       </header>
@@ -42,21 +31,18 @@ export default function Recipe({ data }, id) {
         <div className={style.recipemaincontent}>
           <h3>{data.title}</h3>
           <div>
-            <span className={style.creatortext}>Creator</span>: {data.name}
+            <span className={style.creatortext}>Creator</span>: {writerName}
           </div>
           <p>{data.summary}</p>
         </div>
         <div className={style.detailLink}>
           <div className={style.checkandlikebox}>
-            <div>조회: {data.check}</div>
-            <div>좋아요: {data.like}</div>
+            <div>조회: {viewLabel}</div>
+            <div>좋아요: {likeLabel}</div>
           </div>
 
-          <Link
-            href={`/meals/${data.id}`}
-            onClick={() => recipeclickHD(data.id)}
-          >
-            상세정보
+          <Link href={`/meals/${data.id}`} onClick={() => recipeclickHD(data.id)}>
+            상세보기
           </Link>
         </div>
       </div>

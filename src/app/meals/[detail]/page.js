@@ -12,16 +12,15 @@ import { auth, db } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
+import { deleteRecipe, getRecipe, updateRecipe } from "@/features/recipe/api";
 
-async function alreadyclick(userid, recipeid, detailinfo) {
+async function alreadyclick(userid, recipeid) {
   const userref = doc(db, "User", userid);
-  const reciperef = doc(db, "Recipe", recipeid);
-
   const userdoc = await getDoc(userref);
   const userData = userdoc.data();
 
-  if (userData.likerecipe && userData.likerecipe.includes(recipeid)) {
-    return { message: "좋아요를 누른 레시피입니다.", pass: false };
+  if (userData?.likerecipe && userData.likerecipe.includes(recipeid)) {
+    return { message: "이미 좋아요를 누른 레시피입니다.", pass: false };
   }
 
   await updateDoc(userref, {
@@ -43,24 +42,44 @@ export default function SomethingMealspage({ params }) {
   const [user] = useAuthState(auth);
 
   useEffect(() => {
-    if (user) {
-      console.log(user.uid);
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const username = await fetchUsernameByUid(user.uid);
-          if (username) {
-            setUserName(username);
-          }
-        } else {
-          setUserName(user.displayName || "user");
+    if (!user) return;
+    const loginIdentifier = user.providerData[0]?.providerId;
+    async function ReadUserData() {
+      if (loginIdentifier === "password") {
+        const username = await fetchUsernameByUid(user.uid);
+        if (username) {
+          setUserName(username);
+          return;
         }
       }
-      ReadUserData();
+      setUserName(user.displayName || "user");
     }
+    ReadUserData();
   }, [user]);
 
-  function editHD(e) {
+  useEffect(() => {
+    async function fetchMeals() {
+      try {
+        const data = await getRecipe(params.detail);
+        if (!data) {
+          setDetailInfo(null);
+          return;
+        }
+        setDetailInfo({
+          ...data,
+          createdAt: data.createdAt ? new Date(data.createdAt) : null,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : null,
+        });
+        setLikeCount(data.likeCount ?? 0);
+      } catch (error) {
+        console.error("레시피 상세 조회에 실패했습니다.", error);
+      }
+    }
+
+    fetchMeals();
+  }, [params.detail]);
+
+  function editHD() {
     router.push(`/meals/${params.detail}/recipeedit`);
   }
   function updateHD(e) {
@@ -79,76 +98,39 @@ export default function SomethingMealspage({ params }) {
   async function deleteokHD() {
     setIsModal(false);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${params.detail}`,
-      {
-        method: "delete",
-        body: JSON.stringify({
-          id: params.detail,
-        }),
-        cache: "no-store",
-      }
-    );
-    console.log(response);
-    router.push("/meals");
+    try {
+      await deleteRecipe(params.detail);
+      router.push("/meals");
+    } catch (error) {
+      console.error("레시피 삭제에 실패했습니다.", error);
+      alert("레시피를 삭제하지 못했습니다.");
+    }
   }
-
-  useEffect(() => {
-    const fetchMeals = async () => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${params.detail}`,
-        {
-          cache: "no-store",
-        }
-      );
-
-      const responseobj = await response.json();
-      const detailinfo = responseobj.data;
-      setDetailInfo(detailinfo);
-
-      setLikeCount(detailinfo.like);
-    };
-
-    fetchMeals();
-  }, [params.detail]);
-
-  // console.log(detailinfo);
 
   if (!detailinfo) {
     return <LoadingPage />;
   }
 
-  const mealsrecipe = detailinfo.recipe.replace(/\n/g, "<p/>");
+  const mealsrecipe = detailinfo.recipe?.replace(/\n/g, "<p/>");
 
-  // 좋아요 업데이트
   async function LikeBtnHD(event) {
     event.stopPropagation();
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
-    const likebtnres = await alreadyclick(user.uid, params.detail, detailinfo);
+    const likebtnres = await alreadyclick(user.uid, params.detail);
 
     if (likebtnres.pass) {
-      const updatelike = {
-        ...detailinfo,
-        like: likeCount + 1,
-        lastlike: new Date().toISOString(),
-      };
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${params.detail}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatelike),
-          cache: "no-store",
-        }
-      );
-
-      if (response.ok) {
+      try {
+        await updateRecipe(params.detail, {
+          likeCountIncrement: true,
+          lastLikedAt: new Date().toISOString(),
+        });
         setLikeCount((prev) => prev + 1);
-      } else {
-        console.error("좋아요 업데이트 실패 ");
+      } catch (error) {
+        console.error("좋아요 업데이트 실패", error);
       }
     } else {
       alert(likebtnres.message);
@@ -159,17 +141,22 @@ export default function SomethingMealspage({ params }) {
     setIsModal(false);
   }
 
+  const writerName = detailinfo.writerName ?? detailinfo.name ?? "";
+
   return (
     <div className={style.detailcontainer}>
       <header className={style.header}>
         <div className={style.image}>
-          <Image src={detailinfo.image} fill alt={detailinfo.title || "recipe"} />
+          {detailinfo.image ? (
+            <Image src={detailinfo.image} fill alt={detailinfo.title || "recipe"} />
+          ) : (
+            <div className={style.noimage}>이미지가 없습니다.</div>
+          )}
         </div>
         <div className={style.headerText}>
           <h1>{detailinfo.title}</h1>
-          {/* <div>{mealID}</div> */}
           <p className={style.creator}>
-            by<span> {detailinfo.name}</span>
+            by<span> {writerName}</span>
           </p>
           <p className={style.summary}>{detailinfo.summary}</p>
         </div>
@@ -184,7 +171,7 @@ export default function SomethingMealspage({ params }) {
       </main>
 
       <div className={style.likebox}>
-        {detailinfo.name === userName && (
+        {writerName === userName && (
           <div className={style.btnarea}>
             <button onClick={updateHD}>레시피 수정</button>
             <button onClick={deleteHD}>레시피 삭제</button>

@@ -1,34 +1,30 @@
 "use client";
 
 import Recipe from "./recipe";
-import bread from "@/assets/bread.jpg";
-import soup from "@/assets/goulash-soup.jpg";
-import poke from "@/assets/poke.jpeg";
-import sandwich from "@/assets/sandwich.jpeg";
-import spicychickensoup from "@/assets/spicy-braised-chicken.jpeg";
-import tteokbokki from "@/assets/tteok-bokki.jpeg";
 import style from "./display-racipe.module.css";
-import React, { useEffect, useState } from "react";
 
-export default function Gridracipe({ MealsData }) {
-  const [mealsdata, setMealsData] = useState([]);
+export default function Gridracipe({ MealsData = [], loading = false }) {
+  if (loading) {
+    return (
+      <div className={style.displaygrid}>
+        <p>레시피를 불러오는 중입니다...</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (MealsData.data && MealsData) {
-      setMealsData(MealsData.data);
-    }
-  }, [MealsData]);
+  if (!MealsData.length) {
+    return (
+      <div className={style.displaygrid}>
+        <p>등록된 레시피가 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* <div>{data.data[0].id}</div>
-      <div>{data.message}</div>
-      <div>{data.data[0].email}</div> */}
-      <div className={style.displaygrid}>
-        {mealsdata.map((data, index) => {
-          return <Recipe key={index} data={data} id={index} />;
-        })}
-      </div>
+    <div className={style.displaygrid}>
+      {MealsData.map((data, index) => (
+        <Recipe key={data.id ?? index} data={data} />
+      ))}
     </div>
   );
 }

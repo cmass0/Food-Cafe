@@ -2,16 +2,13 @@
 
 import ImagePreview from "@/component/imgpreview/imgpreview";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
-import { useEffect } from "react";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
-
-//useFormStatus 사용
-//componet로 이동
+import { createRecipe } from "@/features/recipe/api";
 
 export default function ShareMeal() {
   const [userName, setUserName] = useState("");
@@ -20,21 +17,19 @@ export default function ShareMeal() {
   const [user] = useAuthState(auth);
 
   useEffect(() => {
-    if (user) {
-      console.log(user.uid);
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const username = await fetchUsernameByUid(user.uid);
-          if (username) {
-            setUserName(username);
-          }
-        } else {
-          setUserName(user.displayName || "user");
+    if (!user) return;
+    const loginIdentifier = user.providerData[0]?.providerId;
+    async function ReadUserData() {
+      if (loginIdentifier === "password") {
+        const username = await fetchUsernameByUid(user.uid);
+        if (username) {
+          setUserName(username);
+          return;
         }
       }
-      ReadUserData();
+      setUserName(user.displayName || "user");
     }
+    ReadUserData();
   }, [user]);
 
   const isselect = (isselected) => {
@@ -44,68 +39,55 @@ export default function ShareMeal() {
     }
   };
 
-  async function addrecipeHD(data) {
-    data.preventDefault();
-    const MealData = new FormData(data.target);
+  async function addrecipeHD(event) {
+    event.preventDefault();
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+    const MealData = new FormData(event.target);
     const imagefile = MealData.get("image");
-    const imageurl = await uploadImage(imagefile);
-    console.log(imagefile);
-
     if (!imagefile) {
       alert("이미지를 선택해주세요!");
       return;
     }
 
-    console.log(imageurl);
-    console.log(MealData.get("creator"));
-    console.log(MealData.get("title"));
-    console.log(MealData.get("email"));
-    console.log(MealData.get("summary"));
-    console.log(MealData.get("recipe"));
-    console.log(MealData.get("image"));
+    let imageurl = null;
+    try {
+      imageurl = await uploadImage(imagefile);
+    } catch (err) {
+      console.error("이미지 업로드에 실패했습니다.", err);
+      alert("이미지를 업로드하지 못했습니다. 다시 시도해주세요.");
+      return;
+    }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe`,
-        {
-          method: "post",
-          body: JSON.stringify({
-            name: MealData.get("creator"),
-            title: MealData.get("title"),
-            email: MealData.get("email"),
-            summary: MealData.get("summary"),
-            recipe: MealData.get("recipe"),
-            image: imageurl || null,
-            // id: MealData.get("id") || null,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log(`레시피 추가 완료 : ${data}`);
+      await createRecipe({
+        title: String(MealData.get("title") ?? ""),
+        summary: MealData.get("summary") ? String(MealData.get("summary")) : undefined,
+        recipe: String(MealData.get("recipe") ?? ""),
+        image: imageurl || null,
+        writerName: userName || String(MealData.get("creator") ?? ""),
+        writerUid: user.uid,
+        writerEmail: MealData.get("email") ? String(MealData.get("email")) : undefined,
+      });
       router.push("/meals");
     } catch (err) {
-      console.error("err: ", err);
+      console.error("레시피 등록에 실패했습니다.", err);
+      alert("레시피 등록에 실패했습니다. 다시 시도해주세요.");
     }
   }
 
   function sharebtnHD() {
     if (!imgselect) {
       alert("이미지를 선택해주세요!");
-      return;
     }
   }
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>만든 음식, 좋아하는 음식이 있으면 공유하세요!</h1>
+        <h1>만든 음식, 좋아하는 음식을 공유해보세요</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={addrecipeHD}>
@@ -118,6 +100,7 @@ export default function ShareMeal() {
                   name="creator"
                   id="creator"
                   value={userName}
+                  readOnly
                 ></input>
               </div>
               <div>
@@ -127,12 +110,12 @@ export default function ShareMeal() {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">음식이름</label>
-              <input type="text" name="title" id="title"></input>
+              <label htmlFor="title">음식 이름</label>
+              <input type="text" name="title" id="title" required></input>
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">음식설명</label>
+              <label htmlFor="summary">음식 설명</label>
               <input
                 type="text"
                 name="summary"
@@ -145,10 +128,10 @@ export default function ShareMeal() {
               <label htmlFor="recipe">레시피</label>
 
               <textarea
-                type="text"
                 name="recipe"
                 id="recipe"
                 rows="15"
+                required
               ></textarea>
             </div>
           </div>

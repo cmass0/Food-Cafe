@@ -2,113 +2,100 @@
 
 import ImagePreview from "@/component/imgpreview/imgpreview";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import style from "./page.module.css";
 import uploadImage from "@/data/imagehandle";
-import { useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
-
-//useFormStatus 사용
-//componet로 이동
+import { getRecipe, updateRecipe } from "@/features/recipe/api";
 
 export default function EditMeal({ params }) {
-  const [detailinfo, setDetailInfo] = useState([]);
+  const [detailinfo, setDetailInfo] = useState(null);
   const [userName, setUserName] = useState("");
   const [isModal, setIsModal] = useState(false);
   const [email, setEmail] = useState("");
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [recipe, setRecipe] = useState("");
-  const [imgselect, setImageSelect] = useState(false);
   const router = useRouter();
   const [user] = useAuthState(auth);
 
   useEffect(() => {
-    if (user) {
-      console.log(user.uid);
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const username = await fetchUsernameByUid(user.uid);
-          console.log(username);
-
-          if (username) {
-            setUserName(username);
-          }
-        } else {
-          setUserName(user.displayName || "user");
+    if (!user) return;
+    const loginIdentifier = user.providerData[0]?.providerId;
+    async function ReadUserData() {
+      if (loginIdentifier === "password") {
+        const username = await fetchUsernameByUid(user.uid);
+        if (username) {
+          setUserName(username);
+          return;
         }
       }
-      ReadUserData();
+      setUserName(user.displayName || "user");
     }
+    ReadUserData();
   }, [user]);
 
   useEffect(() => {
-    const fetchMeals = async () => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${params.detail}`,
-        {
-          cache: "no-store",
+    async function fetchMeals() {
+      try {
+        const data = await getRecipe(params.detail);
+        if (!data) {
+          setDetailInfo(null);
+          return;
         }
-      );
-
-      const responseobj = await response.json();
-      const detailinfo = responseobj.data;
-      setEmail(detailinfo.email);
-      setTitle(detailinfo.title);
-      setSummary(detailinfo.summary);
-      setRecipe(detailinfo.recipe);
-      setDetailInfo(detailinfo);
-    };
+        setDetailInfo(data);
+        setEmail(data.writerEmail ?? "");
+        setTitle(data.title ?? "");
+        setSummary(data.summary ?? "");
+        setRecipe(data.recipe ?? "");
+      } catch (error) {
+        console.error("레시피 정보를 불러오지 못했습니다.", error);
+      }
+    }
 
     fetchMeals();
   }, [params.detail]);
 
   const isselect = (isselected) => {
-    setImageSelect(isselected);
-    if (isselected === false) {
+    if (!isselected) {
       alert("이미지를 선택해주세요!");
     }
   };
 
-  async function editrecipeHD(data) {
-    data.preventDefault();
-    const MealData = new FormData(data.target);
-    const imagefile = MealData.get("image");
-    console.log(data);
-    const imageurl = await uploadImage(imagefile);
+  async function editrecipeHD(event) {
+    event.preventDefault();
+    if (!detailinfo) return;
+    const formData = new FormData(event.target);
+    const imagefile = formData.get("image");
+    let imageurl = detailinfo.image ?? null;
+
+    if (imagefile && imagefile.size) {
+      try {
+        imageurl = await uploadImage(imagefile);
+      } catch (error) {
+        console.error("이미지 업로드에 실패했습니다.", error);
+        alert("이미지를 업로드하지 못했습니다. 다시 시도해주세요.");
+        return;
+      }
+    }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/recipe/${params.detail}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            name: userName,
-            title: title,
-            email: email,
-            summary: summary,
-            recipe: recipe,
-            image: imageurl || null,
-            like: detailinfo.like,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log(`레시피 추가 완료 : ${data}`);
-      router.push("/meals");
-    } catch (err) {
-      console.error("err: ", err);
+      await updateRecipe(params.detail, {
+        title,
+        summary: summary || undefined,
+        recipe,
+        image: imageurl,
+        writerName: userName,
+        writerUid: user?.uid,
+        writerEmail: email || undefined,
+      });
+      router.push(`/meals/${params.detail}`);
+    } catch (error) {
+      console.error("레시피 수정에 실패했습니다.", error);
+      alert("레시피를 수정하지 못했습니다.");
     }
   }
 
@@ -116,21 +103,14 @@ export default function EditMeal({ params }) {
     setIsModal(false);
   }
 
-  function editqus(e) {
+  function editqus() {
     setIsModal(true);
-  }
-
-  function editbtnHD() {
-    if (!imgselect) {
-      alert("이미지를 선택해주세요!");
-      return;
-    }
   }
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>만든 음식, 좋아하는 음식이 있으면 공유하세요!</h1>
+        <h1>만든 음식, 좋아하는 음식을 공유해보세요</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={editrecipeHD}>
@@ -143,7 +123,7 @@ export default function EditMeal({ params }) {
                   name="creator"
                   id="creator"
                   value={userName}
-                  onChange={(e) => setCreator(e.target.value)}
+                  onChange={(e) => setUserName(e.target.value)}
                 ></input>
               </div>
               <div>
@@ -159,18 +139,19 @@ export default function EditMeal({ params }) {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">음식이름</label>
+              <label htmlFor="title">음식 이름</label>
               <input
                 type="text"
                 name="title"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                required
               ></input>
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">음식설명</label>
+              <label htmlFor="summary">음식 설명</label>
               <input
                 type="text"
                 name="summary"
@@ -184,12 +165,12 @@ export default function EditMeal({ params }) {
             <div className={style.row4}>
               <label htmlFor="recipe">레시피</label>
               <textarea
-                type="text"
                 name="recipe"
                 id="recipe"
                 rows="15"
                 value={recipe}
                 onChange={(e) => setRecipe(e.target.value)}
+                required
               ></textarea>
             </div>
           </div>
@@ -208,7 +189,6 @@ export default function EditMeal({ params }) {
                   <button
                     className={style.deleteselectbtn}
                     type="submit"
-                    onClick={editbtnHD}
                   >
                     수정하기
                   </button>

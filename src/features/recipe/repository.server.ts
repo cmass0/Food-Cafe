@@ -5,8 +5,52 @@ import type { Recipe, RecipeCreateDTO, RecipeUpdateDTO } from "./types";
 
 const COL = "Recipe";
 
-function toDate(t?: Timestamp): Date | null {
-  return t?.toDate?.() ?? null;
+function toMaybeDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (value instanceof Timestamp) return value.toDate();
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof (value as Timestamp | undefined)?.toDate === "function") {
+    try {
+      return (value as Timestamp).toDate();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function mapDocToRecipe(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): Recipe {
+  const data = doc.data() as Record<string, unknown> | undefined;
+  const likeSource = data?.likeCount ?? data?.like ?? 0;
+  const viewSource = data?.viewCount ?? data?.check ?? 0;
+  const lastLiked = data?.lastLikedAt ?? data?.lastlike ?? null;
+  const createdSource = data?.createdAt ?? data?.date ?? null;
+  const updatedSource = data?.updatedAt ?? data?.date ?? null;
+
+  const rawWriterUid = data?.writerUid ?? (data as any)?.writeruid ?? null;
+  const writerUid = typeof rawWriterUid === "string" && rawWriterUid.length > 0 ? rawWriterUid : null;
+
+  const rawWriterName = (data?.writerName ?? (data as any)?.name) as string | undefined;
+
+  return {
+    id: doc.id,
+    title: (data?.title as string) ?? "",
+    summary: (data?.summary as string | null | undefined) ?? null,
+    image: (data?.image as string | null | undefined) ?? null,
+    recipe: (data?.recipe as string) ?? "",
+    writerUid,
+    writerName: rawWriterName ?? "",
+    writerEmail: (data?.writerEmail as string | null | undefined) ?? ((data as any)?.email ?? null),
+    likeCount: Number(likeSource) || 0,
+    viewCount: Number(viewSource) || 0,
+    lastLikedAt: toMaybeDate(lastLiked),
+    createdAt: toMaybeDate(createdSource),
+    updatedAt: toMaybeDate(updatedSource),
+  };
 }
 
 export async function listRecipes(opts?: {
@@ -33,25 +77,13 @@ export async function listRecipes(opts?: {
 
   const snap = await q.limit(limit).get();
 
-  const items: Recipe[] = snap.docs.map((d) => {
-    const x = d.data() as any;
-    return {
-      id: d.id,
-      title: x.title ?? "",
-      summary: x.summary ?? null,
-      image: x.image ?? null,
-      recipe: x.recipe ?? "",
-      writerUid: x.writerUid ?? "",
-      writerName: x.writerName ?? "",
-      likeCount: Number(x.likeCount ?? 0),
-      createdAt: toDate(x.createdAt),
-      updatedAt: toDate(x.updatedAt),
-    };
-  });
+  const items = snap.docs.map((doc) => mapDocToRecipe(doc));
 
   const last = snap.docs.at(-1);
-  const nextCursor = last
-    ? Buffer.from(`${(last.get("createdAt") as Timestamp)?.toMillis?.() ?? 0}|${last.id}`, "utf8").toString("base64")
+  const lastTimestampRaw = last?.get("createdAt") ?? last?.get("date");
+  const lastTimestamp = lastTimestampRaw instanceof Timestamp ? lastTimestampRaw : null;
+  const nextCursor = last && lastTimestamp
+    ? Buffer.from(`${lastTimestamp.toMillis()}|${last.id}`, "utf8").toString("base64")
     : null;
 
   return { items, nextCursor };
@@ -60,38 +92,56 @@ export async function listRecipes(opts?: {
 export async function getRecipe(id: string): Promise<Recipe | null> {
   const doc = await adminDb.collection(COL).doc(id).get();
   if (!doc.exists) return null;
-  const x = doc.data() as any;
-  return {
-    id: doc.id,
-    title: x.title ?? "",
-    summary: x.summary ?? null,
-    image: x.image ?? null,
-    recipe: x.recipe ?? "",
-    writerUid: x.writerUid ?? "",
-    writerName: x.writerName ?? "",
-    likeCount: Number(x.likeCount ?? 0),
-    createdAt: toDate(x.createdAt),
-    updatedAt: toDate(x.updatedAt),
-  };
+  return mapDocToRecipe(doc);
 }
 
 export async function createRecipe(input: RecipeCreateDTO): Promise<Recipe> {
   const ref = adminDb.collection(COL).doc();
+  const timestamp = FieldValue.serverTimestamp();
   await ref.set({
-    ...input,
+    id: ref.id,
+    title: input.title,
+    summary: input.summary ?? null,
+    image: input.image ?? null,
+    recipe: input.recipe,
+    writerUid: input.writerUid ?? null,
+    writerName: input.writerName,
+    writerEmail: input.writerEmail ?? null,
     likeCount: 0,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
+    viewCount: 0,
+    lastLikedAt: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    date: timestamp, // backward compatibility
   });
   return (await getRecipe(ref.id))!;
 }
 
 export async function updateRecipe(id: string, patch: RecipeUpdateDTO): Promise<Recipe | null> {
   const ref = adminDb.collection(COL).doc(id);
-  await ref.update({
-    ...patch,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  const update: Record<string, unknown> = {};
+
+  if (patch.title !== undefined) update.title = patch.title;
+  if (patch.summary !== undefined) update.summary = patch.summary ?? null;
+  if (patch.image !== undefined) update.image = patch.image ?? null;
+  if (patch.recipe !== undefined) update.recipe = patch.recipe;
+  if (patch.writerUid !== undefined) update.writerUid = patch.writerUid ?? null;
+  if (patch.writerName !== undefined) update.writerName = patch.writerName;
+  if (patch.writerEmail !== undefined) update.writerEmail = patch.writerEmail ?? null;
+
+  if (patch.likeCount !== undefined) update.likeCount = patch.likeCount;
+  if (patch.viewCount !== undefined) update.viewCount = patch.viewCount;
+
+  if (patch.likeCountIncrement) update.likeCount = FieldValue.increment(1);
+  if (patch.viewCountIncrement) update.viewCount = FieldValue.increment(1);
+
+  if (patch.lastLikedAt !== undefined) {
+    update.lastLikedAt = patch.lastLikedAt ? new Date(patch.lastLikedAt) : null;
+  }
+
+  update.updatedAt = FieldValue.serverTimestamp();
+
+  await ref.update(update);
   return getRecipe(id);
 }
 

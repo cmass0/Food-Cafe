@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limit = Number(url.searchParams.get("limit") ?? "20");
+    const limitParam = Number(url.searchParams.get("limit") ?? "20");
+    const limit = Number.isFinite(limitParam) ? limitParam : 20;
     const cursor = url.searchParams.get("cursor") ?? undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
 
