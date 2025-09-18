@@ -59,11 +59,10 @@ export async function listRecipes(opts?: {
   writerUid?: string;
 }): Promise<{ items: Recipe[]; nextCursor: string | null }> {
   const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 50);
-  const orderField: "date" | "createdAt" = "date";
 
   let q = adminDb
     .collection(COL)
-    .orderBy(orderField, "desc")
+    .orderBy("createdAt", "desc")
     .orderBy(FieldPath.documentId());
 
   if (opts?.writerUid) {
@@ -71,9 +70,9 @@ export async function listRecipes(opts?: {
   }
 
   if (opts?.cursor) {
-    const [cursorMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
-    const cursorDate = new Date(Number(cursorMs));
-    q = q.startAfter(cursorDate, id);
+    const [createdAtMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
+    const createdAt = new Date(Number(createdAtMs));
+    q = q.startAfter(createdAt, id);
   }
 
   const snap = await q.limit(limit).get();
@@ -81,10 +80,10 @@ export async function listRecipes(opts?: {
   const items = snap.docs.map((doc) => mapDocToRecipe(doc));
 
   const last = snap.docs.at(-1);
-  const lastTimestampRaw = last?.get(orderField);
-  const lastTimestamp = toMaybeDate(lastTimestampRaw);
+  const lastTimestampRaw = last?.get("createdAt") ?? last?.get("date");
+  const lastTimestamp = lastTimestampRaw instanceof Timestamp ? lastTimestampRaw : null;
   const nextCursor = last && lastTimestamp
-    ? Buffer.from(`${lastTimestamp.getTime()}|${last.id}`, "utf8").toString("base64")
+    ? Buffer.from(`${lastTimestamp.toMillis()}|${last.id}`, "utf8").toString("base64")
     : null;
 
   return { items, nextCursor };
@@ -149,3 +148,4 @@ export async function updateRecipe(id: string, patch: RecipeUpdateDTO): Promise<
 export async function deleteRecipe(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
+
