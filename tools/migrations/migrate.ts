@@ -1,7 +1,7 @@
 ﻿/**
  * Firestore schema standardization migration (User / Recipe / Post / Comment)
  * - Set DRY_RUN=1 to preview without writes
- * - Set DELETE_LEGACY=1 to remove deprecated fields after migration
+ * - Legacy fields are pruned by default (set DELETE_LEGACY=0 to keep them)
  *
  * Examples:
  *   # Preview
@@ -23,7 +23,7 @@ import {
 /* --------------------------- ENV & Admin --------------------------- */
 
 const DRY_RUN = process.env.DRY_RUN === "1";
-const DELETE_LEGACY = process.env.DELETE_LEGACY === "1";
+const DELETE_LEGACY = process.env.DELETE_LEGACY !== "0";
 
 function req(name: string) {
   const v = process.env[name];
@@ -355,6 +355,8 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+
 
 
 
