@@ -23,19 +23,6 @@ function toMaybeDate(value: unknown): Date | null {
   return null;
 }
 
-function extractImage(data: Record<string, unknown> | undefined): string | null {
-  const direct = data?.image;
-  if (typeof direct === "string" && direct.length > 0) return direct;
-
-  const images = (data as any)?.images;
-  if (Array.isArray(images)) {
-    const first = images.find((item) => typeof item === "string" && item.length > 0);
-    if (typeof first === "string") return first;
-  }
-
-  return null;
-}
-
 function mapDocToRecipe(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): Recipe {
   const data = doc.data() as Record<string, unknown> | undefined;
   const likeSource = data?.likeCount ?? data?.like ?? 0;
@@ -53,8 +40,8 @@ function mapDocToRecipe(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseF
     id: doc.id,
     title: (data?.title as string) ?? "",
     summary: (data?.summary as string | null | undefined) ?? null,
-    image: extractImage(data),
-    recipe: (data?.recipe as string) ?? ((data as any)?.content as string) ?? "",
+    image: (data?.image as string | null | undefined) ?? null,
+    recipe: (data?.recipe as string) ?? "",
     writerUid,
     writerName: rawWriterName ?? "",
     writerEmail: (data?.writerEmail as string | null | undefined) ?? ((data as any)?.email ?? null),
@@ -162,4 +149,5 @@ export async function updateRecipe(id: string, patch: RecipeUpdateDTO): Promise<
 export async function deleteRecipe(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
+
 
