@@ -1,4 +1,4 @@
-import "server-only";
+﻿import "server-only";
 
 import { cert, getApp, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
@@ -9,7 +9,8 @@ function getPrivateKey(): string | undefined {
   return key.includes("\n") ? key : key.replace(/\\n/g, "\n");
 }
 
-const app = getApps().length
+const hasApp = getApps().length > 0;
+const app = hasApp
   ? getApp()
   : initializeApp({
       credential: cert({
@@ -20,5 +21,7 @@ const app = getApps().length
     });
 
 export const adminDb = getFirestore(app);
-adminDb.settings({ ignoreUndefinedProperties: true });
 
+if (!hasApp) {
+  adminDb.settings({ ignoreUndefinedProperties: true });
+}

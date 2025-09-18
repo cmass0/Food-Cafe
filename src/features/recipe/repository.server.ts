@@ -1,6 +1,6 @@
-import "server-only";
+﻿import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
-import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { Recipe, RecipeCreateDTO, RecipeUpdateDTO } from "./types";
 
 const COL = "Recipe";
@@ -55,24 +55,27 @@ function mapDocToRecipe(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseF
 
 export async function listRecipes(opts?: {
   limit?: number;
-  cursor?: string; // base64 encoded
+  cursor?: string; // base64 encoded doc id (legacy format supported)
   writerUid?: string;
 }): Promise<{ items: Recipe[]; nextCursor: string | null }> {
   const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 50);
 
-  let q = adminDb
-    .collection(COL)
-    .orderBy("createdAt", "desc")
-    .orderBy(FieldPath.documentId());
+  let q = adminDb.collection(COL).orderBy("createdAt", "desc");
 
   if (opts?.writerUid) {
     q = q.where("writerUid", "==", opts.writerUid);
   }
 
   if (opts?.cursor) {
-    const [createdAtMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
-    const createdAt = new Date(Number(createdAtMs));
-    q = q.startAfter(createdAt, id);
+    const decoded = Buffer.from(opts.cursor, "base64").toString("utf8");
+    const parts = decoded.split("|");
+    const cursorId = parts.length > 1 ? parts[1] : decoded;
+    if (cursorId) {
+      const snapshot = await adminDb.collection(COL).doc(cursorId).get();
+      if (snapshot.exists) {
+        q = q.startAfter(snapshot);
+      }
+    }
   }
 
   const snap = await q.limit(limit).get();
@@ -80,10 +83,8 @@ export async function listRecipes(opts?: {
   const items = snap.docs.map((doc) => mapDocToRecipe(doc));
 
   const last = snap.docs.at(-1);
-  const lastTimestampRaw = last?.get("createdAt") ?? last?.get("date");
-  const lastTimestamp = lastTimestampRaw instanceof Timestamp ? lastTimestampRaw : null;
-  const nextCursor = last && lastTimestamp
-    ? Buffer.from(`${lastTimestamp.toMillis()}|${last.id}`, "utf8").toString("base64")
+  const nextCursor = last
+    ? Buffer.from(last.id, "utf8").toString("base64")
     : null;
 
   return { items, nextCursor };
@@ -148,4 +149,3 @@ export async function updateRecipe(id: string, patch: RecipeUpdateDTO): Promise<
 export async function deleteRecipe(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
-

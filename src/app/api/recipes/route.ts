@@ -1,4 +1,4 @@
-// src/app/api/recipes/route.ts
+﻿// src/app/api/recipes/route.ts
 import { RecipeCreateSchema } from "@/features/recipe/types";
 import * as repo from "@/features/recipe/repository.server";
 
@@ -15,7 +15,8 @@ export async function GET(req: Request) {
 
     const data = await repo.listRecipes({ limit, cursor, writerUid });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    console.error("/api/recipes GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
@@ -33,8 +34,8 @@ export async function POST(req: Request) {
 
     const created = await repo.createRecipe(parsed.data);
     return Response.json({ data: created }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("/api/recipes POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
-
