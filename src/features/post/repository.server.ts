@@ -1,12 +1,22 @@
-import "server-only";
+﻿import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
-import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { Post, PostCreateDTO, PostUpdateDTO } from "./types";
 
 const COL = "Post";
+const ORDER_FIELD = "createdAt";
 
 function toDate(t?: Timestamp): Date | null {
   return t?.toDate?.() ?? null;
+}
+
+function encodeCursor(value: number): string {
+  return Buffer.from(String(value), "utf8").toString("base64");
+}
+
+function decodeCursor(cursor: string): number {
+  const raw = Number(Buffer.from(cursor, "base64").toString("utf8"));
+  return Number.isFinite(raw) ? raw : 0;
 }
 
 export async function listPosts(opts?: {
@@ -16,15 +26,14 @@ export async function listPosts(opts?: {
   type?: string;
 }): Promise<{ items: Post[]; nextCursor: string | null }> {
   const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 50);
-  let q = adminDb.collection(COL).orderBy("createdAt", "desc").orderBy(FieldPath.documentId());
+  let q = adminDb.collection(COL).orderBy(ORDER_FIELD, "desc");
 
   if (opts?.writerUid) q = q.where("writerUid", "==", opts.writerUid);
   if (opts?.type) q = q.where("type", "==", opts.type);
 
   if (opts?.cursor) {
-    const [createdAtMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
-    const createdAt = new Date(Number(createdAtMs));
-    q = q.startAfter(createdAt, id);
+    const cursorMs = decodeCursor(opts.cursor);
+    q = q.startAfter(Timestamp.fromMillis(cursorMs));
   }
 
   const snap = await q.limit(limit).get();
@@ -45,9 +54,8 @@ export async function listPosts(opts?: {
   });
 
   const last = snap.docs.at(-1);
-  const nextCursor = last
-    ? Buffer.from(`${(last.get("createdAt") as Timestamp)?.toMillis?.() ?? 0}|${last.id}`, "utf8").toString("base64")
-    : null;
+  const lastTimestamp = (last?.get(ORDER_FIELD) as Timestamp | undefined)?.toMillis?.() ?? null;
+  const nextCursor = lastTimestamp ? encodeCursor(lastTimestamp) : null;
 
   return { items, nextCursor };
 }
@@ -115,4 +123,3 @@ export async function updatePost(id: string, patch: PostUpdateDTO): Promise<Post
 export async function deletePost(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
-

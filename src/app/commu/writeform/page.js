@@ -1,78 +1,60 @@
 ﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import style from "./page.module.css";
-
-import uploadImage from "@/data/imagehandle";
+import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/client";
+
 import LoadingPage from "@/app/loading";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import uploadImage from "@/data/imagehandle";
+import { createPost } from "@/features/post/api";
+import { auth } from "@/lib/firebase/client";
+
+import style from "./page.module.css";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-
-async function fetchPosts() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to load posts: ${response.status}`);
-  }
-
-  return response.json();
-}
 
 export default function PostForm() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [userName, setUserName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [maxNumber, setMaxNumber] = useState(0);
-  const router = useRouter();
+  const [userName, setUserName] = useState("user");
+  const [initializing, setInitializing] = useState(true);
   const [user] = useAuthState(auth);
+  const router = useRouter();
   const quillRef = useRef(null);
 
   useEffect(() => {
-    if (!user) return;
-
-    const providerId = user.providerData[0]?.providerId;
+    let cancelled = false;
 
     async function resolveDisplayName() {
-      if (providerId === "password") {
-        const username = await fetchUsernameByUid(user.uid);
-        if (username) {
-          setUserName(username);
-          return;
-        }
+      if (!user) {
+        if (!cancelled) setInitializing(false);
+        return;
       }
 
-      setUserName(user.displayName || "user");
-    }
-
-    resolveDisplayName().catch((err) => {
-      console.error("Failed to resolve display name", err);
-    });
-  }, [user]);
-
-  useEffect(() => {
-    async function loadPosts() {
       try {
-        const data = await fetchPosts();
-        const sorted = [...(data?.data ?? [])].sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
-        const last = sorted[sorted.length - 1];
-        setMaxNumber(last?.number ?? 0);
+        const providerId = user.providerData?.[0]?.providerId;
+        if (providerId === "password") {
+          const username = await fetchUsernameByUid(user.uid);
+          if (!cancelled) setUserName(username ?? user.displayName ?? "user");
+        } else if (!cancelled) {
+          setUserName(user.displayName ?? "user");
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Failed to resolve display name", error);
+        if (!cancelled) setUserName(user.displayName ?? "user");
       } finally {
-        setLoading(false);
+        if (!cancelled) setInitializing(false);
       }
     }
 
-    loadPosts();
-  }, []);
+    resolveDisplayName();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const imageHandler = useCallback(() => {
     const input = document.createElement("input");
@@ -83,13 +65,17 @@ export default function PostForm() {
       const file = input.files?.[0];
       if (!file) return;
 
-      const imageUrl = await uploadImage(file);
-      const editor = quillRef.current?.getEditor?.();
-      if (!editor) return;
+      try {
+        const imageUrl = await uploadImage(file);
+        const editor = quillRef.current?.getEditor?.();
+        if (!editor) return;
 
-      const range = editor.getSelection(true);
-      editor.insertEmbed(range.index, "image", imageUrl, "user");
-      editor.setSelection(range.index + 1, 0, "user");
+        const range = editor.getSelection(true);
+        editor.insertEmbed(range.index, "image", imageUrl, "user");
+        editor.setSelection(range.index + 1, 0, "user");
+      } catch (error) {
+        console.error("Failed to upload image", error);
+      }
     };
 
     input.click();
@@ -116,32 +102,22 @@ export default function PostForm() {
     event.preventDefault();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({
-          title,
-          content,
-          writer: userName,
-          number: maxNumber + 1,
-        }),
+      await createPost({
+        title,
+        content,
+        writerName: userName,
+        writerUid: user?.uid ?? undefined,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to create post: ${response.status}`);
-      }
-
-      await response.json();
       setTitle("");
       setContent("");
       router.push("/commu");
     } catch (error) {
-      console.error(error);
+      console.error("Failed to create post", error);
     }
   }
 
-  if (loading) {
+  if (initializing) {
     return <LoadingPage />;
   }
 

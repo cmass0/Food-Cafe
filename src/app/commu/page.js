@@ -1,43 +1,44 @@
-"use client";
-
-import BoardMain from "@/component/postboard/postboard";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import LoadingPage from "../loading";
 
-async function fetchpost() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/post`, {
-    cache: "no-store",
-  });
-  return response.json();
-}
+import BoardMain from "@/component/postboard/postboard";
+import LoadingPage from "../loading";
+import { listPosts } from "@/features/post/api";
 
 export default function CommuPage() {
-  const [postdata, setPostData] = useState([]);
-  const [maxnum, setMaxNum] = useState(0);
-  const [loading, setloading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchpostdata() {
-      try {
-        const data = await fetchpost();
-        const sortData = data.data.sort((a, b) => a.number - b.number);
+    let cancelled = false;
 
-        setMaxNum(sortData[sortData.length - 1].number);
-        setPostData(sortData);
-        setloading(false);
-      } catch (err) {
-        console.error("err: ", err);
-        setloading(false);
+    async function loadPosts() {
+      try {
+        const data = await listPosts({ limit: 100 });
+        const items = Array.isArray(data?.items) ? [...data.items] : [];
+        if (cancelled) return;
+
+        items.sort((a, b) => (a?.number ?? 0) - (b?.number ?? 0));
+        setPosts(items);
+      } catch (error) {
+        console.error("Failed to load posts", error);
+        if (!cancelled) setPosts([]);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
 
-    fetchpostdata();
+    loadPosts();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
-    return <LoadingPage></LoadingPage>;
+    return <LoadingPage />;
   }
 
-  return <BoardMain data={postdata} maxnum={maxnum}></BoardMain>;
+  return <BoardMain data={posts} />;
 }

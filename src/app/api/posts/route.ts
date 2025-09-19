@@ -1,4 +1,4 @@
-// src/app/api/posts/route.ts
+﻿// src/app/api/posts/route.ts
 import { PostCreateSchema } from "@/features/post/types";
 import * as repo from "@/features/post/repository.server";
 
@@ -14,7 +14,8 @@ export async function GET(req: Request) {
     const type = url.searchParams.get("type") ?? undefined;
     const data = await repo.listPosts({ limit, cursor, writerUid, type });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    console.error("Failed to list posts", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
@@ -31,8 +32,8 @@ export async function POST(req: Request) {
     }
     const created = await repo.createPost(parsed.data);
     return Response.json({ data: created }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Failed to create post", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
-
