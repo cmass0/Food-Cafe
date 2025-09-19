@@ -1,4 +1,4 @@
-// src/app/api/comments/route.ts
+﻿// src/app/api/comments/route.ts
 import { CommentCreateSchema } from "@/features/comment/types";
 import * as repo from "@/features/comment/repository.server";
 
@@ -13,7 +13,8 @@ export async function GET(req: Request) {
     const type = url.searchParams.get("type") ?? undefined;
     const data = await repo.listComments({ limit, cursor, type });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
-  } catch {
+  } catch (error) {
+    console.error("[comments] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
@@ -29,8 +30,8 @@ export async function POST(req: Request) {
       );
     const created = await repo.createComment(parsed.data);
     return Response.json({ data: created }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("[comments] POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
-

@@ -1,4 +1,4 @@
-.header {
+﻿.header {
   display: flex;
   position: relative;
   width: 100%;
@@ -7,7 +7,7 @@
   align-items: center;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  background: linear-gradient(45deg, #9b468d, #de9746);
+  background: #4fa36a;
 }
 
 .searchcontainer {
@@ -46,7 +46,7 @@
   cursor: pointer;
   font-weight: bold;
   padding: 10px 20px;
-  background-color: rgb(54, 106, 21);
+  background-color: #3b6f49;
   font-size: 12px;
 }
 
@@ -57,7 +57,7 @@
   cursor: pointer;
   font-weight: bold;
   padding: 10px 20px;
-  background-color: rgb(54, 106, 21);
+  background-color: #3b6f49;
   margin-left: 25px;
   font-size: 12px;
 }
@@ -66,7 +66,7 @@
 .signbtn:active,
 .signoutbtn:hover,
 .signoutbtn:active {
-  background-color: rgb(47, 71, 32);
+  background-color: #2a5335;
 }
 
 .search {
@@ -87,5 +87,5 @@
 
 .username {
   font-size: 12px;
-  color: rgb(150, 199, 150);
+  color: rgba(176, 201, 182, 0.85);
 }

@@ -1,4 +1,4 @@
-import "server-only";
+﻿import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { Comment, CommentCreateDTO, CommentUpdateDTO } from "./types";
@@ -20,8 +20,8 @@ export async function listComments(opts?: {
 
   if (opts?.cursor) {
     const [createdAtMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
-    const createdAt = new Date(Number(createdAtMs));
-    q = q.startAfter(createdAt, id);
+    const createdAt = Timestamp.fromMillis(Number(createdAtMs) || 0);
+    q = q.startAfter(createdAt, id ?? "");
   }
 
   const snap = await q.limit(limit).get();
@@ -87,4 +87,3 @@ export async function updateComment(id: string, patch: CommentUpdateDTO): Promis
 export async function deleteComment(id: string): Promise<void> {
   await adminDb.collection(COL).doc(id).delete();
 }
-
