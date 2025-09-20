@@ -42,3 +42,6 @@ next-env.d.ts
 
 # firebase cli
 /.firebase/
+
+# supabase
+.codex/config.toml
