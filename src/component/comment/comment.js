@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
+import { Button as HeroButton, Card, CardBody, CardFooter, CardHeader } from "@heroui/react";
+import { AlertTriangle } from "lucide-react";
+
 import { createComment, deleteComment, listComments } from "@/features/comment/api";
 import { auth } from "@/lib/firebase/client";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
@@ -11,13 +14,21 @@ import style from "./comment.module.css";
 
 const COMMENTS_LIMIT = 100;
 
+const MODAL_TEXT = {
+  loginRequired: "로그인이 필요한 기능입니다.",
+  emptyComment: "댓글 내용을 입력해주세요.",
+  createError: "댓글 작성 중 오류가 발생했습니다.",
+  deleteError: "댓글 삭제 중 오류가 발생했습니다.",
+  deleteConfirm: "댓글을 삭제하시겠습니까?",
+};
+
 function formatDateTime(value) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   const datePart = date.toLocaleDateString("ko-KR");
   const timePart = date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-  return `${datePart} ${timePart}`;
+  return datePart + " " + timePart;
 }
 
 export default function CommentArea({ type }) {
@@ -93,18 +104,18 @@ export default function CommentArea({ type }) {
   }, []);
 
   const openDeleteConfirm = useCallback((id) => {
-    setModalMessage("댓글을 삭제하시겠습니까?");
+    setModalMessage(MODAL_TEXT.deleteConfirm);
     setPendingDeleteId(id);
     setModalOpen(true);
   }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!user) {
-      openAlert("로그인이 필요한 서비스입니다.");
+      openAlert(MODAL_TEXT.loginRequired);
       return;
     }
     if (!comment.trim()) {
-      openAlert("댓글 내용을 입력해 주세요.");
+      openAlert(MODAL_TEXT.emptyComment);
       return;
     }
 
@@ -120,7 +131,7 @@ export default function CommentArea({ type }) {
       await loadComments();
     } catch (error) {
       console.error("Failed to create comment", error);
-      openAlert("댓글 작성 중 오류가 발생했습니다.");
+      openAlert(MODAL_TEXT.createError);
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +144,7 @@ export default function CommentArea({ type }) {
       await loadComments();
     } catch (error) {
       console.error("Failed to delete comment", error);
-      openAlert("댓글 삭제 중 오류가 발생했습니다.");
+      openAlert(MODAL_TEXT.deleteError);
       return;
     }
     closeModal();
@@ -198,7 +209,7 @@ export default function CommentArea({ type }) {
       <ul className={style.comment}>
         <div>
           <textarea
-            placeholder="댓글을 입력해 주세요..."
+            placeholder="댓글을 입력해주세요..."
             rows={4}
             cols={50}
             className={style.textarea}
@@ -219,19 +230,53 @@ export default function CommentArea({ type }) {
 
       {modalOpen && (
         <Modal onclose={closeModal}>
-          <div className={style.requirelogin}>
-            <button className={style.modalclosebtn} onClick={closeModal}>
-              X
-            </button>
-            <div className={style.modaltext}>{modalMessage}</div>
-            <div className={style.deletebtnbox}>
+          <Card className={style.modalCard}>
+            <CardHeader className={style.modalHeader}>
+              <div className={style.modalHeaderContent}>
+                <AlertTriangle className={style.modalIcon} size={20} />
+                <span className={style.modalTitle}>{pendingDeleteId ? "댓글 삭제" : "알림"}</span>
+              </div>
+              <HeroButton
+                isIconOnly
+                variant="light"
+                radius="full"
+                size="sm"
+                onPress={closeModal}
+                className={style.modalCloseButton}
+              >
+                ✕
+              </HeroButton>
+            </CardHeader>
+            <CardBody className={style.modalBody}>
               {pendingDeleteId && (
-                <button className={style.deleteselectbtn} onClick={handleDeleteConfirm}>
-                  삭제
-                </button>
+                <div className={style.modalWarning}>
+                  <AlertTriangle size={16} className={style.modalWarningIcon} />
+                  <span>이 작업은 되돌릴 수 없어요. 선택한 댓글이 영구적으로 삭제됩니다.</span>
+                </div>
               )}
-            </div>
-          </div>
+              <p className={style.modalText}>{modalMessage}</p>
+            </CardBody>
+            <CardFooter className={style.modalFooter}>
+              <HeroButton
+                variant="flat"
+                radius="sm"
+                onPress={closeModal}
+                className={style.modalCancelButton}
+              >
+                {pendingDeleteId ? "취소" : "확인"}
+              </HeroButton>
+              {pendingDeleteId && (
+                <HeroButton
+                  variant="solid"
+                  radius="sm"
+                  onPress={handleDeleteConfirm}
+                  className={style.modalDeleteButton}
+                >
+                  삭제
+                </HeroButton>
+              )}
+            </CardFooter>
+          </Card>
         </Modal>
       )}
     </div>

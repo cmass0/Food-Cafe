@@ -2,7 +2,9 @@
 
 import style from "./page.module.css";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
+import { createUser } from "@/features/user/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { checkDuplicate } from "@/Authlogic/nicknamecheck";
@@ -27,40 +29,25 @@ export default function SignupPage() {
 
   async function SignupHD(data) {
     data.preventDefault();
-    const UserData = new FormData(data.target);
-    // const UserName = UserData.get("username");
-    // const UserEmail = UserData.get("email");
 
     try {
-      // const userRes = await createUserWithEmailAndPassword(
-      //   UserEmail,
-      //   UserPassword
-      // );
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/user`,
-        {
-          method: "post",
-          body: JSON.stringify({
-            username: UserName,
-            email: UserEmail,
-            password: UserPassword,
-            likerecipe: [],
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        }
+      const credential = await createUserWithEmailAndPassword(
+        UserEmail,
+        UserPassword
       );
-      console.log(data);
-      if (!response.ok) {
-        const errdata = await response.json();
-        const error = new Error(errdata.message);
-        error.code = errdata.code;
-        throw error;
+
+      if (!credential || !credential.user) {
+        throw new Error("AUTH_CREATION_FAILED");
       }
-      // console.log({ userRes });
+
+      await createUser({
+        id: credential.user.uid,
+        email: UserEmail,
+        username: UserName,
+      });
+
+      await signOut(auth);
+
       setUserName("");
       setUserEmail("");
       setUserPassword("");
@@ -68,10 +55,11 @@ export default function SignupPage() {
       alert("회원가입에 성공했습니다 로그인을 진행해 주세요");
       router.push("/login");
     } catch (error) {
-      console.log(error.code);
-      if (error.code) {
-        console.log("Error creating user:", error);
-        switch (error.code) {
+      console.error(error);
+      const errorCode = error?.code ?? null;
+
+      if (errorCode) {
+        switch (errorCode) {
           case "auth/invalid-email":
             setErrormsg("잘못된 이메일 주소입니다");
             break;
@@ -82,11 +70,11 @@ export default function SignupPage() {
             setErrormsg("비밀번호는 6자리 이상이어야 합니다");
             break;
           default:
-            setErrormsg(
-              "회원가입 도중 오류가 발생했습니다. 다시 시도해 주세요"
-            );
+            setErrormsg("회원가입 도중 오류가 발생했습니다. 다시 시도해 주세요");
             break;
         }
+      } else if (error instanceof Error && error.message === "AUTH_CREATION_FAILED") {
+        setErrormsg("회원 계정 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       } else {
         setErrormsg("회원가입 도중 오류가 발생했습니다. 다시 시도해 주세요");
       }
@@ -127,7 +115,7 @@ export default function SignupPage() {
       }
     } else {
       setEmailValid("유효하지 않은 이메일 형식입니다.");
-      setEmailValid(false);
+      SetUserEmailValid(false);
     }
   }, [UserEmail]);
 
@@ -159,7 +147,7 @@ export default function SignupPage() {
               value={UserName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="닉네임"
-              maxLength="8"
+              maxLength={8}
             />
           </div>
           <button

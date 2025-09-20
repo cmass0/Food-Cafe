@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useContext, createContext, useState, useEffect } from "react";
 import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "firebase/auth";
-import { auth, db } from "@/lib/firebase/client";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth } from "@/lib/firebase/client";
+import { createUser, getUser } from "@/features/user/api";
 
 const AuthContext = createContext();
 
@@ -22,15 +22,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (curUser) => {
       if (curUser) {
-        const userref = doc(db, "User", curUser.uid);
-        const userSnap = await getDoc(userref);
-        if (!userSnap.exists()) {
-          await setDoc(userref, {
-            id: curUser.uid,
-            email: curUser.email,
-            name: curUser.displayName,
-            likerecipe: [],
-          });
+        try {
+          const existing = await getUser(curUser.uid);
+          if (!existing) {
+            await createUser({
+              id: curUser.uid,
+              email: curUser.email ?? "",
+              username: curUser.displayName ?? "user",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to ensure user profile", error);
         }
         setUserAuthData(curUser);
       } else {

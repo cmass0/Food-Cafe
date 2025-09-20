@@ -1,4 +1,4 @@
-export async function listUsers(params?: { limit?: number; cursor?: string }) {
+﻿export async function listUsers(params?: { limit?: number; cursor?: string }) {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.cursor) qs.set("cursor", params.cursor);
@@ -19,6 +19,7 @@ export async function createUser(body: any) {
 
 export async function getUser(id: string) {
   const res = await fetch(`/api/users/${id}`, { cache: "no-store" });
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Failed to get user: ${res.status}`);
   return res.json();
 }
@@ -39,3 +40,9 @@ export async function deleteUser(id: string) {
   return res.text();
 }
 
+export async function findUserByUsername(username: string) {
+  const qs = new URLSearchParams({ username });
+  const res = await fetch(`/api/users?${qs.toString()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to find user by username: ${res.status}`);
+  return res.json();
+}

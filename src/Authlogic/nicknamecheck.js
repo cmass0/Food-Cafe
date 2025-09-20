@@ -1,11 +1,14 @@
-import { collection, query, where, getDoc, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+﻿import { findUserByUsername } from "@/features/user/api";
 
 async function checkDuplicate(username) {
-  const userRef = collection(db, "User");
-  const q = query(userRef, where("username", "==", username));
-  const querySnap = await getDocs(q);
-  return !querySnap.empty;
+  if (!username) return false;
+  try {
+    const payload = await findUserByUsername(username);
+    return Boolean(payload?.data);
+  } catch (error) {
+    console.error("Failed to check username duplication", error);
+    return false;
+  }
 }
 
 export { checkDuplicate };

@@ -39,8 +39,8 @@ export async function DELETE(_: Request, { params }: Ctx) {
   try {
     await repo.deleteRecipe(params.id);
     return new Response(null, { status: 204 });
-  } catch {
+  } catch (error) {
+    console.error("[recipes] DELETE failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
-

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import style from "./nav-bar.module.css";
@@ -7,36 +7,51 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import { signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import ThemeToggle from "@/component/theme-toggle";
 import { Input } from "@heroui/react";
 import { SearchIcon } from "lucide-react";
 import { searchInputClassNames } from "@/styles/input/searchUI";
+import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
 export default function Navbar(props) {
-  const [isModal, setIsmodal] = useState(false); // loginform 이동
+  const [isModal, setIsmodal] = useState(false);
   const [searchtext, setsearchText] = useState("");
   const [userName, setUserName] = useState("");
   const [user] = useAuthState(auth);
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
-      const loginIdentifier = user.providerData[0]?.providerId;
-      async function ReadUserData() {
-        if (loginIdentifier === "password") {
-          const Usersnap = await getDoc(doc(db, "User", user.uid));
-          const Userdata = Usersnap.exists() ? Usersnap.data() : null;
+    let cancelled = false;
 
-          setUserName(Userdata?.username ?? "user");
-        } else {
-          setUserName(user.displayName || "user");
+    async function resolveUserName() {
+      if (!user) {
+        if (!cancelled) setUserName("");
+        return;
+      }
+
+      const loginIdentifier = user.providerData[0]?.providerId;
+      if (loginIdentifier === "password") {
+        try {
+          const resolved = await fetchUsernameByUid(user.uid);
+          if (!cancelled) {
+            setUserName(resolved ?? user.displayName ?? "user");
+          }
+          return;
+        } catch (error) {
+          console.error("Failed to resolve nav username", error);
         }
       }
-      ReadUserData();
+
+      if (!cancelled) setUserName(user.displayName || "user");
     }
+
+    resolveUserName();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   function SearchHD(e) {
@@ -44,17 +59,18 @@ export default function Navbar(props) {
     router.push(`/search?query=${encodeURIComponent(searchtext)}`);
   }
 
-  function modalHD(e) {
+  function modalHD() {
     setIsmodal(true);
   }
 
-  function ModalclickHD(e) {
+  function ModalclickHD() {
     setIsmodal(false);
-  } // loginform 이동
+  }
 
   function SearchTextHD(e) {
     setsearchText(e.target.value);
   }
+
   return (
     <div className={style.navcontainer}>
       <div className={style.header}>
@@ -64,7 +80,7 @@ export default function Navbar(props) {
           </Link>
         </div>
         <form onSubmit={SearchHD} className={style.searchcontainer}>
-          <div className="">
+          <div>
             <Input
               value={searchtext}
               onValueChange={setsearchText}

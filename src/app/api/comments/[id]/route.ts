@@ -31,7 +31,11 @@ export async function PUT(req: Request, { params }: Ctx) {
 }
 
 export async function DELETE(_: Request, { params }: Ctx) {
-  await repo.deleteComment(params.id);
-  return Response.json(null, { status: 204 });
+  try {
+    await repo.deleteComment(params.id);
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    console.error("[comments] DELETE failed", error);
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+  }
 }
-
