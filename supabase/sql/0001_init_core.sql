@@ -1,4 +1,4 @@
-﻿-- PREVIEW/EXECUTE SCRIPT: Core schema for users, recipes, posts, comments
+-- PREVIEW/EXECUTE SCRIPT: Core schema for users, recipes, posts, comments
 -- Note: execute in Supabase SQL editor. Uses text PK for recipes to ease Firestore ID migration.
 
 begin;
@@ -6,10 +6,19 @@ begin;
 -- Extensions
 create extension if not exists pgcrypto;
 create extension if not exists pg_trgm;
-
 -- Types
-create type if not exists public.comment_parent_type as enum ('recipe','post');
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE t.typname = 'comment_parent_type' AND n.nspname = 'public'
+  ) THEN
+    CREATE TYPE public.comment_parent_type AS ENUM ('recipe','post');
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 -- Helper function
 create or replace function public.set_updated_at()
 returns trigger
@@ -21,12 +30,6 @@ begin
 end
 $$;
 
-create or replace function public.is_admin(uid uuid)
-returns boolean
-language sql stable security definer set search_path = public
-as $$
-  select exists (select 1 from public.users u where u.id = uid and u.role = 'admin');
-$$;
 
 -- Tables
 create table if not exists public.users (
@@ -36,6 +39,13 @@ create table if not exists public.users (
   role         text not null default 'user',
   created_at   timestamptz not null default now()
 );
+
+create or replace function public.is_admin(uid uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (select 1 from public.users u where u.id = uid and u.role = 'admin');
+$$;
 
 -- Firestore-friendly recipes (text PK, plus legacy uid)
 create table if not exists public.recipes (
@@ -109,30 +119,54 @@ alter table public.posts    enable row level security;
 alter table public.comments enable row level security;
 
 -- users RLS
-create policy if not exists users_select_all on public.users for select using (true);
-create policy if not exists users_insert_self_or_admin on public.users for insert with check (id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists users_update_self_or_admin on public.users for update using (id = auth.uid() or public.is_admin(auth.uid())) with check (id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists users_delete_admin_only    on public.users for delete using (public.is_admin(auth.uid()));
+drop policy if exists users_select_all on public.users;
+create policy users_select_all on public.users for select using (true);
+drop policy if exists users_insert_self_or_admin on public.users;
+create policy users_insert_self_or_admin on public.users for insert with check (id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists users_update_self_or_admin on public.users;
+create policy users_update_self_or_admin on public.users for update using (id = auth.uid() or public.is_admin(auth.uid())) with check (id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists users_delete_admin_only on public.users;
+create policy users_delete_admin_only on public.users for delete using (public.is_admin(auth.uid()));
 
 -- recipes RLS (allow legacy during migration)
-create policy if not exists recipes_select_all on public.recipes for select using (true);
-create policy if not exists recipes_insert_own_or_legacy on public.recipes for insert to authenticated
+drop policy if exists recipes_select_all on public.recipes;
+create policy recipes_select_all on public.recipes for select using (true);
+drop policy if exists recipes_insert_own_or_legacy on public.recipes;
+create policy recipes_insert_own_or_legacy on public.recipes for insert to authenticated
   with check (writer_uid = auth.uid() or (writer_uid is null and writer_uid_legacy is not null));
-create policy if not exists recipes_update_own_or_legacy on public.recipes for update to authenticated
+drop policy if exists recipes_update_own_or_legacy on public.recipes;
+create policy recipes_update_own_or_legacy on public.recipes for update to authenticated
   using (writer_uid = auth.uid() or (writer_uid is null and writer_uid_legacy is not null))
   with check (writer_uid = auth.uid() or (writer_uid is null and writer_uid_legacy is not null));
-create policy if not exists recipes_delete_own_or_admin on public.recipes for delete using (writer_uid = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists recipes_delete_own_or_admin on public.recipes;
+create policy recipes_delete_own_or_admin on public.recipes for delete using (writer_uid = auth.uid() or public.is_admin(auth.uid()));
 
 -- posts RLS
-create policy if not exists posts_select_all on public.posts for select using (true);
-create policy if not exists posts_insert_own_or_admin on public.posts for insert to authenticated with check (author_id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists posts_update_own_or_admin on public.posts for update  to authenticated using (author_id = auth.uid() or public.is_admin(auth.uid())) with check (author_id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists posts_delete_own_or_admin on public.posts for delete using (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists posts_select_all on public.posts;
+create policy posts_select_all on public.posts for select using (true);
+drop policy if exists posts_insert_own_or_admin on public.posts;
+create policy posts_insert_own_or_admin on public.posts for insert to authenticated with check (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists posts_update_own_or_admin on public.posts;
+create policy posts_update_own_or_admin on public.posts for update  to authenticated using (author_id = auth.uid() or public.is_admin(auth.uid())) with check (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists posts_delete_own_or_admin on public.posts;
+create policy posts_delete_own_or_admin on public.posts for delete using (author_id = auth.uid() or public.is_admin(auth.uid()));
 
 -- comments RLS
-create policy if not exists comments_select_all on public.comments for select using (true);
-create policy if not exists comments_insert_own_or_admin on public.comments for insert to authenticated with check (author_id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists comments_update_own_or_admin on public.comments for update  to authenticated using (author_id = auth.uid() or public.is_admin(auth.uid())) with check (author_id = auth.uid() or public.is_admin(auth.uid()));
-create policy if not exists comments_delete_own_or_admin on public.comments for delete using (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists comments_select_all on public.comments;
+create policy comments_select_all on public.comments for select using (true);
+drop policy if exists comments_insert_own_or_admin on public.comments;
+create policy comments_insert_own_or_admin on public.comments for insert to authenticated with check (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists comments_update_own_or_admin on public.comments;
+create policy comments_update_own_or_admin on public.comments for update  to authenticated using (author_id = auth.uid() or public.is_admin(auth.uid())) with check (author_id = auth.uid() or public.is_admin(auth.uid()));
+drop policy if exists comments_delete_own_or_admin on public.comments;
+create policy comments_delete_own_or_admin on public.comments for delete using (author_id = auth.uid() or public.is_admin(auth.uid()));
 
 commit;
+
+
+
+
+
+
+
+
