@@ -6,15 +6,13 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-type ServerClient = ReturnType<typeof createServerClient /*<Database>*/>;
+type ServerClient = ReturnType<typeof createServerClient>;
 
 export function getServerSupabase(): ServerClient {
   const store = cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) {
-    throw new Error("[server] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  }
+  if (!url || !anon) throw new Error("[server] missing env");
 
   return createServerClient(url, anon, {
     cookies: {
