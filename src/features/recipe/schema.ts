@@ -1,83 +1,83 @@
-import { z } from "zod";
+ï»¿import { z } from "zod";
 
 export const recipeIdTextSchema = z
-  .string({ required_error: "·¹°Å½Ã ID¸¦ ÀÔ·ÂÇØ ÁÖ¼¼¿ä." })
+  .string({ required_error: "ë ˆê±°ì‹œ IDë¥¼ ì…ë ¥í•´ ì£¼ì„¸ìš”." })
   .trim()
-  .min(1, "·¹°Å½Ã ID¸¦ ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
-  .max(128, "·¹°Å½Ã ID´Â 128ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.");
+  .min(1, "ë ˆê±°ì‹œ IDë¥¼ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
+  .max(128, "ë ˆê±°ì‹œ IDëŠ” 128ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
 
 const imageUrlSchema = z
   .string()
   .trim()
-  .url("¿Ã¹Ù¸¥ ÀÌ¹ÌÁö URLÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
-  .max(2048, "ÀÌ¹ÌÁö URLÀº 2048ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.");
+  .url("ì˜¬ë°”ë¥¸ ì´ë¯¸ì§€ URLì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
+  .max(2048, "ì´ë¯¸ì§€ URLì€ 2048ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
 
 const tagSchema = z
   .string()
   .trim()
-  .min(1, "ÅÂ±×´Â 1ÀÚ ÀÌ»óÀÌ¾î¾ß ÇÕ´Ï´Ù.")
-  .max(50, "ÅÂ±×´Â 50ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.");
+  .min(1, "íƒœê·¸ëŠ” 1ì ì´ìƒì´ì–´ì•¼ í•©ë‹ˆë‹¤.")
+  .max(50, "íƒœê·¸ëŠ” 50ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
 
 export const recipeInsertSchema = z.object({
   idTextOld: recipeIdTextSchema.optional(),
   legacyId: z
     .string()
     .trim()
-    .max(128, "legacyId´Â 128ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .max(128, "legacyIdëŠ” 128ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .nullable()
     .optional(),
   title: z
-    .string({ required_error: "Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä." })
+    .string({ required_error: "ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”." })
     .trim()
-    .min(1, "Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
-    .max(200, "Á¦¸ñÀº 200ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù."),
+    .min(1, "ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
+    .max(200, "ì œëª©ì€ 200ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."),
   summary: z
     .string()
     .trim()
-    .max(500, "¿ä¾àÀº 500ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .max(500, "ìš”ì•½ì€ 500ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .nullable()
     .optional(),
   recipe: z
-    .string({ required_error: "º»¹®À» ÀÔ·ÂÇØ ÁÖ¼¼¿ä." })
+    .string({ required_error: "ë³¸ë¬¸ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”." })
     .trim()
-    .min(1, "º»¹®À» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
+    .min(1, "ë³¸ë¬¸ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
     .nullable()
     .optional(),
   image: imageUrlSchema.nullish(),
-  images: z.array(imageUrlSchema).max(12, "ÀÌ¹ÌÁö´Â ÃÖ´ë 12°³±îÁö Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.").optional(),
+  images: z.array(imageUrlSchema).max(12, "ì´ë¯¸ì§€ëŠ” ìµœëŒ€ 12ê°œê¹Œì§€ ì¶”ê°€í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.").optional(),
   category: z
     .string()
     .trim()
-    .max(120, "Ä«Å×°í¸®´Â 120ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .max(120, "ì¹´í…Œê³ ë¦¬ëŠ” 120ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .nullable()
     .optional(),
-  tags: z.array(tagSchema).max(20, "ÅÂ±×´Â ÃÖ´ë 20°³±îÁö Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.").optional(),
+  tags: z.array(tagSchema).max(20, "íƒœê·¸ëŠ” ìµœëŒ€ 20ê°œê¹Œì§€ ì¶”ê°€í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.").optional(),
   status: z.number().int().min(0).max(9).nullable().optional(),
-  writerUid: z.string().uuid("ÀÛ¼ºÀÚ UID°¡ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù.").nullable().optional(),
+  writerUid: z.string().uuid("ì‘ì„±ì UIDê°€ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.").nullable().optional(),
   writerUidLegacy: z
     .string()
     .trim()
-    .max(120, "·¹°Å½Ã UID´Â 120ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .max(120, "ë ˆê±°ì‹œ UIDëŠ” 120ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .nullable()
     .optional(),
   writerName: z
     .string()
     .trim()
-    .max(120, "ÀÛ¼ºÀÚ ÀÌ¸§Àº 120ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .max(120, "ì‘ì„±ì ì´ë¦„ì€ 120ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .nullable()
     .optional(),
-  writerEmail: z.string().email("ÀÌ¸ŞÀÏ Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù.").nullable().optional(),
+  writerEmail: z.string().email("ì´ë©”ì¼ í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.").nullable().optional(),
 });
 
 export const recipeUpdateSchema = recipeInsertSchema
   .partial()
   .extend({
-    likeCount: z.number().int().min(0, "ÁÁ¾Æ¿ä ¼ö´Â 0 ÀÌ»óÀÌ¾î¾ß ÇÕ´Ï´Ù.").optional(),
-    viewCount: z.number().int().min(0, "Á¶È¸¼ö´Â 0 ÀÌ»óÀÌ¾î¾ß ÇÕ´Ï´Ù.").optional(),
+    likeCount: z.number().int().min(0, "ì¢‹ì•„ìš” ìˆ˜ëŠ” 0 ì´ìƒì´ì–´ì•¼ í•©ë‹ˆë‹¤.").optional(),
+    viewCount: z.number().int().min(0, "ì¡°íšŒìˆ˜ëŠ” 0 ì´ìƒì´ì–´ì•¼ í•©ë‹ˆë‹¤.").optional(),
     lastLikedAt: z.string().datetime().nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "º¯°æÇÒ ÇÊµå¸¦ ÇÑ °¡Áö ÀÌ»ó ÀÔ·ÂÇØ ÁÖ¼¼¿ä.",
+    message: "ë³€ê²½í•  í•„ë“œë¥¼ í•œ ê°€ì§€ ì´ìƒ ì…ë ¥í•´ ì£¼ì„¸ìš”.",
   });
 
 export const recipeListOptionsSchema = z.object({
@@ -92,3 +92,4 @@ export const recipeListOptionsSchema = z.object({
 export type RecipeInsertSchema = z.infer<typeof recipeInsertSchema>;
 export type RecipeUpdateSchema = z.infer<typeof recipeUpdateSchema>;
 export type RecipeListOptionsSchema = z.infer<typeof recipeListOptionsSchema>;
+

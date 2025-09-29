@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface RecipeRow {
   id: string;
@@ -84,4 +84,5 @@ export interface RecipeListResult {
 }
 
 export type RecipeSupabaseClient = SupabaseClient<any>;
+
 

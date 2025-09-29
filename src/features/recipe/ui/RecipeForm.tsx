@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useState, useTransition, type FormEvent } from "react";
 import { recipeInsertSchema } from "../schema";
@@ -13,7 +13,7 @@ type RecipeFormProps = {
 export default function RecipeForm({
   defaultValues,
   onSubmit,
-  submitLabel = "ÀúÀå",
+  submitLabel = "ì €ì¥",
 }: RecipeFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export default function RecipeForm({
 
     const validationResult = recipeInsertSchema.safeParse(payload);
     if (!validationResult.success) {
-      setError(validationResult.error.issues[0]?.message ?? "ÀÔ·Â°ªÀ» È®ÀÎÇØ ÁÖ¼¼¿ä.");
+      setError(validationResult.error.issues[0]?.message ?? "ì…ë ¥ê°’ì„ í™•ì¸í•´ ì£¼ì„¸ìš”.");
       return;
     }
 
@@ -60,7 +60,7 @@ export default function RecipeForm({
       try {
         await onSubmit(validationResult.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "ÀúÀå Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.");
+        setError(err instanceof Error ? err.message : "ì €ì¥ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.");
       }
     });
   };
@@ -68,39 +68,39 @@ export default function RecipeForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Á¦¸ñ</span>
+        <span className="text-sm font-medium">ì œëª©</span>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           className="rounded border border-divider px-3 py-2"
-          placeholder="·¹½ÃÇÇ Á¦¸ñ"
+          placeholder="ë ˆì‹œí”¼ ì œëª©"
           required
         />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">¿ä¾à</span>
+        <span className="text-sm font-medium">ìš”ì•½</span>
         <textarea
           value={summary}
           onChange={(event) => setSummary(event.target.value)}
           className="min-h-[80px] rounded border border-divider px-3 py-2"
-          placeholder="°£´ÜÇÑ ¼Ò°³"
+          placeholder="ê°„ë‹¨í•œ ì†Œê°œ"
         />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">º»¹®</span>
+        <span className="text-sm font-medium">ë³¸ë¬¸</span>
         <textarea
           value={body}
           onChange={(event) => setBody(event.target.value)}
           className="min-h-[160px] rounded border border-divider px-3 py-2"
-          placeholder="·¹½ÃÇÇ ³»¿ëÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä"
+          placeholder="ë ˆì‹œí”¼ ë‚´ìš©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”"
           required
         />
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">´ëÇ¥ ÀÌ¹ÌÁö URL</span>
+        <span className="text-sm font-medium">ëŒ€í‘œ ì´ë¯¸ì§€ URL</span>
         <input
           value={image}
           onChange={(event) => setImage(event.target.value)}
@@ -110,12 +110,12 @@ export default function RecipeForm({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">ÅÂ±× (½°Ç¥ ±¸ºĞ)</span>
+        <span className="text-sm font-medium">íƒœê·¸ (ì‰¼í‘œ êµ¬ë¶„)</span>
         <input
           value={tagsText}
           onChange={(event) => setTagsText(event.target.value)}
           className="rounded border border-divider px-3 py-2"
-          placeholder="ÇÑ½Ä, ¸ÅÄŞ"
+          placeholder="í•œì‹, ë§¤ì½¤"
         />
       </label>
 
@@ -126,10 +126,11 @@ export default function RecipeForm({
         className="inline-flex items-center justify-center rounded bg-primary px-4 py-2 font-medium text-primary-foreground"
         disabled={isPending}
       >
-        {isPending ? "ÀúÀå Áß..." : submitLabel}
+        {isPending ? "ì €ì¥ ì¤‘..." : submitLabel}
       </button>
     </form>
   );
 }
+
 
 

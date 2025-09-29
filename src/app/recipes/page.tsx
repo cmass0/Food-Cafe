@@ -1,7 +1,22 @@
-// PURPOSE: /recipes ëª©ë¡ SSR â€” RecipeList ì‚¬ìš©(ìµëª… SELECT RLS ê²€ì¦)
-// NOTE: êµ¬í˜„ì€ ì¶”í›„ ì§„í–‰. í˜„ì¬ëŠ” íŒŒì¼ êµ¬ì¡°ë§Œ ìƒì„±í•©ë‹ˆë‹¤.
+import RecipeList from "@/features/recipe/ui/RecipeList";
+import { listRecipes } from "@/features/recipe/service";
+import { getServerSupabase } from "@/lib/supabase/server";
 
-export default function RecipesIndexPlaceholder() {
-  return null;
+export const dynamic = "force-dynamic";
+
+export default async function RecipesPage() {
+  const supabase = getServerSupabase();
+  const { items } = await listRecipes(supabase, { limit: 50 });
+
+  return (
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-10">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-semibold">·¹½ÃÇÇ ¸ñ·Ï</h1>
+        <p className="text-sm text-foreground/70">
+          Supabase RLS ¼¼¼ÇÀ¸·Î º¸È£µÇ´Â ·¹½ÃÇÇ µ¥ÀÌÅÍ¸¦ ¼­¹ö¿¡¼­ ¹Ù·Î Á¶È¸ÇÕ´Ï´Ù.
+        </p>
+      </header>
+      <RecipeList recipes={items} />
+    </main>
+  );
 }
-

@@ -1,4 +1,4 @@
-import type { Recipe } from "../types";
+ï»¿import type { Recipe } from "../types";
 import RecipeCard from "./RecipeCard";
 
 type RecipeListProps = {
@@ -9,7 +9,7 @@ type RecipeListProps = {
 
 export default function RecipeList({
   recipes,
-  emptyMessage = "µî·ÏµÈ ·¹½ÃÇÇ°¡ ¾ø½À´Ï´Ù.",
+  emptyMessage = "ë“±ë¡ëœ ë ˆì‹œí”¼ê°€ ì—†ìŠµë‹ˆë‹¤.",
   className,
 }: RecipeListProps) {
   if (!recipes.length) {
@@ -28,3 +28,4 @@ export default function RecipeList({
     </div>
   );
 }
+

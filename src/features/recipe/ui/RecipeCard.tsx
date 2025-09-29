@@ -1,4 +1,4 @@
-import type { Recipe } from "../types";
+ï»¿import type { Recipe } from "../types";
 
 type RecipeCardProps = {
   recipe: Recipe;
@@ -15,12 +15,13 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       </header>
       {recipe.summary && <p className="mb-3 text-sm text-foreground/80">{recipe.summary}</p>}
       <footer className="flex flex-wrap gap-2 text-xs text-foreground/60">
-        <span>ÀÛ¼ºÀÚ: {recipe.writerName ?? "¹Ì»ó"}</span>
-        <span>Á¶È¸¼ö: {recipe.viewCount ?? 0}</span>
+        <span>ì‘ì„±ì: {recipe.writerName ?? "ë¯¸ìƒ"}</span>
+        <span>ì¡°íšŒìˆ˜: {recipe.viewCount ?? 0}</span>
         <span>
-          »ı¼ºÀÏ: {recipe.createdAt.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
+          ìƒì„±ì¼: {recipe.createdAt.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
         </span>
       </footer>
     </article>
   );
 }
+

@@ -1,4 +1,4 @@
-import type { PostgrestError } from "@supabase/supabase-js";
+ï»¿import type { PostgrestError } from "@supabase/supabase-js";
 import type {
   Recipe,
   RecipeInsertInput,
@@ -134,7 +134,7 @@ function fromCursor(cursor: string): { createdAt: string; id: string } | null {
 
 function throwIfError(error: PostgrestError | null, action: string): never | void {
   if (error) {
-    throw new Error(`[recipes] ${action} ½ÇÆĞ: ${error.message}`);
+    throw new Error(`[recipes] ${action} ì‹¤íŒ¨: ${error.message}`);
   }
 }
 
@@ -176,34 +176,31 @@ export async function listRecipes(
   }
 
   const { data, error } = await query;
-  throwIfError(error, "¸ñ·Ï Á¶È¸");
+  throwIfError(error, "ëª©ë¡ ì¡°íšŒ");
 
   if (!data) {
     return { items: [], nextCursor: null };
   }
 
-  const rows = data as RecipeRow[];
+  const rows = data as unknown as RecipeRow[];
   const hasExtra = rows.length > limit;
   const trimmed = hasExtra ? rows.slice(0, limit) : rows;
 
   return {
     items: trimmed.map(mapRowToRecipe),
-    nextCursor: hasExtra ? toCursor(rows[limit]) : null,
+    nextCursor: hasExtra && rows[limit] ? toCursor(rows[limit]) : null,
   };
 }
 
-export async function getRecipe(
-  client: RecipeSupabaseClient,
-  id: string
-): Promise<Recipe | null> {
+export async function getRecipe(client: RecipeSupabaseClient, id: string): Promise<Recipe | null> {
   const { data, error } = await client
     .from("recipes")
     .select(RECIPE_COLUMNS)
     .eq("id", id)
     .maybeSingle();
-  throwIfError(error, "´ÜÀÏ Á¶È¸");
+  throwIfError(error, "ë‹¨ì¼ ì¡°íšŒ");
   if (!data) return null;
-  return mapRowToRecipe(data as RecipeRow);
+  return mapRowToRecipe(data as unknown as RecipeRow);
 }
 
 export async function createRecipe(
@@ -216,11 +213,11 @@ export async function createRecipe(
     .insert(payload)
     .select(RECIPE_COLUMNS)
     .single();
-  throwIfError(error, "»ı¼º");
+  throwIfError(error, "ìƒì„±");
   if (!data) {
-    throw new Error("·¹½ÃÇÇ »ı¼º °á°ú°¡ ºñ¾î ÀÖ½À´Ï´Ù.");
+    throw new Error("ë ˆì‹œí”¼ ìƒì„± ê²°ê³¼ê°€ ë¹„ì–´ ìˆìŠµë‹ˆë‹¤.");
   }
-  return mapRowToRecipe(data as RecipeRow);
+  return mapRowToRecipe(data as unknown as RecipeRow);
 }
 
 export async function updateRecipe(
@@ -235,17 +232,14 @@ export async function updateRecipe(
     .eq("id", id)
     .select(RECIPE_COLUMNS)
     .single();
-  throwIfError(error, "¼öÁ¤");
+  throwIfError(error, "ìˆ˜ì •");
   if (!data) {
-    throw new Error("¼öÁ¤µÈ ·¹½ÃÇÇ¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+    throw new Error("ìˆ˜ì •ëœ ë ˆì‹œí”¼ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
   }
-  return mapRowToRecipe(data as RecipeRow);
+  return mapRowToRecipe(data as unknown as RecipeRow);
 }
 
-export async function removeRecipe(
-  client: RecipeSupabaseClient,
-  id: string
-): Promise<void> {
+export async function removeRecipe(client: RecipeSupabaseClient, id: string): Promise<void> {
   const { error } = await client.from("recipes").delete().eq("id", id);
-  throwIfError(error, "»èÁ¦");
+  throwIfError(error, "ì‚­ì œ");
 }
