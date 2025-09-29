@@ -1,5 +1,10 @@
-// PURPOSE: (선택) Supabase SSR 쿠키 초기화/보안 리다이렉트 등 미들웨어 스켈레톤
-// NOTE: 구현은 추후 필요 시 진행. 현재는 파일 구조만 생성합니다.
+﻿import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export {};
+// No-op middleware: 현재는 아무 것도 하지 않고 그대로 통과합니다.
+export function middleware(_req: NextRequest) {
+  return NextResponse.next();
+}
 
+// 필요 시 특정 경로에만 적용하도록 matcher를 설정할 수 있습니다.
+// export const config = { matcher: ['/recipes/:path*'] };
