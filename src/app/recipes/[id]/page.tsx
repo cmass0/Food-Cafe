@@ -1,7 +1,54 @@
-// PURPOSE: /recipes/[id] 상세 페이지 — repository.get + 수정/삭제 버튼(서버액션) 예정
-// NOTE: 구현은 추후 진행. 현재는 파일 구조만 생성합니다.
+import { notFound } from "next/navigation";
 
-export default function RecipeDetailPlaceholder() {
-  return null;
+import RecipeEditForm from "../_components/RecipeEditForm";
+import DeleteRecipeButton from "../_components/DeleteRecipeButton";
+import { getServerSupabase } from "@/lib/supabase/server";
+import { getRecipe } from "@/features/recipe/service";
+
+type RecipeDetailPageProps = {
+  params: { id: string };
+};
+
+export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
+  const supabase = getServerSupabase();
+  const recipe = await getRecipe(supabase, params.id);
+
+  if (!recipe) {
+    notFound();
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
+      <article className="space-y-2">
+        <h1 className="text-3xl font-semibold">{recipe.title}</h1>
+        {recipe.summary ? <p className="text-base text-foreground/80">{recipe.summary}</p> : null}
+        <dl className="grid grid-cols-2 gap-3 text-sm text-foreground/70">
+          <div>
+            <dt className="font-medium text-foreground">Author</dt>
+            <dd>{recipe.writerName ?? "Anonymous"}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-foreground">Created</dt>
+            <dd>{recipe.createdAt.toLocaleString("ko-KR")}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-foreground">Likes</dt>
+            <dd>{recipe.likeCount}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-foreground">Views</dt>
+            <dd>{recipe.viewCount}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Edit Recipe</h2>
+          <DeleteRecipeButton recipeId={recipe.id} />
+        </div>
+        <RecipeEditForm recipe={recipe} />
+      </section>
+    </main>
+  );
 }
-

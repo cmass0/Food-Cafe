@@ -3,25 +3,28 @@
 // - 쿠키 기반 세션 전파(createServerClient) 예정
 // - 변이(INSERT/UPDATE/DELETE)는 서버에서만 실행 원칙
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { cookies } from "next/headers";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-export function getMiddlewareSupabase(req: NextRequest, res: NextResponse) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            res.cookies.set(name, value, options);
-          });
-        },
+type ServerClient = ReturnType<typeof createServerClient>;
+
+export function getServerSupabase(): ServerClient {
+  const store = cookies();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error("[server] missing env");
+
+  return createServerClient(url, anon, {
+    cookies: {
+      get(name: string) {
+        return store.get(name)?.value;
       },
-    }
-  );
+      set(name: string, value: string, options: CookieOptions) {
+        store.set({ name, value, ...options });
+      },
+      remove(name: string, options: CookieOptions) {
+        store.set({ name, value: "", ...options, maxAge: 0 });
+      },
+    },
+  });
 }
-

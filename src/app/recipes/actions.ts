@@ -1,5 +1,57 @@
-// PURPOSE: ë ˆì‹œí”¼ create/update/delete ì„œë²„ì•¡ì…˜ ìŠ¤ì¼ˆë ˆí†¤
-// NOTE: êµ¬í˜„ì€ ì¶”í›„ ì§„í–‰. í˜„ì¬ëŠ” íŒŒì¼ êµ¬ì¡°ë§Œ ìƒì„±í•©ë‹ˆë‹¤.
+"use server";
 
-export {};
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { ZodError } from "zod";
 
+import { getServerSupabase } from "@/lib/supabase/server";
+import * as recipeService from "@/features/recipe/service";
+import type { RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
+
+function handleError(error: unknown): never {
+  if (error instanceof ZodError) {
+    const first = error.issues.at(0);
+    throw new Error(first?.message ?? "ÀÔ·Â°ªÀ» È®ÀÎÇØ ÁÖ¼¼¿ä.");
+  }
+  if (error instanceof Error) {
+    throw error;
+  }
+  throw new Error("¾Ë ¼ö ¾ø´Â ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.");
+}
+
+export async function createRecipeAction(input: RecipeInsertInput) {
+  try {
+    const supabase = getServerSupabase();
+    const recipe = await recipeService.createRecipe(supabase, input);
+    revalidatePath("/recipes");
+    revalidatePath("/search");
+    redirect(`/recipes/${recipe.id}`);
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+export async function updateRecipeAction(id: string, patch: RecipeUpdateInput) {
+  try {
+    const supabase = getServerSupabase();
+    const recipe = await recipeService.updateRecipe(supabase, id, patch);
+    revalidatePath(`/recipes/${id}`);
+    revalidatePath("/recipes");
+    revalidatePath("/search");
+    return recipe;
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+export async function deleteRecipeAction(id: string) {
+  try {
+    const supabase = getServerSupabase();
+    await recipeService.removeRecipe(supabase, id);
+    revalidatePath("/recipes");
+    revalidatePath("/search");
+    redirect("/recipes");
+  } catch (error) {
+    handleError(error);
+  }
+}

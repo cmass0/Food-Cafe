@@ -3,18 +3,20 @@
 // - NEXT_PUBLIC_SUPABASE_URL
 // - NEXT_PUBLIC_SUPABASE_ANON_KEY
 // 를 사용해 createBrowserClient 구성 예정.
-import type {SupabaseClient} from "@supabase/supabase-js"
-
+// src/lib/supabase/browser.ts
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-let client: SupabaseClient |null = null;
+type BrowserClient = ReturnType<typeof createBrowserClient>;
 
-export function getBrowserSupabase(): SupabaseClient {
-  if (!client) {
-    client = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+const globalForSupabase = globalThis as unknown as { _sbBrowser?: BrowserClient };
+
+export function getBrowserSupabase(): BrowserClient {
+  if (!globalForSupabase._sbBrowser) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anon) throw new Error("[browser] missing env");
+    globalForSupabase._sbBrowser = createBrowserClient(url, anon);
   }
-  return client;
+  return globalForSupabase._sbBrowser!;
 }

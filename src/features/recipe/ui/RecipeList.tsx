@@ -1,7 +1,31 @@
-// PURPOSE: [서버 컴포넌트] 목록 SSR(읽기 전용) — repository.list 호출 예정
-// NOTE: 구현은 추후 진행. 현재는 파일 구조만 생성합니다.
+﻿import type { Recipe } from "../types";
+import RecipeCard from "./RecipeCard";
 
-export default function RecipeListPlaceholder() {
-  return null;
+type RecipeListProps = {
+  recipes: Recipe[];
+  emptyMessage?: string;
+  className?: string;
+};
+
+export default function RecipeList({
+  recipes,
+  emptyMessage = "등록된 레시피가 없습니다.",
+  className,
+}: RecipeListProps) {
+  if (!recipes.length) {
+    return <p className={className}>{emptyMessage}</p>;
+  }
+
+  return (
+    <div className={className}>
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {recipes.map((recipe) => (
+          <li key={recipe.id}>
+            <RecipeCard recipe={recipe} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 

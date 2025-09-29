@@ -1,7 +1,15 @@
-// PURPOSE: /recipes/new ì‘ì„± í˜ì´ì§€ â€” RecipeForm + ì„œë²„ì•¡ì…˜(create) ì—°ê²° ì˜ˆì •
-// NOTE: êµ¬í˜„ì€ ì¶”í›„ ì§„í–‰. í˜„ì¬ëŠ” íŒŒì¼ êµ¬ì¡°ë§Œ ìƒì„±í•©ë‹ˆë‹¤.
+import CreateRecipeForm from "../_components/CreateRecipeForm";
 
-export default function RecipesNewPlaceholder() {
-  return null;
+export default function NewRecipePage() {
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-semibold">·¹½ÃÇÇ µî·Ï</h1>
+        <p className="text-sm text-foreground/70">
+          »õ·Î¿î ·¹½ÃÇÇ¸¦ ÀÛ¼ºÇÏ°í ÀúÀåÇÏ¸é ÀÚµ¿À¸·Î »ó¼¼ ÆäÀÌÁö·Î ÀÌµ¿ÇÕ´Ï´Ù.
+        </p>
+      </header>
+      <CreateRecipeForm />
+    </main>
+  );
 }
-
