@@ -13,6 +13,7 @@
   "dependencies": {
     "@heroui/react": "^2.8.4",
     "@modelcontextprotocol/sdk": "^1.18.2",
+    "@supabase/ssr": "^0.7.0",
     "classnames": "^2.5.1",
     "cors": "^2.8.5",
     "firebase": "^11.10.0",
