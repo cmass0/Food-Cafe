@@ -1,0 +1,12 @@
+.searchlist {
+  width: 90%;
+  /* margin-left: 20px; */
+  margin-bottom: 50px;
+}
+
+.searchlist li {
+  list-style: none;
+}
+.searchlist ul {
+  padding-left: 5px;
+}

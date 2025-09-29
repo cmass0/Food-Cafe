@@ -1,0 +1,157 @@
+﻿.commentarea {
+  margin: auto;
+  max-width: 60rem;
+}
+
+.commentarea li {
+  list-style: none;
+  padding: 20px 0;
+  border-bottom: solid 1px rgb(170, 170, 170);
+}
+
+.commentarea ul {
+  padding-left: 0;
+  margin: 0;
+  border-top: solid 2px rgb(43, 78, 28);
+}
+
+.textarea {
+  margin-top: 20px;
+}
+
+.modalCard {
+  width: 520px;
+  max-width: min(96vw, 520px);
+  border-radius: 18px;
+  border: 1px solid #f5cfcf;
+  box-shadow: none;
+  font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: #ffffff;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 26px 0 26px;
+}
+
+.modalHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #d7443f;
+  font-weight: 700;
+  font-size: 1.08rem;
+}
+
+.modalIcon {
+  color: #d7443f;
+}
+
+.modalTitle {
+  margin: 0;
+}
+
+.modalCloseButton {
+  color: #b0b0b0;
+}
+
+.modalBody {
+  padding: 16px 26px 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background-color: #fde3e1;
+  color: #ba2b28;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.modalWarningIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.modalText {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: #111217;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 0 26px 24px 26px;
+}
+
+.modalCancelButton {
+  background-color: #f1f2f6;
+  color: #383a46;
+}
+
+.modalCancelButton:hover {
+  background-color: #e5e7ec;
+}
+
+.modalDeleteButton {
+  background-color: #d7443f;
+  color: #ffffff;
+}
+
+.modalDeleteButton:hover {
+  background-color: #ba2b28;
+}
+
+.submitbtn {
+  cursor: pointer;
+  background-color: rgb(54, 106, 21);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px;
+}
+
+.creator {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.creatorbar {
+  margin-right: 5px;
+  font-weight: bold;
+  color: rgb(54, 106, 21);
+}
+
+.comment {
+  font-size: 14px;
+}
+
+.contentcontainer {
+  margin-left: 15px;
+}
+
+.deletebtn {
+  float: right;
+  cursor: pointer;
+}
+
+.commentdate {
+  margin-left: 10px;
+  display: flex;
+  gap: 5px;
+}

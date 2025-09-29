@@ -1,0 +1,43 @@
+.display img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.display {
+  box-shadow: 0 0px 0px 1px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.mealsinfocontainer a {
+  text-decoration: none;
+  color: black;
+}
+
+.postcontainer {
+  padding-left: 20px;
+}
+
+.postcontainer a {
+  text-decoration: none;
+  font-weight: bold;
+  color: rgb(55, 61, 58);
+}
+
+.searchimg {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.searchdetail {
+  font-weight: bold;
+}
+
+.creatortext {
+  font-weight: bold;
+}

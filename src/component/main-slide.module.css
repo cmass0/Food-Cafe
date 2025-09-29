@@ -1,0 +1,26 @@
+.active {
+  z-index: 1;
+  animation: fadein 3s;
+}
+@keyframes fadein {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slidebox {
+  position: relative;
+  width: 450px;
+  height: 350px;
+  box-shadow: 5px, 5px, 5px, 5px rgb(134, 8, 8);
+  border-radius: 10px;
+}
+
+.slidebox img {
+  position: absolute;
+  border-radius: 10px;
+  opacity: 0;
+}

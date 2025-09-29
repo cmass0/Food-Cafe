@@ -1,0 +1,153 @@
+.container {
+  max-width: 1000px;
+  margin: 2.5rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.heading {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  height: 900px;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-left: 30px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #36752e;
+  box-shadow: 0 0 5px rgba(108, 99, 255, 0.3);
+}
+
+.editor {
+  height: 500px;
+  border: 1px 1px 0 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+.editor .ql-editor {
+  min-height: 200px;
+}
+
+.buttonContainer {
+  justify-content: flex-end;
+}
+
+.button {
+  width: 130px;
+  height: 50px;
+  font-weight: bold;
+  color: white;
+  border-radius: 5px;
+  background-color: #329929;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 2rem;
+}
+
+.button:hover {
+  background-color: #1c5f28;
+}
+
+.preview {
+  margin-top: 70px;
+}
+
+.btnarea {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  /* border: solid 1px black; */
+}
+
+.canclebtn {
+  width: 60px;
+  height: 50px;
+  font-weight: bold;
+  color: white;
+  border-radius: 5px;
+  background-color: #329929;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 2rem;
+}
+
+.canclebtn:hover {
+  background-color: #1c5f28;
+}
+
+.requirelogin {
+  width: 400px;
+  height: 100px;
+}
+
+.modalclosebtn {
+  width: 20px;
+  height: 20px;
+  float: right;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: solid 1px rgb(214, 214, 214);
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.modaltext {
+  text-align: center;
+  transform: translateY(170%);
+  font-weight: bold;
+}
+
+.deletebtnbox {
+  display: flex;
+  justify-content: end;
+  align-items: flex-end;
+  height: 80px;
+  gap: 10px;
+}
+
+.deleteselectbtn {
+  background-color: rgb(54, 106, 21);
+  cursor: pointer;
+  height: 25px;
+  border: none;
+  color: white;
+  border-radius: 3px;
+}
+
+.deleteselectbtn:hover {
+  background-color: rgb(47, 71, 32);
+}

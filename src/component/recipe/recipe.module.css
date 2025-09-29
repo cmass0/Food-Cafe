@@ -1,0 +1,126 @@
+﻿.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.header {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 70%;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.imageFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 0.95rem;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem 0.5rem;
+}
+
+.writer {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.92);
+  line-height: 1.35;
+}
+
+.summary {
+  font-size: 0.95rem;
+  color: rgba(15, 23, 42, 0.72);
+  line-height: 1.45;
+  min-height: 3.6rem;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 1.1rem 1rem;
+}
+
+.metrics {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.metricChip {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.7);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.65) 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .imageFallback {
+    background: rgba(148, 163, 184, 0.14);
+    color: rgba(226, 232, 240, 0.65);
+  }
+
+  .body {
+    color: rgba(226, 232, 240, 0.92);
+  }
+
+  .writer {
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  .title {
+    color: rgba(226, 232, 240, 0.96);
+  }
+
+  .summary {
+    color: rgba(226, 232, 240, 0.78);
+  }
+
+  .metrics {
+    color: rgba(226, 232, 240, 0.88);
+  }
+
+  .metricChip {
+    background: rgba(148, 163, 184, 0.16);
+    color: rgba(226, 232, 240, 0.88);
+  }
+}
+
