@@ -115,17 +115,20 @@ create index if not exists idx_user_likes_recipe on public.user_likes(recipe_id)
 -- RLS
 alter table public.user_likes enable row level security;
 
-create or replace policy user_likes_select_all
+drop policy if exists user_likes_select_all on public.user_likes;
+create policy user_likes_select_all
 on public.user_likes for select
 to public
 using (true);
 
-create or replace policy user_likes_insert_self
+drop policy if exists user_likes_insert_self on public.user_likes;
+create policy user_likes_insert_self
 on public.user_likes for insert
 to authenticated
 with check (user_id = auth.uid());
 
-create or replace policy user_likes_delete_self
+drop policy if exists user_likes_delete_self on public.user_likes;
+create policy user_likes_delete_self
 on public.user_likes for delete
 to authenticated
 using (user_id = auth.uid());
@@ -134,25 +137,31 @@ using (user_id = auth.uid());
 -- 필요한 경우에만 활성화/갱신하세요. (이미 있다면 스킵됨)
 alter table public.users enable row level security;
 
-create or replace policy users_select_all
+drop policy if exists users_select_all on public.users;
+create policy users_select_all
 on public.users for select
 to public
 using (true);
 
-create or replace policy users_insert_self_or_admin
+drop policy if exists users_insert_self_or_admin on public.users;
+create policy users_insert_self_or_admin
 on public.users for insert
 to authenticated
 with check (id = auth.uid() or is_admin(auth.uid()));
 
-create or replace policy users_update_self_or_admin
+drop policy if exists users_update_self_or_admin on public.users;
+create policy users_update_self_or_admin
 on public.users for update
 to authenticated
 using (id = auth.uid() or is_admin(auth.uid()))
 with check (id = auth.uid() or is_admin(auth.uid()));
 
-create or replace policy users_delete_admin_only
+drop policy if exists users_delete_admin_only on public.users;
+create policy users_delete_admin_only
 on public.users for delete
 to authenticated
 using (is_admin(auth.uid()));
 
 commit;
+
+

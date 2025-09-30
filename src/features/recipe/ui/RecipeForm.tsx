@@ -37,7 +37,7 @@ export default function RecipeForm({
       title,
       summary: summary.length ? summary : null,
       recipe: body,
-      image: image.length ? image : null,
+      image: image,
       tags,
       images: defaultValues?.images,
       category: defaultValues?.category,
@@ -131,6 +131,3 @@ export default function RecipeForm({
     </form>
   );
 }
-
-
-
