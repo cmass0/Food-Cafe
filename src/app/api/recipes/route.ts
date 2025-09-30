@@ -1,7 +1,6 @@
-﻿// src/app/api/recipes/route.ts
 import { recipeInsertSchema } from "@/features/recipe/schema";
-import { getServerSupabase } from "@/lib/supabase/server";
 import * as service from "@/features/recipe/service";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,8 +13,8 @@ export async function GET(req: Request) {
     const cursor = url.searchParams.get("cursor") ?? undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
 
-    const sb = getServerSupabase();
-    const data = await service.listRecipes(sb as any, { limit, cursor, writerUid });
+    const supabase = getServerSupabase();
+    const data = await service.listRecipes(supabase, { limit, cursor, writerUid });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("/api/recipes GET failed", error);
@@ -34,11 +33,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const sb = getServerSupabase();
-    const created = await service.createRecipe(sb as any, parsed.data);
+    const supabase = getServerSupabase();
+    const created = await service.createRecipe(supabase, parsed.data);
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
     console.error("/api/recipes POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
+
