@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
-import { Github, Apple, Mail } from "lucide-react";
+import { Github, Apple } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,43 +15,48 @@ type AuthButton = {
   label: string;
   icon?: React.ReactNode;
   imageSrc?: string;
-  imageAlt?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
 };
 
 const AUTH_BUTTONS: AuthButton[] = [
   {
     provider: "google",
-    label: "Sign in with Google",
-    icon: <Mail className="h-4 w-4" />,
-    variant: "outline",
+    label: "Google로 로그인",
+    imageSrc: "/brand/auth/web_neutral_sq_SI@4x.png",
   },
   {
     provider: "github",
-    label: "Sign in with GitHub",
+    label: "GitHub로 로그인",
     icon: <Github className="h-4 w-4" />,
     variant: "outline",
   },
   {
     provider: "kakao",
     label: "카카오로 로그인",
-    imageSrc: "/auth/kakao-login.png",
-  },
-  {
-    provider: "apple",
-    label: "Sign in with Apple",
-    icon: <Apple className="h-4 w-4" />,
-    variant: "outline",
+    imageSrc: "/brand/auth/kakao_login_medium_narrow.png",
   },
 ];
 
-function signIn(provider: Provider) {
+
+
+function getScope(provider: Provider) {
+  if (provider === "kakao") {
+    return "profile_nickname account_email";
+  }
+  if (provider === "google") {
+    return "profile email";
+  }
+  return undefined;
+}
+
+async function signIn(provider: Provider) {
   const supabase = getBrowserSupabase();
-  const next = new URLSearchParams(window.location.search).get("next") ?? "/profile";
-  return supabase.auth.signInWithOAuth({
+  const scopes = getScope(provider);
+  await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: `${location.origin}/auth/callback`,
+      scopes,
     },
   });
 }
@@ -59,43 +64,30 @@ function signIn(provider: Provider) {
 export default function AuthButtons({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc }) => {
-        const handleClick = () => signIn(provider);
-
-        if (imageSrc) {
-          return (
-            <button
-              key={provider}
-              type="button"
-              onClick={handleClick}
-              className="relative flex items-center justify-center"
-              aria-label={label}
-            >
-              <Image
-                src={imageSrc}
-                alt={label}
-                width={312}
-                height={45}
-                className="h-11 w-auto"
-                priority
-              />
-            </button>
-          );
-        }
-
-        return (
+      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc }) => (
+        imageSrc ? (
+          <button
+            key={provider}
+            type="button"
+            onClick={() => signIn(provider)}
+            className="relative flex items-center justify-center"
+            aria-label={label}
+          >
+            <Image src={imageSrc} alt={label} width={312} height={45} className="h-11 w-auto" priority />
+          </button>
+        ) : (
           <Button
             key={provider}
             variant={variant}
             className="justify-start gap-2"
-            onClick={handleClick}
+            onClick={() => signIn(provider)}
             type="button"
           >
             {icon}
             <span>{label}</span>
           </Button>
-        );
-      })}
+        )
+      ))}
     </div>
   );
 }

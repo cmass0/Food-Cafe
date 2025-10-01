@@ -1,4 +1,4 @@
-import Link from "next/link";
+ï»¿import Link from "next/link";
 
 import * as userRepo from "@/features/user/repository";
 import ProfileForm from "@/features/user/ui/ProfileForm";
@@ -11,9 +11,9 @@ export default async function ProfilePage() {
   if (!me) {
     return (
       <main className="grid gap-4 p-6">
-        <p>·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.</p>
+        <p>ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.</p>
         <Link href="/auth/signin" className="text-primary underline">
-          ·Î±×ÀÎÇÏ·¯ °¡±â
+          ë¡œê·¸ì¸í•˜ëŸ¬ ê°€ê¸°
         </Link>
       </main>
     );
@@ -22,12 +22,13 @@ export default async function ProfilePage() {
   return (
     <main className="grid gap-6 p-6">
       <section className="space-y-2">
-        <h1 className="text-xl font-bold">³» ÇÁ·ÎÇÊ</h1>
-        <div>ÀÌ¸ŞÀÏ: {me.email ?? "-"}</div>
-        <div>ÀÌ¸§: {me.display_name ?? "-"}</div>
+        <h1 className="text-xl font-bold">ë‚´ í”„ë¡œí•„</h1>
+        <div>ì´ë©”ì¼: {me.email ?? "-"}</div>
+        <div>ì´ë¦„: {me.display_name ?? "-"}</div>
       </section>
-      <ProfileForm defaultName={me.display_name} defaultAvatar={me.avatar_url} />
+      <ProfileForm defaultName={me.display_name} defaultAvatar={me.photo_url} />
     </main>
   );
 }
+
 

@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 
@@ -10,12 +10,11 @@ export async function updateProfileAction(formData: FormData) {
   await requireAuth();
 
   const payload = UserUpdateSchema.parse({
-    display_name: formData.get("display_name"),
-    avatar_url: formData.get("avatar_url"),
+    display_name: formData.get("display_name")?.toString(),
+    photo_url: formData.get("photo_url")?.toString(),
   });
 
   const updated = await userRepo.updateSelf(payload);
   revalidatePath("/profile");
   return updated.id;
 }
-

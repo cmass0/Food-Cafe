@@ -1,18 +1,19 @@
-import { z } from "zod";
+ï»¿import { z } from "zod";
 
 export const UserUpdateSchema = z.object({
   display_name: z
     .string()
-    .min(1, "ÀÌ¸§À» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
-    .max(40, "ÀÌ¸§Àº 40ÀÚ¸¦ ³ÑÀ» ¼ö ¾ø½À´Ï´Ù.")
+    .min(1, "ì´ë¦„ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
+    .max(40, "ì´ë¦„ì€ 40ìë¥¼ ë„˜ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.")
     .optional()
     .nullable(),
-  avatar_url: z
+  photo_url: z
     .string()
-    .url("¿Ã¹Ù¸¥ URLÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.")
+    .url("ì˜¬ë°”ë¥¸ URLì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.")
     .optional()
     .nullable(),
 });
 
 export type UserUpdateInput = z.infer<typeof UserUpdateSchema>;
+
 
