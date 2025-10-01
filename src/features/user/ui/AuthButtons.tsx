@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
-import { Github, Apple } from "lucide-react";
+import { Github } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
