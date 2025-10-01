@@ -4,7 +4,14 @@ import * as React from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +27,10 @@ export default function LoginPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email || !password) {
-      setError("ÀÌ¸ŞÀÏ°ú ºñ¹Ğ¹øÈ£¸¦ ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
+      setError("ì´ë©”ì¼ê³¼ ë¹„ë°€ë²ˆí˜¸ë¥¼ ì…ë ¥í•´ì£¼ì„¸ìš”.");
       return;
     }
-    setError("ÀÌ¸ŞÀÏ/ºñ¹Ğ¹øÈ£ ·Î±×ÀÎÀº ÁØºñ ÁßÀÔ´Ï´Ù. ¼Ò¼È ·Î±×ÀÎÀ» ÀÌ¿ëÇØ ÁÖ¼¼¿ä.");
+    setError("ì´ë©”ì¼/ë¹„ë°€ë²ˆí˜¸ ë¡œê·¸ì¸ì´ ì¤€ë¹„ ì¤‘ì…ë‹ˆë‹¤. ì†Œì…œ ë¡œê·¸ì¸ì„ ì´ìš©í•´ì£¼ì„¸ìš”.");
   };
 
   return (
@@ -33,13 +40,13 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-3xl font-semibold text-primary">Food Cafe</CardTitle>
             <CardDescription className="text-base">
-              ÀÌ¸ŞÀÏ·Î ·Î±×ÀÎÇÏ°Å³ª, ¾Æ·¡ÀÇ ¼Ò¼È °èÁ¤À» ¼±ÅÃÇØ °è¼ÓÇÒ ¼ö ÀÖ½À´Ï´Ù.
+              1111111111111111111111111111111
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={handleSubmit}>
               <div className="grid gap-2">
-                <Label htmlFor="email">ÀÌ¸ŞÀÏ</Label>
+                <Label htmlFor="email">ì´ë©”ì¼</Label>
                 <Input
                   id="email"
                   type="email"
@@ -50,11 +57,11 @@ export default function LoginPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="password">ºñ¹Ğ¹øÈ£</Label>
+                <Label htmlFor="password">ë¹„ë°€ë²ˆí˜¸</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="ºñ¹Ğ¹øÈ£"
+                  placeholder="ë¹„ë°€ë²ˆí˜¸"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"
@@ -64,49 +71,51 @@ export default function LoginPage() {
                 <label className="flex items-center gap-2 font-medium text-muted-foreground">
                   <Checkbox
                     checked={keepSignedIn}
-                    onCheckedChange={(checked) => setKeepSignedIn(Boolean(checked))}
+                    onCheckedChange={(checked: boolean | "indeterminate") =>
+                      setKeepSignedIn(checked === true)
+                    }
                     id="keepSignedIn"
                   />
-                  <span>·Î±×ÀÎ »óÅÂ À¯Áö</span>
+                  <span>ë¡œê·¸ì¸ ìƒíƒœ ìœ ì§€</span>
                 </label>
                 <Link href="/reset-password" className="text-sm text-primary hover:underline">
-                  ºñ¹Ğ¹øÈ£ Ã£±â
+                  ë¹„ë°€ë²ˆí˜¸ ì°¾ê¸°
                 </Link>
               </div>
               {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
               <Button className="w-full" type="submit">
-                ÀÌ¸ŞÀÏ·Î °è¼ÓÇÏ±â
+                ì´ë©”ì¼ë¡œ ë¡œê·¸ì¸
               </Button>
             </form>
             <Separator className="my-6" />
             <div className="grid gap-3">
-              <p className="text-sm font-medium text-muted-foreground">¼Ò¼È °èÁ¤À¸·Î ºü¸£°Ô ·Î±×ÀÎÇÏ±â</p>
+              <p className="text-sm font-medium text-muted-foreground">ì†Œì…œ ê³„ì •ìœ¼ë¡œ ë¡œê·¸ì¸í•˜ê¸°</p>
               <AuthButtons />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col items-start gap-2 text-sm text-muted-foreground">
-            <div>Food Cafe¿Í ÇÔ²² ´Ù¾çÇÑ ·¹½ÃÇÇ¿Í Ä¿¹Â´ÏÆ¼ È°µ¿À» Áñ°Üº¸¼¼¿ä.</div>
+            <div>Food Cafeì™€ í•¨ê»˜ ë‹¤ì–‘í•œ ë ˆì‹œí”¼ë¡œ ì»¤ë®¤ë‹ˆí‹° í™œë™ì„ ì¦ê²¨ë³´ì„¸ìš”.</div>
             <div className="text-xs text-muted-foreground/80">
-              ÀÌ¸ŞÀÏ ·Î±×ÀÎÀº ÃßÈÄ Supabase Auth·Î ±³Ã¼µÉ ¿¹Á¤ÀÔ´Ï´Ù.
+              ì´ë©”ì¼ ë¡œê·¸ì¸ì˜ ì²˜ë¦¬ëŠ” Supabase Authë¥¼ í†µí•´ ì•ˆì „í•˜ê²Œ ì´ë£¨ì–´ì§‘ë‹ˆë‹¤.
             </div>
           </CardFooter>
         </Card>
 
         <Card className="hidden h-full flex-col justify-between bg-primary text-primary-foreground p-10 shadow-lg md:flex">
           <div className="space-y-4">
-            <CardTitle className="text-3xl">Food Cafe¿¡ ¿À½Å °É È¯¿µÇÕ´Ï´Ù!</CardTitle>
+            <CardTitle className="text-3xl">Food Cafeì— ì˜¤ì‹  ê±¸ í™˜ì˜í•©ë‹ˆë‹¤!</CardTitle>
             <CardDescription className="text-base text-primary-foreground/90">
-              ³ª¸¸ÀÇ ·¹½ÃÇÇ¸¦ °øÀ¯ÇÏ°í, ´Ù¸¥ »ç¶÷µé°ú ¾ÆÀÌµğ¾î¸¦ ³ª´©¸ç ¿µ°¨À» ¹Ş¾Æº¸¼¼¿ä.
+              ë§›ìˆëŠ” ë ˆì‹œí”¼ë¥¼ ê³µìœ í•˜ê³ , ë‹¤ë¥¸ ì‚¬ìš©ìë“¤ì˜ ì•„ì´ë””ì–´ë¥¼ ì°¸ê³ í•´ ë³´ì„¸ìš”.
             </CardDescription>
           </div>
           <div className="space-y-4 text-sm text-primary-foreground/80">
-            <p>? ÁÁ¾ÆÇÏ´Â ·¹½ÃÇÇ¸¦ ÀúÀåÇÏ°í ¾ğÁ¦µç ´Ù½Ã È®ÀÎÇÒ ¼ö ÀÖ¾î¿ä.</p>
-            <p>? ½Ç½Ã°£ ´ñ±Û°ú ÁÁ¾Æ¿ä·Î Ä¿¹Â´ÏÆ¼¿Í ¼ÒÅëÇØ º¸¼¼¿ä.</p>
-            <p>? ·Î±×ÀÎ ¹®Á¦´Â support@foodcafe.com À¸·Î ¹®ÀÇ ÁÖ¼¼¿ä.</p>
+            <p>- ì¦ê²¨ì°¾ëŠ” ë ˆì‹œí”¼ë¥¼ ì €ì¥í•˜ê³  ì–¸ì œë“ ì§€ ë‹¤ì‹œ í™•ì¸í•  ìˆ˜ ìˆì–´ìš”.</p>
+            <p>- ì‹¤ì‹œê°„ ì¸ê¸° ë©”ë‰´ì™€ ì£¼ê°„ ì»¤ë®¤ë‹ˆí‹° ì¶”ì²œì„ ë§Œë‚˜ë³´ì„¸ìš”.</p>
+            <p>- ë¡œê·¸ì¸ ê´€ë ¨ ë¬¸ì˜ëŠ” support@foodcafe.com ìœ¼ë¡œ ì—°ë½í•´ì£¼ì„¸ìš”.</p>
           </div>
           <div>
             <p className="text-xs text-primary-foreground/60">
-              Food Cafe´Â »ç¿ëÀÚÀÇ Æí¸®ÇÏ°í ¾ÈÀüÇÑ ÀÌ¿ëÀ» À§ÇØ Supabase ÀÎÁõÀ» »ç¿ëÇÕ´Ï´Ù.
+              Food CafeëŠ” ì‚¬ìš©ì ë°ì´í„°ë¥¼ ì†Œì¤‘íˆ ë‹¤ë£¨ë©°, ì¸ì¦ì€ Supabase ì„œë¹„ìŠ¤ë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤.
             </p>
           </div>
         </Card>
