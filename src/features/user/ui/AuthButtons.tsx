@@ -16,6 +16,7 @@ type AuthButton = {
   icon?: React.ReactNode;
   imageSrc?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
+  className?: string;
 };
 
 const AUTH_BUTTONS: AuthButton[] = [
@@ -28,7 +29,7 @@ const AUTH_BUTTONS: AuthButton[] = [
     provider: "github",
     label: "GitHub로 로그인",
     icon: <Github className="h-4 w-4" />,
-    variant: "outline",
+    className: "bg-black text-white hover:bg-black/80 border-transparent",
   },
   {
     provider: "kakao",
@@ -36,8 +37,6 @@ const AUTH_BUTTONS: AuthButton[] = [
     imageSrc: "/brand/auth/kakao_login_medium_narrow.png",
   },
 ];
-
-
 
 function getScope(provider: Provider) {
   if (provider === "kakao") {
@@ -64,7 +63,7 @@ async function signIn(provider: Provider) {
 export default function AuthButtons({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc }) => (
+      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc, className: extraClassName }) => (
         imageSrc ? (
           <button
             key={provider}
@@ -79,7 +78,7 @@ export default function AuthButtons({ className }: { className?: string }) {
           <Button
             key={provider}
             variant={variant}
-            className="justify-start gap-2"
+            className={cn("justify-start gap-2", extraClassName)}
             onClick={() => signIn(provider)}
             type="button"
           >
