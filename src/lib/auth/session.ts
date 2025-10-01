@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function getUserOrNull() {
   const { data, error } = await getServerSupabase().auth.getUser();
@@ -9,8 +9,7 @@ export async function getUserOrNull() {
 export async function requireAuth() {
   const user = await getUserOrNull();
   if (!user) {
-    throw new Error("·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.");
+    throw new Error("ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½.");
   }
   return user;
 }
-

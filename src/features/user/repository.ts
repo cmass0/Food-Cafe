@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase";
+import { getServerSupabase } from "@/lib/supabase/server";
 import type { UserRow, UserUpdate } from "./types";
 
 export async function getSelf(): Promise<UserRow | null> {
@@ -22,7 +22,7 @@ export async function updateSelf(patch: UserUpdate): Promise<UserRow> {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError) throw authError;
-  if (!user) throw new Error("·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.");
+  if (!user) throw new Error("ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½.");
 
   const { data, error } = await supabase
     .from("users")
@@ -33,4 +33,3 @@ export async function updateSelf(patch: UserUpdate): Promise<UserRow> {
   if (error) throw error;
   return data as UserRow;
 }
-
