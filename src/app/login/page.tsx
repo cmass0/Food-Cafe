@@ -238,7 +238,6 @@ export default function LoginPage() {
 
           <Separator className="my-6" />
           <div className="grid gap-3">
-            <p className="text-sm font-medium text-muted-foreground">소셜 계정으로 로그인</p>
             <AuthButtons />
           </div>
         </CardContent>
