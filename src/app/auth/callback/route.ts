@@ -8,22 +8,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/auth/signin?error=missing-supabase-config", req.url));
   }
 
-  const next = req.nextUrl.searchParams.get("next") ?? "/profile";
+  const rawNext = req.nextUrl.searchParams.get("next") ?? "/profile";
+  const next = rawNext.startsWith("/") ? rawNext : "/profile";
   const response = NextResponse.redirect(new URL(next, req.url));
 
   const supabase = createServerClient(url, anon, {
     cookies: {
-      get: (name) => req.cookies.get(name)?.value,
-      set: (name, value, options: CookieOptions) => {
-        response.cookies.set({ name, value, ...options });
+      getAll() {
+        return req.cookies.getAll();
       },
-      remove: (name, options: CookieOptions) => {
-        response.cookies.set({ name, value: "", ...options, maxAge: 0 });
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        );
       },
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(req.nextUrl);
+  const { error } = await supabase.auth.exchangeCodeForSession(req.nextUrl.toString());
   if (error) {
     return NextResponse.redirect(
       new URL(`/auth/signin?error=${encodeURIComponent(error.message)}`, req.url)
@@ -32,4 +34,3 @@ export async function GET(req: NextRequest) {
 
   return response;
 }
-
