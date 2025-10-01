@@ -1,167 +1,166 @@
 -- =========================================================
 --  users / recipes / user_likes migration (idempotent)
---  Note: 실제 DB에서 이미지 컬럼명이 image_path 라면 아래의 image 레퍼런스를 image_path 로 교체하세요.
+--  Note: if your database uses `image_path` instead of `image`, replace the column name accordingly.
 -- =========================================================
 begin;
 
--- 0) 안전 가드: 스키마 존재
+-- 0) Safety guard: ensure schema exists
 create schema if not exists public;
 
--- 1) USERS: 컬럼 표준화 및 보강
-do $$
-begin
-  -- rename columns if exist
-  if exists (select 1 from information_schema.columns
-             where table_schema='public' and table_name='users' and column_name='displayname') then
-    alter table public.users rename column displayname to display_name;
-  end if;
+-- 1) USERS: column normalization and missing fields
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'displayname'
+  ) THEN
+    ALTER TABLE public.users RENAME COLUMN displayname TO display_name;
+  END IF;
 
-  if exists (select 1 from information_schema.columns
-             where table_schema='public' and table_name='users' and column_name='create_At') then
-    alter table public.users rename column create_At to created_at;
-  end if;
-end $$;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'create_At'
+  ) THEN
+    ALTER TABLE public.users RENAME COLUMN create_At TO created_at;
+  END IF;
+END $$;
 
--- missing columns
-alter table if exists public.users
-  add column if not exists email        text,
-  add column if not exists updated_at   timestamptz default now();
+ALTER TABLE IF EXISTS public.users
+  ADD COLUMN IF NOT EXISTS email      text,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
--- 파생(admin): role='admin'이면 true
-do $$
-begin
-  if not exists (select 1 from information_schema.columns
-                 where table_schema='public' and table_name='users' and column_name='is_admin') then
-    alter table public.users
-      add column is_admin boolean generated always as (role = 'admin') stored;
-  end if;
-end $$;
+-- derived column: role = 'admin' => true
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_admin'
+  ) THEN
+    ALTER TABLE public.users
+      ADD COLUMN is_admin boolean GENERATED ALWAYS AS (role = 'admin') STORED;
+  END IF;
+END $$;
 
--- (선택) 없으면 is_admin(uid) 함수 생성 - SECURITY DEFINER
-do $$
-begin
-  if not exists (
-    select 1 from pg_proc p
-    join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname='is_admin'
-  ) then
-    create or replace function public.is_admin(uid uuid)
-    returns boolean
-    language sql
-    security definer
-    stable
-    as $fn$
-      select coalesce(u.is_admin, false)
-      from public.users u
-      where u.id = uid
+-- optional helper function: create if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'is_admin'
+  ) THEN
+    CREATE OR REPLACE FUNCTION public.is_admin(uid uuid)
+    RETURNS boolean
+    LANGUAGE sql
+    SECURITY DEFINER
+    STABLE
+    AS $fn$
+      SELECT coalesce(u.is_admin, false)
+      FROM public.users u
+      WHERE u.id = uid
     $fn$;
-    comment on function public.is_admin(uuid) is 'Return true if users.is_admin for the given uid';
-  end if;
-end $$;
+    COMMENT ON FUNCTION public.is_admin(uuid) IS 'Return true if users.is_admin for the given uid.';
+  END IF;
+END $$;
 
--- 2) RECIPES: 작성자 FK + 자동 주입 트리거 + 이미지 규칙
--- FK (존재 확인 후 추가)
-do $$
-begin
-  if not exists (
-    select 1 from information_schema.table_constraints
-    where table_schema='public' and table_name='recipes' and constraint_name='recipes_writer_fk'
-  ) then
-    alter table public.recipes
-      add constraint recipes_writer_fk
-      foreign key (writer_uid) references public.users(id)
-      on delete set null;
-  end if;
-end $$;
+-- 2) RECIPES: writer FK, trigger, image constraint
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'recipes'
+      AND constraint_name = 'recipes_writer_fk'
+  ) THEN
+    ALTER TABLE public.recipes
+      ADD CONSTRAINT recipes_writer_fk
+      FOREIGN KEY (writer_uid) REFERENCES public.users(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
 
--- writer_uid 자동 주입 트리거 (없으면 생성/갱신)
-create or replace function public.set_writer_uid()
-returns trigger language plpgsql as $$
-begin
-  if new.writer_uid is null then
-    new.writer_uid := auth.uid();
-  end if;
-  return new;
-end; $$;
+CREATE OR REPLACE FUNCTION public.set_writer_uid()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.writer_uid IS NULL THEN
+    NEW.writer_uid := auth.uid();
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
-drop trigger if exists trg_recipes_set_writer on public.recipes;
-create trigger trg_recipes_set_writer
-before insert on public.recipes
-for each row execute function public.set_writer_uid();
+DROP TRIGGER IF EXISTS trg_recipes_set_writer ON public.recipes;
+CREATE TRIGGER trg_recipes_set_writer
+BEFORE INSERT ON public.recipes
+FOR EACH ROW EXECUTE FUNCTION public.set_writer_uid();
 
--- 이미지 필수 CHECK (빈 문자열 방지). NOT NULL은 레거시 백필 완료 후 별도 적용 권장.
-alter table public.recipes
-  drop constraint if exists recipes_image_required;
+ALTER TABLE public.recipes
+  DROP CONSTRAINT IF EXISTS recipes_image_required;
 
-alter table public.recipes
-  add constraint recipes_image_required
-  check (coalesce(nullif(trim(image), ''), null) is not null);
+ALTER TABLE public.recipes
+  ADD CONSTRAINT recipes_image_required
+  CHECK (coalesce(nullif(trim(image), ''), NULL) IS NOT NULL);
 
--- 필요 시, 백필 완료 후 아래 주석 해제
--- alter table public.recipes
---   alter column image set not null;
-
--- 3) USER_LIKES: 연결 테이블 + 인덱스 + RLS
-create table if not exists public.user_likes (
-  user_id   uuid not null references public.users(id)   on delete cascade,
-  recipe_id uuid not null references public.recipes(id) on delete cascade,
-  created_at timestamptz default now(),
-  primary key (user_id, recipe_id)
+-- 3) USER_LIKES table + indexes + RLS policies
+CREATE TABLE IF NOT EXISTS public.user_likes (
+  user_id    uuid NOT NULL REFERENCES public.users(id)   ON DELETE CASCADE,
+  recipe_id  uuid NOT NULL REFERENCES public.recipes(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (user_id, recipe_id)
 );
 
-create index if not exists idx_user_likes_user   on public.user_likes(user_id);
-create index if not exists idx_user_likes_recipe on public.user_likes(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_user_likes_user   ON public.user_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_likes_recipe ON public.user_likes(recipe_id);
 
--- RLS
-alter table public.user_likes enable row level security;
+ALTER TABLE public.user_likes ENABLE ROW LEVEL SECURITY;
 
-drop policy if exists user_likes_select_all on public.user_likes;
-create policy user_likes_select_all
-on public.user_likes for select
-to public
-using (true);
+DROP POLICY IF EXISTS user_likes_select_all ON public.user_likes;
+CREATE POLICY user_likes_select_all
+ON public.user_likes FOR SELECT
+TO public
+USING (true);
 
-drop policy if exists user_likes_insert_self on public.user_likes;
-create policy user_likes_insert_self
-on public.user_likes for insert
-to authenticated
-with check (user_id = auth.uid());
+DROP POLICY IF EXISTS user_likes_insert_self ON public.user_likes;
+CREATE POLICY user_likes_insert_self
+ON public.user_likes FOR INSERT
+TO authenticated
+WITH CHECK (user_id = auth.uid());
 
-drop policy if exists user_likes_delete_self on public.user_likes;
-create policy user_likes_delete_self
-on public.user_likes for delete
-to authenticated
-using (user_id = auth.uid());
+DROP POLICY IF EXISTS user_likes_delete_self ON public.user_likes;
+CREATE POLICY user_likes_delete_self
+ON public.user_likes FOR DELETE
+TO authenticated
+USING (user_id = auth.uid());
 
--- 4) USERS 테이블 RLS(참고: 기존 규칙 유지/갱신)
--- 필요한 경우에만 활성화/갱신하세요. (이미 있다면 스킵됨)
-alter table public.users enable row level security;
+-- 4) USERS table RLS policies
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
-drop policy if exists users_select_all on public.users;
-create policy users_select_all
-on public.users for select
-to public
-using (true);
+DROP POLICY IF EXISTS users_select_all ON public.users;
+CREATE POLICY users_select_all
+ON public.users FOR SELECT
+TO public
+USING (true);
 
-drop policy if exists users_insert_self_or_admin on public.users;
-create policy users_insert_self_or_admin
-on public.users for insert
-to authenticated
-with check (id = auth.uid() or is_admin(auth.uid()));
+DROP POLICY IF EXISTS users_insert_self_or_admin ON public.users;
+CREATE POLICY users_insert_self_or_admin
+ON public.users FOR INSERT
+TO authenticated
+WITH CHECK (id = auth.uid() OR is_admin(auth.uid()));
 
-drop policy if exists users_update_self_or_admin on public.users;
-create policy users_update_self_or_admin
-on public.users for update
-to authenticated
-using (id = auth.uid() or is_admin(auth.uid()))
-with check (id = auth.uid() or is_admin(auth.uid()));
+DROP POLICY IF EXISTS users_update_self_or_admin ON public.users;
+CREATE POLICY users_update_self_or_admin
+ON public.users FOR UPDATE
+TO authenticated
+USING (id = auth.uid() OR is_admin(auth.uid()))
+WITH CHECK (id = auth.uid() OR is_admin(auth.uid()));
 
-drop policy if exists users_delete_admin_only on public.users;
-create policy users_delete_admin_only
-on public.users for delete
-to authenticated
-using (is_admin(auth.uid()));
+DROP POLICY IF EXISTS users_delete_admin_only ON public.users;
+CREATE POLICY users_delete_admin_only
+ON public.users FOR DELETE
+TO authenticated
+USING (is_admin(auth.uid()));
 
 commit;
-
-
