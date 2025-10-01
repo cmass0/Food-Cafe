@@ -134,22 +134,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3">
-          <CardTitle className="text-3xl font-semibold text-primary">Food Cafe</CardTitle>
+          <CardTitle className="text-3xl font-semibold text-green-600">Food Cafe</CardTitle>
           <CardDescription className="text-muted-foreground">
             이메일로 로그인하거나, 새로운 계정을 만들어 커뮤니티에 참여해 보세요.
           </CardDescription>
-          <div className="flex gap-2">
-            {NAV_ITEMS.map(({ key, label }) => (
-              <Button
-                key={key}
-                type="button"
-                variant={mode === key ? "default" : "outline"}
-                onClick={() => setMode(key)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
         </CardHeader>
         <CardContent>
           {mode === "signin" ? (
