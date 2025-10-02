@@ -66,7 +66,7 @@ export default function ClientUserNav({ session }: Props) {
               </div>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[400px]">
+          <DialogContent className="sm:max-w-[400px] max-h-[calc(100dvh-2rem)] overflow-hidden p-0">
             <LoginPage />
           </DialogContent>
         </Dialog>
