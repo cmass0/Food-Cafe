@@ -3,6 +3,7 @@
 import Image from "next/image";
 import * as React from "react";
 import { Github } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -54,19 +55,24 @@ function getScope(provider: Provider) {
   return undefined;
 }
 
-async function signIn(provider: Provider) {
-  const supabase = getBrowserSupabase();
-  const scopes = getScope(provider);
-  await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: `${location.origin}/auth/callback`,
-      scopes,
-    },
-  });
+function useOAuthSignIn() {
+  const searchParams = useSearchParams();
+  return React.useCallback(async (provider: Provider) => {
+    const supabase = getBrowserSupabase();
+    const scopes = getScope(provider);
+    const next = searchParams?.get("next");
+    const redirectTo = next
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${location.origin}/auth/callback`;
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo, scopes },
+    });
+  }, [searchParams]);
 }
 
 export default function AuthButtons({ className }: { className?: string }) {
+  const signIn = useOAuthSignIn();
   return (
     <div className={cn("grid gap-2", className)}>
       {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc, imageWidth, imageHeight, className: extraClassName }) => {

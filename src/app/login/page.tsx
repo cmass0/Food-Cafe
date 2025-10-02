@@ -27,7 +27,7 @@ const NAV_ITEMS: Array<{ key: "signin" | "signup"; label: string }> = [
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams?.get("next") ?? "/profile";
+  const next = searchParams?.get("next") ?? "/";
 
   const [mode, setMode] = React.useState<"signin" | "signup">("signin");
 
@@ -131,15 +131,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="items-center justify-center">
+      <Card
+        className="w-full max-w-md shadow-lg
++                  max-h-[calc(100dvh-2rem)] flex flex-col "
+      >
         <CardHeader className="space-y-3">
           <CardTitle className="text-3xl font-semibold text-green-600">Food Cafe</CardTitle>
           <CardDescription className="text-muted-foreground">
             이메일로 로그인하거나, 새로운 계정을 만들어 커뮤니티에 참여해 보세요.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 min-h-0 overflow-y-auto pr-2">
           {mode === "signin" ? (
             <form className="grid gap-4" onSubmit={handleSignIn}>
               <div className="grid gap-2">
@@ -247,7 +250,7 @@ export default function LoginPage() {
             {mode === "signin" ? "계정이 없으신가요? " : "이미 계정이 있으신가요? "}
             <button
               type="button"
-              className="font-medium text-primary underline-offset-4 hover:underline"
+              className="font-medium text-primary underline-offset-4 hover:underline cursor-pointer"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             >
               {mode === "signin" ? "회원가입" : "로그인"}

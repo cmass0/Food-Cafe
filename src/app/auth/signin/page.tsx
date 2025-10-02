@@ -5,7 +5,7 @@ const AuthButtons = dynamic(() => import("@/features/user/ui/AuthButtons"), { ss
 export default function SignInPage() {
   return (
     <main className="grid gap-4 p-6">
-      <h1 className="text-xl font-bold">?뚯썝媛?낆엯</h1>
+      <h1 className="text-xl font-bold"></h1>
       <AuthButtons />
     </main>
   );

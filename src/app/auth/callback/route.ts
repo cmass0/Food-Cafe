@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/auth/signin?error=missing-supabase-config", req.url));
   }
 
-  const rawNext = req.nextUrl.searchParams.get("next") ?? "/profile";
-  const next = rawNext.startsWith("/") ? rawNext : "/profile";
+  const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
+  const next = rawNext.startsWith("/") ? rawNext : "/";
   const response = NextResponse.redirect(new URL(next, req.url));
 
   const supabase = createServerClient(url, anon, {

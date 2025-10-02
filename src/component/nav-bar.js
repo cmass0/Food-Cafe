@@ -15,7 +15,7 @@ import { SearchIcon } from "lucide-react";
 import { searchInputClassNames } from "@/styles/input/searchUI";
 import { fetchUsernameByUid } from "@/data/fetchuser-client";
 
-export default function Navbar(props) {
+export default function Navbar({ rightSlot }) {
   const [isModal, setIsmodal] = useState(false);
   const [searchtext, setsearchText] = useState("");
   const [userName, setUserName] = useState("");
@@ -104,7 +104,7 @@ export default function Navbar(props) {
           <NavLink href="/meals">음식 및 레시피 공유</NavLink>
           <NavLink href="/commu">커뮤니티</NavLink>
           {/* 버튼 컴포넌트 삽입  */}
-          {!user && (
+          {/* {!user && (
             <NavLink href="/login">
               <button onClick={modalHD} className={style.signbtn}>
                 로그인 / 회원가입
@@ -122,7 +122,8 @@ export default function Navbar(props) {
             >
               <span className={style.username}>{userName}</span>님 / 로그아웃
             </button>
-          )}
+          )} */}
+          {rightSlot}
         </div>
       </div>
     </div>
