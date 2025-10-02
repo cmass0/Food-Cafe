@@ -103,7 +103,7 @@ export default function Navbar(props) {
           <ThemeToggle />
           <NavLink href="/meals">음식 및 레시피 공유</NavLink>
           <NavLink href="/commu">커뮤니티</NavLink>
-          {/* <NavLink href="/ranking">랭킹</NavLink> */}
+          {/* 버튼 컴포넌트 삽입  */}
           {!user && (
             <NavLink href="/login">
               <button onClick={modalHD} className={style.signbtn}>
