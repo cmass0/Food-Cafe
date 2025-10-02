@@ -237,7 +237,7 @@ export default function LoginPage() {
           )}
 
           <Separator className="my-6" />
-          <div className="grid gap-3">
+          <div className="grid gap-3 justify-center">
             <AuthButtons />
           </div>
         </CardContent>

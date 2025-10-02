@@ -27,18 +27,20 @@ const AUTH_BUTTONS: AuthButton[] = [
     label: "Google로 로그인",
     imageSrc: "/brand/auth/web_neutral_sq_SI@4x.png",
     imageWidth: 192.875,
+    imageHeight: 44,
   },
   {
     provider: "github",
     label: "GitHub로 로그인",
     icon: <Github className="h-4 w-4" />,
-    className: "bg-black text-white hover:bg-black/80 border-transparent w-[192.875px] justify-center",
+    className: "bg-black text-white hover:bg-black/80 border-transparent w-[192.875px] h-[44px] justify-center",
   },
   {
     provider: "kakao",
     label: "카카오로 로그인",
     imageSrc: "/brand/auth/kakao_login_medium_narrow.png",
     imageWidth: 192.875,
+    imageHeight: 44
   },
 ];
 
