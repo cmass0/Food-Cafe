@@ -15,6 +15,8 @@ type AuthButton = {
   label: string;
   icon?: React.ReactNode;
   imageSrc?: string;
+  imageWidth?: number | string;
+  imageHeight?: number | string;
   variant?: React.ComponentProps<typeof Button>["variant"];
   className?: string;
 };
@@ -24,17 +26,19 @@ const AUTH_BUTTONS: AuthButton[] = [
     provider: "google",
     label: "Google로 로그인",
     imageSrc: "/brand/auth/web_neutral_sq_SI@4x.png",
+    imageWidth: 192.875,
   },
   {
     provider: "github",
     label: "GitHub로 로그인",
     icon: <Github className="h-4 w-4" />,
-    className: "bg-black text-white hover:bg-black/80 border-transparent",
+    className: "bg-black text-white hover:bg-black/80 border-transparent w-[192.875px] justify-center",
   },
   {
     provider: "kakao",
     label: "카카오로 로그인",
     imageSrc: "/brand/auth/kakao_login_medium_narrow.png",
+    imageWidth: 192.875,
   },
 ];
 
@@ -63,18 +67,48 @@ async function signIn(provider: Provider) {
 export default function AuthButtons({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc, className: extraClassName }) => (
-        imageSrc ? (
-          <button
-            key={provider}
-            type="button"
-            onClick={() => signIn(provider)}
-            className="relative flex items-center justify-center"
-            aria-label={label}
-          >
-            <Image src={imageSrc} alt={label} width={312} height={45} className="h-11 w-auto" priority />
-          </button>
-        ) : (
+      {AUTH_BUTTONS.map(({ provider, label, icon, variant, imageSrc, imageWidth, imageHeight, className: extraClassName }) => {
+        if (imageSrc) {
+          const widthValue =
+            imageWidth !== undefined
+              ? typeof imageWidth === "number"
+                ? `${imageWidth}px`
+                : imageWidth
+              : undefined;
+          const heightValue =
+            imageHeight !== undefined
+              ? typeof imageHeight === "number"
+                ? `${imageHeight}px`
+                : imageHeight
+              : undefined;
+
+          const buttonStyle: React.CSSProperties = {};
+          if (widthValue) buttonStyle.width = widthValue;
+          if (heightValue) buttonStyle.height = heightValue;
+
+          return (
+            <button
+              key={provider}
+              type="button"
+              onClick={() => signIn(provider)}
+              className="relative flex items-center justify-center"
+              aria-label={label}
+              style={buttonStyle}
+            >
+              <Image
+                src={imageSrc}
+                alt={label}
+                width={312}
+                height={45}
+                className="h-auto w-full"
+                style={{ width: "100%", height: "100%" }}
+                priority
+              />
+            </button>
+          );
+        }
+
+        return (
           <Button
             key={provider}
             variant={variant}
@@ -85,8 +119,8 @@ export default function AuthButtons({ className }: { className?: string }) {
             {icon}
             <span>{label}</span>
           </Button>
-        )
-      ))}
+        );
+      })}
     </div>
   );
 }
