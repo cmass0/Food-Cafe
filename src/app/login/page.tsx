@@ -18,15 +18,16 @@ import AuthButtons from "@/features/user/ui/AuthButtons";
 import { getBrowserSupabase } from "@/lib/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const NAV_ITEMS: Array<{ key: "signin" | "signup"; label: string }> = [
-  { key: "signin", label: "로그인" },
-  { key: "signup", label: "회원가입" },
-];
+// const NAV_ITEMS: Array<{ key: "signin" | "signup"; label: string }> = [
+//   { key: "signin", label: "로그인" },
+//   { key: "signup", label: "회원가입" },
+// ];
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/";
+  const supabase = getBrowserSupabase();
 
   const [mode, setMode] = React.useState<"signin" | "signup">("signin");
 
@@ -44,6 +45,9 @@ export default function LoginPage() {
   const [signUpMessage, setSignUpMessage] = React.useState<string | null>(null);
   const [signUpError, setSignUpError] = React.useState<string | null>(null);
   const [isSigningUp, startSignUpTransition] = React.useTransition();
+  
+  
+    
 
   const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -89,7 +93,7 @@ export default function LoginPage() {
         email: signUpEmail,
         password: signUpPassword,
         options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
+          emailRedirectTo: location.href,
           data: {
             display_name: displayName.trim(),
           },
@@ -102,13 +106,13 @@ export default function LoginPage() {
       }
 
       const user = data.user;
-      if (user) {
+      // Only write profile when a session exists (RLS requires auth.uid())
+      if (data.session && user) {
         const profilePayload = {
           id: user.id,
           display_name: displayName.trim(),
           email: user.email,
           photo_url: user.user_metadata?.picture ?? null,
-          is_admin: false,
         };
         const { error: profileError } = await supabase
           .from("users")
@@ -128,6 +132,7 @@ export default function LoginPage() {
       }
     });
   };
+  
 
   return (
     <div className="items-center justify-center ">
@@ -138,6 +143,11 @@ export default function LoginPage() {
               <CardHeader className="space-y-3 items-center">
                 <CardTitle className="text-3xl font-semibold text-green-600">Food Cafe</CardTitle>
               </CardHeader>
+              {signUpMessage ? (
+                <div className="mx-6 -mt-2 mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+                  {signUpMessage}
+                </div>
+              ) : null}
 
               {mode === "signin" ? (
                 <form className="grid gap-4" onSubmit={handleSignIn}>

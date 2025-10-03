@@ -1,19 +1,18 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
-type BrowserClient = ReturnType<typeof createBrowserClient>;
+type BrowserClient = SupabaseClient<Database>;
 
-const globalForSupabase = globalThis as unknown as { _sbBrowser?: BrowserClient };
+let client: BrowserClient | null = null;
 
 export function getBrowserSupabase(): BrowserClient {
-  if (!globalForSupabase._sbBrowser) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) {
-      throw new Error("[browser] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
-    }
-    globalForSupabase._sbBrowser = createBrowserClient(url, anon);
+  if (client) return client;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error("[browser] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
-  return globalForSupabase._sbBrowser!;
+  client = createBrowserClient<Database>(url, anon);
+  return client;
 }
-
-

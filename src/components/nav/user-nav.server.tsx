@@ -3,7 +3,7 @@ import ClientUserNav from "./user-nav.client";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export default async function NavBarServer() {
-  const supabase = await getServerSupabase();
+  const supabase = getServerSupabase();
   const {
     data: { session },
   } = await supabase.auth.getSession();

@@ -1,11 +1,15 @@
 "use client";
 import { HeroUIProvider } from "@heroui/react";
-import { AuthProvider } from "./context/Auth-context";
+import { AuthProvider } from "./auth/auth-context";
+import AuthFlowHandler from "./auth/flow-handler";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <HeroUIProvider>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <AuthFlowHandler />
+        {children}
+      </AuthProvider>
     </HeroUIProvider>
   );
 }

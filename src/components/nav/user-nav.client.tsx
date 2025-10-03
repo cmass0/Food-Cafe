@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 // shadcn/ui
 import {
@@ -12,25 +12,13 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import LoginPage from "@/app/login/page";
 
 type Props = { session: Session | null };
 
 function displayName(user: User | null) {
   if (!user) return null;
-  console.log(user);
   const um = (user.user_metadata ?? {}) as Record<string, any>;
   const nameCommon = um.full_name || um.name || um.nickname || um.user_name;
   if (nameCommon) return nameCommon as string;
@@ -52,6 +40,8 @@ export default function ClientUserNav({ session }: Props) {
   const searchParams = useSearchParams();
   const user = session?.user ?? null;
   const name = useMemo(() => displayName(user), [user]);
+
+
 
   if (!user) {
     {

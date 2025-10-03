@@ -55,15 +55,18 @@ function getScope(provider: Provider) {
   return undefined;
 }
 
+
 function useOAuthSignIn() {
   const searchParams = useSearchParams();
   return React.useCallback(async (provider: Provider) => {
     const supabase = getBrowserSupabase();
     const scopes = getScope(provider);
     const next = searchParams?.get("next");
-    const redirectTo = next
-      ? `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`
-      : `${location.origin}/auth/callback`;
+    const url = new URL(location.href);
+    if (next && !url.searchParams.get("next")) {
+      url.searchParams.set("next", next);
+    }
+    const redirectTo = url.toString();
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo, scopes },
@@ -99,7 +102,7 @@ export default function AuthButtons({ className }: { className?: string }) {
               key={provider}
               type="button"
               onClick={() => signIn(provider)}
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center cursor-pointer"
               aria-label={label}
               style={buttonStyle}
             >
@@ -120,7 +123,7 @@ export default function AuthButtons({ className }: { className?: string }) {
           <Button
             key={provider}
             variant={variant}
-            className={cn("justify-start gap-2", extraClassName)}
+            className={cn("justify-start gap-2 cursor-pointer", extraClassName)}
             onClick={() => signIn(provider)}
             type="button"
           >

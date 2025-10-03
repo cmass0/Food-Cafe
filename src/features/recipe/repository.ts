@@ -8,6 +8,7 @@ import type {
   RecipeSupabaseClient,
   RecipeUpdateInput,
 } from "./types";
+import type { RecipeInsertDB, RecipeUpdateDB } from "./types";
 
 const RECIPE_COLUMNS = [
   "id",
@@ -70,7 +71,7 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
   };
 }
 
-function buildInsertPayload(input: RecipeInsertInput) {
+function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
   return {
     id_text_old: input.idTextOld ?? generateLegacyId(),
     legacy_id: input.legacyId ?? null,
@@ -89,8 +90,8 @@ function buildInsertPayload(input: RecipeInsertInput) {
   };
 }
 
-function buildUpdatePayload(patch: RecipeUpdateInput) {
-  const payload: Record<string, unknown> = {};
+function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
+  const payload: RecipeUpdateDB = {} as RecipeUpdateDB;
 
   if (patch.idTextOld !== undefined) payload.id_text_old = patch.idTextOld ?? generateLegacyId();
   if (patch.legacyId !== undefined) payload.legacy_id = patch.legacyId;

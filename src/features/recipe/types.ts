@@ -1,27 +1,7 @@
-﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
 
-export interface RecipeRow {
-  id: string;
-  id_text_old: string;
-  legacy_id: string | null;
-  title: string;
-  summary: string | null;
-  recipe: string | null;
-  image: string | null;
-  images: string[] | null;
-  category: string | null;
-  tags: string[] | null;
-  like_count: number;
-  view_count: number;
-  last_liked_at: string | null;
-  status: number | null;
-  writer_uid: string | null;
-  writer_uid_legacy: string | null;
-  writer_name: string | null;
-  writer_email: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type RecipeRow = Tables<"recipes">;
 
 export interface Recipe {
   id: string;
@@ -83,6 +63,8 @@ export interface RecipeListResult {
   nextCursor: string | null;
 }
 
-export type RecipeSupabaseClient = SupabaseClient<any>;
+export type RecipeSupabaseClient = SupabaseClient<Database>;
 
+export type RecipeInsertDB = TablesInsert<"recipes">;
+export type RecipeUpdateDB = TablesUpdate<"recipes">;
 
