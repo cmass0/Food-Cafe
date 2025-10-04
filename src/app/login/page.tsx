@@ -5,18 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import AuthButtons from "@/features/user/ui/AuthButtons";
 import { getBrowserSupabase } from "@/lib/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { setRemember } from "@/lib/auth/login-maintain";
 
 // const NAV_ITEMS: Array<{ key: "signin" | "signup"; label: string }> = [
 //   { key: "signin", label: "로그인" },
@@ -45,14 +42,12 @@ export default function LoginPage() {
   const [signUpMessage, setSignUpMessage] = React.useState<string | null>(null);
   const [signUpError, setSignUpError] = React.useState<string | null>(null);
   const [isSigningUp, startSignUpTransition] = React.useTransition();
-  
-  
-    
+  const [maintainLogin, setMaintainLogin] = React.useState(false);
 
   const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSignInError(null);
-
+    setRemember(maintainLogin);
     if (!email || !password) {
       setSignInError("이메일과 비밀번호를 입력해주세요.");
       return;
@@ -132,7 +127,6 @@ export default function LoginPage() {
       }
     });
   };
-  
 
   return (
     <div className="items-center justify-center ">
@@ -181,7 +175,11 @@ export default function LoginPage() {
                   <Button className="w-full" type="submit" disabled={isSigningIn}>
                     {isSigningIn ? "로그인 중..." : "이메일로 로그인"}
                   </Button>
-                  <div className="flex justify-end text-sm text-muted-foreground">
+                  <div className="flex justify-between text-sm text-muted-foreground items-center">
+                    <div className="flex">
+                      <Checkbox id="terms" onChange={() => {setMaintainLogin(true)}}/>
+                      <Label htmlFor="terms">로그인 유지</Label>
+                    </div>
                     <Link href="/reset-password" className="hover:underline">
                       비밀번호 찾기
                     </Link>
@@ -245,7 +243,7 @@ export default function LoginPage() {
                 </form>
               )}
 
-              <Separator className="my-6" />
+              <Separator className="my-4" />
               <div className="grid gap-3 justify-center">
                 <AuthButtons />
               </div>
