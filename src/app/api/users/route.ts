@@ -1,5 +1,5 @@
 ﻿// src/app/api/users/route.ts
-import { UserCreateSchema } from "@/features/user/types";
+import { UserCreateSchema } from "@/features/user/schema";
 import * as repo from "@/features/user/repository.server";
 
 export const runtime = "nodejs";

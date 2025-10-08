@@ -1,9 +1,24 @@
-﻿import "server-only";
+import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
-import { FieldPath, FieldValue, Timestamp, type DocumentSnapshot, type QueryDocumentSnapshot } from "firebase-admin/firestore";
-import type { User, UserCreateDTO, UserUpdateDTO } from "./types";
+import {
+  FieldPath,
+  FieldValue,
+  Timestamp,
+  type DocumentSnapshot,
+  type QueryDocumentSnapshot,
+} from "firebase-admin/firestore";
+import type { UserCreateInput, UserUpdateLegacyInput } from "./schema";
 
 const COL = "User";
+
+type LegacyUser = {
+  id: string;
+  email: string;
+  username: string;
+  likerecipe: string[];
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
 
 function toDate(value: unknown): Date | null {
   if (!value) return null;
@@ -24,9 +39,7 @@ function normalizeLikerecipe(source: unknown): string[] {
   return source.filter((item): item is string => typeof item === "string" && item.length > 0);
 }
 
-function mapDocToUser(
-  doc: DocumentSnapshot | QueryDocumentSnapshot
-): User {
+function mapDocToUser(doc: DocumentSnapshot | QueryDocumentSnapshot): LegacyUser {
   const data = doc.data() as Record<string, unknown> | undefined;
   const createdSource = data?.createdAt ?? data?.date ?? null;
   const updatedSource = data?.updatedAt ?? data?.date ?? null;
@@ -57,7 +70,7 @@ function millisFromTimestamp(value: unknown): number {
 export async function listUsers(opts?: {
   limit?: number;
   cursor?: string;
-}): Promise<{ items: User[]; nextCursor: string | null }> {
+}): Promise<{ items: LegacyUser[]; nextCursor: string | null }> {
   const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 50);
   let q = adminDb.collection(COL).orderBy("createdAt", "desc").orderBy(FieldPath.documentId());
 
@@ -69,7 +82,7 @@ export async function listUsers(opts?: {
   }
 
   const snap = await q.limit(limit).get();
-  const items: User[] = snap.docs.map((doc) => mapDocToUser(doc));
+  const items: LegacyUser[] = snap.docs.map((doc) => mapDocToUser(doc));
 
   const last = snap.docs.at(-1);
   const lastCreated = last?.get("createdAt") ?? last?.get("date");
@@ -80,20 +93,20 @@ export async function listUsers(opts?: {
   return { items, nextCursor };
 }
 
-export async function getUser(id: string): Promise<User | null> {
+export async function getUser(id: string): Promise<LegacyUser | null> {
   const doc = await adminDb.collection(COL).doc(id).get();
   if (!doc.exists) return null;
   return mapDocToUser(doc);
 }
 
-export async function findUserByUsername(username: string): Promise<User | null> {
+export async function findUserByUsername(username: string): Promise<LegacyUser | null> {
   const snap = await adminDb.collection(COL).where("username", "==", username).limit(1).get();
   const doc = snap.docs[0];
   if (!doc) return null;
   return mapDocToUser(doc);
 }
 
-export async function createUser(input: UserCreateDTO): Promise<User> {
+export async function createUser(input: UserCreateInput): Promise<LegacyUser> {
   const ref = input.id ? adminDb.collection(COL).doc(input.id) : adminDb.collection(COL).doc();
   const timestamp = FieldValue.serverTimestamp();
   const likerecipe = normalizeLikerecipe(input.likerecipe);
@@ -111,7 +124,7 @@ export async function createUser(input: UserCreateDTO): Promise<User> {
   return (await getUser(ref.id))!;
 }
 
-export async function updateUser(id: string, patch: UserUpdateDTO): Promise<User | null> {
+export async function updateUser(id: string, patch: UserUpdateLegacyInput): Promise<LegacyUser | null> {
   const ref = adminDb.collection(COL).doc(id);
   const update: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
 

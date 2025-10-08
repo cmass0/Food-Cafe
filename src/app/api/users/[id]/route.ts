@@ -1,5 +1,5 @@
 // src/app/api/users/[id]/route.ts
-import { UserUpdateSchema } from "@/features/user/types";
+import { UserUpdateSchema } from "@/features/user/schema";
 import * as repo from "@/features/user/repository.server";
 
 export const runtime = "nodejs";

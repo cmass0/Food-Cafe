@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useTransition } from "react";
 
@@ -32,7 +32,7 @@ export default function ProfileForm({ defaultName, defaultAvatar }: ProfileFormP
         <input name="photo_url" defaultValue={defaultAvatar ?? ""} className="rounded border px-3 py-2" />
       </div>
       <Button type="submit" disabled={isPending}>
-        {isPending ? "저장 중..." : "정보 저장"}
+        {isPending ? "저장 중..." : "변경 저장"}
       </Button>
     </form>
   );

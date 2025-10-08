@@ -1,6 +1,5 @@
 import { getServerSupabase } from "@/lib/supabase/server";
-import type { UserRow, UserUpdate } from "./types";
-import type { TablesUpdate } from "@/types/supabase";
+import type { UserRow, UserUpdate, UserUpdateDB } from "./types";
 
 const USER_COLUMNS = "id, display_name, photo_url, role, email, created_at, updated_at, is_admin";
 
@@ -32,14 +31,14 @@ export async function updateSelf(patch: UserUpdate): Promise<UserRow> {
   if (authError) throw authError;
   if (!user) throw new Error("로그인이 필요합니다.");
 
-  const payload: TablesUpdate<"users"> = {
+  const payload: UserUpdateDB = {
     updated_at: new Date().toISOString(),
   };
   if (patch.display_name !== undefined) {
     if (patch.display_name !== null) {
       payload.display_name = patch.display_name;
     }
-    // if null, skip updating display_name to satisfy non-null column
+    // null이면 컬럼을 수정하지 않습니다 (NOT NULL 보호)
   }
   if (patch.photo_url !== undefined) {
     payload.photo_url = patch.photo_url ?? null;
@@ -55,4 +54,3 @@ export async function updateSelf(patch: UserUpdate): Promise<UserRow> {
   if (error) throw error;
   return data as UserRow;
 }
-

@@ -1,41 +1,31 @@
-ï»¿import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
 
-export type UserRow = {
+// DB ·¹ÀÌ¾î¿¡¼­ »ç¿ëÇÒ Supabase Å¸ÀÔ ÇïÆÛ
+export type UserRow = Tables<"users">;
+export type UserInsertDB = TablesInsert<"users">;
+export type UserUpdateDB = TablesUpdate<"users">;
+export type UserSupabaseClient = SupabaseClient<Database>;
+
+// µµ¸ÞÀÎ °èÃþ¿¡¼­ »ç¿ëÇÒ »ç¿ëÀÚ ¸ðµ¨ (ÇÊ¿äÇÑ ÇÊµå¸¸ camelCase·Î Á¤ÀÇ)
+export interface User {
   id: string;
   email: string | null;
-  display_name: string;
-  photo_url: string | null;
+  displayName: string;
+  photoUrl: string | null;
   role: string;
-  created_at: string;
-  updated_at: string;
-  is_admin: boolean | null;
-};
+  isAdmin: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
 
+export interface UserListResult {
+  items: User[];
+  nextCursor: string | null;
+}
+
+// ÇÁ·ÎÇÊ ¾÷µ¥ÀÌÆ® ÀÔ·Â(¼­ºñ½º/ÄÁÆ®·Ñ·¯¿¡¼­ »ç¿ë)
 export type UserUpdate = {
   display_name?: string | null;
   photo_url?: string | null;
 };
-
-// Legacy Firebase types & schemas (í˜¸í™˜ìš©)
-export const UserCreateSchema = z.object({
-  id: z.string().optional(),
-  email: z.string().email(),
-  username: z.string().min(1),
-  likerecipe: z.array(z.string()).optional(),
-});
-
-export const UserUpdateLegacySchema = z.object({
-  email: z.string().email().optional(),
-  username: z.string().min(1).optional(),
-  likerecipe: z.array(z.string()).optional(),
-});
-
-export type User = z.infer<typeof UserCreateSchema> & {
-  createdAt: Date | null;
-  updatedAt: Date | null;
-};
-
-export type UserCreateDTO = z.infer<typeof UserCreateSchema>;
-export type UserUpdateDTO = z.infer<typeof UserUpdateLegacySchema>;
-
-export const UserUpdateSchema = UserUpdateLegacySchema;

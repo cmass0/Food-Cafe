@@ -14,8 +14,7 @@ export default function UserAvatar({ name, avatarUrl }: UserAvatarProps) {
           {(name ?? "?").slice(0, 1)}
         </div>
       )}
-      <div className="text-sm font-medium">{name ?? "ÀÌ¸§ ¾øÀ½"}</div>
+      <div className="text-sm font-medium">{name ?? "ì´ë¦„ ì—†ìŒ"}</div>
     </div>
   );
 }
-
