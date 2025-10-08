@@ -43,5 +43,6 @@ next-env.d.ts
 # firebase cli
 /.firebase/
 
-# supabase
+# supabase / codex local configs (contain secrets)
 .codex/config.toml
+config.toml
