@@ -7,16 +7,17 @@ import { ZodError } from "zod";
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as recipeService from "@/features/recipe/service";
 import type { RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
+import { getLikeMeta, likeOnceForCurrentUser } from "@/features/user_like/service";
 
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
     const first = error.issues.at(0);
-    throw new Error(first?.message ?? "ÀÔ·Â°ªÀ» È®ÀÎÇØ ÁÖ¼¼¿ä.");
+    throw new Error(first?.message ?? "ï¿½Ô·Â°ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ï¿½ï¿½.");
   }
   if (error instanceof Error) {
     throw error;
   }
-  throw new Error("¾Ë ¼ö ¾ø´Â ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù.");
+  throw new Error("ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
 }
 
 export async function createRecipeAction(input: RecipeInsertInput) {
@@ -55,3 +56,15 @@ export async function deleteRecipeAction(id: string) {
     handleError(error);
   }
 }
+
+export async function likeOnceAction(recipeId:string) {
+  const result = await likeOnceForCurrentUser(recipeId);
+  revalidatePath("/recipes"); // í•„ìš” ê²½ë¡œë§Œ
+  return result;
+}
+
+export async function likeMetaAction(recipeId: string) {
+  return getLikeMeta(recipeId);
+}
+
+
