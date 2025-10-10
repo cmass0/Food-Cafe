@@ -42,7 +42,7 @@ export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
         writerName: recipe.writerName ?? undefined,
         writerEmail: recipe.writerEmail ?? undefined,
       }}
-      submitLabel="·¹½ÃÇÇ ¼öÁ¤"
+      submitLabel="ë ˆì‹œí”¼ ìˆ˜ì •"
       onSubmit={handleSubmit}
     />
   );

@@ -12,12 +12,12 @@ import { getLikeMeta, likeOnceForCurrentUser } from "@/features/user_like/servic
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
     const first = error.issues.at(0);
-    throw new Error(first?.message ?? "�Է°��� Ȯ���� �ּ���.");
+    throw new Error(first?.message ?? "입력값을 확인해 주세요.");
   }
   if (error instanceof Error) {
     throw error;
   }
-  throw new Error("�� �� ���� ������ �߻��߽��ϴ�.");
+  throw new Error("알 수 없는 오류가 발생했습니다.");
 }
 
 export async function createRecipeAction(input: RecipeInsertInput) {
@@ -59,12 +59,10 @@ export async function deleteRecipeAction(id: string) {
 
 export async function likeOnceAction(recipeId:string) {
   const result = await likeOnceForCurrentUser(recipeId);
-  revalidatePath("/recipes"); // 필요 경로만
+  revalidatePath("/recipes"); 
   return result;
 }
 
 export async function likeMetaAction(recipeId: string) {
   return getLikeMeta(recipeId);
 }
-
-

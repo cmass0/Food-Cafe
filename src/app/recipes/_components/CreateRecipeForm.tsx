@@ -9,5 +9,5 @@ export default function CreateRecipeForm() {
     await createRecipeAction(values);
   };
 
-  return <RecipeForm onSubmit={handleSubmit} submitLabel="·¹½ÃÇÇ µî·Ï" />;
+  return <RecipeForm onSubmit={handleSubmit} submitLabel="ë ˆì‹œí”¼ ë“±ë¡" />;
 }

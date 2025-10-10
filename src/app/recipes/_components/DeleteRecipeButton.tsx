@@ -11,7 +11,7 @@ export default function DeleteRecipeButton({ recipeId }: DeleteRecipeButtonProps
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
-    const confirmed = window.confirm("Á¤¸»·Î ÀÌ ·¹½ÃÇÇ¸¦ »èÁ¦ÇÏ½Ã°Ú¾î¿ä?");
+    const confirmed = window.confirm("ë ˆì‹œí”¼ë¥¼ ì •ë§ ì‚­ì œí•˜ì‹œê² ì–´ìš”?");
     if (!confirmed) return;
 
     startTransition(async () => {
@@ -26,7 +26,7 @@ export default function DeleteRecipeButton({ recipeId }: DeleteRecipeButtonProps
       disabled={isPending}
       className="rounded border border-red-500 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
     >
-      {isPending ? "»èÁ¦ Áß..." : "·¹½ÃÇÇ »èÁ¦"}
+      {isPending ? "ì‚­ì œ ì¤‘..." : "ë ˆì‹œí”¼ ì‚­ì œ"}
     </button>
   );
 }

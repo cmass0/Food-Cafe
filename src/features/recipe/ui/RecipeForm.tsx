@@ -10,11 +10,7 @@ type RecipeFormProps = {
   submitLabel?: string;
 };
 
-export default function RecipeForm({
-  defaultValues,
-  onSubmit,
-  submitLabel = "저장",
-}: RecipeFormProps) {
+export default function RecipeForm({defaultValues, onSubmit, submitLabel = "저장",}: RecipeFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(defaultValues?.title ?? "");

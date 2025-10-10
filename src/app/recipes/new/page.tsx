@@ -4,9 +4,9 @@ export default function NewRecipePage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold">·¹½ÃÇÇ µî·Ï</h1>
+        <h1 className="text-3xl font-semibold">ìƒˆ ë ˆì‹œí”¼ ë“±ë¡</h1>
         <p className="text-sm text-foreground/70">
-          »õ·Î¿î ·¹½ÃÇÇ¸¦ ÀÛ¼ºÇÏ°í ÀúÀåÇÏ¸é ÀÚµ¿À¸·Î »ó¼¼ ÆäÀÌÁö·Î ÀÌµ¿ÇÕ´Ï´Ù.
+          ìƒˆë¡œìš´ ë ˆì‹œí”¼ë¥¼ ìž‘ì„±í•´ ê³µìœ í•´ ë³´ì„¸ìš”. ì €ìž¥í•˜ë©´ ìƒì„¸ íŽ˜ì´ì§€ë¡œ ì´ë™í•©ë‹ˆë‹¤.
         </p>
       </header>
       <CreateRecipeForm />

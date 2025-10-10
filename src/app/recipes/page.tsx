@@ -11,9 +11,9 @@ export default async function RecipesPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold">·¹½ÃÇÇ ¸ñ·Ï</h1>
+        <h1 className="text-3xl font-semibold">ë ˆì‹œí”¼ ëª©ë¡</h1>
         <p className="text-sm text-foreground/70">
-          Supabase RLS ¼¼¼ÇÀ¸·Î º¸È£µÇ´Â ·¹½ÃÇÇ µ¥ÀÌÅÍ¸¦ ¼­¹ö¿¡¼­ ¹Ù·Î Á¶È¸ÇÕ´Ï´Ù.
+          Supabase RLS ì •ì±…ìœ¼ë¡œ ë³´í˜¸ëœ ìµœì‹  ë ˆì‹œí”¼ë¥¼ ì‹¤ì‹œê°„ìœ¼ë¡œ í™•ì¸í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
         </p>
       </header>
       <RecipeList recipes={items} />

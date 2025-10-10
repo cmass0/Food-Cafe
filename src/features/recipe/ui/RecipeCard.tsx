@@ -1,4 +1,5 @@
-﻿import type { Recipe } from "../types";
+﻿import LikeButton from "@/features/user_like/ui/likebutton";
+import type { Recipe } from "../types";
 
 type RecipeCardProps = {
   recipe: Recipe;
@@ -20,6 +21,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         <span>
           생성일: {recipe.createdAt.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
         </span>
+        <LikeButton recipeId={recipe.id} initialLiked = {false} initialCount = {recipe.likeCount}/>
       </footer>
     </article>
   );

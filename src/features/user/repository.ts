@@ -29,7 +29,7 @@ export async function updateSelf(patch: UserUpdate): Promise<UserRow> {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError) throw authError;
-  if (!user) throw new Error("로그?�이 ?�요?�니??");
+  if (!user) throw new Error("로그인이 필요합니다.");
 
   const payload: UserUpdateDB = {
     updated_at: new Date().toISOString(),
