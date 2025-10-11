@@ -34,15 +34,11 @@ export const recipeInsertSchema = z.object({
   summary: z
     .string()
     .trim()
-    .max(500, "요약은 500자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
+    .max(500, "요약은 500자 이하만 가능합니다."),
   recipe: z
     .string({ required_error: "레시피 내용을 입력해 주세요." })
     .trim()
-    .min(1, "레시피 내용을 입력해 주세요.")
-    .nullable()
-    .optional(),
+    .min(1, "레시피 내용을 입력해 주세요."),
   image: imageUrlSchema,
   images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
   category: z
@@ -89,7 +85,7 @@ export const recipeUpdateSchema = z
       .min(1, "레시피 내용을 입력해 주세요.")
       .nullable()
       .optional(),
-    image: imageUrlSchema.nullable().optional(),
+    image: imageUrlSchema.optional(),
     images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
     category: z
       .string()
