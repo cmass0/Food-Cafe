@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// 생성(레거시 호환) 스키마: Firebase 시절 구조 유지
 export const UserCreateSchema = z.object({
   id: z.string().optional(),
   email: z.string().email(),
@@ -16,18 +15,19 @@ export const UserUpdateLegacySchema = z.object({
 });
 export type UserUpdateLegacyInput = z.infer<typeof UserUpdateLegacySchema>;
 
-// 프로필 수정 스키마: Supabase users 컬럼에 맞춤
 export const UserUpdateSchema = z.object({
   display_name: z
     .string()
     .min(1, "이름을 입력해 주세요.")
-    .max(40, "이름은 40자까지 가능합니다.")
+    .max(40, "이름은 40자 이하만 가능합니다.")
     .optional()
     .nullable(),
   photo_url: z
     .string()
-    .url("올바른 URL 형식이 아닙니다.")
+    .url("올바른 URL을 입력해 주세요.")
     .optional()
     .nullable(),
+  email: z.string().email("올바른 이메일 주소를 입력해 주세요.").optional(),
 });
 export type UserUpdateInput = z.infer<typeof UserUpdateSchema>;
+

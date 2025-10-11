@@ -1,14 +1,11 @@
-﻿import type { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError } from "@supabase/supabase-js";
+
 import type {
-  Recipe,
-  RecipeInsertInput,
-  RecipeListOptions,
-  RecipeListResult,
+  RecipeInsertDB,
   RecipeRow,
   RecipeSupabaseClient,
-  RecipeUpdateInput,
+  RecipeUpdateDB,
 } from "./types";
-import type { RecipeInsertDB, RecipeUpdateDB } from "./types";
 
 const RECIPE_COLUMNS = [
   "id",
@@ -33,214 +30,115 @@ const RECIPE_COLUMNS = [
   "updated_at",
 ].join(", ");
 
-function normaliseTextArray(value: string[] | null | undefined): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item) => typeof item === "string" && item.length > 0);
+function mapRows(rows: RecipeRow[] | null | undefined): RecipeRow[] {
+  return Array.isArray(rows) ? (rows as RecipeRow[]) : [];
 }
 
-function generateLegacyId(): string {
-  const cryptoApi = globalThis.crypto as Crypto | undefined;
-  if (cryptoApi && typeof cryptoApi.randomUUID === "function") {
-    return cryptoApi.randomUUID();
-  }
-  return `tmp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+function throwIfError(error: PostgrestError | null): void {
+  if (error) throw error;
 }
 
-function mapRowToRecipe(row: RecipeRow): Recipe {
-  return {
-    id: row.id,
-    idTextOld: row.id_text_old,
-    legacyId: row.legacy_id,
-    title: row.title,
-    summary: row.summary,
-    recipe: row.recipe,
-    image: row.image,
-    images: normaliseTextArray(row.images),
-    category: row.category,
-    tags: normaliseTextArray(row.tags),
-    likeCount: row.like_count ?? 0,
-    viewCount: row.view_count ?? 0,
-    lastLikedAt: row.last_liked_at,
-    status: row.status,
-    writerUid: row.writer_uid,
-    writerUidLegacy: row.writer_uid_legacy,
-    writerName: row.writer_name,
-    writerEmail: row.writer_email,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  };
-}
+export type RecipeCursorFilter = {
+  createdAt: string;
+  id: string;
+};
 
-function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
-  return {
-    id_text_old: input.idTextOld ?? generateLegacyId(),
-    legacy_id: input.legacyId ?? null,
-    title: input.title,
-    summary: input.summary ?? null,
-    recipe: input.recipe ?? null,
-    image: input.image ?? null,
-    images: input.images ?? [],
-    category: input.category ?? null,
-    tags: input.tags ?? [],
-    status: input.status ?? 0,
-    writer_uid: input.writerUid ?? null,
-    writer_uid_legacy: input.writerUidLegacy ?? null,
-    writer_name: input.writerName ?? null,
-    writer_email: input.writerEmail ?? null,
-  };
-}
+export type FetchRecipesParams = {
+  limit: number;
+  tag?: string;
+  status?: number;
+  writerUid?: string;
+  search?: string;
+  cursor?: RecipeCursorFilter | null;
+};
 
-function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
-  const payload: RecipeUpdateDB = {} as RecipeUpdateDB;
-
-  if (patch.idTextOld !== undefined) payload.id_text_old = patch.idTextOld ?? generateLegacyId();
-  if (patch.legacyId !== undefined) payload.legacy_id = patch.legacyId;
-  if (patch.title !== undefined) payload.title = patch.title;
-  if (patch.summary !== undefined) payload.summary = patch.summary;
-  if (patch.recipe !== undefined) payload.recipe = patch.recipe;
-  if (patch.image !== undefined) payload.image = patch.image;
-  if (patch.images !== undefined) payload.images = patch.images ?? [];
-  if (patch.category !== undefined) payload.category = patch.category;
-  if (patch.tags !== undefined) payload.tags = patch.tags ?? [];
-  if (patch.status !== undefined) payload.status = patch.status;
-  if (patch.writerUid !== undefined) payload.writer_uid = patch.writerUid;
-  if (patch.writerUidLegacy !== undefined) payload.writer_uid_legacy = patch.writerUidLegacy;
-  if (patch.writerName !== undefined) payload.writer_name = patch.writerName;
-  if (patch.writerEmail !== undefined) payload.writer_email = patch.writerEmail;
-  if (patch.likeCount !== undefined) payload.like_count = patch.likeCount;
-  if (patch.viewCount !== undefined) payload.view_count = patch.viewCount;
-  if (patch.lastLikedAt !== undefined) payload.last_liked_at = patch.lastLikedAt;
-
-  return payload;
-}
-
-function toCursor(row: RecipeRow): string {
-  const payload = JSON.stringify({
-    created_at: row.created_at,
-    id: row.id,
-  });
-  return Buffer.from(payload).toString("base64url");
-}
-
-function fromCursor(cursor: string): { createdAt: string; id: string } | null {
-  try {
-    const json = Buffer.from(cursor, "base64url").toString("utf8");
-    const value = JSON.parse(json) as { created_at?: string; id?: string };
-    if (!value.created_at || !value.id) return null;
-    return { createdAt: value.created_at, id: value.id };
-  } catch {
-    return null;
-  }
-}
-
-function throwIfError(error: PostgrestError | null, action: string): never | void {
-  if (error) {
-    throw new Error(`[recipes] ${action} 실패: ${error.message}`);
-  }
-}
-
-export async function listRecipes(
+export async function fetchRecipes(
   client: RecipeSupabaseClient,
-  options: RecipeListOptions = {}
-): Promise<RecipeListResult> {
-  const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
+  params: FetchRecipesParams
+): Promise<RecipeRow[]> {
+  const safeLimit = Math.max(params.limit, 1);
   let query = client
     .from("recipes")
     .select(RECIPE_COLUMNS)
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
-    .limit(limit + 1);
+    .limit(safeLimit);
 
-  if (options.tag) {
-    query = query.contains("tags", [options.tag]);
+  if (params.tag) {
+    query = query.contains("tags", [params.tag]);
   }
 
-  if (options.status !== undefined) {
-    query = query.eq("status", options.status);
+  if (params.status !== undefined) {
+    query = query.eq("status", params.status);
   }
 
-  if (options.writerUid) {
-    query = query.eq("writer_uid", options.writerUid);
+  if (params.writerUid) {
+    query = query.eq("writer_uid", params.writerUid);
   }
 
-  if (options.search) {
-    query = query.textSearch("tsv", options.search, { type: "plain" });
+  if (params.search) {
+    query = query.textSearch("tsv", params.search, { type: "plain" });
   }
 
-  if (options.cursor) {
-    const decoded = fromCursor(options.cursor);
-    if (decoded) {
-      query = query.or(
-        `created_at.lt.${decoded.createdAt},and(created_at.eq.${decoded.createdAt},id.gt.${decoded.id})`
-      );
-    }
+  if (params.cursor) {
+    query = query.or(
+      `created_at.lt.${params.cursor.createdAt},and(created_at.eq.${params.cursor.createdAt},id.gt.${params.cursor.id})`
+    );
   }
 
   const { data, error } = await query;
-  throwIfError(error, "목록 조회");
-
-  if (!data) {
-    return { items: [], nextCursor: null };
-  }
-
-  const rows = data as unknown as RecipeRow[];
-  const hasExtra = rows.length > limit;
-  const trimmed = hasExtra ? rows.slice(0, limit) : rows;
-
-  return {
-    items: trimmed.map(mapRowToRecipe),
-    nextCursor: hasExtra && rows[limit] ? toCursor(rows[limit]) : null,
-  };
+  throwIfError(error);
+  return mapRows(data as RecipeRow[]);
 }
 
-export async function getRecipe(client: RecipeSupabaseClient, id: string): Promise<Recipe | null> {
+export async function selectRecipeById(
+  client: RecipeSupabaseClient,
+  id: string
+): Promise<RecipeRow | null> {
   const { data, error } = await client
     .from("recipes")
     .select(RECIPE_COLUMNS)
     .eq("id", id)
     .maybeSingle();
-  throwIfError(error, "단일 조회");
-  if (!data) return null;
-  return mapRowToRecipe(data as unknown as RecipeRow);
+  throwIfError(error);
+  return (data as RecipeRow | null) ?? null;
 }
 
-export async function createRecipe(
+export async function insertRecipeRecord(
   client: RecipeSupabaseClient,
-  input: RecipeInsertInput
-): Promise<Recipe> {
-  const payload = buildInsertPayload(input);
+  payload: RecipeInsertDB
+): Promise<RecipeRow> {
   const { data, error } = await client
     .from("recipes")
     .insert(payload)
     .select(RECIPE_COLUMNS)
     .single();
-  throwIfError(error, "생성");
+  throwIfError(error);
   if (!data) {
-    throw new Error("레시피 생성 결과가 비어 있습니다.");
+    throw new Error("레시피를 생성하지 못했습니다.");
   }
-  return mapRowToRecipe(data as unknown as RecipeRow);
+  return data as RecipeRow;
 }
 
-export async function updateRecipe(
+export async function updateRecipeRecord(
   client: RecipeSupabaseClient,
   id: string,
-  patch: RecipeUpdateInput
-): Promise<Recipe> {
-  const payload = buildUpdatePayload(patch);
+  payload: RecipeUpdateDB
+): Promise<RecipeRow> {
   const { data, error } = await client
     .from("recipes")
     .update(payload)
     .eq("id", id)
     .select(RECIPE_COLUMNS)
     .single();
-  throwIfError(error, "수정");
+  throwIfError(error);
   if (!data) {
-    throw new Error("수정된 레시피를 찾을 수 없습니다.");
+    throw new Error("레시피를 수정하지 못했습니다.");
   }
-  return mapRowToRecipe(data as unknown as RecipeRow);
+  return data as RecipeRow;
 }
 
-export async function removeRecipe(client: RecipeSupabaseClient, id: string): Promise<void> {
+export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: string): Promise<void> {
   const { error } = await client.from("recipes").delete().eq("id", id);
-  throwIfError(error, "삭제");
+  throwIfError(error);
 }

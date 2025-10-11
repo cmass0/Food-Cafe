@@ -1,12 +1,12 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
-import * as userRepo from "@/features/user/repository";
+import * as userService from "@/features/user/service";
 import ProfileForm from "@/features/user/ui/ProfileForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const me = await userRepo.getSelf();
+  const me = await userService.getSelf();
 
   if (!me) {
     return (
@@ -26,9 +26,11 @@ export default async function ProfilePage() {
         <div>이메일: {me.email ?? "-"}</div>
         <div>이름: {me.display_name ?? "-"}</div>
       </section>
-      <ProfileForm defaultName={me.display_name} defaultAvatar={me.photo_url} />
+      <ProfileForm
+        defaultName={me.display_name}
+        defaultAvatar={me.photo_url}
+        defaultEmail={me.email}
+      />
     </main>
   );
 }
-
-

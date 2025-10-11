@@ -1,18 +1,17 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
-// shadcn/ui
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import LoginPage from "@/app/login/page";
 
 type Props = { session: Session | null };
@@ -28,40 +27,34 @@ function displayName(user: User | null) {
   const d = (id?.identity_data ?? {}) as Record<string, any>;
   if (p === "github") return d.user_name || d.name || user.email;
   if (p === "google") return d.name || user.email;
-  if (p === "kakao")
+  if (p === "kakao") {
     return d.properties?.nickname || d.kakao_account?.profile?.nickname || user.email;
+  }
 
   return user.email;
 }
 
 export default function ClientUserNav({ session }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const user = session?.user ?? null;
   const name = useMemo(() => displayName(user), [user]);
 
-
-
   if (!user) {
-    {
-      return (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-green-800 rounded-xl">
-              <div className="flex items-center gap-1 text-white">
-                <div className="text-sm">로그인</div>
-                <div>/</div>
-                <div className="text-sm">회원가입</div>
-              </div>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[400px]   p-0">
-            <LoginPage />
-          </DialogContent>
-        </Dialog>
-      );
-    }
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button className="rounded-xl bg-green-800">
+            <div className="flex items-center gap-1 text-white">
+              <div className="text-sm">로그인</div>
+              <div>/</div>
+              <div className="text-sm">회원가입</div>
+            </div>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[400px] p-0">
+          <LoginPage />
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
@@ -73,10 +66,10 @@ export default function ClientUserNav({ session }: Props) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <a href="/profile">???�로??</a>
+          <a href="/profile">내 프로필</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="/settings">?�정</a>
+          <a href="/settings">설정</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <form action="/auth/signout" method="post">

@@ -1,6 +1,5 @@
 // src/app/api/users/[id]/route.ts
-import { UserUpdateSchema } from "@/features/user/schema";
-import * as repo from "@/features/user/repository";
+import * as userService from "@/features/user/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +8,7 @@ type Ctx = { params: { id: string } };
 
 export async function GET(_: Request, { params }: Ctx) {
   try {
-    const user = await repo.getUser(params.id);
+    const user = await userService.getUserById(params.id);
     if (!user) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
     return Response.json({ data: user }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -21,8 +20,7 @@ export async function GET(_: Request, { params }: Ctx) {
 export async function PUT(req: Request, { params }: Ctx) {
   try {
     const json = await req.json();
-    const patch = UserUpdateSchema.parse(json);
-    const updated = await repo.updateUser(params.id, patch);
+    const updated = await userService.updateUserById(params.id, json);
     return Response.json({ data: updated });
   } catch (error) {
     console.error("[users] [id] PUT failed", error);
@@ -35,7 +33,7 @@ export async function PUT(req: Request, { params }: Ctx) {
 
 export async function DELETE(_: Request, { params }: Ctx) {
   try {
-    await repo.deleteUser(params.id);
+    await userService.deleteUserById(params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error("[users] [id] DELETE failed", error);

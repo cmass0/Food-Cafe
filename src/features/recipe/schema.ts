@@ -1,41 +1,41 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const recipeIdTextSchema = z
   .string({ required_error: "레거시 ID를 입력해 주세요." })
   .trim()
   .min(1, "레거시 ID를 입력해 주세요.")
-  .max(128, "레거시 ID는 128자를 넘을 수 없습니다.");
+  .max(128, "레거시 ID는 128자 이하만 가능합니다.");
 
 const imageUrlSchema = z
   .string()
   .trim()
   .url("올바른 이미지 URL을 입력해 주세요.")
-  .max(2048, "이미지 URL은 2048자를 넘을 수 없습니다.");
+  .max(2048, "이미지 URL은 2048자 이하만 가능합니다.");
 
 const tagSchema = z
   .string()
   .trim()
   .min(1, "태그는 1자 이상이어야 합니다.")
-  .max(50, "태그는 50자를 넘을 수 없습니다.");
+  .max(50, "태그는 50자 이하만 가능합니다.");
 
 export const recipeInsertSchema = z.object({
   idTextOld: recipeIdTextSchema.optional(),
   legacyId: z
     .string()
     .trim()
-    .max(128, "legacyId는 128자를 넘을 수 없습니다.")
+    .max(128, "legacyId는 128자 이하만 가능합니다.")
     .nullable()
     .optional(),
   title: z
     .string({ required_error: "제목을 입력해 주세요." })
     .trim()
     .min(1, "제목을 입력해 주세요.")
-    .max(200, "제목은 200자를 넘을 수 없습니다."),
-  summary: z.string().trim().max(500, "요약은 500자를 넘을 수 없습니다.").nullable().optional(),
+    .max(200, "제목은 200자 이하만 가능합니다."),
+  summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
   recipe: z
-    .string({ required_error: "본문을 입력해 주세요." })
+    .string({ required_error: "레시피 내용을 입력해 주세요." })
     .trim()
-    .min(1, "본문을 입력해 주세요.")
+    .min(1, "레시피 내용을 입력해 주세요.")
     .nullable()
     .optional(),
   image: imageUrlSchema,
@@ -43,7 +43,7 @@ export const recipeInsertSchema = z.object({
   category: z
     .string()
     .trim()
-    .max(120, "카테고리는 120자를 넘을 수 없습니다.")
+    .max(120, "카테고리는 120자 이하만 가능합니다.")
     .nullable()
     .optional(),
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
@@ -52,13 +52,13 @@ export const recipeInsertSchema = z.object({
   writerUidLegacy: z
     .string()
     .trim()
-    .max(120, "레거시 UID는 120자를 넘을 수 없습니다.")
+    .max(120, "레거시 UID는 120자 이하만 가능합니다.")
     .nullable()
     .optional(),
   writerName: z
     .string()
     .trim()
-    .max(120, "작성자 이름은 120자를 넘을 수 없습니다.")
+    .max(120, "작성자 이름은 120자 이하만 가능합니다.")
     .nullable()
     .optional(),
   writerEmail: z.string().email("이메일 형식이 올바르지 않습니다.").nullable().optional(),
@@ -72,7 +72,7 @@ export const recipeUpdateSchema = recipeInsertSchema
     lastLikedAt: z.string().datetime().nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "변경할 필드를 한 가지 이상 입력해 주세요.",
+    message: "수정할 필드를 한 가지 이상 입력해 주세요.",
   });
 
 export const recipeListOptionsSchema = z.object({
