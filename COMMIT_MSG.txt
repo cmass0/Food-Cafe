@@ -1,0 +1,6 @@
+사용자 API 라우트 정리 및 RLS 준비
+
+- [id] 라우트: 관리자/본인 분기 로직 주석화(TODO 추가)
+- /api/users/self 라우트 제거(현재는 단일 [id]만 유지)
+- User/Recipe 타입 및 레포 반환 타입 정리(이전 작업 포함)
+- prompts/temp.md 체크리스트 업데이트

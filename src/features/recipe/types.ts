@@ -82,7 +82,6 @@ export type FetchRecipesParams = {
 
 
 export type RecipeSupabaseClient = SupabaseClient<Database>;
-
 export type RecipeInsertDB = TablesInsert<"recipes">;
 export type RecipeUpdateDB = TablesUpdate<"recipes">;
 

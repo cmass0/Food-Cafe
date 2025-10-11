@@ -6,6 +6,7 @@ import {
 import * as repository from "./repository";
 import type {
   Recipe,
+  RecipeCursorFilter,
   RecipeInsertDB,
   RecipeInsertInput,
   RecipeListOptions,
@@ -84,23 +85,12 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   const payload: RecipeUpdateDB = {};
 
-  if (patch.idTextOld !== undefined) payload.id_text_old = patch.idTextOld ?? generateLegacyId();
-  if (patch.legacyId !== undefined) payload.legacy_id = patch.legacyId;
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
-  if (patch.image !== undefined) payload.image = patch.image;
-  if (patch.images !== undefined) payload.images = patch.images ?? [];
+  if (patch.image !== undefined) payload.image = patch.image;  
   if (patch.category !== undefined) payload.category = patch.category;
-  if (patch.tags !== undefined) payload.tags = patch.tags ?? [];
-  if (patch.status !== undefined) payload.status = patch.status;
-  if (patch.writerUid !== undefined) payload.writer_uid = patch.writerUid;
-  if (patch.writerUidLegacy !== undefined) payload.writer_uid_legacy = patch.writerUidLegacy;
-  if (patch.writerName !== undefined) payload.writer_name = patch.writerName;
-  if (patch.writerEmail !== undefined) payload.writer_email = patch.writerEmail;
-  if (patch.likeCount !== undefined) payload.like_count = patch.likeCount;
-  if (patch.viewCount !== undefined) payload.view_count = patch.viewCount;
-  if (patch.lastLikedAt !== undefined) payload.last_liked_at = patch.lastLikedAt;
+  if (patch.tags !== undefined) payload.tags = patch.tags;  
 
   return payload;
 }
@@ -113,7 +103,7 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function parseCursor(cursor?: string | null): repository.RecipeCursorFilter | null {
+function parseCursor(cursor?: string | null): RecipeCursorFilter | null {
   if (!cursor) return null;
   try {
     const decoded = Buffer.from(cursor, "base64url").toString("utf8");
@@ -181,8 +171,13 @@ export async function updateRecipe(
   id: string,
   patch: RecipeUpdateInput
 ): Promise<Recipe> {
+  const { data: auth } = await client.auth.getUser();
+  const me = auth?.user;
+  if (!me) throw new Error("로그인이 필요합니다.");
+  
   const parsed = recipeUpdateSchema.parse(patch);
   const payload = buildUpdatePayload(parsed);
+
   const row = await repository.updateRecipeRecord(client, id, payload);
   return mapRowToRecipe(row);
 }

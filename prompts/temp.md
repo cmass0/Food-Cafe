@@ -1,65 +1,67 @@
-# 점검 요약 (User 레포 & API & UI)
+# 작업 체크리스트 (User 레포 · API · UI)
 
 > 마지막 업데이트: 2025-10-11 (Asia/Seoul)
 
 ---
 
-## Part 2 – User 레포 CRUD
+## Part 2 – User 레포 CRUD (목표: RLS 정합성 + 타입 안정화)
 
-**위치:** `src/features/user/repository.ts`  
-**상태:** `listUsers`, `findUserByUsername`, `getUser`, `createUser`, `updateUser`, `deleteUser` 뼈대 존재(완성도 낮음)
+- [o] createUser: 세션에서 `auth.uid()` 사용해 `id` 강제 세팅
+  - 서비스: `getServerSupabase() → supabase.auth.getUser()`로 `user.id` 확보
+  - 레포 호출: `insertUserRecord(supabase, { id: user.id, display_name, email, photo_url, created_at, updated_at })`
+  - 금지 필드 제외: `role`, `is_admin` 등 권한 관련 컬럼 절대 포함 금지
 
-### 문제점
+- [ ] updateSelf: 본인만 수정되도록 강제
+  - 서비스: `user.id`로 `.eq('id', user.id)` 되도록 `repository.updateUserRecord(supabase, user.id, payload)` 호출
+  - `buildUpdatePayload`에서 허용 필드만 적용, `updated_at` ISO 갱신
+  - 빈 문자열 이름 등은 Zod로 차단(공백 → 오류)
 
-- `createUser`/`updateUser`가 Supabase RLS 정책 충족 입력(예: `id = auth.uid()`)을 세팅하지 않고 `payload`를 그대로 insert/update → 실제 환경에서 실패 가능성 큼
-- `updateSelf` 예외 메시지 깨짐: `"로그?�이 ?�요?�니??"` (null 처리 코멘트도 깨져 있어 재정비 필요)
-- 리턴 타입이 `any` 기반(`payload: any`, `patch: any`) → Supabase 타입 유틸 활용 부족
+- [ ] updateUserById(관리자 경로): 관리자만 허용/차단 결정
+  - 일반 사용자 경로에서는 `params.id !== auth.uid()`면 403 반환 권장
+  - 관리자만 허용 시 별도 권한 체크 또는 SRK 클라이언트 사용
 
-**진행률:** 약 **50%** (CRUD 함수 존재는 하나, 검증/RLS/타입 보강 및 테스트 미완료)
+- [ ] deleteUserById: 정책에 맞게 본인만/관리자만 허용
+  - 본인만: `repository.deleteUserRecord(supabase, user.id)` 형태로 강제
+  - 관리자만: 별도 경로/권한 체크
 
----
+- [ ] listUsers · findUserByDisplayName: RLS 읽기 정책 확인 후 최소 컬럼 선택
+  - 현재 안전성 위해 `select('*')` 사용 중 → 성능 최적화 필요 시 리터럴 문자열 컬럼으로 교체
+  - 검색은 부분 매칭 시 `ilike('display_name', '%' + q + '%')`
 
-## Part 3 – API 라우트 (`/api/users`, `/api/users/[id]`)
+- [ ] 메시지 정비: 깨진 한글 복구(예: "로그인이 필요합니다."), 에러 메시지 일관화
 
-**상태**
-
-- 라우트 파일은 Supabase 레포(`repo.*`) 호출 구조
-- 레포 미완성으로 실제 요청 시 정상 동작 담보 어려움
-- `POST/PUT`의 유효성 메시지에 **깨진 문자열** 남아 있음
-
-**진행률:** 약 **50%** (구조는 갖췄으나 레포 미완성으로 실제 동작 불안)
-
----
-
-## Part 4 – UI/클라이언트 (Like 버튼 + display name 표기)
-
-### 문제점
-
-- `RecipeCard.tsx`에 `<LikeButton>` 존재하나 `initialLiked={false}`로 하드코딩 → 서버 메타 연동 전무
-- LikeButton 호출부 및 주변 텍스트에 **깨진 한글**(??, �ۼ���) 존재
-- 레시피 상세 페이지(`recipes/[id]/page.tsx`)에 **Like 버튼 없음**
-- 작성자 표기가 영문(`Author`, `Anonymous`)이며 **display_name 기반 표기** 미충족
-
-**진행률:** 약 **20%** (버튼 삽입 일부, 서버 메타 및 한글 UI 정리 미완)
+- [ ] 타입: `UserInsertDB`/`UserUpdateDB`/`UserRow` 사용 유지, 캐스팅 지양
 
 ---
 
-## 결론 및 다음 단계
+## Part 3 – API 라우트 (/api/users, /api/users/[id])
 
-### 레포 정비 (Part 2)
+- [ ] GET /api/users/[id]: 404/401/403 구분 응답
+  - 인증 없음 → 401, 권한 없음 → 403, 데이터 없음 → 404
+  - `Cache-Control: no-store` 유지(민감 데이터)
+- [ ] PUT /api/users/[id]: Self 또는 Admin 전략 선택
+  - Self 전용: 라우트에서 `params.id === auth.uid()` 검증 후 `updateSelf` 호출
+  - Admin 전용: 관리자 권한 체크 후 `updateUserById(params.id, body)`
+  - 유효성 실패 메시지 한글 복구 및 상세화
+- [ ] DELETE /api/users/[id]: Self/Admin 정책에 맞춰 처리(상동)
+- [ ] POST /api/users: Self 생성만 허용(콜백/최초 로그인 시점) 또는 관리자만 허용
+- [ ] 에러 매핑 표준화: 400(유효성), 401/403(권한), 404(없음), 500(서버)
 
-- `createUser`: 현재 로그인 사용자 ID 강제 세팅(`id = auth.uid()`), 정책 허용 필드만 insert
-- `updateUser`/`listUsers`/`findUserByUsername`: Supabase 타입(`UserInsertDB`, `UserUpdateDB` 등) 활용해 타입 안정성 확보
-- `updateSelf` 예외 메시지: **“로그인이 필요합니다.”**로 복구, 깨진 한글/주석 정리
+---
 
-### 라우트 점검 (Part 3)
+## Part 4 – UI/클라이언트 (Like 버튼 · display_name 표기)
 
-- 레포 정비 후 간단 테스트 호출로 정상 동작 확인
-- `POST/PUT` 응답 유효성 메시지의 깨진 문자열 수정
+- [ ] 서버에서 좋아요 메타 주입: `initialLiked`, `initialCount` 전달
+  - 예: 카드/상세 서버 컴포넌트에서 `user_like` 레포 호출 후 프롭으로 내려주기
+- [ ] 상세 페이지(`recipes/[id]/page.tsx`)에 Like 버튼 배치
+- [ ] 한글 텍스트 정리: “작성자”, “조회수”, 오류 문구 등 인코딩 깨짐 제거
+- [ ] 작성자 표기: `display_name` 우선, 없으면 대체값(예: "익명")
+- [ ] 목록 화면은 경량 컬럼 사용(필요 시 API/레포에서 부분 컬럼으로 최적화)
 
-### UI 연동 (Part 4)
+---
 
-- 서버 컴포넌트에서 `likeMetaAction` 등 호출 → **`initialLiked`, `initialCount`** 값을 내려주기
-- 상세 페이지에도 Like 버튼 배치
-- 카드/상세 한글 텍스트(“작성자”, “조회수” 등) 정상화
-- 작성자 표기를 **display_name 기반**으로 표시
+## 메모
+
+- RLS 정합성 핵심: INSERT는 `id = auth.uid()`로 저장, UPDATE는 `.eq('id', user.id)`로 본인 행만 수정, 권한 컬럼 제외
+- 타입 안정성: Supabase 제네릭 추론 유지(`select('*')` 또는 리터럴 컬럼 문자열), 임의 캐스팅 지양
+- 관리자 기능은 별도 권한 체크 또는 SRK 사용(일반 요청에 SRK 금지)

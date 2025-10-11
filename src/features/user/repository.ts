@@ -1,5 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase/server";
-import type { FetchUsersParams, UserInsertDB, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
+import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
 // 추후 필요하다면 리터럴로 생성성
 // const USER_COLUMNS = [
@@ -68,19 +67,6 @@ export async function selectUserByDisplayName(
     .maybeSingle();
   if (error) throw error;
   return data ?? null;
-}
-
-export async function insertUserRecord(
-  client: UserSupabaseClient,
-  payload: UserInsertDB
-): Promise<UserRow> {
-  const { data, error } = await client
-    .from("users")
-    .insert(payload)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as UserRow;
 }
 
 export async function updateUserRecord(

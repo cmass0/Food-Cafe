@@ -23,16 +23,4 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const json = await req.json();
-    const created = await userService.createUser(json);
-    return Response.json({ data: created }, { status: 201 });
-  } catch (error) {
-    console.error("[users] POST failed", error);
-    return Response.json(
-      { error: "VALIDATION_OR_INTERNAL_ERROR" },
-      { status: 400 }
-    );
-  }
-}
+

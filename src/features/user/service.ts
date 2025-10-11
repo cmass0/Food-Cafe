@@ -1,6 +1,6 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 
-import { UserCreateSchema, UserUpdateSchema, type UserUpdateInput } from "./schema";
+import { UserUpdateSchema, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
 import type { UserCursorFilter, UserListOptions, UserListResult, UserRow, UserUpdateDB } from "./types";
 
@@ -121,19 +121,7 @@ export async function getUserById(id: string): Promise<UserRow | null> {
   return repository.selectUserById(supabase, id);
 }
 
-export async function createUser(input: unknown): Promise<UserRow> {
-  const supabase = getServerSupabase();
-  const parsed = UserCreateSchema.parse(input);
-  return repository.insertUserRecord(supabase, {
-    id: parsed.id,
-    email: parsed.email,
-    display_name: parsed.username,
-    photo_url: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
-}
-
+//관리자
 export async function updateUserById(id: string, input: unknown): Promise<UserRow> {
   const supabase = getServerSupabase();
   const parsed = UserUpdateSchema.parse(input);
