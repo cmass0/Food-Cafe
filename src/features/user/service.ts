@@ -2,7 +2,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 
 import { UserCreateSchema, UserUpdateSchema, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
-import type { UserListOptions, UserListResult, UserRow } from "./types";
+import type { UserCursorFilter, UserListOptions, UserListResult, UserRow, UserUpdateDB } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -22,7 +22,7 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function parseCursor(cursor?: string | null): repository.UserCursorFilter | null {
+function parseCursor(cursor?: string | null): UserCursorFilter | null {
   if (!cursor) return null;
   try {
     const decoded = Buffer.from(cursor, "base64url").toString("utf8");
@@ -39,13 +39,15 @@ function toCursor(row: UserRow): string {
   return Buffer.from(payload).toString("base64url");
 }
 
-function buildUpdatePayload(parsed: UserUpdateInput): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
+function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
+  const payload: UserUpdateDB = {
     updated_at: new Date().toISOString(),
   };
 
   if (parsed.display_name !== undefined) {
-    payload.display_name = parsed.display_name ?? null;
+    if (parsed.display_name !== null) {
+      payload.display_name = parsed.display_name;
+    }
   }
   if (parsed.photo_url !== undefined) {
     payload.photo_url = parsed.photo_url ?? null;

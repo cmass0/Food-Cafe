@@ -63,6 +63,24 @@ export interface RecipeListResult {
   nextCursor: string | null;
 }
 
+
+export type RecipeCursorFilter = {
+  createdAt: string;
+  id: string;
+};
+
+export type FetchRecipesParams = {
+  limit: number;
+  tag?: string;
+  status?: number;
+  writerUid?: string;
+  search?: string;
+  cursor?: RecipeCursorFilter | null;
+};
+
+
+
+
 export type RecipeSupabaseClient = SupabaseClient<Database>;
 
 export type RecipeInsertDB = TablesInsert<"recipes">;

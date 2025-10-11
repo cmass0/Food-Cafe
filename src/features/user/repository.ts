@@ -1,39 +1,30 @@
-import type { UserRow, UserSupabaseClient } from "./types";
+import { getServerSupabase } from "@/lib/supabase/server";
+import type { FetchUsersParams, UserInsertDB, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
-const USER_COLUMNS = [
-  "id",
-  "display_name",
-  "photo_url",
-  "role",
-  "email",
-  "created_at",
-  "updated_at",
-  "is_admin"
-].join(", ");
+// 추후 필요하다면 리터럴로 생성성
+// const USER_COLUMNS = [
+//   "id",
+//   "display_name",
+//   "photo_url",
+//   "role",
+//   "email",
+//   "created_at",
+//   "updated_at",
+//   "is_admin"
+// ].join(", ");
 
 function mapRows(rows: UserRow[] | null | undefined): UserRow[] {
   return Array.isArray(rows) ? (rows as UserRow[]) : [];
 }
 
-export type UserCursorFilter = {
-  createdAt: string;
-  id: string;
-};
-
-export type FetchUsersParams = {
-  limit: number;
-  username?: string;
-  cursor?: UserCursorFilter | null;
-};
-
 export async function fetchUsers(
   client: UserSupabaseClient,
-  params: FetchUsersParams
+  params: FetchUsersParams,
 ): Promise<UserRow[]> {
   const safeLimit = Math.max(params.limit, 1);
   let query = client
     .from("users")
-    .select(USER_COLUMNS)
+    .select("*")
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .limit(safeLimit);
@@ -50,8 +41,7 @@ export async function fetchUsers(
 
   const { data, error } = await query;
   if (error) throw error;
-
-  return mapRows(data as UserRow[]);
+  return mapRows(data);
 }
 
 export async function selectUserById(
@@ -60,11 +50,11 @@ export async function selectUserById(
 ): Promise<UserRow | null> {
   const { data, error } = await client
     .from("users")
-    .select(USER_COLUMNS)
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return (data as UserRow) ?? null;
+  return data ?? null;
 }
 
 export async function selectUserByDisplayName(
@@ -73,21 +63,21 @@ export async function selectUserByDisplayName(
 ): Promise<UserRow | null> {
   const { data, error } = await client
     .from("users")
-    .select(USER_COLUMNS)
+    .select("*")
     .ilike("display_name", name)
     .maybeSingle();
   if (error) throw error;
-  return (data as UserRow) ?? null;
+  return data ?? null;
 }
 
 export async function insertUserRecord(
   client: UserSupabaseClient,
-  payload: Record<string, unknown>
+  payload: UserInsertDB
 ): Promise<UserRow> {
   const { data, error } = await client
     .from("users")
     .insert(payload)
-    .select(USER_COLUMNS)
+    .select("*")
     .single();
   if (error) throw error;
   return data as UserRow;
@@ -96,13 +86,13 @@ export async function insertUserRecord(
 export async function updateUserRecord(
   client: UserSupabaseClient,
   id: string,
-  payload: Record<string, unknown>
+  payload: UserUpdateDB
 ): Promise<UserRow> {
   const { data, error } = await client
     .from("users")
     .update(payload)
     .eq("id", id)
-    .select(USER_COLUMNS)
+    .select("*")
     .single();
   if (error) throw error;
   return data as UserRow;

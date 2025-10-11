@@ -22,3 +22,15 @@ export type UserUpdate = {
   photo_url?: string | null;
   email?: string | null;
 };
+
+export type UserCursorFilter = {
+  createdAt: string;
+  id: string;
+};
+
+export type FetchUsersParams = {
+  limit: number;
+  username?: string;
+  cursor?: UserCursorFilter | null;
+};
+

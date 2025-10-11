@@ -1,34 +1,36 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import type {
+  FetchRecipesParams,
   RecipeInsertDB,
   RecipeRow,
   RecipeSupabaseClient,
   RecipeUpdateDB,
 } from "./types";
 
-const RECIPE_COLUMNS = [
-  "id",
-  "id_text_old",
-  "legacy_id",
-  "title",
-  "summary",
-  "recipe",
-  "image",
-  "images",
-  "category",
-  "tags",
-  "like_count",
-  "view_count",
-  "last_liked_at",
-  "status",
-  "writer_uid",
-  "writer_uid_legacy",
-  "writer_name",
-  "writer_email",
-  "created_at",
-  "updated_at",
-].join(", ");
+//추후 필요하다면 리터럴로 생성성
+// const RECIPE_COLUMNS = [
+//   "id",
+//   "id_text_old",
+//   "legacy_id",
+//   "title",
+//   "summary",
+//   "recipe",
+//   "image",
+//   "images",
+//   "category",
+//   "tags",
+//   "like_count",
+//   "view_count",
+//   "last_liked_at",
+//   "status",
+//   "writer_uid",
+//   "writer_uid_legacy",
+//   "writer_name",
+//   "writer_email",
+//   "created_at",
+//   "updated_at",
+// ].join(", ");
 
 function mapRows(rows: RecipeRow[] | null | undefined): RecipeRow[] {
   return Array.isArray(rows) ? (rows as RecipeRow[]) : [];
@@ -38,28 +40,17 @@ function throwIfError(error: PostgrestError | null): void {
   if (error) throw error;
 }
 
-export type RecipeCursorFilter = {
-  createdAt: string;
-  id: string;
-};
 
-export type FetchRecipesParams = {
-  limit: number;
-  tag?: string;
-  status?: number;
-  writerUid?: string;
-  search?: string;
-  cursor?: RecipeCursorFilter | null;
-};
+
 
 export async function fetchRecipes(
   client: RecipeSupabaseClient,
-  params: FetchRecipesParams
+  params: FetchRecipesParams,
 ): Promise<RecipeRow[]> {
   const safeLimit = Math.max(params.limit, 1);
   let query = client
     .from("recipes")
-    .select(RECIPE_COLUMNS)
+    .select("*")
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .limit(safeLimit);
@@ -88,7 +79,7 @@ export async function fetchRecipes(
 
   const { data, error } = await query;
   throwIfError(error);
-  return mapRows(data as RecipeRow[]);
+  return mapRows(data);
 }
 
 export async function selectRecipeById(
@@ -97,11 +88,11 @@ export async function selectRecipeById(
 ): Promise<RecipeRow | null> {
   const { data, error } = await client
     .from("recipes")
-    .select(RECIPE_COLUMNS)
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   throwIfError(error);
-  return (data as RecipeRow | null) ?? null;
+  return data ?? null;
 }
 
 export async function insertRecipeRecord(
@@ -111,7 +102,7 @@ export async function insertRecipeRecord(
   const { data, error } = await client
     .from("recipes")
     .insert(payload)
-    .select(RECIPE_COLUMNS)
+    .select("*")
     .single();
   throwIfError(error);
   if (!data) {
@@ -129,7 +120,7 @@ export async function updateRecipeRecord(
     .from("recipes")
     .update(payload)
     .eq("id", id)
-    .select(RECIPE_COLUMNS)
+    .select("*")
     .single();
   throwIfError(error);
   if (!data) {
