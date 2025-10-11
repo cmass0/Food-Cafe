@@ -88,9 +88,10 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
-  if (patch.image !== undefined) payload.image = patch.image;  
+  if (patch.image !== undefined) payload.image = patch.image;
+  if (patch.images !== undefined) payload.images = patch.images;
   if (patch.category !== undefined) payload.category = patch.category;
-  if (patch.tags !== undefined) payload.tags = patch.tags;  
+  if (patch.tags !== undefined) payload.tags = patch.tags;
 
   return payload;
 }
@@ -171,14 +172,17 @@ export async function updateRecipe(
   id: string,
   patch: RecipeUpdateInput
 ): Promise<Recipe> {
+  // 1) 로그인 사용자 확인
   const { data: auth } = await client.auth.getUser();
   const me = auth?.user;
   if (!me) throw new Error("로그인이 필요합니다.");
-  
+
+  // 2) 유효성 검사 및 허용된 필드만 추출
   const parsed = recipeUpdateSchema.parse(patch);
   const payload = buildUpdatePayload(parsed);
 
-  const row = await repository.updateRecipeRecord(client, id, payload);
+  // 3) 소유자(writer_uid)가 일치할 때만 업데이트 수행
+  const row = await repository.updateRecipeRecordByOwner(client, id, me.id, payload);
   return mapRowToRecipe(row);
 }
 

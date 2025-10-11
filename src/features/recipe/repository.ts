@@ -111,15 +111,17 @@ export async function insertRecipeRecord(
   return data as RecipeRow;
 }
 
-export async function updateRecipeRecord(
+export async function updateRecipeRecordByOwner(
   client: RecipeSupabaseClient,
   id: string,
+  ownerUid: string,
   payload: RecipeUpdateDB
 ): Promise<RecipeRow> {
   const { data, error } = await client
     .from("recipes")
     .update(payload)
     .eq("id", id)
+    .eq("writer_uid", ownerUid)
     .select("*")
     .single();
   throwIfError(error);

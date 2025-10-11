@@ -43,10 +43,14 @@ export interface RecipeInsertInput {
   writerEmail?: string | null;
 }
 
-export interface RecipeUpdateInput extends Partial<RecipeInsertInput> {
-  likeCount?: number;
-  viewCount?: number;
-  lastLikedAt?: string | null;
+export interface RecipeUpdateInput {
+  title?: string;
+  summary?: string | null;
+  recipe?: string | null;
+  image?: string | null;
+  images?: string[];
+  category?: string | null;
+  tags?: string[];
 }
 
 export interface RecipeListOptions {
@@ -84,4 +88,3 @@ export type FetchRecipesParams = {
 export type RecipeSupabaseClient = SupabaseClient<Database>;
 export type RecipeInsertDB = TablesInsert<"recipes">;
 export type RecipeUpdateDB = TablesUpdate<"recipes">;
-

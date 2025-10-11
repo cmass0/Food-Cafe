@@ -15,6 +15,7 @@ function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
     summary: values.summary,
     recipe: values.recipe,
     image: values.image,
+    images: values.images,
     tags: values.tags,
     category: values.category,
     // writerName: values.writerName,

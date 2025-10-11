@@ -79,31 +79,15 @@ function normaliseCreateInput(payload: LegacyCreateInput): RecipeInsertInput {
   };
 }
 
-function buildUpdateInput(existing: Recipe | null, values: LegacyUpdateInput): RecipeUpdateInput {
-  const viewCount =
-    values.check === "increment"
-      ? (existing?.viewCount ?? 0) + 1
-      : typeof values.check === "number"
-        ? values.check
-        : undefined;
+function buildUpdateInput(_existing: Recipe | null, values: LegacyUpdateInput): RecipeUpdateInput {
+  const result: RecipeUpdateInput = {};
 
-  const lastLikedAt = values.lastlike
-    ? values.lastlike instanceof Date
-      ? values.lastlike.toISOString()
-      : new Date(values.lastlike).toISOString()
-    : values.lastlike;
+  if (values.title !== undefined) result.title = values.title;
+  if (values.summary !== undefined) result.summary = values.summary ?? null;
+  if (values.recipe !== undefined) result.recipe = values.recipe ?? null;
+  if (values.image !== undefined) result.image = values.image ?? null;
 
-  return {
-    writerEmail: values.email ?? undefined,
-    writerName: values.name ?? undefined,
-    title: values.title,
-    summary: values.summary,
-    recipe: values.recipe,
-    image: values.image,
-    likeCount: values.like,
-    viewCount,
-    lastLikedAt,
-  };
+  return result;
 }
 
 function rethrow(error: unknown): never {
