@@ -128,7 +128,9 @@ export async function updateUserById(id: string, input: unknown): Promise<UserRo
   return repository.updateUserRecord(supabase, id, buildUpdatePayload(parsed));
 }
 
-export async function deleteUserById(id: string): Promise<void> {
+export async function deleteUserById(): Promise<void> {
   const supabase = getServerSupabase();
-  await repository.deleteUserRecord(supabase, id);
+  const {data: { user }} = await supabase.auth.getUser();
+  if (!user) throw new Error("로그인이 필요합니다.");
+  await repository.deleteUserRecord(supabase, user.id);
 }

@@ -11,12 +11,12 @@
   - 레포 호출: `insertUserRecord(supabase, { id: user.id, display_name, email, photo_url, created_at, updated_at })`
   - 금지 필드 제외: `role`, `is_admin` 등 권한 관련 컬럼 절대 포함 금지
 
-- [ ] updateSelf: 본인만 수정되도록 강제
+- [o] updateSelf: 본인만 수정되도록 강제
   - 서비스: `user.id`로 `.eq('id', user.id)` 되도록 `repository.updateUserRecord(supabase, user.id, payload)` 호출
   - `buildUpdatePayload`에서 허용 필드만 적용, `updated_at` ISO 갱신
   - 빈 문자열 이름 등은 Zod로 차단(공백 → 오류)
 
-- [ ] updateUserById(관리자 경로): 관리자만 허용/차단 결정
+- [x] updateUserById(관리자 경로): 관리자만 허용/차단 결정
   - 일반 사용자 경로에서는 `params.id !== auth.uid()`면 403 반환 권장
   - 관리자만 허용 시 별도 권한 체크 또는 SRK 클라이언트 사용
 

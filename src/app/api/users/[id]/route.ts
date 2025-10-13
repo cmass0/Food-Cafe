@@ -54,7 +54,7 @@ export async function PUT(req: Request, { params }: Ctx) {
 
 export async function DELETE(_: Request, { params }: Ctx) {
   try {
-    await userService.deleteUserById(params.id);
+    await userService.deleteUserById();
     return new Response(null, { status: 204 });
 
     /*
