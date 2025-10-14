@@ -1,4 +1,4 @@
-import type { PostgrestError } from "@supabase/supabase-js";
+﻿import type { PostgrestError } from "@supabase/supabase-js";
 
 import type {
   FetchRecipesParams,
@@ -135,3 +135,4 @@ export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: strin
   const { error } = await client.from("recipes").delete().eq("id", id);
   throwIfError(error);
 }
+

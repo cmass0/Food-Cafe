@@ -24,7 +24,7 @@
   - 본인만: `repository.deleteUserRecord(supabase, user.id)` 형태로 강제
   <!-- - 관리자만: 별도 경로/권한 체크 -->
 
-- [ ] listUsers · findUserByDisplayName: RLS 읽기 정책 확인 후 최소 컬럼 선택
+- [o] listUsers · findUserByDisplayName: RLS 읽기 정책 확인 후 최소 컬럼 선택
   - 현재 안전성 위해 `select('*')` 사용 중 → 성능 최적화 필요 시 리터럴 문자열 컬럼으로 교체
   - 검색은 부분 매칭 시 `ilike('display_name', '%' + q + '%')`
 
@@ -39,11 +39,11 @@
 - [ ] GET /api/users/[id]: 404/401/403 구분 응답
   - 인증 없음 → 401, 권한 없음 → 403, 데이터 없음 → 404
   - `Cache-Control: no-store` 유지(민감 데이터)
-- [ ] PUT /api/users/[id]: Self 또는 Admin 전략 선택
+- [ ] PUT /api/users/[id]: Self
   - Self 전용: 라우트에서 `params.id === auth.uid()` 검증 후 `updateSelf` 호출
-  - Admin 전용: 관리자 권한 체크 후 `updateUserById(params.id, body)`
-  - 유효성 실패 메시지 한글 복구 및 상세화
-- [ ] DELETE /api/users/[id]: Self/Admin 정책에 맞춰 처리(상동)
+  <!-- - Admin 전용: 관리자 권한 체크 후 `updateUserById(params.id, body)`
+  - 유효성 실패 메시지 한글 복구 및 상세화 -->
+- [ ] DELETE /api/users/[id]: Self 정책에 맞춰 처리(상동)
 - [ ] POST /api/users: Self 생성만 허용(콜백/최초 로그인 시점) 또는 관리자만 허용
 - [ ] 에러 매핑 표준화: 400(유효성), 401/403(권한), 404(없음), 500(서버)
 

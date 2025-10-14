@@ -1,4 +1,4 @@
-import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
+﻿import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
 // 추후 필요하다면 리터럴로 생성성
 // const USER_COLUMNS = [
@@ -21,15 +21,16 @@ export async function fetchUsers(
   params: FetchUsersParams,
 ): Promise<UserRow[]> {
   const safeLimit = Math.max(params.limit, 1);
-  let query = client
-    .from("users")
-    .select("*")
+  let query = (client as any)
+    .from("users_public")
+    .select("id, display_name, photo_url, created_at")
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .limit(safeLimit);
-
+ 
   if (params.username) {
-    query = query.ilike("display_name", params.username);
+    const escaped = params.username.replace(/[%_]/g, m => `\\${m}`);
+    query = query.ilike("display_name",`%${escaped}%`);
   }
 
   if (params.cursor) {
