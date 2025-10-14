@@ -22,18 +22,19 @@ export default function LikeButton({ recipeId, initialLiked, initialCount }: Pro
       disabled={disabled}
       onClick={() =>
         start(async () => {
-          if (liked) return; // 클라 중복 방지
+          if (liked) return; // 클릭 중복 방지
           try {
             const { count: nextCount } = await likeOnceAction(recipeId);
             setLiked(true);
             setCount(nextCount);
           } catch (e) {
-            console.error(e); // AUTH_REQUIRED 처리 등
+            console.error(e); // TODO: AUTH_REQUIRED 처리
           }
         })
       }
     >
-      ♥ {count}
+      좋아요 {count}
     </Button>
   );
 }
+

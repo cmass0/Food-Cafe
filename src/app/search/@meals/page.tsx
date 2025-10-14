@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Card, CardBody, CardFooter, Image } from "@heroui/react";
 import { fetchRecipes } from "@/data/recipe";
+import LikeButton from "@/features/user_like/ui/likebutton";
+import { getLikeMeta } from "@/features/user_like/service";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
     const hay = `${r.title ?? ""} ${r.name ?? ""} ${r.summary ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
   });
-
+ 
   if (results.length === 0) return <p>검색 결과가 없습니다.</p>;
 
   return (
@@ -30,13 +32,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
       }}
     >
       {results.map((r: any) => (
-        <Card
-          as={Link}
-          href={`/meals/${r.id}`}
-          isPressable
-          key={r.id}
-          shadow="sm"
-        >
+        <Card as={Link} href={`/meals/${r.id}`} isPressable key={r.id} shadow="sm">
           {r.image && (
             <Image
               alt={r.title}
@@ -48,19 +44,12 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
             />
           )}
           <CardBody>
-            <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 600 }}>
-              {r.title}
-            </h3>
-            {r.summary && (
-              <p style={{ margin: 0, fontSize: "14px", color: "#555" }}>
-                {r.summary}
-              </p>
-            )}
+            <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 600 }}>{r.title}</h3>
+            {r.summary && <p style={{ margin: 0, fontSize: "14px", color: "#555" }}>{r.summary}</p>}
           </CardBody>
           <CardFooter>
-            <small style={{ color: "#666" }}>
-              by {r.name ?? "작성자"}
-            </small>
+            <small style={{ color: "#666" }}>by {r.name ?? "작성자"}</small>
+            <LikeButton recipeId={r.id} initialLiked={false} initialCount={r.likeCount ?? 0} />
           </CardFooter>
         </Card>
       ))}

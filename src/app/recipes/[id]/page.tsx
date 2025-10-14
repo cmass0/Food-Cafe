@@ -5,6 +5,7 @@ import DeleteRecipeButton from "../_components/DeleteRecipeButton";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getRecipe } from "@/features/recipe/service";
 import LikeButton from "@/features/user_like/ui/likebutton";
+import { getLikeMeta } from "@/features/user_like/service";
 
 type RecipeDetailPageProps = {
   params: { id: string };
@@ -17,6 +18,8 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
   if (!recipe) {
     notFound();
   }
+
+  const { liked, count } = await getLikeMeta(recipe.id);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
@@ -45,10 +48,10 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
 
       <section className="space-y-4">
         <div>
-        <LikeButton recipeId={recipe.id} initialLiked = {false} initialCount = {recipe.likeCount}/>
+          <LikeButton recipeId={recipe.id} initialLiked={liked} initialCount={count} />
         </div>
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">레시피 수정</h2>
+          <h2 className="text-2xl font-semibold">레시피 설정</h2>
           <DeleteRecipeButton recipeId={recipe.id} />
         </div>
         <RecipeEditForm recipe={recipe} />
@@ -56,3 +59,4 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
     </main>
   );
 }
+

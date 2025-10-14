@@ -57,12 +57,13 @@ export async function deleteRecipeAction(id: string) {
   }
 }
 
-export async function likeOnceAction(recipeId:string) {
+export async function likeOnceAction(recipeId: string) {
   const result = await likeOnceForCurrentUser(recipeId);
-  revalidatePath("/recipes"); 
+  revalidatePath("/recipes");
   return result;
 }
 
 export async function likeMetaAction(recipeId: string) {
   return getLikeMeta(recipeId);
 }
+
