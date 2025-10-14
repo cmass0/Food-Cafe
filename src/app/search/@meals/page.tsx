@@ -2,8 +2,6 @@ import Link from "next/link";
 
 import { Card, CardBody, CardFooter, Image } from "@heroui/react";
 import { fetchRecipes } from "@/data/recipe";
-import LikeButton from "@/features/user_like/ui/likebutton";
-import { getLikeMeta } from "@/features/user_like/service";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -16,7 +14,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
   const keyword = q.trim().toLowerCase();
 
   const all = await fetchRecipes();
-  const results = all.filter((r: any) => {
+  const results =  all.filter((r: any) => {
     const hay = `${r.title ?? ""} ${r.name ?? ""} ${r.summary ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
   });
@@ -49,7 +47,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
           </CardBody>
           <CardFooter>
             <small style={{ color: "#666" }}>by {r.name ?? "작성자"}</small>
-            <LikeButton recipeId={r.id} initialLiked={false} initialCount={r.likeCount ?? 0} />
+            {/* <LikeButton recipeId={r.id} initialLiked={false} initialCount={r.likeCount ?? 0} /> */}
           </CardFooter>
         </Card>
       ))}
