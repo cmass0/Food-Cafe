@@ -69,6 +69,7 @@ export async function selectUserByDisplayName(
   return data ?? null;
 }
 
+
 export async function updateUserRecord(
   client: UserSupabaseClient,
   id: string,

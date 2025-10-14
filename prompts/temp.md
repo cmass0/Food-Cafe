@@ -16,13 +16,13 @@
   - `buildUpdatePayload`에서 허용 필드만 적용, `updated_at` ISO 갱신
   - 빈 문자열 이름 등은 Zod로 차단(공백 → 오류)
 
-- [x] updateUserById(관리자 경로): 관리자만 허용/차단 결정
+- [o] updateUserById(관리자 경로): 관리자만 허용/차단 결정
   - 일반 사용자 경로에서는 `params.id !== auth.uid()`면 403 반환 권장
-  - 관리자만 허용 시 별도 권한 체크 또는 SRK 클라이언트 사용
+  <!-- - 관리자만 허용 시 별도 권한 체크 또는 SRK 클라이언트 사용 -->
 
-- [ ] deleteUserById: 정책에 맞게 본인만/관리자만 허용
+- [o] deleteUserById: 정책에 맞게 본인만/관리자만 허용
   - 본인만: `repository.deleteUserRecord(supabase, user.id)` 형태로 강제
-  - 관리자만: 별도 경로/권한 체크
+  <!-- - 관리자만: 별도 경로/권한 체크 -->
 
 - [ ] listUsers · findUserByDisplayName: RLS 읽기 정책 확인 후 최소 컬럼 선택
   - 현재 안전성 위해 `select('*')` 사용 중 → 성능 최적화 필요 시 리터럴 문자열 컬럼으로 교체

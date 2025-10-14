@@ -20,10 +20,10 @@ export async function GET(_: Request, { params }: Ctx) {
   }
 }
 
-export async function PUT(req: Request, { params }: Ctx) {
+export async function PUT(req: Request) {
   try {
     const json = await req.json();
-    const updated = await userService.updateUserById(params.id, json);
+    const updated = await userService.updateSelf(json);
     return Response.json({ data: updated });
 
     /*

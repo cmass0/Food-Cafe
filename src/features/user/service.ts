@@ -122,11 +122,13 @@ export async function getUserById(id: string): Promise<UserRow | null> {
 }
 
 //관리자
-export async function updateUserById(id: string, input: unknown): Promise<UserRow> {
-  const supabase = getServerSupabase();
-  const parsed = UserUpdateSchema.parse(input);
-  return repository.updateUserRecord(supabase, id, buildUpdatePayload(parsed));
-}
+// export async function updateUserById(input: unknown): Promise<UserRow> {
+//   const supabase = getServerSupabase();
+//   const parsed = UserUpdateSchema.parse(input);
+//   const {data: {user}} = await supabase.auth.getUser(); 
+//   if (!user) throw new Error("로그인이 필요합니다.");
+//   return repository.updateUserRecord(supabase, user.id, buildUpdatePayload(parsed));
+// }
 
 export async function deleteUserById(): Promise<void> {
   const supabase = getServerSupabase();
