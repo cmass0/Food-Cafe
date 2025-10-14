@@ -1,11 +1,33 @@
 import { getServerSupabase } from "@/lib/supabase/server";
+import type { User } from "@supabase/supabase-js";
 
-import { UserUpdateSchema, type UserUpdateInput } from "./schema";
+import { UserCreateSchema, UserUpdateSchema, type UserCreateInput, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
-import type { UserCursorFilter, UserListOptions, UserListResult, UserRow, UserUpdateDB } from "./types";
+import type {
+  UserCursorFilter,
+  UserListOptions,
+  UserListResult,
+  UserRow,
+  UserInsertDB,
+  UserUpdateDB,
+} from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+
+const ERROR_UNAUTHORIZED = "UNAUTHORIZED";
+const ERROR_ALREADY_EXISTS = "USER_ALREADY_EXISTS";
+const ERROR_VALIDATION = "VALIDATION_ERROR";
+
+const MESSAGE_LOGIN_REQUIRED = "\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
+const MESSAGE_DISPLAY_NAME_REQUIRED = "\uC774\uB984\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694.";
+const MESSAGE_EMAIL_MISMATCH = "\uC694\uCCAD\uD55C \uC774\uBA54\uC77C\uC774 \uC778\uC99D \uACC4\uC815\uACFC \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.";
+const MESSAGE_PROFILE_EXISTS = "\uC774\uBBF8 \uC0AC\uC6A9\uC790 \uD504\uB85C\uD544\uC774 \uC874\uC7AC\uD569\uB2C8\uB2E4.";
+
+function withCode<T extends Error>(error: T, code: string): T & { code: string } {
+  (error as T & { code: string }).code = code;
+  return error as T & { code: string };
+}
 
 type CursorPayload = {
   created_at?: string;
@@ -49,6 +71,7 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
       payload.display_name = parsed.display_name;
     }
   }
+
   if (parsed.photo_url !== undefined) {
     payload.photo_url = parsed.photo_url ?? null;
   }
@@ -57,6 +80,25 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
   }
 
   return payload;
+}
+
+function pickAvatarURL(user: User): string | null {
+  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const candidates = [metadata.avatar_url, metadata.picture, metadata.avatarUrl];
+  const selected = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
+  return typeof selected === "string" ? selected : null;
+}
+
+function buildInsertPayload(authUser: User, parsed: UserCreateInput): UserInsertDB {
+  const now = new Date().toISOString();
+  return {
+    id: authUser.id,
+    display_name: parsed.username,
+    email: parsed.email ?? authUser.email ?? null,
+    photo_url: pickAvatarURL(authUser),
+    created_at: now,
+    updated_at: now,
+  };
 }
 
 export async function getSelf(): Promise<UserRow | null> {
@@ -70,6 +112,30 @@ export async function getSelf(): Promise<UserRow | null> {
   return repository.selectUserById(supabase, user.id);
 }
 
+export async function createSelf(input: unknown): Promise<UserRow> {
+  const supabase = getServerSupabase();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
+
+  const parsed = UserCreateSchema.parse(input);
+
+  if (parsed.email && user.email && parsed.email !== user.email) {
+    throw withCode(new Error(MESSAGE_EMAIL_MISMATCH), ERROR_VALIDATION);
+  }
+
+  const existing = await repository.selectUserById(supabase, user.id);
+  if (existing) {
+    throw withCode(new Error(MESSAGE_PROFILE_EXISTS), ERROR_ALREADY_EXISTS);
+  }
+
+  const payload = buildInsertPayload(user, parsed);
+  return repository.insertUserRecord(supabase, payload);
+}
+
 export async function updateSelf(input: unknown): Promise<UserRow> {
   const supabase = getServerSupabase();
   const {
@@ -77,11 +143,11 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
     error,
   } = await supabase.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다.");
+  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
 
   const parsed = UserUpdateSchema.parse(input);
   if (typeof parsed.display_name === "string" && !parsed.display_name.trim()) {
-    throw new Error("이름을 입력해 주세요.");
+    throw withCode(new Error(MESSAGE_DISPLAY_NAME_REQUIRED), ERROR_VALIDATION);
   }
 
   if (parsed.email && parsed.email !== user.email) {
@@ -121,18 +187,13 @@ export async function getUserById(id: string): Promise<UserRow | null> {
   return repository.selectUserById(supabase, id);
 }
 
-//관리자
-// export async function updateUserById(input: unknown): Promise<UserRow> {
-//   const supabase = getServerSupabase();
-//   const parsed = UserUpdateSchema.parse(input);
-//   const {data: {user}} = await supabase.auth.getUser(); 
-//   if (!user) throw new Error("로그인이 필요합니다.");
-//   return repository.updateUserRecord(supabase, user.id, buildUpdatePayload(parsed));
-// }
-
 export async function deleteUserById(): Promise<void> {
   const supabase = getServerSupabase();
-  const {data: { user }} = await supabase.auth.getUser();
-  if (!user) throw new Error("로그인이 필요합니다.");
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
   await repository.deleteUserRecord(supabase, user.id);
 }

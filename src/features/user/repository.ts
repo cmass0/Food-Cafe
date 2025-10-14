@@ -1,6 +1,6 @@
-ï»¿import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
+import type { FetchUsersParams, UserInsertDB, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
-// ì¶”í›„ í•„ìš”í•˜ë‹¤ë©´ ë¦¬í„°ëŸ´ë¡œ ìƒì„±ì„±
+// ÃßÈÄ ÇÊ¿äÇÏ´Ù¸é ¸®ÅÍ·²·Î »ı¼º¼º
 // const USER_COLUMNS = [
 //   "id",
 //   "display_name",
@@ -69,6 +69,20 @@ export async function selectUserByDisplayName(
   if (error) throw error;
   return data ?? null;
 }
+
+export async function insertUserRecord(
+  client: UserSupabaseClient,
+  payload: UserInsertDB
+): Promise<UserRow> {
+  const { data, error } = await client
+    .from("users")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as UserRow;
+}
+
 
 
 export async function updateUserRecord(

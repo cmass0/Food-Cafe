@@ -19,11 +19,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         <span>작성자: {recipe.writerName ?? "미상"}</span>
         <span>조회수: {recipe.viewCount ?? 0}</span>
         <span>
-          생성일: {recipe.createdAt.toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
+          생성일:{" "}
+          {recipe.createdAt.toLocaleDateString("ko-KR", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
         </span>
-        <LikeButton recipeId={recipe.id} initialLiked = {false} initialCount = {recipe.likeCount}/>
+        <LikeButton recipeId={recipe.id} initialLiked={false} initialCount={recipe.likeCount} />
       </footer>
     </article>
   );
 }
-
