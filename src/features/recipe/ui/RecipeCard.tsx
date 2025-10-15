@@ -1,13 +1,14 @@
 import LikeButton from "@/features/user_like/ui/likebutton";
-import { getLikeMeta } from "@/features/user_like/service";
 import type { Recipe } from "../types";
 
 type RecipeCardProps = {
   recipe: Recipe;
+  initialLiked: boolean;
+  initialCount: number
 };
 
-export default async function RecipeCard({ recipe }: RecipeCardProps) {
-  const { liked, count } = await getLikeMeta(recipe.id);
+export default async function RecipeCard({initialLiked, initialCount, recipe} : RecipeCardProps) {
+
   return (
     <article className="rounded-lg border border-divider bg-background p-4 shadow-sm">
       <header className="mb-2 flex items-start justify-between gap-2">
@@ -28,7 +29,7 @@ export default async function RecipeCard({ recipe }: RecipeCardProps) {
             day: "numeric",
           })}
         </span>
-        <LikeButton recipeId={recipe.id} initialLiked={liked} initialCount={count} />
+        <LikeButton recipeId={recipe.id} initialLiked={initialLiked} initialCount={initialCount?? recipe.likeCount ?? 0} />
       </footer>
     </article>
   );

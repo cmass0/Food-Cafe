@@ -1,11 +1,28 @@
 // src/features/user_like/repository.ts
 import { getServerSupabase } from "@/lib/supabase/server";
+import { Database } from "@/types/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 async function getCurrentUserId(): Promise<string | null> {
   const supabase = getServerSupabase();
   const { data, error} = await supabase.auth.getUser();
   if (error) throw error;
   return data?.user?.id ?? null;
+}
+
+export async function fetchLikedRecipeIds(
+  client: SupabaseClient<Database>,
+  userId: string,
+  recipeIds: string[],
+): Promise<Set<string>> {
+  if (!userId || recipeIds.length === 0) return new Set();
+  const { data, error } = await client
+    .from("user_likes")
+    .select("recipe_id")
+    .eq("user_id", userId)
+    .in("recipe_id", recipeIds);
+  if (error) throw error;
+  return new Set((data ?? []).map((d: { recipe_id: string; }) => d.recipe_id as string));
 }
 
 

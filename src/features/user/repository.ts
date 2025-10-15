@@ -1,16 +1,6 @@
 import type { FetchUsersParams, UserInsertDB, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
-// 추후 필요하다면 리터럴로 생성성
-// const USER_COLUMNS = [
-//   "id",
-//   "display_name",
-//   "photo_url",
-//   "role",
-//   "email",
-//   "created_at",
-//   "updated_at",
-//   "is_admin"
-// ].join(", ");
+
 
 function mapRows(rows: UserRow[] | null | undefined): UserRow[] {
   return Array.isArray(rows) ? (rows as UserRow[]) : [];
