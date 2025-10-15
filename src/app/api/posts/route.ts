@@ -1,6 +1,7 @@
-﻿// src/app/api/posts/route.ts
-import { PostCreateSchema } from "@/features/post/types";
-import * as repo from "@/features/post/repository.server";
+// src/app/api/posts/route.ts
+import { getServerSupabase } from "@/lib/supabase/server";
+import { postInsertSchema } from "@/features/post/schema";
+import * as postService from "@/features/post/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,14 +9,23 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limit = Number(url.searchParams.get("limit") ?? "20");
+    const limit = Number(url.searchParams.get("limit") ?? "");
     const cursor = url.searchParams.get("cursor") ?? undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
     const type = url.searchParams.get("type") ?? undefined;
-    const data = await repo.listPosts({ limit, cursor, writerUid, type });
+    const search = url.searchParams.get("search") ?? undefined;
+
+    const supabase = getServerSupabase();
+    const data = await postService.listPosts(supabase, {
+      limit: Number.isFinite(limit) ? limit : undefined,
+      cursor,
+      writerUid,
+      type,
+      search,
+    });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("Failed to list posts", error);
+    console.error("[posts] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
@@ -23,17 +33,19 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const json = await req.json();
-    const parsed = PostCreateSchema.safeParse(json);
+    const parsed = postInsertSchema.safeParse(json);
     if (!parsed.success) {
       return Response.json(
         { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
-    const created = await repo.createPost(parsed.data);
+
+    const supabase = getServerSupabase();
+    const created = await postService.createPost(supabase, parsed.data);
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create post", error);
+    console.error("[posts] POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

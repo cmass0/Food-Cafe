@@ -1,35 +1,71 @@
-import { z } from "zod";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
-export const PostCreateSchema = z.object({
-  title: z.string().min(1).max(150),
-  content: z.string().min(1),
-  writerName: z.string().min(1),
-  writerUid: z.string().min(1).optional(),
-  type: z.string().default("board").optional(),
-});
+export interface PostRow {
+  id: string;
+  title: string;
+  content: string;
+  writer_uid: string | null;
+  writer_name: string;
+  type: string | null;
+  number: number | null;
+  view_count: number | null;
+  created_at: string;
+  updated_at: string;
+}
 
-export const PostUpdateSchema = z.object({
-  title: z.string().min(1).max(150).optional(),
-  content: z.string().min(1).optional(),
-  writerName: z.string().min(1).optional(),
-  writerUid: z.string().min(1).optional(),
-  type: z.string().optional(),
-  checkIncrement: z.boolean().optional(),
-});
+export type PostInsertDB = {
+  title: string;
+  content: string;
+  writer_uid: string;
+  writer_name: string;
+  type?: string;
+};
 
-export type PostCreateDTO = z.infer<typeof PostCreateSchema>;
-export type PostUpdateDTO = z.infer<typeof PostUpdateSchema>;
+export type PostUpdateDB = Partial<{
+  title: string;
+  content: string;
+  writer_name: string;
+  type: string;
+}>;
+
+export type PostSupabaseClient = SupabaseClient<Database>;
 
 export interface Post {
   id: string;
   title: string;
   content: string;
   writerName: string;
-  writerUid?: string | null;
-  number: number;
+  writerUid: string | null;
+  number: number | null;
   check: number;
   type: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
+export type PostListResult = {
+  items: Post[];
+  nextCursor: string | null;
+};
+
+export type PostListOptions = {
+  limit?: number;
+  cursor?: string;
+  writerUid?: string;
+  type?: string;
+  search?: string;
+};
+
+export type PostCursorFilter = {
+  createdAt: string;
+  id: string;
+};
+
+export type FetchPostsParams = {
+  limit: number;
+  cursor?: PostCursorFilter | null;
+  writerUid?: string;
+  type?: string;
+  search?: string;
+};
