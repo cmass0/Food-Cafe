@@ -6,14 +6,14 @@ export default function PostDetail({ post }: { post: Post }) {
       <header className="space-y-1">
         <h1 className="text-3xl font-semibold">{post.title}</h1>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>ÀÛ¼ºÀÚ {post.writerName}</span>
-          <span>?</span>
+          <span>ì‘ì„±ì {post.writerName}</span>
+          <span>â€¢</span>
           <span>{post.createdAt.toLocaleString("ko-KR")}</span>
-          <span>?</span>
-          <span>Á¶È¸¼ö {post.check}</span>
+          <span>â€¢</span>
+          <span>ì¡°íšŒìˆ˜ {post.check}</span>
           {post.type ? (
             <>
-              <span>?</span>
+              <span>â€¢</span>
               <span>{post.type}</span>
             </>
           ) : null}

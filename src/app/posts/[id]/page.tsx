@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+ï»¿import { notFound } from "next/navigation";
 
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as postService from "@/features/post/service";
@@ -19,7 +19,7 @@ export default async function PostDetailPage({ params }: { params: { id: string 
       <PostDetail post={post} />
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">°Ô½Ã±Û ¼öÁ¤</h2>
+        <h2 className="text-2xl font-semibold">ê²Œì‹œê¸€ ìˆ˜ì •</h2>
         <PostForm
           action={updatePostAction}
           defaultValues={{
@@ -29,16 +29,17 @@ export default async function PostDetailPage({ params }: { params: { id: string 
             type: post.type,
             writerName: post.writerName,
           }}
-          submitLabel="¼öÁ¤"
+          submitLabel="ìˆ˜ì •"
           cancelHref="/posts"
         />
         <form action={deletePostAction} className="flex justify-end border-t border-border pt-4">
           <input type="hidden" name="id" value={post.id} />
           <Button type="submit" variant="destructive">
-            »èÁ¦
+            ì‚­ì œ
           </Button>
         </form>
       </section>
     </main>
   );
 }
+

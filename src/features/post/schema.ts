@@ -1,9 +1,9 @@
-import { z } from "zod";
+ï»¿import { z } from "zod";
 
 export const postInsertSchema = z.object({
-  title: z.string().trim().min(1, "Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.").max(150),
-  content: z.string().min(1, "³»¿ëÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä."),
-  writerName: z.string().trim().min(1, "ÀÛ¼ºÀÚ¸¦ ÀÔ·ÂÇØ ÁÖ¼¼¿ä.").max(120),
+  title: z.string().trim().min(1, "ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.").max(150),
+  content: z.string().min(1, "ë‚´ìš©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”."),
+  writerName: z.string().trim().min(1, "ì‘ì„±ìë¥¼ ì…ë ¥í•´ ì£¼ì„¸ìš”.").max(120),
   type: z.string().trim().max(40).optional(),
 });
 
@@ -16,7 +16,7 @@ export const postUpdateSchema = z
     checkIncrement: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "¼öÁ¤ÇÒ Ç×¸ñÀ» ÇÑ °¡Áö ÀÌ»ó ÀÔ·ÂÇØ ÁÖ¼¼¿ä.",
+    message: "ìˆ˜ì •í•  í•­ëª©ì„ í•œ ê°€ì§€ ì´ìƒ ì…ë ¥í•´ ì£¼ì„¸ìš”.",
   });
 
 export const postListOptionsSchema = z.object({

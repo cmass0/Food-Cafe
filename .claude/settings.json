@@ -1,0 +1,14 @@
+{
+  "allowedTools": [
+    "Edit",
+    "Bash(*)",
+    "mcp__*",
+    "mcp__supabase-rest-anon__*",
+    "mcp__supabase-rest-service__*",
+    "mcp__task_master_ai__*"
+  ],
+  "preferences": {
+    "mcpAutoConnect": true
+  }
+}
+

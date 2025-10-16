@@ -1,11 +1,11 @@
-import PostForm from "@/features/post/ui/PostForm";
+ï»¿import PostForm from "@/features/post/ui/PostForm";
 import { createPostAction } from "../actions";
 
 export default function NewPostPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
-      <h1 className="text-3xl font-semibold">»õ °Ô½Ã±Û ÀÛ¼º</h1>
-      <PostForm action={createPostAction} submitLabel="µî·Ï" />
+      <h1 className="text-3xl font-semibold">ìƒˆ ê²Œì‹œê¸€ ìž‘ì„±</h1>
+      <PostForm action={createPostAction} submitLabel="ë“±ë¡" />
     </main>
   );
 }

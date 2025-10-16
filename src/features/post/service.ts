@@ -117,7 +117,7 @@ export async function createPost(
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("Login required.");
+  if (!user) throw new Error("로그인이 필요합니다.");
 
   const parsed = postInsertSchema.parse(input);
   const payload = buildInsertPayload(parsed, user.id);
@@ -145,7 +145,7 @@ export async function updatePost(
       error,
     } = await client.auth.getUser();
     if (error) throw error;
-    if (!user) throw new Error("Login required.");
+    if (!user) throw new Error("로그인이 필요합니다.");
     row = await repository.updatePostRecordByOwner(client, id, user.id, updatePayload);
   } else {
     row = await repository.selectPostById(client, id);
@@ -160,7 +160,7 @@ export async function removePost(client: PostSupabaseClient, id: string): Promis
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("Login required.");
+  if (!user) throw new Error("로그인이 필요합니다.");
   await repository.deletePostRecord(client, id, user.id);
 }
 
@@ -171,3 +171,4 @@ export async function incrementPostView(
   await repository.incrementPostViewCount(client, id);
   return getPost(client, id);
 }
+
