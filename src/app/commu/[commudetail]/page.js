@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import CommentArea from "@/component/comment/comment";
 import Modal from "@/component/modal/modal";
 import LoadingPage from "@/app/loading";
 import { auth } from "@/lib/firebase/client";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import { fetchUsernameByUid } from "@/features/user/client";
 import { deletePost, getPost } from "@/features/post/api";
 
 import style from "./page.module.css";
@@ -97,13 +97,13 @@ export default function CommuDetailPage({ params }) {
   }
 
   function confirmEdit() {
-    setConfirmText("ê²Œì‹œê¸€ì„ ìˆ˜ì •í•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
+    setConfirmText("°Ô½Ã±ÛÀ» ¼öÁ¤ÇÏ½Ã°Ú½À´Ï±î?");
     setConfirmAction(() => handleEditConfirm);
     setIsModal(true);
   }
 
   function confirmDelete() {
-    setConfirmText("ê²Œì‹œê¸€ì„ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
+    setConfirmText("°Ô½Ã±ÛÀ» »èÁ¦ÇÏ½Ã°Ú½À´Ï±î?");
     setConfirmAction(() => handleDelete);
     setIsModal(true);
   }
@@ -130,12 +130,12 @@ export default function CommuDetailPage({ params }) {
   if (!detail) {
     return (
       <div className={style.postcontainer}>
-        <p>ê²Œì‹œê¸€ì„ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.</p>
+        <p>°Ô½Ã±ÛÀ» ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.</p>
       </div>
     );
   }
 
-  const writer = detail.writerName ?? detail.writer ?? "ìµëª…";
+  const writer = detail.writerName ?? detail.writer ?? "ÀÍ¸í";
   const createdAt = formatDate(detail.createdAt ?? detail.date);
   const viewCount = detail.check ?? detail.viewCount ?? 0;
 
@@ -145,9 +145,9 @@ export default function CommuDetailPage({ params }) {
         <header className={style.BoardHeader}>
           <h2>{detail.title}</h2>
           <div className={style.HeaderInfo}>
-            <div>ì‘ì„±ì {writer}</div>
+            <div>ÀÛ¼ºÀÚ {writer}</div>
             <div>|</div>
-            <div>ì¡°íšŒ: {viewCount}</div>
+            <div>Á¶È¸: {viewCount}</div>
             <div>|</div>
             <div>{createdAt}</div>
           </div>
@@ -160,8 +160,8 @@ export default function CommuDetailPage({ params }) {
       <div className={style.btnarea}>
         {isAuthor && (
           <>
-            <button onClick={confirmEdit}>ìˆ˜ì •</button>
-            <button onClick={confirmDelete}>ì‚­ì œ</button>
+            <button onClick={confirmEdit}>¼öÁ¤</button>
+            <button onClick={confirmDelete}>»èÁ¦</button>
           </>
         )}
       </div>
@@ -176,7 +176,7 @@ export default function CommuDetailPage({ params }) {
             <div className={style.deletebtnbox}>
               {confirmAction && (
                 <button className={style.deleteselectbtn} onClick={() => confirmAction?.()}>
-                  í™•ì¸
+                  È®ÀÎ
                 </button>
               )}
             </div>

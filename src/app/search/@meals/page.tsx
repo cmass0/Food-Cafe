@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Card, CardBody, CardFooter, Image } from "@heroui/react";
-import { fetchRecipes } from "@/data/recipe";
+import { listRecipes } from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { buildLikedSet } from "@/features/user_like/service";
 import LikeButton from "@/features/user_like/ui/likebutton";
@@ -16,9 +16,9 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
   const q = (Array.isArray(raw) ? raw[0] : raw) ?? "";
   const keyword = q.trim().toLowerCase();
 
-  const all = await fetchRecipes();
+  const all = (await listRecipes(getServerSupabase(), { limit: 200 })).items;
   const results =  all.filter((r: any) => {
-    const hay = `${r.title ?? ""} ${r.name ?? ""} ${r.summary ?? ""}`.toLowerCase();
+    const hay = `${r.title ?? ""} ${r.writerName ?? ""} ${r.summary ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
   });
  
@@ -52,7 +52,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
             {r.summary && <p style={{ margin: 0, fontSize: "14px", color: "#555" }}>{r.summary}</p>}
           </CardBody>
           <CardFooter>
-            <small style={{ color: "#666" }}>by {r.name ?? "작성자"}</small>
+            <small style={{ color: "#666" }}>by {r.writerName ?? "user"}</small>
             <LikeButton recipeId={r.id} initialLiked={linkSet.has(r.id)} initialCount={r.likeCount ?? 0} />
           </CardFooter>
         </Card>

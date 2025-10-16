@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -50,51 +50,62 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       posts: {
         Row: {
-          author_id: string
-          body: string
           comment_count: number
+          content: string
           created_at: string
           id: string
           like_count: number
+          number: number
           tags: string[]
           title: string
+          type: string
           updated_at: string
+          view_count: number
+          writer_name: string
+          writer_uid: string
         }
         Insert: {
-          author_id: string
-          body: string
           comment_count?: number
+          content: string
           created_at?: string
           id?: string
           like_count?: number
+          number?: number
           tags?: string[]
           title: string
+          type?: string
           updated_at?: string
+          view_count?: number
+          writer_name?: string
+          writer_uid: string
         }
         Update: {
-          author_id?: string
-          body?: string
           comment_count?: number
+          content?: string
           created_at?: string
           id?: string
           like_count?: number
+          number?: number
           tags?: string[]
           title?: string
+          type?: string
           updated_at?: string
+          view_count?: number
+          writer_name?: string
+          writer_uid?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       recipes: {
         Row: {
@@ -174,6 +185,13 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recipes_writer_fk"
+            columns: ["writer_uid"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_likes: {
@@ -205,6 +223,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -244,7 +269,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_public: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          photo_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       gtrgm_compress: {
@@ -267,6 +312,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      increment_post_view_count: {
+        Args: { target: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: { uid: string }
         Returns: boolean
@@ -274,15 +323,19 @@ export type Database = {
       post_adjust_like: {
         Args: { p_delta: number; p_post_id: string }
         Returns: {
-          author_id: string
-          body: string
           comment_count: number
+          content: string
           created_at: string
           id: string
           like_count: number
+          number: number
           tags: string[]
           title: string
+          type: string
           updated_at: string
+          view_count: number
+          writer_name: string
+          writer_uid: string
         }
       }
       recipe_adjust_like: {

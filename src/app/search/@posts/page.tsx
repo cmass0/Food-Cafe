@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { fetchPosts } from "@/data/post";
-import { fetchcommets } from "@/data/comment";
+import { getServerSupabase } from "@/lib/supabase/server";
+import { listPosts } from "@/features/post/service";
 
 export const revalidate = 0;
 
@@ -11,9 +11,10 @@ export default async function PostResults({ searchParams }: { searchParams: SP }
   const q: string = (Array.isArray(raw) ? raw[0] : raw) ?? "";
   const keyword = q.trim().toLowerCase();
 
-  const all = await fetchPosts();
+  const supabase = getServerSupabase();
+  const { items: all } = await listPosts(supabase, { limit: 200 });
   const results = all.filter((p: any) => {
-    const hay = `${p.title ?? ""} ${p.writer ?? ""}`.toLowerCase();
+    const hay = `${p.title ?? ""} ${p.writerName ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
   });
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 
 import LoadingPage from "@/app/loading";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
-import uploadImage from "@/data/imagehandle";
+import { fetchUsernameByUid } from "@/features/user/client";
+import uploadImage from "@/lib/uploadImage";
 import { createPost } from "@/features/post/api";
 import { auth } from "@/lib/firebase/client";
 

@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
 import { getUser } from "@/features/user/api";
 
+// Fetch display name for a given Supabase auth uid via our users API route.
+// Returns null if not found or on error.
 export async function fetchUsernameByUid(uid: string): Promise<string | null> {
   if (!uid) return null;
   try {
@@ -14,3 +16,4 @@ export async function fetchUsernameByUid(uid: string): Promise<string | null> {
     return null;
   }
 }
+

@@ -4,11 +4,11 @@ import ImagePreview from "@/component/imgpreview/imgpreview";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import style from "./page.module.css";
-import uploadImage from "@/data/imagehandle";
+import uploadImage from "@/lib/uploadImage";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import { fetchUsernameByUid } from "@/features/user/client";
 import { getRecipe, updateRecipe } from "@/features/recipe/api";
 
 export default function EditMeal({ params }) {
@@ -52,7 +52,7 @@ export default function EditMeal({ params }) {
         setSummary(data.summary ?? "");
         setRecipe(data.recipe ?? "");
       } catch (error) {
-        console.error("레시피 정보를 불러오지 못했습니다.", error);
+        console.error("?�시???�보�?불러?��? 못했?�니??", error);
       }
     }
 
@@ -61,7 +61,7 @@ export default function EditMeal({ params }) {
 
   const isselect = (isselected) => {
     if (!isselected) {
-      alert("이미지를 선택해주세요!");
+      alert("?��?지�??�택?�주?�요!");
     }
   };
 
@@ -76,8 +76,8 @@ export default function EditMeal({ params }) {
       try {
         imageurl = await uploadImage(imagefile);
       } catch (error) {
-        console.error("이미지 업로드에 실패했습니다.", error);
-        alert("이미지를 업로드하지 못했습니다. 다시 시도해주세요.");
+        console.error("?��?지 ?�로?�에 ?�패?�습?�다.", error);
+        alert("?��?지�??�로?�하지 못했?�니?? ?�시 ?�도?�주?�요.");
         return;
       }
     }
@@ -94,8 +94,8 @@ export default function EditMeal({ params }) {
       });
       router.push(`/meals/${params.detail}`);
     } catch (error) {
-      console.error("레시피 수정에 실패했습니다.", error);
-      alert("레시피를 수정하지 못했습니다.");
+      console.error("?�시???�정???�패?�습?�다.", error);
+      alert("?�시?��? ?�정?��? 못했?�니??");
     }
   }
 
@@ -110,14 +110,14 @@ export default function EditMeal({ params }) {
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>만든 음식, 좋아하는 음식을 공유해보세요</h1>
+        <h1>만든 ?�식, 좋아?�는 ?�식??공유?�보?�요</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={editrecipeHD}>
           <div className={style.formcontentsbox}>
             <div className={style.row1}>
               <div>
-                <label htmlFor="creator">이름</label>
+                <label htmlFor="creator">?�름</label>
                 <input
                   type="text"
                   name="creator"
@@ -139,7 +139,7 @@ export default function EditMeal({ params }) {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">음식 이름</label>
+              <label htmlFor="title">?�식 ?�름</label>
               <input
                 type="text"
                 name="title"
@@ -151,7 +151,7 @@ export default function EditMeal({ params }) {
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">음식 설명</label>
+              <label htmlFor="summary">?�식 ?�명</label>
               <input
                 type="text"
                 name="summary"
@@ -163,7 +163,7 @@ export default function EditMeal({ params }) {
             </div>
 
             <div className={style.row4}>
-              <label htmlFor="recipe">레시피</label>
+              <label htmlFor="recipe">?�시??</label>
               <textarea
                 name="recipe"
                 id="recipe"
@@ -176,7 +176,7 @@ export default function EditMeal({ params }) {
           </div>
           <ImagePreview name="image" isselect={isselect} />
           <button type="button" className={style.formbtn} onClick={editqus}>
-            수정하기
+            ?�정?�기
           </button>
           {isModal && (
             <Modal onclose={onclose}>
@@ -184,13 +184,13 @@ export default function EditMeal({ params }) {
                 <button className={style.modalclosebtn} onClick={onclose}>
                   X
                 </button>
-                <div className={style.modaltext}>정말로 수정하시겠습니까?</div>
+                <div className={style.modaltext}>?�말�??�정?�시겠습?�까?</div>
                 <div className={style.deletebtnbox}>
                   <button
                     className={style.deleteselectbtn}
                     type="submit"
                   >
-                    수정하기
+                    ?�정?�기
                   </button>
                 </div>
               </div>

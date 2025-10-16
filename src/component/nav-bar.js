@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import Link from "next/link";
 import style from "./nav-bar.module.css";
@@ -13,7 +13,7 @@ import ThemeToggle from "@/component/theme-toggle";
 import { Input } from "@heroui/react";
 import { SearchIcon } from "lucide-react";
 import { searchInputClassNames } from "@/styles/input/searchUI";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import { fetchUsernameByUid } from "@/features/user/client";
 
 export default function Navbar({ rightSlot }) {
   const [isModal, setIsmodal] = useState(false);
@@ -101,13 +101,13 @@ export default function Navbar({ rightSlot }) {
         </form>
         <div className={style.nav}>
           <ThemeToggle />
-          <NavLink href="/meals">ìŒì‹ ë° ë ˆì‹œí”¼ ê³µìœ </NavLink>
-          <NavLink href="/commu">ì»¤ë®¤ë‹ˆí‹°</NavLink>
-          {/* ë²„íŠ¼ ì»´í¬ë„ŒíŠ¸ ì‚½ì…  */}
+          <NavLink href="/meals">À½½Ä ¹× ·¹½ÃÇÇ °øÀ¯</NavLink>
+          <NavLink href="/commu">Ä¿¹Â´ÏÆ¼</NavLink>
+          {/* ¹öÆ° ÄÄÆ÷³ÍÆ® »ğÀÔ  */}
           {/* {!user && (
             <NavLink href="/login">
               <button onClick={modalHD} className={style.signbtn}>
-                ë¡œê·¸ì¸ / íšŒì›ê°€ì…
+                ·Î±×ÀÎ / È¸¿ø°¡ÀÔ
               </button>
             </NavLink>
           )}
@@ -120,7 +120,7 @@ export default function Navbar({ rightSlot }) {
               }}
               className={style.signoutbtn}
             >
-              <span className={style.username}>{userName}</span>ë‹˜ / ë¡œê·¸ì•„ì›ƒ
+              <span className={style.username}>{userName}</span>´Ô / ·Î±×¾Æ¿ô
             </button>
           )} */}
           {rightSlot}

@@ -10,7 +10,7 @@ import LoadingPage from "@/app/loading";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase/client";
 import Modal from "@/component/modal/modal";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
+import { fetchUsernameByUid } from "@/features/user/client";
 import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore";
 import { deleteRecipe, getRecipe, updateRecipe } from "@/features/recipe/api";
 
@@ -20,7 +20,7 @@ async function alreadyclick(userid, recipeid) {
   const userData = userdoc.data();
 
   if (userData?.likerecipe && userData.likerecipe.includes(recipeid)) {
-    return { message: "이미 좋아요를 누른 레시피입니다.", pass: false };
+    return { message: "?��? 좋아?��? ?�른 ?�시?�입?�다.", pass: false };
   }
 
   await updateDoc(userref, {
@@ -72,7 +72,7 @@ export default function SomethingMealspage({ params }) {
         });
         setLikeCount(data.likeCount ?? 0);
       } catch (error) {
-        console.error("레시피 상세 조회에 실패했습니다.", error);
+        console.error("?�시???�세 조회???�패?�습?�다.", error);
       }
     }
 
@@ -84,15 +84,15 @@ export default function SomethingMealspage({ params }) {
   }
   function updateHD(e) {
     e.preventDefault();
-    setBtnConfirmText("수정");
+    setBtnConfirmText("?�정");
     setIsModal(true);
-    setConfirmText("정말로 수정하시겠습니까?");
+    setConfirmText("?�말�??�정?�시겠습?�까?");
   }
 
   function deleteHD() {
-    setBtnConfirmText("삭제");
+    setBtnConfirmText("??��");
     setIsModal(true);
-    setConfirmText("정말로 삭제하시겠습니까?");
+    setConfirmText("?�말�???��?�시겠습?�까?");
   }
 
   async function deleteokHD() {
@@ -102,8 +102,8 @@ export default function SomethingMealspage({ params }) {
       await deleteRecipe(params.detail);
       router.push("/meals");
     } catch (error) {
-      console.error("레시피 삭제에 실패했습니다.", error);
-      alert("레시피를 삭제하지 못했습니다.");
+      console.error("?�시????��???�패?�습?�다.", error);
+      alert("?�시?��? ??��?��? 못했?�니??");
     }
   }
 
@@ -116,7 +116,7 @@ export default function SomethingMealspage({ params }) {
   async function LikeBtnHD(event) {
     event.stopPropagation();
     if (!user) {
-      alert("로그인이 필요합니다.");
+      alert("로그?�이 ?�요?�니??");
       return;
     }
 
@@ -130,7 +130,7 @@ export default function SomethingMealspage({ params }) {
         });
         setLikeCount((prev) => prev + 1);
       } catch (error) {
-        console.error("좋아요 업데이트 실패", error);
+        console.error("좋아???�데?�트 ?�패", error);
       }
     } else {
       alert(likebtnres.message);
@@ -150,7 +150,7 @@ export default function SomethingMealspage({ params }) {
           {detailinfo.image ? (
             <Image src={detailinfo.image} fill alt={detailinfo.title || "recipe"} />
           ) : (
-            <div className={style.noimage}>이미지가 없습니다.</div>
+            <div className={style.noimage}>?��?지가 ?�습?�다.</div>
           )}
         </div>
         <div className={style.headerText}>
@@ -173,8 +173,8 @@ export default function SomethingMealspage({ params }) {
       <div className={style.likebox}>
         {writerName === userName && (
           <div className={style.btnarea}>
-            <button onClick={updateHD}>레시피 수정</button>
-            <button onClick={deleteHD}>레시피 삭제</button>
+            <button onClick={updateHD}>?�시???�정</button>
+            <button onClick={deleteHD}>?�시????��</button>
           </div>
         )}
         {user && (
@@ -203,12 +203,12 @@ export default function SomethingMealspage({ params }) {
             </button>
             <div className={style.modaltext}>{confirmtext}</div>
             <div className={style.deletebtnbox}>
-              {btnconfirmtext === "삭제" && (
+              {btnconfirmtext === "??��" && (
                 <button className={style.deleteselectbtn} onClick={deleteokHD}>
                   {btnconfirmtext}
                 </button>
               )}
-              {btnconfirmtext === "수정" && (
+              {btnconfirmtext === "?�정" && (
                 <button className={style.deleteselectbtn} onClick={editHD}>
                   {btnconfirmtext}
                 </button>

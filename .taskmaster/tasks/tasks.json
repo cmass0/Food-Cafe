@@ -23,8 +23,9 @@
         "dependencies": [
           "1"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T17:46:43.679Z"
       },
       {
         "id": "3",
@@ -37,8 +38,9 @@
           "1",
           "2"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "cancelled",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T18:07:38.271Z"
       },
       {
         "id": "4",
@@ -50,8 +52,9 @@
         "dependencies": [
           "3"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "cancelled",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T18:23:10.019Z"
       },
       {
         "id": "5",
@@ -63,8 +66,9 @@
         "dependencies": [
           "4"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2025-10-16T18:38:45.090Z"
       },
       {
         "id": "6",
@@ -94,6 +98,30 @@
       },
       {
         "id": "8",
+        "title": "중복 라우트 정리(/posts ↔ /commu 통합)",
+        "description": "/posts와 /commu 라우트가 동일 목적을 수행하므로 하나로 통합합니다. 내비/링크를 정리하고 불필요한 라우트는 제거 또는 리다이렉트 처리합니다.",
+        "details": "- 기준 경로 선택(권장: /commu)\n- 내비게이션/링크를 기준 경로로 통일\n- 중복 라우트(/posts) 제거 또는 리다이렉트 설정\n- 검색/상세/작성/수정 흐름 점검 및 깨진 링크 수정\n- 필요 시 서버 액션/서비스 레이어 호출부 정리",
+        "testStrategy": "- /commu 목록/작성/상세/수정 정상 동작 확인\n- /posts 접근 시 리다이렉트 또는 404 처리 확인\n- 내비 및 검색 페이지 링크가 기준 경로로 이동하는지 확인",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "9",
+        "title": "Supabase Storage 버킷 생성 및 업로드 설정",
+        "description": "이미지 업로드를 위해 Storage 버킷(images) 생성 및 권한/정책 설정. 업로더(브라우저) 동작 검증.",
+        "details": "- 대시보드에서 Storage 버킷 images 생성 (공개 권장, 비공개면 서명 URL 사용)\n- 버킷 정책: 이미지 MIME만 허용(선택), 경로 uploads/ 사용\n- 업로드 테스트: /meals/share 폼에서 이미지 선택·업로드 후 공개 URL 또는 서명 URL 동작 확인\n- 실패 시 로그 확인 후 권한/버킷 존재 여부 점검",
+        "testStrategy": "- /meals/share에서 이미지 업로드 시도→ 성공 시 미리보기/본문에 표시\n- 비공개 버킷이면 10분짜리 서명 URL 제공 확인",
+        "priority": "high",
+        "dependencies": [
+          "2"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "10",
         "title": "커뮤니티 상세/수정 페이지 권한 및 조회수 개선",
         "description": "`src/app/commu/[commudetail]` 하위 페이지가 Supabase 권한 모델을 활용하도록 정비합니다.",
         "details": "- 상세 페이지에서 사용자 식별을 `detail.writerUid === user.uid` 비교로 변경하고 이름 비교 코드를 제거합니다.\n- 첫 로드 시 `PUT /api/posts/{id}` with `{ checkIncrement: true }`를 호출해 직접 URL 접근도 조회수가 증가하도록 `useEffect`를 추가합니다.\n- 수정/삭제 실패 시 Supabase 에러 메시지를 사용자에게 안내하는 UX를 보강합니다.\n의사코드:\n```ts\nconst isAuthor = detail?.writerUid && user?.uid ? detail.writerUid === user.uid : false;\nuseEffect(() => {\n  updatePost(params.commudetail, { checkIncrement: true }).catch(console.error);\n}, [params.commudetail]);\n```",
@@ -107,7 +135,7 @@
         "subtasks": []
       },
       {
-        "id": "9",
+        "id": "11",
         "title": "커뮤니티 작성/수정 폼 Supabase 세션 통합",
         "description": "`src/app/commu/writeform/page.js`와 `editform/page.js`가 Supabase 세션/밸리데이션 흐름을 따르도록 조정합니다.",
         "details": "- 작성/수정 시 `createPost`/`updatePost` 요청 본문을 `{ title, content, writerName, type }`로 축소하고 작성자 UID는 서버에서 자동 주입되도록 합니다.\n- 폼에서 `type` 선택 혹은 숨김 필드를 추가해 Supabase `type` 컬럼을 명시적으로 설정합니다.\n- API 실패(401/403/422 등)에 대한 사용자 피드백을 모달/토스트로 제공하고, 성공 시 `/commu`로 이동 후 새 데이터를 재요청하도록 합니다.\n의사코드:\n```ts\nawait createPost({ title, content, writerName, type: selectedType });\nif (!res.ok) setError(await res.json());\n```",
@@ -115,13 +143,13 @@
         "priority": "medium",
         "dependencies": [
           "5",
-          "8"
+          "10"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": "10",
+        "id": "12",
         "title": "게시글 UI 한글 문구 및 접근성 정비",
         "description": "`PostList`, `PostForm`, `PostDetail` 등 게시글 UI 컴포넌트의 깨진 한글과 시멘틱 마크업을 수정합니다.",
         "details": "- `src/features/post/ui/PostList.tsx`와 `PostDetail.tsx`에서 깨진 문자열(예: `?�`, `?`)을 정상 한글(`작성자`, `조회수`, 구분자 `|`)로 교체합니다.\n- 텍스트 대비/ARIA 라벨 등 접근성 개선이 필요한 부분을 점검해 버튼/링크에 적절한 라벨을 추가합니다.\n- `PostForm` 입력 필드에 placeholder/에러 문구를 한글로 통일합니다.\n의사코드:\n```tsx\n<span>작성자 {post.writerName}</span>\n<span aria-hidden=\"true\" className=\"text-muted\">|</span>\n<span>조회수 {post.check}</span>\n```",
@@ -134,7 +162,7 @@
         "subtasks": []
       },
       {
-        "id": "11",
+        "id": "13",
         "title": "게시글 Supabase 권한·뷰카운트 통합 테스트 추가",
         "description": "RLS와 조회수 RPC를 자동으로 검증하는 테스트를 추가해 회귀를 방지합니다.",
         "details": "- `tests/post.service.test.ts`(신규)에서 `SupabaseClient`를 이용해 게시글 CRUD 및 뷰 카운트 증가 시나리오를 작성합니다.\n- 오너와 비오너 토큰을 생성하거나 서비스 키를 이용해 세션을 구성하고 update/delete 권한이 올바르게 거부되는지 확인합니다.\n- 조회수 증가 RPC 호출 후 `view_count`가 1 증가했는지 검증합니다.\n의사코드:\n```ts\nit('denies update by non owner', async () => {\n  const other = createClient(anonKey, otherUserSession);\n  const { error } = await postService.updatePost(other, postId, { title: 'hack' });\n  expect(error?.message).toMatch(/permission denied/i);\n});\n```",
@@ -142,14 +170,14 @@
         "priority": "medium",
         "dependencies": [
           "7",
-          "8",
-          "9"
+          "10",
+          "11"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": "12",
+        "id": "14",
         "title": "게시글 캐싱·revalidate 및 UX 회귀 점검",
         "description": "SSR/Server Action 흐름에서 재검증 범위를 명확히 하고 로딩/에러 UX를 보완합니다.",
         "details": "- `/posts`와 `/commu`에서 사용 중인 `revalidate`/`revalidatePath` 호출을 정리하고 필요 시 추가 경로(`/commu`, `/posts/[id]`)를 재검증 대상에 포함합니다.\n- 서버 액션(`src/app/posts/actions.ts`)이 게시글 생성/수정/삭제 후 모든 관련 경로를 재검증하도록 목록을 재검토합니다.\n- 로딩/에러 상태 컴포넌트가 Supabase 전환 이후에도 적절히 표시되는지 확인하고, 필요 시 `Suspense`/스켈레톤을 업데이트합니다.\n의사코드:\n```ts\nrevalidatePath(\"/commu\");\nrevalidatePath(`/commu/${id}`);\nrevalidatePath(\"/posts\");\nrevalidatePath(`/posts/${id}`);\n```",
@@ -157,8 +185,8 @@
         "priority": "medium",
         "dependencies": [
           "7",
-          "8",
-          "9"
+          "10",
+          "11"
         ],
         "status": "pending",
         "subtasks": []
@@ -166,9 +194,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-10-16T17:27:16.395Z",
+      "lastModified": "2025-10-16T19:01:46.919Z",
       "taskCount": 12,
-      "completedCount": 1,
+      "completedCount": 2,
       "tags": [
         "master"
       ]

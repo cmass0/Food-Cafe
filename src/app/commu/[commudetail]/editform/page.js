@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -7,8 +7,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 
 import LoadingPage from "@/app/loading";
 import Modal from "@/component/modal/modal";
-import { fetchUsernameByUid } from "@/data/fetchuser-client";
-import uploadImage from "@/data/imagehandle";
+import { fetchUsernameByUid } from "@/features/user/client";
+import uploadImage from "@/lib/uploadImage";
 import { getPost, updatePost } from "@/features/post/api";
 import { auth } from "@/lib/firebase/client";
 
@@ -141,11 +141,11 @@ export default function PostEditPage({ params }) {
 
   return (
     <div className={style.container}>
-      <h2 className={style.heading}>ê²Œì‹œê¸€ ìˆ˜ì •</h2>
+      <h2 className={style.heading}>°Ô½Ã±Û ¼öÁ¤</h2>
       <form className={style.form}>
         <div className={style.formGroup}>
           <label htmlFor="title" className={style.label}>
-            ì œëª©
+            Á¦¸ñ
           </label>
           <input
             type="text"
@@ -153,13 +153,13 @@ export default function PostEditPage({ params }) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className={style.input}
-            placeholder="ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”"
+            placeholder="Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä"
             required
           />
         </div>
         <div className={style.formGroup}>
           <label htmlFor="content" className={style.label}>
-            ë‚´ìš©
+            ³»¿ë
           </label>
           <ReactQuill
             ref={quillRef}
@@ -168,16 +168,16 @@ export default function PostEditPage({ params }) {
             onChange={setContent}
             modules={modules}
             className={style.editor}
-            placeholder="ë‚´ìš©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”"
+            placeholder="³»¿ëÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä"
           />
         </div>
         <div className={style.preview}></div>
         <div className={style.btnarea}>
           <button type="button" className={style.button} onClick={() => setShowModal(true)}>
-            ê²Œì‹œê¸€ ìˆ˜ì •
+            °Ô½Ã±Û ¼öÁ¤
           </button>
           <button type="button" className={style.canclebtn} onClick={() => router.back()}>
-            ì·¨ì†Œ
+            Ãë¼Ò
           </button>
         </div>
       </form>
@@ -188,10 +188,10 @@ export default function PostEditPage({ params }) {
             <button className={style.modalclosebtn} onClick={() => setShowModal(false)}>
               X
             </button>
-            <div className={style.modaltext}>ì •ë§ ìˆ˜ì •í•˜ì‹œê² ìŠµë‹ˆê¹Œ?</div>
+            <div className={style.modaltext}>Á¤¸» ¼öÁ¤ÇÏ½Ã°Ú½À´Ï±î?</div>
             <div className={style.deletebtnbox}>
               <button className={style.deleteselectbtn} onClick={handleUpdate}>
-                ìˆ˜ì •í•˜ê¸°
+                ¼öÁ¤ÇÏ±â
               </button>
             </div>
           </div>
