@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { revalidatePath } from 'next/cache';
+
+import * as userRepository from "@/features/user/repository";
+import type { Database } from "@/types/supabase";
 
 export async function GET(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,10 +13,10 @@ export async function GET(req: NextRequest) {
 
   const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
   const next = rawNext.startsWith("/") ? rawNext : "/";
-  const newurl = new URL(next, req.url)
-  const response = NextResponse.redirect(newurl);
+  const redirectUrl = new URL(next, req.url);
+  const response = NextResponse.redirect(redirectUrl);
 
-  const supabase = createServerClient(url, anon, {
+  const supabase = createServerClient<Database>(url, anon, {
     cookies: {
       getAll() {
         return req.cookies.getAll();
@@ -37,24 +39,25 @@ export async function GET(req: NextRequest) {
   const { data: userRes } = await supabase.auth.getUser();
   const user = userRes?.user ?? null;
   if (user) {
-    const { data: existing } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
+    const existing = await userRepository.selectUserById(supabase, user.id);
     if (!existing) {
       const displayName =
         (user.user_metadata?.full_name as string | undefined) ||
         (user.user_metadata?.name as string | undefined) ||
         (user.email?.split("@")[0] ?? "user");
 
-      await supabase.from("users").insert({
+      const now = new Date().toISOString();
+
+      await userRepository.insertUserRecord(supabase, {
         id: user.id,
         display_name: displayName,
-        email: user.email,
+        email: user.email ?? null,
         photo_url: (user.user_metadata?.picture as string | undefined) ?? null,
+        created_at: now,
+        updated_at: now,
       });
     }
   }
+
   return response;
 }

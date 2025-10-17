@@ -73,8 +73,6 @@ export async function insertUserRecord(
   return data as UserRow;
 }
 
-
-
 export async function updateUserRecord(
   client: UserSupabaseClient,
   id: string,

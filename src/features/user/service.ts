@@ -112,29 +112,6 @@ export async function getSelf(): Promise<UserRow | null> {
   return repository.selectUserById(supabase, user.id);
 }
 
-export async function createSelf(input: unknown): Promise<UserRow> {
-  const supabase = getServerSupabase();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error) throw error;
-  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
-
-  const parsed = UserCreateSchema.parse(input);
-
-  if (parsed.email && user.email && parsed.email !== user.email) {
-    throw withCode(new Error(MESSAGE_EMAIL_MISMATCH), ERROR_VALIDATION);
-  }
-
-  const existing = await repository.selectUserById(supabase, user.id);
-  if (existing) {
-    throw withCode(new Error(MESSAGE_PROFILE_EXISTS), ERROR_ALREADY_EXISTS);
-  }
-
-  const payload = buildInsertPayload(user, parsed);
-  return repository.insertUserRecord(supabase, payload);
-}
 
 export async function updateSelf(input: unknown): Promise<UserRow> {
   const supabase = getServerSupabase();

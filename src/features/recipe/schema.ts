@@ -1,7 +1,7 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const recipeIdTextSchema = z
-  .string({ required_error: "레거시 ID를 입력해 주세요." })
+  .string()
   .trim()
   .min(1, "레거시 ID를 입력해 주세요.")
   .max(128, "레거시 ID는 128자 이하만 가능합니다.");
@@ -27,16 +27,18 @@ export const recipeInsertSchema = z.object({
     .nullable()
     .optional(),
   title: z
-    .string({ required_error: "제목을 입력해 주세요." })
+    .string()
     .trim()
     .min(1, "제목을 입력해 주세요.")
     .max(200, "제목은 200자 이하만 가능합니다."),
   summary: z
     .string()
     .trim()
-    .max(500, "요약은 500자 이하만 가능합니다."),
+    .max(500, "요약은 500자 이하만 가능합니다.")
+    .nullable()
+    .optional(),
   recipe: z
-    .string({ required_error: "레시피 내용을 입력해 주세요." })
+    .string()
     .trim()
     .min(1, "레시피 내용을 입력해 주세요."),
   image: imageUrlSchema,
@@ -71,12 +73,12 @@ export const recipeUpdateSchema = z
       .string()
       .trim()
       .min(1, "제목을 입력해 주세요.")
-      .max(200, "제목은 200자 이하로 입력해 주세요.")
+      .max(200, "제목은 200자 이하만 가능합니다.")
       .optional(),
     summary: z
       .string()
       .trim()
-      .max(500, "요약은 500자 이하로 입력해 주세요.")
+      .max(500, "요약은 500자 이하만 가능합니다.")
       .nullable()
       .optional(),
     recipe: z
@@ -90,13 +92,13 @@ export const recipeUpdateSchema = z
     category: z
       .string()
       .trim()
-      .max(120, "카테고리는 120자 이하로 입력해 주세요.")
+      .max(120, "카테고리는 120자 이하만 가능합니다.")
       .nullable()
       .optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "수정할 항목을 한 가지 이상 입력해 주세요.",
+    message: "수정할 필드를 한 가지 이상 입력해 주세요.",
   });
 
 export const recipeListOptionsSchema = z.object({

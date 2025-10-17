@@ -1,6 +1,4 @@
 // src/app/api/users/route.ts
-import { ZodError } from "zod";
-
 import * as userService from "@/features/user/service";
 
 export const runtime = "nodejs";
@@ -25,42 +23,6 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const payload = await req.json();
-    const created = await userService.createSelf(payload);
-    return Response.json(
-      { data: created },
-      { status: 201, headers: { "Cache-Control": "no-store" } }
-    );
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    if (error instanceof SyntaxError) {
-      return Response.json({ error: "VALIDATION_ERROR" }, { status: 400 });
-    }
-
-    if (error instanceof Error) {
-      const code = (error as { code?: string }).code;
-      if (code === "UNAUTHORIZED") {
-        return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-      }
-      if (code === "USER_ALREADY_EXISTS") {
-        return Response.json({ error: "CONFLICT", message: error.message }, { status: 409 });
-      }
-      if (code === "VALIDATION_ERROR") {
-        return Response.json(
-          { error: "VALIDATION_ERROR", message: error.message },
-          { status: 400 }
-        );
-      }
-    }
-    console.error("[users] POST failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
-  }
+export async function POST(): Promise<Response> {
+  return Response.json({ error: "METHOD_NOT_ALLOWED" }, { status: 405 });
 }
