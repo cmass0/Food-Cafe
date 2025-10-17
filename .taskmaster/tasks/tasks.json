@@ -66,9 +66,9 @@
         "dependencies": [
           "4"
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [],
-        "updatedAt": "2025-10-16T18:38:45.090Z"
+        "updatedAt": "2025-10-17T19:43:26.845Z"
       },
       {
         "id": "6",
@@ -104,8 +104,9 @@
         "testStrategy": "- /commu 목록/작성/상세/수정 정상 동작 확인\n- /posts 접근 시 리다이렉트 또는 404 처리 확인\n- 내비 및 검색 페이지 링크가 기준 경로로 이동하는지 확인",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-17T19:43:26.845Z"
       },
       {
         "id": "9",
@@ -194,9 +195,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-10-16T19:01:46.919Z",
-      "taskCount": 12,
-      "completedCount": 2,
+      "lastModified": "2025-10-17T19:43:26.845Z",
+      "taskCount": 14,
+      "completedCount": 4,
       "tags": [
         "master"
       ]

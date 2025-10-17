@@ -23,7 +23,6 @@ export async function createPostAction(formData: FormData) {
 
   const post = await postService.createPost(supabase, parsed);
   revalidatePath("/posts");
-  revalidatePath("/commu");
   redirect(`/posts/${post.id}`);
 }
 
@@ -44,7 +43,6 @@ export async function updatePostAction(formData: FormData) {
   if (!post) throw new Error("게시글을 찾을 수 없습니다.");
   revalidatePath("/posts");
   revalidatePath(`/posts/${id}`);
-  revalidatePath("/commu");
   redirect(`/posts/${id}`);
 }
 
@@ -55,6 +53,5 @@ export async function deletePostAction(formData: FormData) {
   if (!id) throw new Error("게시글 ID가 필요합니다.");
   await postService.removePost(supabase, id);
   revalidatePath("/posts");
-  revalidatePath("/commu");
   redirect("/posts");
 }

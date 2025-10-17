@@ -18,7 +18,7 @@ type PostFormProps = {
   cancelHref?: string;
 };
 
-export default function PostForm({ action, defaultValues, submitLabel = "저장", cancelHref }: PostFormProps) {
+export default function PostForm({ action, defaultValues, submitLabel = "등록", cancelHref }: PostFormProps) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -51,7 +51,7 @@ export default function PostForm({ action, defaultValues, submitLabel = "저장"
         />
       </label>
       <label className="flex flex-col gap-2 text-sm">
-        <span className="font-medium">본문</span>
+        <span className="font-medium">내용</span>
         <textarea
           name="content"
           defaultValue={defaultValues?.content ?? ""}
@@ -61,7 +61,7 @@ export default function PostForm({ action, defaultValues, submitLabel = "저장"
         />
       </label>
       <label className="flex flex-col gap-2 text-sm">
-        <span className="font-medium">분류</span>
+        <span className="font-medium">구분</span>
         <input
           name="type"
           type="text"
@@ -77,7 +77,7 @@ export default function PostForm({ action, defaultValues, submitLabel = "저장"
           </Link>
         ) : null}
         <Button type="submit" disabled={pending}>
-          {pending ? "저장 중..." : submitLabel}
+          {pending ? "처리 중..." : submitLabel}
         </Button>
       </div>
     </form>

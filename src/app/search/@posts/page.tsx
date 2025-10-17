@@ -1,4 +1,5 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+
 import { getServerSupabase } from "@/lib/supabase/server";
 import { listPosts } from "@/features/post/service";
 
@@ -24,7 +25,7 @@ export default async function PostResults({ searchParams }: { searchParams: SP }
     <ul>
       {results.map((p: any) => (
         <li key={p.id} style={{ padding: "6px 0" }}>
-          <Link href={`/commu/${p.id}`}>{p.title}</Link>
+          <Link href={`/posts/${p.id}`}>{p.title}</Link>
         </li>
       ))}
     </ul>

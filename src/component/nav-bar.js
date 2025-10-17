@@ -1,23 +1,22 @@
-"use client";
+ï»¿"use client";
 
 import Link from "next/link";
-import style from "./nav-bar.module.css";
-import NavLink from "./navlink/navlink";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/client";
+import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
-import ThemeToggle from "@/component/theme-toggle";
 import { Input } from "@heroui/react";
 import { SearchIcon } from "lucide-react";
+import { useAuthState } from "react-firebase-hooks/auth";
+
+import style from "./nav-bar.module.css";
+import NavLink from "./navlink/navlink";
+import ThemeToggle from "@/component/theme-toggle";
 import { searchInputClassNames } from "@/styles/input/searchUI";
+import { auth } from "@/lib/firebase/client";
 import { fetchUsernameByUid } from "@/features/user/client";
 
 export default function Navbar({ rightSlot }) {
-  const [isModal, setIsmodal] = useState(false);
-  const [searchtext, setsearchText] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [userName, setUserName] = useState("");
   const [user] = useAuthState(auth);
   const router = useRouter();
@@ -54,21 +53,9 @@ export default function Navbar({ rightSlot }) {
     };
   }, [user]);
 
-  function SearchHD(e) {
-    e.preventDefault();
-    router.push(`/search?query=${encodeURIComponent(searchtext)}`);
-  }
-
-  function modalHD() {
-    setIsmodal(true);
-  }
-
-  function ModalclickHD() {
-    setIsmodal(false);
-  }
-
-  function SearchTextHD(e) {
-    setsearchText(e.target.value);
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    router.push(`/search?query=${encodeURIComponent(searchText)}`);
   }
 
   return (
@@ -79,13 +66,13 @@ export default function Navbar({ rightSlot }) {
             Food Cafe
           </Link>
         </div>
-        <form onSubmit={SearchHD} className={style.searchcontainer}>
+        <form onSubmit={handleSearchSubmit} className={style.searchcontainer}>
           <div>
             <Input
-              value={searchtext}
-              onValueChange={setsearchText}
+              value={searchText}
+              onValueChange={setSearchText}
               onClear={() => {
-                setsearchText("");
+                setSearchText("");
                 router.push("/search");
               }}
               isClearable
@@ -101,28 +88,8 @@ export default function Navbar({ rightSlot }) {
         </form>
         <div className={style.nav}>
           <ThemeToggle />
-          <NavLink href="/meals">À½½Ä ¹× ·¹½ÃÇÇ °øÀ¯</NavLink>
-          <NavLink href="/commu">Ä¿¹Â´ÏÆ¼</NavLink>
-          {/* ¹öÆ° ÄÄÆ÷³ÍÆ® »ðÀÔ  */}
-          {/* {!user && (
-            <NavLink href="/login">
-              <button onClick={modalHD} className={style.signbtn}>
-                ·Î±×ÀÎ / È¸¿ø°¡ÀÔ
-              </button>
-            </NavLink>
-          )}
-          {user && (
-            <button
-              onClick={() => {
-                signOut(auth);
-                sessionStorage.removeItem("user");
-                window.location.reload();
-              }}
-              className={style.signoutbtn}
-            >
-              <span className={style.username}>{userName}</span>´Ô / ·Î±×¾Æ¿ô
-            </button>
-          )} */}
+          <NavLink href="/meals">ë ˆì‹œí”¼</NavLink>
+          <NavLink href="/posts">ì»¤ë®¤ë‹ˆí‹°</NavLink>
           {rightSlot}
         </div>
       </div>

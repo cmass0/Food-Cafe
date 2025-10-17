@@ -1,203 +1,193 @@
-"use client";
+﻿"use client";
 
-import ImagePreview from "@/component/imgpreview/imgpreview";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import style from "./page.module.css";
-import uploadImage from "@/lib/uploadImage";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/client";
+
+import LoadingPage from "@/app/loading";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/features/user/client";
-import { getRecipe, updateRecipe } from "@/features/recipe/api";
+import uploadImage from "@/lib/uploadImage";
+import { getPost, updatePost } from "@/features/post/api";
+import { auth } from "@/lib/firebase/client";
 
-export default function EditMeal({ params }) {
-  const [detailinfo, setDetailInfo] = useState(null);
-  const [userName, setUserName] = useState("");
-  const [isModal, setIsModal] = useState(false);
-  const [email, setEmail] = useState("");
+import style from "./page.module.css";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+export default function PostEditPage({ params }) {
   const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
-  const [recipe, setRecipe] = useState("");
-  const router = useRouter();
+  const [content, setContent] = useState("");
+  const [userName, setUserName] = useState("user");
+  const [showModal, setShowModal] = useState(false);
+  const [loadingPost, setLoadingPost] = useState(true);
   const [user] = useAuthState(auth);
+  const router = useRouter();
+  const quillRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
-    const loginIdentifier = user.providerData[0]?.providerId;
-    async function ReadUserData() {
-      if (loginIdentifier === "password") {
-        const username = await fetchUsernameByUid(user.uid);
-        if (username) {
-          setUserName(username);
+    const providerId = user.providerData?.[0]?.providerId;
+
+    async function resolveDisplayName() {
+      if (providerId === "password") {
+        try {
+          const username = await fetchUsernameByUid(user.uid);
+          setUserName(username ?? user.displayName ?? "user");
           return;
+        } catch (error) {
+          console.error("Failed to resolve display name", error);
         }
       }
-      setUserName(user.displayName || "user");
+      setUserName(user.displayName ?? "user");
     }
-    ReadUserData();
+
+    resolveDisplayName();
   }, [user]);
 
   useEffect(() => {
-    async function fetchMeals() {
+    let cancelled = false;
+
+    async function loadPost() {
       try {
-        const data = await getRecipe(params.detail);
-        if (!data) {
-          setDetailInfo(null);
-          return;
-        }
-        setDetailInfo(data);
-        setEmail(data.writerEmail ?? "");
+        const data = await getPost(params.detail);
+        if (!data || cancelled) return;
         setTitle(data.title ?? "");
-        setSummary(data.summary ?? "");
-        setRecipe(data.recipe ?? "");
+        setContent(data.content ?? "");
       } catch (error) {
-        console.error("?�시???�보�?불러?��? 못했?�니??", error);
+        console.error("Failed to load post", error);
+      } finally {
+        if (!cancelled) setLoadingPost(false);
       }
     }
 
-    fetchMeals();
+    loadPost();
+    return () => {
+      cancelled = true;
+    };
   }, [params.detail]);
 
-  const isselect = (isselected) => {
-    if (!isselected) {
-      alert("?��?지�??�택?�주?�요!");
-    }
-  };
+  const imageHandler = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
 
-  async function editrecipeHD(event) {
-    event.preventDefault();
-    if (!detailinfo) return;
-    const formData = new FormData(event.target);
-    const imagefile = formData.get("image");
-    let imageurl = detailinfo.image ?? null;
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
 
-    if (imagefile && imagefile.size) {
       try {
-        imageurl = await uploadImage(imagefile);
-      } catch (error) {
-        console.error("?��?지 ?�로?�에 ?�패?�습?�다.", error);
-        alert("?��?지�??�로?�하지 못했?�니?? ?�시 ?�도?�주?�요.");
-        return;
-      }
-    }
+        const imageUrl = await uploadImage(file);
+        const editor = quillRef.current?.getEditor?.();
+        if (!editor) return;
 
+        const range = editor.getSelection(true);
+        editor.insertEmbed(range.index, "image", imageUrl, "user");
+        editor.setSelection(range.index + 1, 0, "user");
+      } catch (error) {
+        console.error("Failed to upload image", error);
+      }
+    };
+
+    input.click();
+  }, []);
+
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          [{ align: [] }],
+          ["link", "image"],
+          ["clean"],
+        ],
+        handlers: { image: imageHandler },
+      },
+    }),
+    [imageHandler]
+  );
+
+  async function handleUpdate() {
     try {
-      await updateRecipe(params.detail, {
+      await updatePost(params.detail, {
         title,
-        summary: summary || undefined,
-        recipe,
-        image: imageurl,
+        content,
         writerName: userName,
-        writerUid: user?.uid,
-        writerEmail: email || undefined,
+        writerUid: user?.uid ?? undefined,
       });
       router.push(`/meals/${params.detail}`);
     } catch (error) {
-      console.error("?�시???�정???�패?�습?�다.", error);
-      alert("?�시?��? ?�정?��? 못했?�니??");
+      console.error("Failed to update post", error);
+    } finally {
+      setShowModal(false);
     }
   }
 
-  function onclose() {
-    setIsModal(false);
-  }
-
-  function editqus() {
-    setIsModal(true);
+  if (loadingPost) {
+    return <LoadingPage />;
   }
 
   return (
-    <div className={style.pagecontainer}>
-      <header className={style.header}>
-        <h1>만든 ?�식, 좋아?�는 ?�식??공유?�보?�요</h1>
-      </header>
-      <main className={style.shareform}>
-        <form className={style.form} onSubmit={editrecipeHD}>
-          <div className={style.formcontentsbox}>
-            <div className={style.row1}>
-              <div>
-                <label htmlFor="creator">?�름</label>
-                <input
-                  type="text"
-                  name="creator"
-                  id="creator"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                ></input>
-              </div>
-              <div>
-                <label htmlFor="email">E-Mail</label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                ></input>
-              </div>
-            </div>
+    <div className={style.container}>
+      <h2 className={style.heading}>게시글 수정</h2>
+      <form className={style.form}>
+        <div className={style.formGroup}>
+          <label htmlFor="title" className={style.label}>
+            제목
+          </label>
+          <input
+            type="text"
+            id="title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className={style.input}
+            placeholder="제목을 입력해주세요"
+            required
+          />
+        </div>
+        <div className={style.formGroup}>
+          <label htmlFor="content" className={style.label}>
+            내용
+          </label>
+          <ReactQuill
+            ref={quillRef}
+            theme="snow"
+            value={content}
+            onChange={setContent}
+            modules={modules}
+            className={style.editor}
+            placeholder="내용을 입력해주세요"
+          />
+        </div>
+        <div className={style.preview}></div>
+        <div className={style.btnarea}>
+          <button type="button" className={style.button} onClick={() => setShowModal(true)}>
+            게시글 수정
+          </button>
+          <button type="button" className={style.canclebtn} onClick={() => router.back()}>
+            취소
+          </button>
+        </div>
+      </form>
 
-            <div className={style.row2}>
-              <label htmlFor="title">?�식 ?�름</label>
-              <input
-                type="text"
-                name="title"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              ></input>
-            </div>
-
-            <div className={style.row3}>
-              <label htmlFor="summary">?�식 ?�명</label>
-              <input
-                type="text"
-                name="summary"
-                id="summary"
-                maxLength="51"
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-              ></input>
-            </div>
-
-            <div className={style.row4}>
-              <label htmlFor="recipe">?�시??</label>
-              <textarea
-                name="recipe"
-                id="recipe"
-                rows="15"
-                value={recipe}
-                onChange={(e) => setRecipe(e.target.value)}
-                required
-              ></textarea>
+      {showModal && (
+        <Modal onclose={() => setShowModal(false)}>
+          <div className={style.requirelogin}>
+            <button className={style.modalclosebtn} onClick={() => setShowModal(false)}>
+              X
+            </button>
+            <div className={style.modaltext}>정말 수정하시겠습니까?</div>
+            <div className={style.deletebtnbox}>
+              <button className={style.deleteselectbtn} onClick={handleUpdate}>
+                수정하기
+              </button>
             </div>
           </div>
-          <ImagePreview name="image" isselect={isselect} />
-          <button type="button" className={style.formbtn} onClick={editqus}>
-            ?�정?�기
-          </button>
-          {isModal && (
-            <Modal onclose={onclose}>
-              <div className={style.requirelogin}>
-                <button className={style.modalclosebtn} onClick={onclose}>
-                  X
-                </button>
-                <div className={style.modaltext}>?�말�??�정?�시겠습?�까?</div>
-                <div className={style.deletebtnbox}>
-                  <button
-                    className={style.deleteselectbtn}
-                    type="submit"
-                  >
-                    ?�정?�기
-                  </button>
-                </div>
-              </div>
-            </Modal>
-          )}
-        </form>
-      </main>
+        </Modal>
+      )}
     </div>
   );
 }

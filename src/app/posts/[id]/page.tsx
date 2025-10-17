@@ -3,6 +3,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as postService from "@/features/post/service";
 import PostDetail from "@/features/post/ui/PostDetail";
+import CommentArea from "@/component/comment/comment";
 import PostForm from "@/features/post/ui/PostForm";
 import { Button } from "@/components/ui/button";
 import { deletePostAction, updatePostAction } from "../actions";
@@ -39,7 +40,11 @@ export default async function PostDetailPage({ params }: { params: { id: string 
           </Button>
         </form>
       </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">댓글</h2>
+        <CommentArea type={post.id} />
+      </section>
     </main>
   );
 }
-
