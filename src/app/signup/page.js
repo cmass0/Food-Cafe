@@ -52,8 +52,8 @@ export default function SignupPage() {
       setUserEmail("");
       setUserPassword("");
 
-      alert("회원가입에 성공했습니다 로그인을 진행해 주세요");
-      router.push("/login");
+      alert("?�원가?�에 ?�공?�습?�다 로그?�을 진행??주세??);
+      router.push("/auth/signin-signup");
     } catch (error) {
       console.error(error);
       const errorCode = error?.code ?? null;
@@ -61,22 +61,22 @@ export default function SignupPage() {
       if (errorCode) {
         switch (errorCode) {
           case "auth/invalid-email":
-            setErrormsg("잘못된 이메일 주소입니다");
+            setErrormsg("?�못???�메??주소?�니??);
             break;
           case "auth/email-already-in-use":
-            setErrormsg("이미 존재하는 이메일입니다.");
+            setErrormsg("?��? 존재?�는 ?�메?�입?�다.");
             break;
           case "auth/weak-password":
-            setErrormsg("비밀번호는 6자리 이상이어야 합니다");
+            setErrormsg("비�?번호??6?�리 ?�상?�어???�니??);
             break;
           default:
-            setErrormsg("회원가입 도중 오류가 발생했습니다. 다시 시도해 주세요");
+            setErrormsg("?�원가???�중 ?�류가 발생?�습?�다. ?�시 ?�도??주세??);
             break;
         }
       } else if (error instanceof Error && error.message === "AUTH_CREATION_FAILED") {
-        setErrormsg("회원 계정 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setErrormsg("?�원 계정 ?�성???�패?�습?�다. ?�시 ???�시 ?�도??주세??");
       } else {
-        setErrormsg("회원가입 도중 오류가 발생했습니다. 다시 시도해 주세요");
+        setErrormsg("?�원가???�중 ?�류가 발생?�습?�다. ?�시 ?�도??주세??);
       }
     }
   }
@@ -84,17 +84,17 @@ export default function SignupPage() {
   async function duplicateHD() {
     const duplicate = await checkDuplicate(UserName);
     if (duplicate) {
-      setNickNameErr("이미 사용중인 닉네임입니다.");
+      setNickNameErr("?��? ?�용중인 ?�네?�입?�다.");
       SetUserNameValid(false);
     } else {
       if (UserName !== "") {
-        setNickNameErr("사용 가능한 닉네임입니다.");
+        setNickNameErr("?�용 가?�한 ?�네?�입?�다.");
         SetUserNameValid(true);
       }
     }
 
     if (UserName === "") {
-      setNickNameErr("닉네임을 입력해 주세요.");
+      setNickNameErr("?�네?�을 ?�력??주세??");
       SetUserNameValid(false);
     }
   }
@@ -107,14 +107,14 @@ export default function SignupPage() {
   useEffect(() => {
     if (UserEmail) {
       if (emailcheck(UserEmail)) {
-        setEmailValid("유효한 이메일 형식입니다.");
+        setEmailValid("?�효???�메???�식?�니??");
         SetUserEmailValid(true);
       } else {
-        setEmailValid("유효하지 않은 이메일 형식입니다.");
+        setEmailValid("?�효?��? ?��? ?�메???�식?�니??");
         SetUserEmailValid(false);
       }
     } else {
-      setEmailValid("유효하지 않은 이메일 형식입니다.");
+      setEmailValid("?�효?��? ?��? ?�메???�식?�니??");
       SetUserEmailValid(false);
     }
   }, [UserEmail]);
@@ -128,7 +128,7 @@ export default function SignupPage() {
       setPassValid("");
       SetUserPassValid(true);
     } else {
-      setPassValid("비밀번호는 6자리 이상 입력해주세요");
+      setPassValid("비�?번호??6?�리 ?�상 ?�력?�주?�요");
       SetUserPassValid(false);
     }
   }, [UserPassword]);
@@ -146,7 +146,7 @@ export default function SignupPage() {
               name="username"
               value={UserName}
               onChange={(e) => setUserName(e.target.value)}
-              placeholder="닉네임"
+              placeholder="?�네??
               maxLength={8}
             />
           </div>
@@ -155,7 +155,7 @@ export default function SignupPage() {
             className={style.duplicatebtn}
             onClick={duplicateHD}
           >
-            중복확인
+            중복?�인
           </button>
           <span className={style.nicknamemsg}>{nicknameerr}</span>
           <div className={style.formGroup}>
@@ -166,7 +166,7 @@ export default function SignupPage() {
               name="email"
               value={UserEmail}
               onChange={emailHD}
-              placeholder="이메일"
+              placeholder="?�메??
             />
           </div>
           <div className={style.emailmsg}>{emailvalid}</div>
@@ -178,7 +178,7 @@ export default function SignupPage() {
               name="password"
               value={UserPassword}
               onChange={(e) => setUserPassword(e.target.value)}
-              placeholder="비밀번호"
+              placeholder="비�?번호"
             />
           </div>
           <div className={style.passwordlogic}>{passvalid}</div>
@@ -191,8 +191,7 @@ export default function SignupPage() {
                   !usernamevalid || !useremailvalid || !userpassvalid,
               })}
             >
-              회원가입
-            </button>
+              ?�원가??            </button>
             {/* {loading && <p>Loading...</p>} */}
             {Errormsg && <p className={style.errormsg}>Error: {Errormsg}</p>}
           </div>

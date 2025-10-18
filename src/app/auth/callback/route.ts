@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) {
-    return NextResponse.redirect(new URL("/auth/signin?error=missing-supabase-config", req.url));
+    return NextResponse.redirect(new URL("/auth/signin-signup?error=missing-supabase-config", req.url));
   }
 
   const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(req.nextUrl.toString());
   if (error) {
     return NextResponse.redirect(
-      new URL(`/auth/signin?error=${encodeURIComponent(error.message)}`, req.url)
+      new URL(`/auth/signin-signup?error=${encodeURIComponent(error.message)}`, req.url)
     );
   }
 

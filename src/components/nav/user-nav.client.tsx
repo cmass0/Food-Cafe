@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import LoginPage from "@/app/login/page";
+import LoginPage from "@/app/auth/signin-signup/page";
 
 type Props = { session: Session | null };
 

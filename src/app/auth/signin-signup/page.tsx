@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -15,26 +15,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { setRemember } from "@/lib/auth/login-maintain";
 
-// const NAV_ITEMS: Array<{ key: "signin" | "signup"; label: string }> = [
-//   { key: "signin", label: "로그인" },
-//   { key: "signup", label: "회원가입" },
-// ];
-
-export default function LoginPage() {
+export default function SignInSignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/";
-  const supabase = getBrowserSupabase();
 
   const [mode, setMode] = React.useState<"signin" | "signup">("signin");
 
-  // signin state
+  // Sign in state
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [signInError, setSignInError] = React.useState<string | null>(null);
   const [isSigningIn, startSignInTransition] = React.useTransition();
+  const [maintainLogin, setMaintainLogin] = React.useState(false);
 
-  // signup state
+  // Sign up state
   const [displayName, setDisplayName] = React.useState("");
   const [signUpEmail, setSignUpEmail] = React.useState("");
   const [signUpPassword, setSignUpPassword] = React.useState("");
@@ -42,7 +37,6 @@ export default function LoginPage() {
   const [signUpMessage, setSignUpMessage] = React.useState<string | null>(null);
   const [signUpError, setSignUpError] = React.useState<string | null>(null);
   const [isSigningUp, startSignUpTransition] = React.useTransition();
-  const [maintainLogin, setMaintainLogin] = React.useState(false);
 
   const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -84,14 +78,16 @@ export default function LoginPage() {
 
     startSignUpTransition(async () => {
       const supabase = getBrowserSupabase();
+      // Ensure server callback handles profile creation and redirect
+      const url = new URL("/auth/callback", location.origin);
+      if (next) url.searchParams.set("next", next);
+
       const { data, error } = await supabase.auth.signUp({
         email: signUpEmail,
         password: signUpPassword,
         options: {
-          emailRedirectTo: location.href,
-          data: {
-            display_name: displayName.trim(),
-          },
+          emailRedirectTo: url.toString(),
+          data: { display_name: displayName.trim() },
         },
       });
 
@@ -100,29 +96,10 @@ export default function LoginPage() {
         return;
       }
 
-      const user = data.user;
-      // Only write profile when a session exists (RLS requires auth.uid())
-      if (data.session && user) {
-        const profilePayload = {
-          id: user.id,
-          display_name: displayName.trim(),
-          email: user.email,
-          photo_url: user.user_metadata?.picture ?? null,
-        };
-        const { error: profileError } = await supabase
-          .from("users")
-          .upsert(profilePayload, { onConflict: "id" });
-
-        if (profileError) {
-          setSignUpError(profileError.message);
-          return;
-        }
-      }
-
       if (data.session) {
         router.replace(next);
       } else {
-        setSignUpMessage("확인 메일을 전송했습니다. 이메일을 확인해주세요.");
+        setSignUpMessage("확인 메일을 발송했습니다. 이메일을 확인해주세요.");
         setMode("signin");
       }
     });
@@ -137,6 +114,7 @@ export default function LoginPage() {
               <CardHeader className="space-y-3 items-center">
                 <CardTitle className="text-3xl font-semibold text-green-600">Food Cafe</CardTitle>
               </CardHeader>
+
               {signUpMessage ? (
                 <div className="mx-6 -mt-2 mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
                   {signUpMessage}
@@ -176,9 +154,9 @@ export default function LoginPage() {
                     {isSigningIn ? "로그인 중..." : "이메일로 로그인"}
                   </Button>
                   <div className="flex justify-between text-sm text-muted-foreground items-center">
-                    <div className="flex">
-                      <Checkbox id="terms" onChange={() => {setMaintainLogin(true)}}/>
-                      <Label htmlFor="terms">로그인 유지</Label>
+                    <div className="flex items-center gap-2">
+                      <Checkbox id="remember" onCheckedChange={(v) => setMaintainLogin(Boolean(v))} />
+                      <Label htmlFor="remember">로그인 유지</Label>
                     </div>
                     <Link href="/reset-password" className="hover:underline">
                       비밀번호 찾기
@@ -267,3 +245,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

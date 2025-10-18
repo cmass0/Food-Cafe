@@ -16,8 +16,8 @@ export default function Home() {
 
   function shareHD() {
     if (!user) {
-      alert("로그인이 필요한 서비스입니다.");
-      router.push("/login");
+      alert("로그?�이 ?�요???�비?�입?�다.");
+      router.push("/auth/signin-signup");
     } else {
       router.push("/meals/share");
     }
@@ -31,20 +31,20 @@ export default function Home() {
           </span>
           <span>
             <h1 className={style.highlight1}>
-              요리하는 <span>즐거움</span>
+              ?�리?�는 <span>즐거?�</span>
             </h1>
 
             <h1 className={style.highlight2}>
-              <span>건강한</span> 식습관
+              <span>건강??/span> ?�습관
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
               <button className={style["main-headerbtn"]} onClick={shareHD}>
-                커뮤니티 참여하기
+                커�??�티 참여?�기
               </button>
 
               <button className={style["main-headerbtn"]} onClick={shareHD}>
-                음식 공유하기
+                ?�식 공유?�기
               </button>
             </div>
           </span>
@@ -56,27 +56,27 @@ export default function Home() {
             <h2>Welcome!</h2>
 
             <p>
-              Food Cafe는 요리를 즐기고 좋아하는 여러분들을 위한 최고의 레시피 공유 커뮤니티 입니다.
-              많은 사람들의 레시피를 공유하고 요리에 대한 접근성을 높이기 위해 이 사이트를 만들게
-              되었습니다.
+              Food Cafe???�리�?즐기�?좋아?�는 ?�러분들???�한 최고???�시??공유 커�??�티 ?�니??
+              많�? ?�람?�의 ?�시?��? 공유?�고 ?�리???�???�근?�을 ?�이�??�해 ???�이?��? 만들�?
+              ?�었?�니??
             </p>
 
             <p>
-              Food Cafe에서는 전세계 수많은 음식의 레시피를 공유하고 찾아볼 수 있습니다. 서로의
-              요리에대한 아이디어를 주고 받을 수 있습니다. 자신이 초보자라도 상관없습니다. 이 곳에서
-              더욱 배워갈 수 있을겁니다. 초보자는 언제나 환영합니다!
+              Food Cafe?�서???�세�??�많?� ?�식???�시?��? 공유?�고 찾아�????�습?�다. ?�로??
+              ?�리?��????�이?�어�?주고 받을 ???�습?�다. ?�신??초보?�라???��??�습?�다. ??곳에??
+              ?�욱 배워�????�을겁니?? 초보?�는 ?�제???�영?�니??
             </p>
           </section>
           <section className={style.section}>
-            <h2>이 사이트를 활용하는 법</h2>
+            <h2>???�이?��? ?�용?�는 �?/h2>
             <p>
-              요리를 취미로 즐기고 싶나요? 많은 사람들과 자신의 아이디어를 공유할 수 있고 요리를
-              더욱 재밌게 즐길 수 있을겁니다. 혹은 갑작스럽게 요리를 해야하는 상황인 경우 Food
-              Cafe의 믿을 수 있는 레시피를 참고하면 쉽고 빠르게 요리를 만들 수 있을겁니다.
+              ?�리�?취�?�?즐기�??�나?? 많�? ?�람?�과 ?�신???�이?�어�?공유?????�고 ?�리�?
+              ?�욱 ?�밌�?즐길 ???�을겁니?? ?��? 갑작?�럽�??�리�??�야?�는 ?�황??경우 Food
+              Cafe??믿을 ???�는 ?�시?��? 참고?�면 ?�고 빠르�??�리�?만들 ???�을겁니??
             </p>
             <p>
-              요리를 직업으로 삼고 싶으신 생각이있으신가요? 레시피를 공유하고 전세계 많으사람들로
-              부터 피드백을 받아보세요. 분명 더욱 견고한 실력자로 성장하실겁니다.
+              ?�리�?직업?�로 ?�고 ?�으???�각?�있?�신가?? ?�시?��? 공유?�고 ?�세�?많으?�람?�로
+              부???�드백을 받아보세?? 분명 ?�욱 견고???�력?�로 ?�장?�실겁니??
             </p>
           </section>
         </main>
