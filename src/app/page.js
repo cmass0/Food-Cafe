@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import style from "./page.module.css";
 import Link from "next/link";
@@ -16,12 +16,13 @@ export default function Home() {
 
   function shareHD() {
     if (!user) {
-      alert("로그?�이 ?�요???�비?�입?�다.");
+      alert("로그인이 필요한 서비스입니다.");
       router.push("/auth/signin-signup");
     } else {
       router.push("/meals/share");
     }
   }
+
   return (
     <div className={style.maincontainer}>
       <section>
@@ -31,52 +32,50 @@ export default function Home() {
           </span>
           <span>
             <h1 className={style.highlight1}>
-              ?�리?�는 <span>즐거?�</span>
+              요리하는 <span>즐거움</span>
             </h1>
 
             <h1 className={style.highlight2}>
-              <span>건강??/span> ?�습관
+              <span>건강한</span> 식습관
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
               <button className={style["main-headerbtn"]} onClick={shareHD}>
-                커�??�티 참여?�기
+                커뮤니티 참여하기
               </button>
 
               <button className={style["main-headerbtn"]} onClick={shareHD}>
-                ?�식 공유?�기
+                음식 공유하기
               </button>
             </div>
           </span>
         </header>
       </section>
+
       <section className={style.mainsection}>
-        <main className={`${style.main}`}>
+        <main className={style.main}>
           <section className={style.section}>
             <h2>Welcome!</h2>
-
             <p>
-              Food Cafe???�리�?즐기�?좋아?�는 ?�러분들???�한 최고???�시??공유 커�??�티 ?�니??
-              많�? ?�람?�의 ?�시?��? 공유?�고 ?�리???�???�근?�을 ?�이�??�해 ???�이?��? 만들�?
-              ?�었?�니??
+              Food Cafe는 요리를 즐기고 좋아하는 여러분들을 위한 최고의 레시피 공유 커뮤니티입니다.
+              많은 사람들의 레시피를 공유하고 요리에 대한 접근성을 높이기 위해 이 사이트를 만들게 되었습니다.
             </p>
-
             <p>
-              Food Cafe?�서???�세�??�많?� ?�식???�시?��? 공유?�고 찾아�????�습?�다. ?�로??
-              ?�리?��????�이?�어�?주고 받을 ???�습?�다. ?�신??초보?�라???��??�습?�다. ??곳에??
-              ?�욱 배워�????�을겁니?? 초보?�는 ?�제???�영?�니??
+              Food Cafe에서는 전 세계 수많은 음식의 레시피를 함께 공유하고 찾아볼 수 있습니다. 서로의
+              요리에 대한 아이디어를 주고받을 수 있습니다. 요리에 처음 입문했더라도 괜찮습니다. 이곳에서
+              하나씩 배워 가며 실력을 키워 보세요. 초보자도 언제나 환영합니다!
             </p>
           </section>
+
           <section className={style.section}>
-            <h2>???�이?��? ?�용?�는 �?/h2>
+            <h2>이 사이트를 활용하는 법</h2>
             <p>
-              ?�리�?취�?�?즐기�??�나?? 많�? ?�람?�과 ?�신???�이?�어�?공유?????�고 ?�리�?
-              ?�욱 ?�밌�?즐길 ???�을겁니?? ?��? 갑작?�럽�??�리�??�야?�는 ?�황??경우 Food
-              Cafe??믿을 ???�는 ?�시?��? 참고?�면 ?�고 빠르�??�리�?만들 ???�을겁니??
+              요리를 취미로 즐기고 싶나요? 많은 사람들과 아이디어를 공유하고 더 즐겁게 요리할 수 있을 것입니다.
+              갑작스럽게 요리가 필요하다면 Food Cafe의 믿을 수 있는 레시피를 참고해 쉽고 빠르게 요리를 완성해 보세요.
             </p>
             <p>
-              ?�리�?직업?�로 ?�고 ?�으???�각?�있?�신가?? ?�시?��? 공유?�고 ?�세�?많으?�람?�로
-              부???�드백을 받아보세?? 분명 ?�욱 견고???�력?�로 ?�장?�실겁니??
+              요리를 직업으로 삼고 싶은가요? 레시피를 공유하고 전 세계 사용자들에게 피드백을 받아보세요.
+              분명 더 탄탄한 실력자로 성장할 수 있을 거예요.
             </p>
           </section>
         </main>
