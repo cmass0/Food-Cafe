@@ -29,6 +29,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     const updated = await postService.updatePost(supabase, params.id, parsed.data);
     if (!updated) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
     return Response.json({ data: updated });
+    
   } catch (error) {
     console.error("[posts] PUT failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
