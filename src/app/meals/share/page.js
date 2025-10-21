@@ -6,11 +6,12 @@ import { useAuthState } from "react-firebase-hooks/auth";
 
 import ImagePreview from "@/component/imgpreview/imgpreview";
 import { auth } from "@/lib/firebase/client";
-import uploadImage from "@/lib/uploadImage";
+import { uploadRecipeImage } from "@/lib/storage";
 import { fetchUsernameByUid } from "@/features/user/client";
-import { createRecipe } from "@/features/recipe/api";
+import { createRecipe, updateRecipe } from "@/features/recipe/api";
 
 import style from "./page.module.css";
+import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function ShareMeal() {
   const [userName, setUserName] = useState("user");
@@ -56,24 +57,33 @@ export default function ShareMeal() {
     }
 
     let imageUrl = null;
-    try {
-      imageUrl = await uploadImage(imageFile);
-    } catch (error) {
-      console.error("이미지 업로드에 실패했습니다.", error);
-      alert("이미지를 업로드하지 못했습니다. 다시 시도해주세요.");
-      return;
-    }
+    const supabase = getBrowserSupabase();
+    // try {
+    //   imageUrl = await uploadImage(imageFile);
+    // } catch (error) {
+    //   console.error("이미지 업로드에 실패했습니다.", error);
+    //   alert("이미지를 업로드하지 못했습니다. 다시 시도해주세요.");
+    //   return;
+    // }
 
     try {
-      await createRecipe({
+      const created = await createRecipe({
         title: String(formData.get("title") ?? ""),
         summary: formData.get("summary") ? String(formData.get("summary")) : undefined,
         recipe: String(formData.get("recipe") ?? ""),
-        image: imageUrl,
+        image: null,
         writerName: userName,
         writerUid: user.uid,
         writerEmail: formData.get("email") ? String(formData.get("email")) : undefined,
       });
+      const { publicUrl, signedUrl } = await uploadRecipeImage(
+        supabase,
+        created.id,
+        imageFile,
+        { contentType: imageFile.type, upsert: false }
+      );
+      const finalUrl = publicUrl ?? signedUrl ?? null;
+      await updateRecipe(created.id, { image: finalUrl });
       router.push("/meals");
     } catch (error) {
       console.error("레시피 등록에 실패했습니다.", error);
