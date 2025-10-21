@@ -27,11 +27,9 @@ function mapRowToPost(row: PostRow): Post {
     id: row.id,
     title: row.title,
     content: row.content,
-    // 기본값 보강: 작성자 미지정 시 '익명'
     writerName: row.writer_name,
     writerUid: row.writer_uid,
     number: row.number ?? null,
-    // view_count 기본값 0
     check: row.view_count ?? 0,
     type: row.type ?? "board",
     createdAt: new Date(row.created_at),
