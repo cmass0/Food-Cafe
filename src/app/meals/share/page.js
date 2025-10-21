@@ -38,24 +38,24 @@ export default function ShareMeal() {
   const handleSelect = (selected) => {
     setImageSelected(selected);
     if (!selected) {
-      alert("ÀÌ¹ÌÁö¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä!");
+      alert("ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½!");
     }
   };
 
   async function handleSubmit(event) {
     event.preventDefault();
     if (!user) {
-      alert("·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.");
+      alert("ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½.");
       return;
     }
 
     const formData = new FormData(event.currentTarget);
     const imageFile = formData.get("image");
     if (!imageFile) {
-      alert("ÀÌ¹ÌÁö¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä!");
+      alert("ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½!");
       return;
     }
-    const supabase = getBrowserSupabase();\n
+    const supabase = getBrowserSupabase();
     try {
       const created = await createRecipe({
         title: String(formData.get("title") ?? ""),
@@ -76,22 +76,22 @@ export default function ShareMeal() {
       await updateRecipe(created.id, { image: finalUrl });
       router.push("/meals");
     } catch (error) {
-      console.error("·¹½ÃÇÇ µî·Ï¿¡ ½ÇÆÐÇß½À´Ï´Ù.", error);
-      alert("·¹½ÃÇÇ¸¦ µî·ÏÇÏÁö ¸øÇß½À´Ï´Ù. ´Ù½Ã ½ÃµµÇØÁÖ¼¼¿ä.");
+      console.error("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.", error);
+      alert("ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½. ï¿½Ù½ï¿½ ï¿½Ãµï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½.");
     }
   }
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>¸¸µç À½½Ä, ÁÁ¾ÆÇÏ´Â À½½ÄÀ» °øÀ¯ÇØº¸¼¼¿ä</h1>
+        <h1>ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Øºï¿½ï¿½ï¿½ï¿½ï¿½</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={handleSubmit}>
           <div className={style.formcontentsbox}>
             <div className={style.row1}>
               <div>
-                <label htmlFor="creator">ÀÌ¸§</label>
+                <label htmlFor="creator">ï¿½Ì¸ï¿½</label>
                 <input type="text" name="creator" id="creator" value={userName} readOnly />
               </div>
               <div>
@@ -101,23 +101,23 @@ export default function ShareMeal() {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">À½½Ä ÀÌ¸§</label>
+              <label htmlFor="title">ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½</label>
               <input type="text" name="title" id="title" required />
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">À½½Ä ¼³¸í</label>
+              <label htmlFor="summary">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</label>
               <input type="text" name="summary" id="summary" maxLength={51} />
             </div>
 
             <div className={style.row4}>
-              <label htmlFor="recipe">·¹½ÃÇÇ</label>
+              <label htmlFor="recipe">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</label>
               <textarea name="recipe" id="recipe" rows={15} required />
             </div>
           </div>
           <ImagePreview name="image" isselect={handleSelect} />
           <button type="submit" className={style.formbtn}>
-            °øÀ¯ÇÏ±â
+            ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
           </button>
         </form>
       </main>
