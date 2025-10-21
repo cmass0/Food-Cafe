@@ -1,4 +1,4 @@
-﻿import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
+import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import * as repository from "./repository";
 import type {
   Post,
@@ -28,7 +28,7 @@ function mapRowToPost(row: PostRow): Post {
     title: row.title,
     content: row.content,
     // 기본값 보강: 작성자 미지정 시 '익명'
-    writerName: row.writer_name && row.writer_name.trim().length > 0 ? row.writer_name : "익명",
+    writerName: row.writer_name,
     writerUid: row.writer_uid,
     number: row.number ?? null,
     // view_count 기본값 0
