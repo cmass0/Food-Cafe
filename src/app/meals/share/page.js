@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -38,34 +38,24 @@ export default function ShareMeal() {
   const handleSelect = (selected) => {
     setImageSelected(selected);
     if (!selected) {
-      alert("ì´ë¯¸ì§€ë¥¼ ì„ íƒí•´ì£¼ì„¸ìš”!");
+      alert("ÀÌ¹ÌÁö¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä!");
     }
   };
 
   async function handleSubmit(event) {
     event.preventDefault();
     if (!user) {
-      alert("ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.");
+      alert("·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.");
       return;
     }
 
     const formData = new FormData(event.currentTarget);
     const imageFile = formData.get("image");
     if (!imageFile) {
-      alert("ì´ë¯¸ì§€ë¥¼ ì„ íƒí•´ì£¼ì„¸ìš”!");
+      alert("ÀÌ¹ÌÁö¸¦ ¼±ÅÃÇØÁÖ¼¼¿ä!");
       return;
     }
-
-    let imageUrl = null;
-    const supabase = getBrowserSupabase();
-    // try {
-    //   imageUrl = await uploadImage(imageFile);
-    // } catch (error) {
-    //   console.error("ì´ë¯¸ì§€ ì—…ë¡œë“œì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", error);
-    //   alert("ì´ë¯¸ì§€ë¥¼ ì—…ë¡œë“œí•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ë‹¤ì‹œ ì‹œë„í•´ì£¼ì„¸ìš”.");
-    //   return;
-    // }
-
+    const supabase = getBrowserSupabase();\n
     try {
       const created = await createRecipe({
         title: String(formData.get("title") ?? ""),
@@ -86,22 +76,22 @@ export default function ShareMeal() {
       await updateRecipe(created.id, { image: finalUrl });
       router.push("/meals");
     } catch (error) {
-      console.error("ë ˆì‹œí”¼ ë“±ë¡ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", error);
-      alert("ë ˆì‹œí”¼ë¥¼ ë“±ë¡í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ë‹¤ì‹œ ì‹œë„í•´ì£¼ì„¸ìš”.");
+      console.error("·¹½ÃÇÇ µî·Ï¿¡ ½ÇÆĞÇß½À´Ï´Ù.", error);
+      alert("·¹½ÃÇÇ¸¦ µî·ÏÇÏÁö ¸øÇß½À´Ï´Ù. ´Ù½Ã ½ÃµµÇØÁÖ¼¼¿ä.");
     }
   }
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>ë§Œë“  ìŒì‹, ì¢‹ì•„í•˜ëŠ” ìŒì‹ì„ ê³µìœ í•´ë³´ì„¸ìš”</h1>
+        <h1>¸¸µç À½½Ä, ÁÁ¾ÆÇÏ´Â À½½ÄÀ» °øÀ¯ÇØº¸¼¼¿ä</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={handleSubmit}>
           <div className={style.formcontentsbox}>
             <div className={style.row1}>
               <div>
-                <label htmlFor="creator">ì´ë¦„</label>
+                <label htmlFor="creator">ÀÌ¸§</label>
                 <input type="text" name="creator" id="creator" value={userName} readOnly />
               </div>
               <div>
@@ -111,23 +101,23 @@ export default function ShareMeal() {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">ìŒì‹ ì´ë¦„</label>
+              <label htmlFor="title">À½½Ä ÀÌ¸§</label>
               <input type="text" name="title" id="title" required />
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">ìŒì‹ ì„¤ëª…</label>
+              <label htmlFor="summary">À½½Ä ¼³¸í</label>
               <input type="text" name="summary" id="summary" maxLength={51} />
             </div>
 
             <div className={style.row4}>
-              <label htmlFor="recipe">ë ˆì‹œí”¼</label>
+              <label htmlFor="recipe">·¹½ÃÇÇ</label>
               <textarea name="recipe" id="recipe" rows={15} required />
             </div>
           </div>
           <ImagePreview name="image" isselect={handleSelect} />
           <button type="submit" className={style.formbtn}>
-            ê³µìœ í•˜ê¸°
+            °øÀ¯ÇÏ±â
           </button>
         </form>
       </main>
