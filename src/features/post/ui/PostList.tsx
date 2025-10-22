@@ -1,16 +1,14 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
 
 import type { Post } from "../types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import SignInSignUpPage from "@/app/auth/signin-signup/page";
+import { Button } from "@heroui/react";
+import { useAuth } from "@/app/auth/auth-context";
+import { useRouter } from "next/navigation";
 
 type PostListProps = {
   posts: Post[];
@@ -19,28 +17,16 @@ type PostListProps = {
 };
 
 export default function PostList({ posts, className, showCreateLink = true }: PostListProps) {
-  const [errorOpen, setErrorOpen] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isLogin, setIsLogin] = React.useState(false);
+  const user = useAuth().user;
+  const route = useRouter();
 
-  async function incrementViewHandler(postId: string) {
-    try {
-      const res = await fetch(`/api/posts/${postId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checkIncrement: true }),
-      });
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const data = await res.json();
-          detail = typeof data?.error === "string" ? ` (${data.error})` : "";
-        } catch {}
-        throw new Error(`조회수 증가 실패${detail}`);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
-      setErrorMessage(msg);
-      setErrorOpen(true);
+  function userLoginHD() {
+    if (!user) {
+      alert("로그인이 필요한 서비스입니다.");
+      setIsLogin(true);
+    } else {
+      route.push("/posts/new");
     }
   }
 
@@ -48,9 +34,12 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
     <div className="border-border w-full rounded-md border p-4">
       {showCreateLink ? (
         <div className="mb-4 flex justify-end">
-          <Link className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground" href="/posts/new">
+          <Button
+            className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
+            onClick={userLoginHD}
+          >
             새 글 쓰기
-          </Link>
+          </Button>
         </div>
       ) : null}
 
@@ -61,11 +50,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
           {posts.map((post) => (
             <li key={post.id} className="flex flex-col gap-1 px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <Link
-                  className="text-base font-semibold text-primary"
-                  onClick={() => incrementViewHandler(post.id)}
-                  href={`/posts/${post.id}`}
-                >
+                <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
                   {post.title}
                 </Link>
                 <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
@@ -86,17 +71,11 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
         </ul>
       )}
 
-      <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>알림</DialogTitle>
-            <DialogDescription>
-              {errorMessage ?? "요청 처리 중 오류가 발생했습니다."}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={isLogin} onOpenChange={setIsLogin}>
+        <DialogContent className="sm:max-w-[400px] p-0">
+          <SignInSignUpPage />
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-

@@ -1,130 +1,135 @@
--- 0006_storage_policies.sql
--- Storage policies for posts/recipes images in bucket `food-cafe`
+-- ===============================================================
+-- Storage RLS policies for bucket 'food-cafe'
+-- DRY-safe version (no IF NOT EXISTS). Drop then Create.
+-- UUID regex is strict (with hyphen positions) to avoid ::uuid cast errors.
+-- ===============================================================
 
--- Helper: safely extract UUID from object name following a fixed prefix
--- Returns NULL if the name does not match the expected pattern
-create or replace function public.uuid_from_object_name(prefix text, objname text)
-returns uuid
-language sql
-immutable
-as $$
-  select substring(objname from ('^' || prefix || '/([0-9a-fA-F-]{36})/'))::uuid;
-$$;
+begin;
 
--- INSERT (upload) — only the owner of the post/recipe can upload
-create policy if not exists upload_post_images_by_owner
+-- UUID regex piece used below:
+--   ^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/
+--   ^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/
+
+-- ---------------------------------------------------------------
+-- INSERT (업로드) — 작성자만
+-- ---------------------------------------------------------------
+drop policy if exists "upload_post_images_by_owner" on storage.objects;
+create policy "upload_post_images_by_owner"
 on storage.objects
 for insert to authenticated
 with check (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('posts', name) is not null
+  and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.posts p
-    where p.id = uuid_from_object_name('posts', name)
+    select 1
+    from public.posts p
+    where p.id = substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and p.writer_uid = auth.uid()
   )
 );
 
-create policy if not exists upload_recipe_images_by_owner
+drop policy if exists "upload_recipe_images_by_owner" on storage.objects;
+create policy "upload_recipe_images_by_owner"
 on storage.objects
 for insert to authenticated
 with check (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('recipes', name) is not null
+  and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.recipes r
-    where r.id = uuid_from_object_name('recipes', name)
+    select 1
+    from public.recipes r
+    where r.id = substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and r.writer_uid = auth.uid()
   )
 );
 
--- UPDATE (metadata/overwrite) — only the owner
-create policy if not exists update_post_images_by_owner
+-- ---------------------------------------------------------------
+-- UPDATE (메타/덮어쓰기) — 작성자만
+--  using: 수정 권한 조건
+--  with check: 수정 후에도 동일 조건 유지 강제
+-- ---------------------------------------------------------------
+drop policy if exists "update_post_images_by_owner" on storage.objects;
+create policy "update_post_images_by_owner"
 on storage.objects
 for update to authenticated
 using (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('posts', name) is not null
+  and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.posts p
-    where p.id = uuid_from_object_name('posts', name)
+    select 1
+    from public.posts p
+    where p.id = substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and p.writer_uid = auth.uid()
   )
 )
 with check (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('posts', name) is not null
+  and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.posts p
-    where p.id = uuid_from_object_name('posts', name)
+    select 1
+    from public.posts p
+    where p.id = substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and p.writer_uid = auth.uid()
   )
 );
 
-create policy if not exists update_recipe_images_by_owner
+drop policy if exists "update_recipe_images_by_owner" on storage.objects;
+create policy "update_recipe_images_by_owner"
 on storage.objects
 for update to authenticated
 using (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('recipes', name) is not null
+  and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.recipes r
-    where r.id = uuid_from_object_name('recipes', name)
+    select 1
+    from public.recipes r
+    where r.id = substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and r.writer_uid = auth.uid()
   )
 )
 with check (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('recipes', name) is not null
+  and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.recipes r
-    where r.id = uuid_from_object_name('recipes', name)
+    select 1
+    from public.recipes r
+    where r.id = substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and r.writer_uid = auth.uid()
   )
 );
 
--- DELETE — only the owner
-create policy if not exists delete_post_images_by_owner
+-- ---------------------------------------------------------------
+-- DELETE — 작성자만
+-- ---------------------------------------------------------------
+drop policy if exists "delete_post_images_by_owner" on storage.objects;
+create policy "delete_post_images_by_owner"
 on storage.objects
 for delete to authenticated
 using (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('posts', name) is not null
+  and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.posts p
-    where p.id = uuid_from_object_name('posts', name)
+    select 1
+    from public.posts p
+    where p.id = substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and p.writer_uid = auth.uid()
   )
 );
 
-create policy if not exists delete_recipe_images_by_owner
+drop policy if exists "delete_recipe_images_by_owner" on storage.objects;
+create policy "delete_recipe_images_by_owner"
 on storage.objects
 for delete to authenticated
 using (
   bucket_id = 'food-cafe'
-  and uuid_from_object_name('recipes', name) is not null
+  and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
-    select 1 from public.recipes r
-    where r.id = uuid_from_object_name('recipes', name)
+    select 1
+    from public.recipes r
+    where r.id = substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
       and r.writer_uid = auth.uid()
   )
 );
 
--- (Optional) READ policies — make objects under posts/ and recipes/ publicly readable.
--- Comment these out if the bucket is private and you will use signed URLs.
-create policy if not exists read_posts_images_public
-on storage.objects
-for select
-using (
-  bucket_id = 'food-cafe'
-  and name like 'posts/%'
-);
 
-create policy if not exists read_recipes_images_public
-on storage.objects
-for select
-using (
-  bucket_id = 'food-cafe'
-  and name like 'recipes/%'
-);
-
+commit;

@@ -98,7 +98,7 @@ export async function insertPostRecord(
     .select(POST_COLUMNS)
     .single();
   throwIfError(error);
-  if (!data) throw new Error("°Ô½Ã±ÛÀ» »ı¼ºÇÏÁö ¸øÇß½À´Ï´Ù.");
+  if (!data) throw new Error("ê²Œì‹œê¸€ì„ ìƒì„±í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
   return data as PostRow;
 }
 
