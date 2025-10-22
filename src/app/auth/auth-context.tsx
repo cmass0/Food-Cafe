@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 import { getRemember } from "@/lib/auth/login-maintain";
+import { deriveDisplayName } from "@/features/user/lib/displayName";
 
 type AuthCtx = {
   user: User | null;
   session: Session | null;
   status: "loading" | "authenticated" | "anonymous";
+  displayName: string | null;
 };
 
 const LOGIN_LIFETIME_MS = 60 * 60 * 1000;
@@ -43,10 +45,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status !== "authenticated" || !session) return;
-    // 로그인 유지(remember)가 켜져 있으면 강제 로그아웃 타이머를 걸지 않음
+    // When "remember login" is enabled, skip scheduling the forced sign-out timer
     if (getRemember()) return;
 
-    // 고정 만료시각 읽기(없으면 최초 설정)
+    // Record a fixed logout timestamp (set once on first authentication)
     const stored = Number(localStorage.getItem(LOGOUT_AT_KEY));
     const hasStored = Number.isFinite(stored) && stored > 0;
     const logoutAt = hasStored ? stored : Date.now() + LOGIN_LIFETIME_MS;
@@ -67,16 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearTimeout(id);
   }, [status, session, supabase]);
-
-
+  const user = session?.user ?? null;
+  const displayName = useMemo<string | null>(() => deriveDisplayName(user), [user]);
 
   const value: AuthCtx = {
-    user: session?.user ?? null,
+    user,
     session,
     status,
+    displayName,
   };
-
-  
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

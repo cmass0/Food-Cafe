@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
@@ -6,10 +6,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { PostActionState } from "@/app/posts/actions";
 
-type PostFormAction = (
-  state: PostActionState,
-  formData: FormData
-) => Promise<PostActionState>;
+type PostFormAction = (state: PostActionState, formData: FormData) => Promise<PostActionState>;
 
 type PostFormProps = {
   action: PostFormAction;
@@ -18,7 +15,6 @@ type PostFormProps = {
     title?: string;
     content?: string;
     type?: string;
-    writerName?: string;
   };
   submitLabel?: string;
   cancelHref?: string;
@@ -37,6 +33,7 @@ export default function PostForm({
   return (
     <form className="flex flex-col gap-4" action={formAction}>
       {defaultValues?.id ? <input type="hidden" name="id" defaultValue={defaultValues.id} /> : null}
+
       <label className="flex flex-col gap-2 text-sm">
         <span className="font-medium">제목</span>
         <input
@@ -48,18 +45,7 @@ export default function PostForm({
           className="rounded border border-input bg-background px-3 py-2"
         />
       </label>
-      <label className="flex flex-col gap-2 text-sm">
-        <span className="font-medium">작성자</span>
-        <input
-          name="writerName"
-          type="text"
-          defaultValue={defaultValues?.writerName ?? ""}
-          required
-          maxLength={120}
-          placeholder="표시할 이름"
-          className="rounded border border-input bg-background px-3 py-2"
-        />
-      </label>
+
       <label className="flex flex-col gap-2 text-sm">
         <span className="font-medium">내용</span>
         <textarea
@@ -70,6 +56,7 @@ export default function PostForm({
           className="rounded border border-input bg-background px-3 py-2"
         />
       </label>
+
       <label className="flex flex-col gap-2 text-sm">
         <span className="font-medium">구분</span>
         <input
@@ -80,9 +67,11 @@ export default function PostForm({
           className="rounded border border-input bg-background px-3 py-2"
         />
       </label>
+
       {!state.ok && state.message ? (
         <p className="text-sm text-destructive">{state.message}</p>
       ) : null}
+
       <div className="flex items-center justify-end gap-2">
         {cancelHref ? (
           <Link className="rounded border border-input px-3 py-2 text-sm" href={cancelHref}>
@@ -101,9 +90,5 @@ type SubmitButtonProps = {
 
 function SubmitButton({ label }: SubmitButtonProps) {
   const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "처리 중..." : label}
-    </Button>
-  );
+  return <Button type="submit" disabled={pending}>{pending ? "처리 중..." : label}</Button>;
 }

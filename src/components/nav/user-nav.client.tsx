@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -14,29 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import LoginPage from "@/app/auth/signin-signup/page";
 
+import { useAuth } from "@/app/auth/auth-context";
+
 type Props = { session: Session | null };
-
-function displayName(user: User | null) {
-  if (!user) return null;
-  const um = (user.user_metadata ?? {}) as Record<string, any>;
-  const nameCommon = um.full_name || um.name || um.nickname || um.user_name;
-  if (nameCommon) return nameCommon as string;
-
-  const id = (user.identities ?? [])[0];
-  const p = id?.provider;
-  const d = (id?.identity_data ?? {}) as Record<string, any>;
-  if (p === "github") return d.user_name || d.name || user.email;
-  if (p === "google") return d.name || user.email;
-  if (p === "kakao") {
-    return d.properties?.nickname || d.kakao_account?.profile?.nickname || user.email;
-  }
-
-  return user.email;
-}
 
 export default function ClientUserNav({ session }: Props) {
   const user = session?.user ?? null;
-  const name = useMemo(() => displayName(user), [user]);
+  const name = useAuth().displayName;
 
   if (!user) {
     return (

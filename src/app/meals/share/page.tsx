@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -9,9 +9,9 @@ import { auth } from "@/lib/firebase/client";
 import { uploadRecipeImage } from "@/lib/storage";
 import { fetchUsernameByUid } from "@/features/user/client";
 import { createRecipe, updateRecipe } from "@/features/recipe/api";
+import { getBrowserSupabase } from "@/lib/supabase";
 
 import style from "./page.module.css";
-import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function ShareMeal() {
   const [userName, setUserName] = useState("user");
@@ -21,42 +21,44 @@ export default function ShareMeal() {
 
   useEffect(() => {
     if (!user) return;
-    const loginIdentifier = user.providerData[0]?.providerId;
+    const loginIdentifier = user?.providerData?.[0]?.providerId;
 
     async function resolveDisplayName() {
       if (loginIdentifier === "password") {
-        const username = await fetchUsernameByUid(user.uid);
-        setUserName(username ?? user.displayName ?? "user");
+        const username = await fetchUsernameByUid(user?.uid as string);
+        setUserName(username ?? (user?.displayName ?? "user"));
       } else {
-        setUserName(user.displayName ?? "user");
+        setUserName(user?.displayName ?? "user");
       }
     }
 
     resolveDisplayName();
   }, [user]);
 
-  const handleSelect = (selected) => {
+  const handleSelect = (selected: boolean) => {
     setImageSelected(selected);
     if (!selected) {
-      alert("�̹����� �������ּ���!");
+      alert("이미지를 선택해주세요!");
     }
   };
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user) {
-      alert("�α����� �ʿ��մϴ�.");
+      alert("로그인이 필요합니다.");
       return;
     }
 
-    const formData = new FormData(event.currentTarget);
-    const imageFile = formData.get("image");
+    const formData = new FormData(event.currentTarget as HTMLFormElement);
+    const imageFile = formData.get("image") as File | null;
     if (!imageFile) {
-      alert("�̹����� �������ּ���!");
+      alert("이미지를 선택해주세요!");
       return;
     }
+
     const supabase = getBrowserSupabase();
     try {
+      // 1) 레시피 먼저 생성(이미지 없이)
       const created = await createRecipe({
         title: String(formData.get("title") ?? ""),
         summary: formData.get("summary") ? String(formData.get("summary")) : undefined,
@@ -66,6 +68,8 @@ export default function ShareMeal() {
         writerUid: user.uid,
         writerEmail: formData.get("email") ? String(formData.get("email")) : undefined,
       });
+
+      // 2) Storage 업로드 (recipes/<id>/...)
       const { publicUrl, signedUrl } = await uploadRecipeImage(
         supabase,
         created.id,
@@ -73,25 +77,27 @@ export default function ShareMeal() {
         { contentType: imageFile.type, upsert: false }
       );
       const finalUrl = publicUrl ?? signedUrl ?? null;
+
+      // 3) 이미지 URL 업데이트 후 이동
       await updateRecipe(created.id, { image: finalUrl });
       router.push("/meals");
     } catch (error) {
-      console.error("������ ��Ͽ� �����߽��ϴ�.", error);
-      alert("�����Ǹ� ������� ���߽��ϴ�. �ٽ� �õ����ּ���.");
+      console.error("레시피 저장/업로드 중 오류가 발생했습니다.", error);
+      alert("레시피를 저장하지 못했습니다. 다시 시도해주세요.");
     }
   }
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>���� ����, �����ϴ� ������ �����غ�����</h1>
+        <h1>식사 공유, 레시피를 올려보세요</h1>
       </header>
       <main className={style.shareform}>
         <form className={style.form} onSubmit={handleSubmit}>
           <div className={style.formcontentsbox}>
             <div className={style.row1}>
               <div>
-                <label htmlFor="creator">�̸�</label>
+                <label htmlFor="creator">이름</label>
                 <input type="text" name="creator" id="creator" value={userName} readOnly />
               </div>
               <div>
@@ -101,26 +107,28 @@ export default function ShareMeal() {
             </div>
 
             <div className={style.row2}>
-              <label htmlFor="title">���� �̸�</label>
+              <label htmlFor="title">레시피 제목</label>
               <input type="text" name="title" id="title" required />
             </div>
 
             <div className={style.row3}>
-              <label htmlFor="summary">���� ����</label>
+              <label htmlFor="summary">레시피 설명</label>
               <input type="text" name="summary" id="summary" maxLength={51} />
             </div>
 
             <div className={style.row4}>
-              <label htmlFor="recipe">������</label>
+              <label htmlFor="recipe">레시피 내용</label>
               <textarea name="recipe" id="recipe" rows={15} required />
             </div>
           </div>
-          <ImagePreview name="image" isselect={handleSelect} />
+          <ImagePreview label="이미지" name="image" isselect={handleSelect} />
           <button type="submit" className={style.formbtn}>
-            �����ϱ�
+            등록하기
           </button>
         </form>
       </main>
     </div>
   );
 }
+
+

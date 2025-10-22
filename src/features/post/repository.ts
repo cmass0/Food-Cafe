@@ -99,6 +99,7 @@ export async function insertPostRecord(
     .single();
   throwIfError(error);
   if (!data) throw new Error("게시글을 생성하지 못했습니다.");
+
   return data as PostRow;
 }
 

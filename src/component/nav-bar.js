@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
 import { Input } from "@heroui/react";
 import { SearchIcon } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";

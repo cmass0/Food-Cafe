@@ -36,7 +36,6 @@ export default async function PostDetailPage({ params }: { params: { id: string 
               title: post.title,
               content: post.content,
               type: post.type,
-              writerName: post.writerName,
             }}
             submitLabel="수정"
             cancelHref="/posts"

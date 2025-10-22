@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import type { Post } from "../types";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SignInSignUpPage from "@/app/auth/signin-signup/page";
 import { Button } from "@heroui/react";
@@ -17,14 +18,15 @@ type PostListProps = {
 };
 
 export default function PostList({ posts, className, showCreateLink = true }: PostListProps) {
-  const [isLogin, setIsLogin] = React.useState(false);
-  const user = useAuth().user;
   const route = useRouter();
+  const [signinOpen, setsigninOpen] = React.useState(false);
+  const user = useAuth().user;
 
-  function userLoginHD() {
+  function isLogin(e: React.MouseEvent) {
     if (!user) {
-      alert("로그인이 필요한 서비스입니다.");
-      setIsLogin(true);
+      e.preventDefault();
+      alert("로그인 후 이용가능합니다.");
+      setsigninOpen(true);
     } else {
       route.push("/posts/new");
     }
@@ -36,7 +38,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
         <div className="mb-4 flex justify-end">
           <Button
             className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
-            onClick={userLoginHD}
+            onClick={(e) => isLogin(e)}
           >
             새 글 쓰기
           </Button>
@@ -70,8 +72,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
           ))}
         </ul>
       )}
-
-      <Dialog open={isLogin} onOpenChange={setIsLogin}>
+      <Dialog open={signinOpen} onOpenChange={setsigninOpen}>
         <DialogContent className="sm:max-w-[400px] p-0">
           <SignInSignUpPage />
         </DialogContent>

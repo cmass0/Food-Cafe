@@ -8,7 +8,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import LoadingPage from "@/app/loading";
 import Modal from "@/component/modal/modal";
 import { fetchUsernameByUid } from "@/features/user/client";
-import { uploadPostImage } from "@/lib/storage";\nimport { getBrowserSupabase } from "@/lib/supabase";
+import { uploadPostImage } from "@/lib/storage";
+import { getBrowserSupabase } from "@/lib/supabase";
 import { getPost, updatePost } from "@/features/post/api";
 import { auth } from "@/lib/firebase/client";
 
@@ -78,7 +79,11 @@ export default function PostEditPage({ params }) {
       if (!file) return;
 
       try {
-        const supabase = getBrowserSupabase();\n        const { publicUrl, signedUrl } = await uploadPostImage(supabase, params.detail, file, { contentType: file.type });\n        const imageUrl = publicUrl ?? signedUrl ?? "";
+        const supabase = getBrowserSupabase();
+        const { publicUrl, signedUrl } = await uploadPostImage(supabase, params.detail, file, {
+          contentType: file.type,
+        });
+        const imageUrl = publicUrl ?? signedUrl ?? "";
         const editor = quillRef.current?.getEditor?.();
         if (!editor) return;
 
@@ -91,7 +96,7 @@ export default function PostEditPage({ params }) {
     };
 
     input.click();
-  }, []);
+  }, [params.detail]);
 
   const modules = useMemo(
     () => ({
@@ -132,26 +137,22 @@ export default function PostEditPage({ params }) {
 
   return (
     <div className={style.container}>
-      <h2 className={style.heading}>°Ô½Ã±Û ¼öÁ¤</h2>
+      <h2 className={style.heading}>ê²Œì‹œê¸€ ìˆ˜ì •</h2>
       <form className={style.form}>
         <div className={style.formGroup}>
-          <label htmlFor="title" className={style.label}>
-            Á¦¸ñ
-          </label>
+          <label htmlFor="title" className={style.label}>ì œëª©</label>
           <input
             type="text"
             id="title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className={style.input}
-            placeholder="Á¦¸ñÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä"
+            placeholder="ì œëª©ì„ ì…ë ¥í•´ì£¼ì„¸ìš”"
             required
           />
         </div>
         <div className={style.formGroup}>
-          <label htmlFor="content" className={style.label}>
-            ³»¿ë
-          </label>
+          <label htmlFor="content" className={style.label}>ë‚´ìš©</label>
           <ReactQuill
             ref={quillRef}
             theme="snow"
@@ -159,16 +160,16 @@ export default function PostEditPage({ params }) {
             onChange={setContent}
             modules={modules}
             className={style.editor}
-            placeholder="³»¿ëÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä"
+            placeholder="ë‚´ìš©ì„ ì…ë ¥í•´ì£¼ì„¸ìš”"
           />
         </div>
         <div className={style.preview}></div>
         <div className={style.btnarea}>
           <button type="button" className={style.button} onClick={() => setShowModal(true)}>
-            °Ô½Ã±Û ¼öÁ¤
+            ê²Œì‹œê¸€ ìˆ˜ì •
           </button>
           <button type="button" className={style.canclebtn} onClick={() => router.back()}>
-            Ãë¼Ò
+            ì·¨ì†Œ
           </button>
         </div>
       </form>
@@ -179,10 +180,10 @@ export default function PostEditPage({ params }) {
             <button className={style.modalclosebtn} onClick={() => setShowModal(false)}>
               X
             </button>
-            <div className={style.modaltext}>Á¤¸» ¼öÁ¤ÇÏ½Ã°Ú½À´Ï±î?</div>
+            <div className={style.modaltext}>ì •ë§ ìˆ˜ì •í•˜ì‹œê² ìŠµë‹ˆê¹Œ?</div>
             <div className={style.deletebtnbox}>
               <button className={style.deleteselectbtn} onClick={handleUpdate}>
-                ¼öÁ¤ÇÏ±â
+                ìˆ˜ì •í•˜ê¸°
               </button>
             </div>
           </div>
@@ -191,3 +192,4 @@ export default function PostEditPage({ params }) {
     </div>
   );
 }
+

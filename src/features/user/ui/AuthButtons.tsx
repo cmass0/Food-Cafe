@@ -58,18 +58,23 @@ function getScope(provider: Provider) {
 
 function useOAuthSignIn() {
   const searchParams = useSearchParams();
-  return React.useCallback(async (provider: Provider) => {
-    const supabase = getBrowserSupabase();
-    const scopes = getScope(provider);
-    const next = searchParams?.get("next") ?? location.pathname + location.search;
-    const url = new URL("/auth/callback", location.origin);
-    if (next) url.searchParams.set("next", next);
 
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: url.toString(), scopes },
-    });
-  }, [searchParams]);
+  return React.useCallback(
+    async (provider: Provider) => {
+      const supabase = getBrowserSupabase();
+      const scopes = getScope(provider);
+      const next = searchParams?.get("next");
+      const url = new URL(location.href);
+      if (next && !url.searchParams.get("next")) url.searchParams.set("next", next);
+      const redirectTo = url.toString();
+
+      await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, scopes },
+      });
+    },
+    [searchParams]
+  );
 }
 
 export default function AuthButtons({ className }: { className?: string }) {
@@ -77,7 +82,16 @@ export default function AuthButtons({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-2", className)}>
       {AUTH_BUTTONS.map(
-        ({ provider, label, icon, variant, imageSrc, imageWidth, imageHeight, className: extraClassName }) => {
+        ({
+          provider,
+          label,
+          icon,
+          variant,
+          imageSrc,
+          imageWidth,
+          imageHeight,
+          className: extraClassName,
+        }) => {
           if (imageSrc) {
             const widthValue =
               imageWidth !== undefined
@@ -135,4 +149,3 @@ export default function AuthButtons({ className }: { className?: string }) {
     </div>
   );
 }
-
