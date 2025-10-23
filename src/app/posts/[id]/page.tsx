@@ -7,11 +7,10 @@ import CommentArea from "@/component/comment/comment";
 import PostForm from "@/features/post/ui/PostForm";
 import DeleteButton from "./DeleteButton";
 import { deletePostAction, updatePostAction } from "../actions";
-import PostViewIncrement from "@/features/post/ui/PostViewIncrement.client";
 
 export default async function PostDetailPage({ params }: { params: { id: string } }) {
   const supabase = getServerSupabase();
-  const post = await postService.getPost(supabase, params.id);
+  const post = await postService.incrementPostView(supabase, params.id);
   if (!post) {
     notFound();
   }
@@ -23,7 +22,6 @@ export default async function PostDetailPage({ params }: { params: { id: string 
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
-      <PostViewIncrement id={post.id} />
       <PostDetail post={post} />
 
       {isAuthor && (

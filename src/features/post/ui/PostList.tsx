@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 
 import type { Post } from "../types";
 
@@ -51,12 +52,9 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
           {posts.map((post) => (
             <li key={post.id} className="flex flex-col gap-1 px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <a
-                  className="text-base font-semibold text-primary"
-                  href={`/posts/${post.id}`}
-                >
+                <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
                   {post.title}
-                </a>
+                </Link>
                 <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
