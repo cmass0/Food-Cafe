@@ -15,11 +15,11 @@ import style from "./comment.module.css";
 const COMMENTS_LIMIT = 100;
 
 const MODAL_TEXT = {
-  loginRequired: "·Î±×ÀÎÀÌ ÇÊ¿äÇÑ ±â´ÉÀÔ´Ï´Ù.",
-  emptyComment: "´ñ±Û ³»¿ëÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä.",
-  createError: "´ñ±Û ÀÛ¼º Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.",
-  deleteError: "´ñ±Û »èÁ¦ Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.",
-  deleteConfirm: "´ñ±ÛÀ» »èÁ¦ÇÏ½Ã°Ú½À´Ï±î?",
+  loginRequired: "ë¡œê·¸ì¸ì´ í•„ìš”í•œ ì„œë¹„ìŠ¤ì…ë‹ˆë‹¤.",
+  emptyComment: "ëŒ“ê¸€ ë‚´ìš©ì„ ì…ë ¥í•´ì£¼ì„¸ìš”.",
+  createError: "ëŒ“ê¸€ì„ ì‘ì„±í•˜ëŠ” ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.",
+  deleteError: "ëŒ“ê¸€ì„ ì‚­ì œí•˜ëŠ” ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.",
+  deleteConfirm: "ëŒ“ê¸€ì„ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?",
 };
 
 function formatDateTime(value) {
@@ -28,7 +28,7 @@ function formatDateTime(value) {
   if (Number.isNaN(date.getTime())) return "-";
   const datePart = date.toLocaleDateString("ko-KR");
   const timePart = date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-  return datePart + " " + timePart;
+  return `${datePart} ${timePart}`;
 }
 
 export default function CommentArea({ type }) {
@@ -135,26 +135,24 @@ export default function CommentArea({ type }) {
     } finally {
       setSubmitting(false);
     }
-  }, [comment, displayName, loadComments, openAlert, type, user]);
+  }, [comment, displayName, loadComments, type, user, openAlert]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!pendingDeleteId) return;
     try {
       await deleteComment(pendingDeleteId);
+      closeModal();
       await loadComments();
     } catch (error) {
       console.error("Failed to delete comment", error);
       openAlert(MODAL_TEXT.deleteError);
-      return;
     }
-    closeModal();
   }, [closeModal, loadComments, openAlert, pendingDeleteId]);
 
   const canDelete = useCallback(
     (item) => {
       if (!user) return false;
-      if (item.writerUid) return item.writerUid === user.uid;
-      return item.writerName === displayName;
+      return item.writerUid ? item.writerUid === user.uid : item.writerName === displayName;
     },
     [displayName, user]
   );
@@ -163,7 +161,7 @@ export default function CommentArea({ type }) {
     if (loading) {
       return (
         <li>
-          <div className={style.contentcontainer}>´ñ±ÛÀ» ºÒ·¯¿À´Â ÁßÀÔ´Ï´Ù...</div>
+          <div className={style.contentcontainer}>ëŒ“ê¸€ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘ì…ë‹ˆë‹¤...</div>
         </li>
       );
     }
@@ -171,7 +169,7 @@ export default function CommentArea({ type }) {
     if (comments.length === 0) {
       return (
         <li>
-          <div className={style.contentcontainer}>Ã¹ ¹øÂ° ´ñ±ÛÀ» ³²°Üº¸¼¼¿ä.</div>
+          <div className={style.contentcontainer}>ì²« ë²ˆì§¸ ëŒ“ê¸€ì„ ë‚¨ê²¨ì£¼ì„¸ìš”.</div>
         </li>
       );
     }
@@ -187,11 +185,8 @@ export default function CommentArea({ type }) {
           <div className={style.comment}>
             {item.comment}
             {canDelete(item) && (
-              <button
-                className={style.deletebtn}
-                onClick={() => openDeleteConfirm(item.id)}
-              >
-                »èÁ¦
+              <button className={style.deletebtn} onClick={() => openDeleteConfirm(item.id)}>
+                ì‚­ì œ
               </button>
             )}
           </div>
@@ -203,13 +198,13 @@ export default function CommentArea({ type }) {
   return (
     <div className={style.commentarea}>
       <div className={style.commentheader}>
-        <h2>´ñ±Û</h2>
+        <h2>ëŒ“ê¸€</h2>
       </div>
 
       <ul className={style.comment}>
         <div>
           <textarea
-            placeholder="´ñ±ÛÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä..."
+            placeholder="ëŒ“ê¸€ì„ ì…ë ¥í•´ì£¼ì„¸ìš”..."
             rows={4}
             cols={50}
             className={style.textarea}
@@ -217,12 +212,8 @@ export default function CommentArea({ type }) {
             onChange={(event) => setComment(event.target.value)}
           />
           <br />
-          <button
-            onClick={handleSubmit}
-            className={style.submitbtn}
-            disabled={submitting}
-          >
-            {submitting ? "ÀÛ¼º Áß..." : "´ñ±Û ÀÛ¼º"}
+          <button onClick={handleSubmit} className={style.submitbtn} disabled={submitting}>
+            {submitting ? "ì‘ì„± ì¤‘..." : "ëŒ“ê¸€ ì‘ì„±"}
           </button>
         </div>
         {renderedComments}
@@ -234,7 +225,7 @@ export default function CommentArea({ type }) {
             <CardHeader className={style.modalHeader}>
               <div className={style.modalHeaderContent}>
                 <AlertTriangle className={style.modalIcon} size={20} />
-                <span className={style.modalTitle}>{pendingDeleteId ? "´ñ±Û »èÁ¦" : "¾Ë¸²"}</span>
+                <span className={style.modalTitle}>{pendingDeleteId ? "ëŒ“ê¸€ ì‚­ì œ" : "ì•Œë¦¼"}</span>
               </div>
               <HeroButton
                 isIconOnly
@@ -244,14 +235,14 @@ export default function CommentArea({ type }) {
                 onPress={closeModal}
                 className={style.modalCloseButton}
               >
-                ?
+                Ã—
               </HeroButton>
             </CardHeader>
             <CardBody className={style.modalBody}>
               {pendingDeleteId && (
                 <div className={style.modalWarning}>
                   <AlertTriangle size={16} className={style.modalWarningIcon} />
-                  <span>ÀÌ ÀÛ¾÷Àº µÇµ¹¸± ¼ö ¾ø¾î¿ä. ¼±ÅÃÇÑ ´ñ±ÛÀÌ ¿µ±¸ÀûÀ¸·Î »èÁ¦µË´Ï´Ù.</span>
+                  <span>ì´ ì‘ì—…ì€ ë˜ëŒë¦´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ì •ë§ë¡œ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?</span>
                 </div>
               )}
               <p className={style.modalText}>{modalMessage}</p>
@@ -263,7 +254,7 @@ export default function CommentArea({ type }) {
                 onPress={closeModal}
                 className={style.modalCancelButton}
               >
-                {pendingDeleteId ? "Ãë¼Ò" : "È®ÀÎ"}
+                {pendingDeleteId ? "ì·¨ì†Œ" : "í™•ì¸"}
               </HeroButton>
               {pendingDeleteId && (
                 <HeroButton
@@ -272,7 +263,7 @@ export default function CommentArea({ type }) {
                   onPress={handleDeleteConfirm}
                   className={style.modalDeleteButton}
                 >
-                  »èÁ¦
+                  ì‚­ì œ
                 </HeroButton>
               )}
             </CardFooter>

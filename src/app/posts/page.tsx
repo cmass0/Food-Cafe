@@ -29,7 +29,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
           <div className="flex justify-end">
             <Link
               className="text-sm text-primary"
-              href={`/posts?cursor=${encodeURIComponent(nextCursor)}`}
+              href= {`/posts?cursor=${encodeURIComponent(nextCursor)}`}
             >
               더 보기
             </Link>
