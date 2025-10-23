@@ -1,5 +1,4 @@
-import PostViewIncrement from "./PostViewIncrement.client";
-import type { Post } from "../types";
+﻿import type { Post } from "../types";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (
@@ -7,14 +6,14 @@ export default function PostDetail({ post }: { post: Post }) {
       <header className="space-y-1">
         <h1 className="text-3xl font-semibold">{post.title}</h1>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>Author {post.writerName}</span>
-          <span aria-hidden="true">|</span>
+          <span>작성자 {post.writerName}</span>
+          <span>|</span>
           <span>{post.createdAt.toLocaleString("ko-KR")}</span>
-          <span aria-hidden="true">|</span>
-          <PostViewIncrement id={post.id} initialCount={post.check} />
+          <span>|</span>
+          <span>조회수 {post.check}</span>
           {post.type ? (
             <>
-              <span aria-hidden="true">|</span>
+              <span>|</span>
               <span>{post.type}</span>
             </>
           ) : null}
@@ -24,4 +23,3 @@ export default function PostDetail({ post }: { post: Post }) {
     </article>
   );
 }
-

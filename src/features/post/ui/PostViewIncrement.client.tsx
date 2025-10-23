@@ -1,58 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type PostViewIncrementProps = {
   id: string;
-  initialCount: number;
 };
 
-export default function PostViewIncrement({ id, initialCount }: PostViewIncrementProps) {
-  const [count, setCount] = useState(initialCount);
+export default function PostViewIncrement({ id }: PostViewIncrementProps) {
   const triggered = useRef(false);
 
   useEffect(() => {
-    setCount(initialCount);
-    triggered.current = false;
-  }, [id, initialCount]);
-
-  useEffect(() => {
-    if (!id || triggered.current) {
-      return;
-    }
+    if (triggered.current) return;
     triggered.current = true;
 
-    const controller = new AbortController();
+    fetch(`/api/posts/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkIncrement: true }),
+    }).catch(() => {});
+  }, [id]);
 
-    const bumpView = async () => {
-      setCount((prev) => prev + 1);
-
-      try {
-        const response = await fetch(`/api/posts/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checkIncrement: true }),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("increment failed");
-        }
-      } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setCount(initialCount);
-        triggered.current = false;
-      }
-    };
-
-    void bumpView();
-
-    return () => {
-      controller.abort();
-    };
-  }, [id, initialCount]);
-
-  return <span>Views {count}</span>;
+  return null;
 }
