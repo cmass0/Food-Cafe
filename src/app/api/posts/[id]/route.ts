@@ -8,41 +8,95 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: { id: string } };
 
+const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+
+const json = (body: unknown, status = 200, headers?: HeadersInit) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json", ...(headers || {}) },
+  });
+
+const err = (status: number, code: string, message?: string, details?: unknown) =>
+  json({ error: code, message, details }, status);
+
+const badId = () => err(400, "BAD_REQUEST", "유효하지 않은 게시글 ID입니다.");
+
+const mapAuthError = (error: unknown) => {
+  const message = String((error as any)?.message ?? "").toLowerCase();
+  if (message.includes("로그인") || message.includes("unauthorized") || message.includes("login")) {
+    return err(401, "UNAUTHORIZED", "로그인이 필요합니다.");
+  }
+  if (
+    message.includes("permission denied") ||
+    message.includes("forbidden") ||
+    message.includes("rls")
+  ) {
+    return err(403, "FORBIDDEN", "권한이 없습니다.");
+  }
+  return null;
+};
+
 export async function GET(_: Request, { params }: Ctx) {
-  const supabase = getServerSupabase();
-  const item = await postService.getPost(supabase, params.id);
-  if (!item) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-  return Response.json({ data: item }, { headers: { "Cache-Control": "no-store" } });
+  try {
+    if (!UUID_RE.test(params.id)) return badId();
+    const supabase = getServerSupabase();
+    const item = await postService.getPost(supabase, params.id);
+    if (!item) return err(404, "NOT_FOUND", "게시글을 찾을 수 없습니다.");
+    return json({ data: item }, 200, { "Cache-Control": "no-store" });
+  } catch (error) {
+    console.error("[posts][GET] failed", error);
+    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+  }
 }
 
 export async function PUT(req: Request, { params }: Ctx) {
   try {
-    const json = await req.json();
-    const parsed = postUpdateSchema.safeParse(json);
-    if (!parsed.success) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+    if (!UUID_RE.test(params.id)) return badId();
+
+    const contentType = req.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return err(415, "UNSUPPORTED_MEDIA_TYPE", "application/json으로 전송해 주세요.");
     }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return err(400, "BAD_JSON", "요청 본문(JSON) 파싱에 실패했습니다.");
+    }
+
+    const parsed = postUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return err(400, "VALIDATION_ERROR", "입력값을 확인해 주세요.", parsed.error.flatten());
+    }
+
     const supabase = getServerSupabase();
     const updated = await postService.updatePost(supabase, params.id, parsed.data);
-    if (!updated) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
-    return Response.json({ data: updated });
-    
+    if (!updated) return err(404, "NOT_FOUND", "게시글을 찾을 수 없습니다.");
+
+    return json({ data: updated });
   } catch (error) {
-    console.error("[posts] PUT failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const mapped = mapAuthError(error);
+    if (mapped) return mapped;
+    console.error("[posts][PUT] failed", error);
+    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
   }
 }
 
 export async function DELETE(_: Request, { params }: Ctx) {
   try {
+    if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
+
+    const existing = await postService.getPost(supabase, params.id);
+    if (!existing) return err(404, "NOT_FOUND", "게시글을 찾을 수 없습니다.");
+
     await postService.removePost(supabase, params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error("[posts] DELETE failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    const mapped = mapAuthError(error);
+    if (mapped) return mapped;
+    console.error("[posts][DELETE] failed", error);
+    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
   }
 }
