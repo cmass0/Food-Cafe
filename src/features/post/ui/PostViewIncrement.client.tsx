@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type PostViewIncrementProps = {
@@ -9,7 +8,6 @@ type PostViewIncrementProps = {
 };
 
 export default function PostViewIncrement({ id, initialCount }: PostViewIncrementProps) {
-  const router = useRouter();
   const [count, setCount] = useState(initialCount);
   const triggered = useRef(false);
 
@@ -40,8 +38,6 @@ export default function PostViewIncrement({ id, initialCount }: PostViewIncremen
         if (!response.ok) {
           throw new Error("increment failed");
         }
-
-        router.refresh();
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -56,7 +52,7 @@ export default function PostViewIncrement({ id, initialCount }: PostViewIncremen
     return () => {
       controller.abort();
     };
-  }, [id, initialCount, router]);
+  }, [id, initialCount]);
 
   return <span>Views {count}</span>;
 }
