@@ -52,11 +52,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
           {posts.map((post) => (
             <li key={post.id} className="flex flex-col gap-1 px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <Link
-                  className="text-base font-semibold text-primary"
-                  href={`/posts/${post.id}`}
-                  prefetch={false}
-                >
+                <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
                   {post.title}
                 </Link>
                 <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
