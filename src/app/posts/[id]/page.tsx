@@ -8,6 +8,9 @@ import PostForm from "@/features/post/ui/PostForm";
 import DeleteButton from "./DeleteButton";
 import { deletePostAction, updatePostAction } from "../actions";
 
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 export default async function PostDetailPage({ params }: { params: { id: string } }) {
   const supabase = getServerSupabase();
   const post = await postService.incrementPostView(supabase, params.id);
