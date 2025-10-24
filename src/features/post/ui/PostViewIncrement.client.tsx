@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 type PostViewIncrementProps = {
@@ -7,6 +8,7 @@ type PostViewIncrementProps = {
 };
 
 export default function PostViewIncrement({ id }: PostViewIncrementProps) {
+  const router = useRouter();
   const hasIncremented = useRef(false);
 
   useEffect(() => {
@@ -17,8 +19,12 @@ export default function PostViewIncrement({ id }: PostViewIncrementProps) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ checkIncrement: true }),
-    }).catch(() => {});
-  }, [id]);
+    })
+      .then(() => {
+        router.refresh();
+      })
+      .catch(() => {});
+  }, [id, router]);
 
   return null;
 }
