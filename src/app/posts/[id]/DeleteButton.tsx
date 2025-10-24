@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import type { PostActionState } from "../actions";
-import { AlertDialogComponent } from "@/components/formalert/alertdialog";
+import { FormAlert } from "@/components/formalert/alertdialog";
 
 const initialState: PostActionState = { ok: true };
 
@@ -26,7 +26,7 @@ export default function DeleteButton({ action, id }: DeleteButtonProps) {
           <p className="text-sm text-destructive">{state.message}</p>
         ) : null}
       </form>
-      <AlertDialogComponent
+      <FormAlert
         showText="삭제"
         des="asdasd"
         title="sadasd"

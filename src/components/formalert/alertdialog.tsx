@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
-type AlertDialogComponentProps = {
+type FormAlertProps = {
   des: string;
   title: string;
   action: ReactNode;
@@ -19,13 +19,7 @@ type AlertDialogComponentProps = {
   formid: string;
   showText: string;
 };
-export function AlertDialogComponent({
-  showText,
-  des,
-  title,
-  action,
-  formid,
-}: AlertDialogComponentProps) {
+export function FormAlert({ showText, des, title, action, formid }: FormAlertProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>

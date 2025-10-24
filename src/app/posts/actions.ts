@@ -7,6 +7,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { postInsertSchema, postUpdateSchema } from "@/features/post/schema";
 import * as postService from "@/features/post/service";
 import { deriveDisplayName } from "@/features/user/lib/displayName";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export type PostActionState = {
   ok: boolean;
@@ -50,6 +51,7 @@ export async function createPostAction(
     revalidatePath("/posts");
     redirect(`/posts/${post.id}`);
   } catch (err) {
+    if (isRedirectError(err)) throw err;    
     console.error("[posts] create failed", err);
     return { ok: false, message: DEFAULT_ERROR };
   }
