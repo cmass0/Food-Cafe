@@ -13,8 +13,7 @@ export type PostActionState = {
   message?: string;
 };
 
-const DEFAULT_ERROR =
-  "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+const DEFAULT_ERROR = "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 export async function createPostAction(
   _prevState: PostActionState,
@@ -58,7 +57,22 @@ export async function createPostAction(
   return { ok: true };
 }
 
-export async function updatePostAction(
+async function deriveAuthorDisplayNameByPostId(
+  client: ReturnType<typeof getServerSupabase>,
+  postId: string
+): Promise<string> {
+  const post = await postService.getPost(client, postId);
+  if (!post?.writerUid) return "익명";
+  // users API를 통해 최신 display_name 조회
+  try {
+    const res = await fetch(`/api/users/${post.writerUid}`, { cache: 'no-store' });
+    if (!res.ok) return post.writerName ?? "익명";
+    const json = await res.json();
+    return json?.data?.display_name ?? post.writerName ?? "익명";
+  } catch {
+    return post.writerName ?? "익명";
+  }
+}export async function updatePostAction(
   _prevState: PostActionState,
   formData: FormData
 ): Promise<PostActionState> {
@@ -78,7 +92,9 @@ export async function updatePostAction(
   }
 
   try {
-    const post = await postService.updatePost(supabase, id, parsed.data);
+    const writerName = await deriveAuthorDisplayNameByPostId(supabase, id);   
+     const payload = { ...parsed.data, writerName };
+     const post = await postService.updatePost(supabase, id, payload);
     if (!post) {
       return { ok: false, message: "게시글을 찾을 수 없습니다." };
     }

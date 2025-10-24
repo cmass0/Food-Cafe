@@ -3,11 +3,11 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as postService from "@/features/post/service";
 import PostDetail from "@/features/post/ui/PostDetail";
-import CommentArea from "@/component/comment/comment";
-import PostForm from "@/features/post/ui/PostForm";
+
 import DeleteButton from "./DeleteButton";
-import { deletePostAction, updatePostAction } from "../actions";
+import { deletePostAction } from "../actions";
 import PostViewIncrement from "@/features/post/ui/PostViewIncrement.client";
+import UpdateButton from "./UpdateButton";
 
 export default async function PostDetailPage({ params }: { params: { id: string } }) {
   const supabase = getServerSupabase();
@@ -28,26 +28,10 @@ export default async function PostDetailPage({ params }: { params: { id: string 
 
       {isAuthor && (
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">게시글 수정</h2>
-          <PostForm
-            action={updatePostAction}
-            defaultValues={{
-              id: post.id,
-              title: post.title,
-              content: post.content,
-              type: post.type,
-            }}
-            submitLabel="수정"
-            cancelHref="/posts"
-          />
+          <UpdateButton id={post.id} />
           <DeleteButton action={deletePostAction} id={post.id} />
         </section>
       )}
-
-      {/* <section className="space-y-4">
-        <h2 className="text-xl font-semibold">댓글</h2>
-        <CommentArea type={post.id} />
-      </section> */}
     </main>
   );
 }
