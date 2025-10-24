@@ -10,7 +10,11 @@ type UpdatateButtonProps = {
 export default function UpdateButton({ id }: UpdatateButtonProps) {
   const router = useRouter();
   function handleClick() {
-    router.push(`/posts/new?id=${id}`);
+    router.push(`/posts/edit?id=${id}`);
   }
-  return <Button onClick={handleClick}>수정</Button>;
+  return (
+    <Button className="mb-0" onClick={handleClick}>
+      수정
+    </Button>
+  );
 }

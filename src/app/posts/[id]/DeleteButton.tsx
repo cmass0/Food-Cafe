@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import type { PostActionState } from "../actions";
+import { AlertDialogComponent } from "@/components/formalert/alertdialog";
 
 const initialState: PostActionState = { ok: true };
 
@@ -15,24 +16,31 @@ type DeleteButtonProps = {
 export default function DeleteButton({ action, id }: DeleteButtonProps) {
   const [state, formAction] = useFormState(action, initialState);
 
+  const formid = `delete-form-${id}`;
+
   return (
-    <form
-      action={formAction}
-      className="flex flex-col items-end gap-2 border-t border-border pt-4"
-    >
-      <input type="hidden" name="id" value={id} />
-      {!state.ok && state.message ? (
-        <p className="text-sm text-destructive">{state.message}</p>
-      ) : null}
-      <DeleteSubmitButton />
-    </form>
+    <>
+      <form id={formid} action={formAction}>
+        <input type="hidden" name="id" value={id} />
+        {!state.ok && state.message ? (
+          <p className="text-sm text-destructive">{state.message}</p>
+        ) : null}
+      </form>
+      <AlertDialogComponent
+        showText="삭제"
+        des="asdasd"
+        title="sadasd"
+        action={<DeleteSubmitButton />}
+        formid={formid}
+      />
+    </>
   );
 }
 
 function DeleteSubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="destructive" disabled={pending}>
+    <Button className="bg-red-700 hover:bg-re" type="submit" disabled={pending}>
       {pending ? "삭제 중..." : "삭제"}
     </Button>
   );

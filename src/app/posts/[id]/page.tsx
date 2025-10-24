@@ -28,8 +28,10 @@ export default async function PostDetailPage({ params }: { params: { id: string 
 
       {isAuthor && (
         <section className="space-y-4">
-          <UpdateButton id={post.id} />
-          <DeleteButton action={deletePostAction} id={post.id} />
+          <div className=" flex gap-2.5 justify-end">
+            <UpdateButton id={post.id} />
+            <DeleteButton action={deletePostAction} id={post.id} />
+          </div>
         </section>
       )}
     </main>

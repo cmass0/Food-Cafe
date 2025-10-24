@@ -58,6 +58,7 @@ export async function createPostAction(
 }
 
 async function deriveAuthorDisplayNameByPostId(
+
   client: ReturnType<typeof getServerSupabase>,
   postId: string
 ): Promise<string> {
@@ -72,7 +73,9 @@ async function deriveAuthorDisplayNameByPostId(
   } catch {
     return post.writerName ?? "익명";
   }
-}export async function updatePostAction(
+}
+
+export async function updatePostAction(
   _prevState: PostActionState,
   formData: FormData
 ): Promise<PostActionState> {

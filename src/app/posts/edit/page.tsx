@@ -15,16 +15,18 @@ export default async function PostEditPage({ searchParams }: { searchParams: { i
   }
 
   return (
-    <PostForm
-      action={updatePostAction as any}
-      defaultValues={{
-        id: post.id,
-        title: post.title ?? "",
-        content: post.content ?? "",
-        type: post.type ?? "board",
-      }}
-      submitLabel="수정"
-      cancelHref="/posts"
-    />
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <PostForm
+        action={updatePostAction}
+        defaultValues={{
+          id: post.id,
+          title: post.title ?? "",
+          content: post.content ?? "",
+          type: post.type ?? "board",
+        }}
+        submitLabel="수정"
+        cancelHref="/posts"
+      />
+    </main>
   );
 }
