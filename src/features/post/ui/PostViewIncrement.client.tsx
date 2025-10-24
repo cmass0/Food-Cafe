@@ -23,7 +23,9 @@ export default function PostViewIncrement({ id }: PostViewIncrementProps) {
       .then(() => {
         router.refresh();
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Failed to increment post view count:", error);
+      });
   }, [id, router]);
 
   return null;

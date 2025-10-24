@@ -9,6 +9,7 @@ import SignInSignUpPage from "@/app/auth/signin-signup/page";
 import { Button } from "@heroui/react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type PostListProps = {
   posts: Post[];
@@ -21,7 +22,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
   const [signinOpen, setsigninOpen] = React.useState(false);
   const user = useAuth().user;
 
-  function isLogin(e: React.MouseEvent) {
+  function isLogin(e: React.FormEvent<HTMLButtonElement>) {
     if (!user) {
       e.preventDefault();
       alert("로그인 후 이용가능합니다.");
@@ -35,12 +36,12 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
     <div className="border-border w-full rounded-md border p-4">
       {showCreateLink ? (
         <div className="mb-4 flex justify-end">
-          <Button
+          <button
             className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
             onClick={(e) => isLogin(e)}
           >
             새 글 쓰기
-          </Button>
+          </button>
         </div>
       ) : null}
 
@@ -51,12 +52,9 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
           {posts.map((post) => (
             <li key={post.id} className="flex flex-col gap-1 px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <a
-                  className="text-base font-semibold text-primary"
-                  href={`/posts/${post.id}`}
-                >
+                <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
                   {post.title}
-                </a>
+                </Link>
                 <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

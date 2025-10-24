@@ -44,10 +44,10 @@ export default async function PostDetailPage({ params }: { params: { id: string 
         </section>
       )}
 
-      <section className="space-y-4">
+      {/* <section className="space-y-4">
         <h2 className="text-xl font-semibold">댓글</h2>
         <CommentArea type={post.id} />
-      </section>
+      </section> */}
     </main>
   );
 }
