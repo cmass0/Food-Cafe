@@ -7,11 +7,11 @@ type PostViewIncrementProps = {
 };
 
 export default function PostViewIncrement({ id }: PostViewIncrementProps) {
-  const triggered = useRef(false);
+  const hasIncremented = useRef(false);
 
   useEffect(() => {
-    if (triggered.current) return;
-    triggered.current = true;
+    if (hasIncremented.current) return;
+    hasIncremented.current = true;
 
     fetch(`/api/posts/${id}`, {
       method: "PUT",
