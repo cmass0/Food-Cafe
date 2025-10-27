@@ -1,27 +1,25 @@
-﻿"use client";
+"use client";
 
 import style from "./page.module.css";
-import Link from "next/link";
 import SlideShow from "@/component/main-slide";
 import FooterSlide from "@/component/footer/footer-slide";
 
 import { useRouter } from "next/navigation";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/client";
-import { Button, ButtonGroup } from "@heroui/react";
+import { useAuth } from "./auth/auth-context";
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 
 export default function Home() {
-  const [user] = useAuthState(auth);
   const router = useRouter();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
 
-  function shareHD() {
+  const handleCta = (targetPath) => {
     if (!user) {
-      alert("로그인이 필요한 서비스입니다.");
-      router.push("/auth/signin-signup");
-    } else {
-      router.push("/meals/share");
+      openAuthModal({ next: targetPath });
+      return;
     }
-  }
+    router.push(targetPath);
+  };
 
   return (
     <div className={style.maincontainer}>
@@ -32,19 +30,25 @@ export default function Home() {
           </span>
           <span>
             <h1 className={style.highlight1}>
-              요리하는 <span>즐거움</span>
+              즐거운 <span>레시피</span>
             </h1>
 
             <h1 className={style.highlight2}>
-              <span>건강한</span> 식습관
+              <span>건강한</span> 한끼
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
-              <button className={style["main-headerbtn"]} onClick={shareHD}>
+              <button
+                className={style["main-headerbtn"]}
+                onClick={() => handleCta("/posts")}
+              >
                 커뮤니티 참여하기
               </button>
 
-              <button className={style["main-headerbtn"]} onClick={shareHD}>
+              <button
+                className={style["main-headerbtn"]}
+                onClick={() => handleCta("/meals/share")}
+              >
                 음식 공유하기
               </button>
             </div>
@@ -58,24 +62,23 @@ export default function Home() {
             <h2>Welcome!</h2>
             <p>
               Food Cafe는 요리를 즐기고 좋아하는 여러분들을 위한 최고의 레시피 공유 커뮤니티입니다.
-              많은 사람들의 레시피를 공유하고 요리에 대한 접근성을 높이기 위해 이 사이트를 만들게 되었습니다.
+              다양한 레시피와 팁을 공유하고 받아가며 함께 즐거운 요리를 만들어 보세요.
             </p>
             <p>
-              Food Cafe에서는 전 세계 수많은 음식의 레시피를 함께 공유하고 찾아볼 수 있습니다. 서로의
-              요리에 대한 아이디어를 주고받을 수 있습니다. 요리에 처음 입문했더라도 괜찮습니다. 이곳에서
-              하나씩 배워 가며 실력을 키워 보세요. 초보자도 언제나 환영합니다!
+              Food Cafe에서는 각자의 경험을 공유하고 서로 배우며 더 나은 요리를 만들어갑니다.
+              초보자부터 전문가까지 모두 환영합니다. 지금 바로 함께하세요!
             </p>
           </section>
 
           <section className={style.section}>
-            <h2>이 사이트를 활용하는 법</h2>
+            <h2>이 커뮤니티를 활용하는 법</h2>
             <p>
-              요리를 취미로 즐기고 싶나요? 많은 사람들과 아이디어를 공유하고 더 즐겁게 요리할 수 있을 것입니다.
-              갑작스럽게 요리가 필요하다면 Food Cafe의 믿을 수 있는 레시피를 참고해 쉽고 빠르게 요리를 완성해 보세요.
+              자신만의 레시피를 공유하거나, 다른 사람들의 레시피를 참고해보세요. 질문을 올리고 답변을
+              받으며 요리에 대한 지식을 넓힐 수 있습니다.
             </p>
             <p>
-              요리를 직업으로 삼고 싶은가요? 레시피를 공유하고 전 세계 사용자들에게 피드백을 받아보세요.
-              분명 더 탄탄한 실력자로 성장할 수 있을 거예요.
+              또한, 레시피 사진과 후기 공유를 통해 더욱 생생한 경험을 나눌 수 있습니다. 여러분의 이야기를
+              기다리고 있어요!
             </p>
           </section>
         </main>
@@ -84,10 +87,6 @@ export default function Home() {
       <section className={style.mainfooter}>
         <FooterSlide className={style.footerslide} />
       </section>
-
-      {/* <section>
-        <footer className={style.footer}></footer>
-      </section> */}
     </div>
   );
 }
