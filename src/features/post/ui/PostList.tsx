@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 import type { Post } from "../types";
 
-import { Button } from "@heroui/react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
+import { Button } from "@/components/ui/button";
 
 type PostListProps = {
   posts: Post[];
@@ -41,12 +41,12 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
             className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
             onClick={handleCreateClick}
           >
-            ??글 ?�기
+            글쓰기
           </Button>
         </div>
       ) : null}
 
-      {posts.length === 0 && <p className={className}>?�록??게시글???�습?�다.</p>}
+      {posts.length === 0 && <p className={className}>등록된 게시글이 없습니다.</p>}
 
       {posts.length !== 0 && (
         <ul className="divide-y divide-border rounded border border-border bg-card">
@@ -56,15 +56,15 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
                 <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
                   {post.title}
                 </Link>
-                <span className="text-xs text-muted-foreground">조회??{post.check}</span>
+                <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>?�성??{post.writerName}</span>
-                <span>??/span>
+                <span>작성자 {post.writerName}</span>
+                <span aria-hidden="true">·</span>
                 <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
                 {post.type ? (
                   <>
-                    <span>??/span>
+                    <span aria-hidden="true">·</span>
                     <span>{post.type}</span>
                   </>
                 ) : null}
@@ -76,4 +76,3 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
     </div>
   );
 }
-

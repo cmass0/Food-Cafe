@@ -29,14 +29,14 @@ export default function SignInSignUpView({
   const router = useRouter();
   const [mode, setMode] = React.useState<"signin" | "signup">(defaultMode);
 
-  // Sign in state
+  // Sign-in state
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [signInError, setSignInError] = React.useState<string | null>(null);
   const [isSigningIn, startSignInTransition] = React.useTransition();
   const [maintainLogin, setMaintainLogin] = React.useState(false);
 
-  // Sign up state
+  // Sign-up state
   const [displayName, setDisplayName] = React.useState("");
   const [signUpEmail, setSignUpEmail] = React.useState("");
   const [signUpPassword, setSignUpPassword] = React.useState("");
@@ -49,6 +49,7 @@ export default function SignInSignUpView({
     event.preventDefault();
     setSignInError(null);
     setRemember(maintainLogin);
+
     if (!email || !password) {
       setSignInError("이메일과 비밀번호를 입력해주세요.");
       return;
@@ -114,8 +115,8 @@ export default function SignInSignUpView({
   };
 
   return (
-    <div className="items-center justify-center ">
-      <Card className="flex h-full max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden shadow-lg ">
+    <div className="items-center justify-center">
+      <Card className="flex h-full max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden shadow-lg">
         <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
           <ScrollArea type="always" className="h-full">
             <div className="p-6">
