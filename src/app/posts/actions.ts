@@ -49,6 +49,7 @@ export async function createPostAction(
   try {
     const post = await postService.createPost(supabase, parsed.data);
     revalidatePath("/posts");
+    revalidatePath(`/posts/${post.id}`);
     redirect(`/posts/${post.id}`);
   } catch (err) {
     if (isRedirectError(err)) throw err;    
@@ -131,5 +132,6 @@ export async function deletePostAction(
   }
 
   revalidatePath("/posts");
+  revalidatePath(`/posts/${id}`);
   redirect("/posts");
 }
