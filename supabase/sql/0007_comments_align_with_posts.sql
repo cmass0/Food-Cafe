@@ -5,6 +5,10 @@ drop policy if exists comments_select_all on public.comments;
 drop policy if exists comments_insert_own on public.comments;
 drop policy if exists comments_update_own on public.comments;
 drop policy if exists comments_delete_own on public.comments;
+-- also drop legacy policy names from earlier migrations (owner_or_admin variants)
+drop policy if exists comments_insert_own_or_admin on public.comments;
+drop policy if exists comments_update_own_or_admin on public.comments;
+drop policy if exists comments_delete_own_or_admin on public.comments;
 drop trigger if exists tr_comments_set_writer on public.comments;
 drop trigger if exists trg_comments_updated on public.comments;
 drop trigger if exists trg_comments_after_insert on public.comments;
