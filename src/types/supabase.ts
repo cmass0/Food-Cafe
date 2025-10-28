@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -16,48 +16,39 @@ export type Database = {
     Tables: {
       comments: {
         Row: {
-          author_id: string
-          body: string
+          content: string
           created_at: string
           deleted_at: string | null
           id: string
           parent_id: string
           parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          updated_at: string
+          writer_name: string
+          writer_uid: string | null
         }
         Insert: {
-          author_id: string
-          body: string
+          content: string
           created_at?: string
           deleted_at?: string | null
           id?: string
           parent_id: string
           parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          updated_at?: string
+          writer_name?: string
+          writer_uid?: string | null
         }
         Update: {
-          author_id?: string
-          body?: string
+          content?: string
           created_at?: string
           deleted_at?: string | null
           id?: string
           parent_id?: string
           parent_type?: Database["public"]["Enums"]["comment_parent_type"]
+          updated_at?: string
+          writer_name?: string
+          writer_uid?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       posts: {
         Row: {
@@ -123,7 +114,7 @@ export type Database = {
           summary: string | null
           tags: string[]
           title: string
-          tsv: unknown | null
+          tsv: unknown
           updated_at: string
           view_count: number
           writer_email: string | null
@@ -146,7 +137,7 @@ export type Database = {
           summary?: string | null
           tags?: string[]
           title: string
-          tsv?: unknown | null
+          tsv?: unknown
           updated_at?: string
           view_count?: number
           writer_email?: string | null
@@ -169,7 +160,7 @@ export type Database = {
           summary?: string | null
           tags?: string[]
           title?: string
-          tsv?: unknown | null
+          tsv?: unknown
           updated_at?: string
           view_count?: number
           writer_email?: string | null
@@ -292,34 +283,11 @@ export type Database = {
       }
     }
     Functions: {
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
       increment_post_view_count: {
         Args: { target: string }
         Returns: undefined
       }
-      is_admin: {
-        Args: { uid: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { uid: string }; Returns: boolean }
       post_adjust_like: {
         Args: { p_delta: number; p_post_id: string }
         Returns: {
@@ -336,6 +304,12 @@ export type Database = {
           view_count: number
           writer_name: string
           writer_uid: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "posts"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       recipe_adjust_like: {
@@ -355,13 +329,19 @@ export type Database = {
           summary: string | null
           tags: string[]
           title: string
-          tsv: unknown | null
+          tsv: unknown
           updated_at: string
           view_count: number
           writer_email: string | null
           writer_name: string | null
           writer_uid: string | null
           writer_uid_legacy: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recipes"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       recipe_increment_view: {
@@ -381,7 +361,7 @@ export type Database = {
           summary: string | null
           tags: string[]
           title: string
-          tsv: unknown | null
+          tsv: unknown
           updated_at: string
           view_count: number
           writer_email: string | null
@@ -389,23 +369,16 @@ export type Database = {
           writer_uid: string | null
           writer_uid_legacy: string | null
         }
+        SetofOptions: {
+          from: "*"
+          to: "recipes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      uuid_v7: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
       comment_parent_type: "recipe" | "post"
@@ -540,3 +513,4 @@ export const Constants = {
     },
   },
 } as const
+
