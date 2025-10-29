@@ -1,18 +1,20 @@
 ﻿import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/supabase";
+import type { Database, Tables } from "@/types/supabase";
 
-export interface PostRow {
-  id: string;
-  title: string;
-  content: string;
-  writer_uid: string | null;
-  writer_name: string;
-  type: string | null;
-  number: number | null;
-  view_count: number | null;
-  created_at: string;
-  updated_at: string;
-}
+export type PostRow = Tables<"posts">;
+
+// export interface PostRow {
+//   id: string;
+//   title: string;
+//   content: string;
+//   writer_uid: string | null;
+//   writer_name: string;
+//   type: string | null;
+//   number: number | null;
+//   view_count: number | null;
+//   created_at: string;
+//   updated_at: string;
+// }
 
 export type PostInsertDB = {
   title: string;

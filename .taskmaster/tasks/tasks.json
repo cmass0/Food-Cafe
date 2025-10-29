@@ -2,7 +2,7 @@
   "master": {
     "tasks": [
       {
-        "id": 16,
+        "id": "16",
         "title": "Supabase 댓글 스키마 정밀 점검",
         "description": "기존 Supabase `public.comments` 테이블이 PRD 요구사항과 일치하는지 확인하고 수정이 필요한 항목(예: author null 허용, 인덱스/트리거 상태, enum 값)을 도출합니다.",
         "details": "- `supabase/sql`과 `src/types/supabase.ts`를 교차 점검해 `author_id` NOT NULL + ON DELETE SET NULL 충돌 여부를 확인합니다.\n- `comment_parent_type` enum 값과 대소문자, 사용 중 도메인(`post`, `recipe`) 일치 여부를 확인합니다.\n- 트리거 `comments_set_author` 존재 여부 및 `auth.uid()` 반환 로직을 검토합니다.\n```sql\n-- 점검 예시\nselect column_name, is_nullable\nfrom information_schema.columns\nwhere table_name = 'comments';\nselect * from pg_trigger where tgname = 'tr_comments_set_author';\n```\n- `idx_comments_parent_created_at` 등 인덱스 활용 상황을 조사하여 커서 페이지네이션 요건을 충족하는지 확인합니다.",
@@ -13,266 +13,273 @@
         "subtasks": []
       },
       {
-        "id": 17,
+        "id": "17",
         "title": "댓글 테이블 정렬 마이그레이션 작성",
         "description": "PRD에서 제시한 안전 정렬 SQL을 기반으로 Supabase 마이그레이션 파일을 추가해 스키마/정책을 정리합니다.",
         "details": "- 새 파일 `supabase/sql/0007_comments.sql`(넘버링 충돌 시 다음 번호) 생성 후 ALTER/CREATE 구문을 반영합니다.\n```sql\nbegin;\nalter table public.comments alter column author_id drop not null;\ncreate or replace function public.comments_set_author() ...;\ndrop trigger if exists tr_comments_set_author on public.comments;\ncreate trigger tr_comments_set_author ...;\nalter table public.comments enable row level security;\ncreate policy ...;\ncommit;\n```\n- 기존 정책/트리거가 있을 경우 `drop if exists`로 안전하게 교체합니다.\n- 마이그레이션 헤더에 변경 의도, 의존 버전 주석을 남깁니다.",
         "testStrategy": "로컬에서 `npm run migrate:dry` 혹은 `supabase db lint`로 구문을 검증하고, 테스트 프로젝트에 적용해 insert/update/delete 권한이 PRD 시나리오대로 동작하는지 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          16
+          "16"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-29T14:47:52.983Z"
       },
       {
-        "id": 18,
+        "id": "18",
         "title": "Supabase 타입 정의 재생성",
         "description": "스키마 변경 사항을 반영하도록 `src/types/supabase.ts`를 최신 상태로 갱신합니다.",
         "details": "- Supabase CLI 또는 VSCode MCP 명령으로 타입 파일을 재생성합니다.\n```bash\nsupabase gen types typescript --linked > src/types/supabase.ts\n```\n- `comments` 테이블 `Insert/Update` 타입에서 `author_id`를 optional로 바뀌었는지 확인합니다.\n- 변경 diff를 점검해 다른 도메인 타입이 의도치 않게 달라지지 않았는지 검수합니다.",
         "testStrategy": "재생성 후 `tsc --noEmit`로 타입 오류가 없는지 확인하고, `git diff`로 변경 범위를 검토합니다.",
         "priority": "medium",
         "dependencies": [
-          17
+          "17"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-28T18:09:55.401Z"
       },
       {
-        "id": 19,
+        "id": "19",
         "title": "댓글 도메인 타입 재작성",
         "description": "`src/features/comment/types.ts`를 Supabase 기반 구조로 재작성해 도메인 모델과 DB 타입을 분리합니다.",
         "details": "- `Database[\"public\"][\"Tables\"][\"comments\"]`를 사용하여 Row/Insert/Update 타입을 선언합니다.\n- 프런트 사용을 위한 View Model(`Comment`)을 정의하고 필드명을 카멜케이스로 정렬합니다.\n```ts\nexport type CommentRow = Tables<'comments'>;\nexport interface Comment {\n  id: string;\n  parentType: CommentRow['parent_type'];\n  parentId: string;\n  authorId: string | null;\n  body: string;\n  createdAt: string;\n  deletedAt: string | null;\n}\n```\n- 커서 페이지네이션용 `FetchCommentsParams` 타입을 추가합니다.",
         "testStrategy": "`tsc --noEmit`으로 타입 호환성을 검증하고, `features/post/types.ts`와 구조를 비교해 일관성을 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          18
+          "18"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-10-29T19:47:47.303Z"
       },
       {
-        "id": 20,
+        "id": "20",
         "title": "댓글 입력/수정 Zod 스키마 도입",
         "description": "Supabase 입력 요건에 맞춰 `src/features/comment/schema.ts`를 작성해 API 입력 유효성 검사를 수행합니다.",
         "details": "- `commentInsertSchema`, `commentUpdateSchema`를 정의하고 최소 길이/UUID 제약을 반영합니다.\n```ts\nexport const commentInsertSchema = z.object({\n  parentType: z.enum(['post','recipe']),\n  parentId: z.string().uuid(),\n  body: z.string().trim().min(1),\n});\n```\n- 업데이트 스키마에서 빈 객체가 허용되지 않도록 `.refine`를 추가합니다.",
         "testStrategy": "`vitest` 혹은 `tsx` 스크립트로 happy-path/invalid 입력 케이스에 대한 단위 테스트를 작성/실행합니다.",
         "priority": "medium",
         "dependencies": [
-          19
+          "19"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 21,
+        "id": "21",
         "title": "Supabase 댓글 리포지토리 구현",
         "description": "`src/features/comment/repository.ts`를 추가해 Supabase Query 빌더 기반 CRUD와 커서 페이지네이션을 구현합니다.",
         "details": "- `fetchComments`, `getComment`, `insertComment`, `updateComment`, `deleteComment` 함수를 작성합니다.\n- 커서 비교는 `created_at DESC, id ASC` 복합 정렬을 준수합니다.\n```ts\nlet query = client\n  .from('comments')\n  .select(COLUMNS)\n  .order('created_at', { ascending: false })\n  .order('id', { ascending: true });\nif (cursor) {\n  query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.gt.${cursor.id})`);\n}\n```\n- DB Row → 도메인 모델 변환 헬퍼를 별도 함수로 분리합니다.",
         "testStrategy": "`vitest` 혹은 통합 테스트에서 Supabase 테스트 데이터베이스에 시드 후 각 메서드가 기대대로 동작하는지 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          20
+          "20"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 22,
+        "id": "22",
         "title": "댓글 서비스 계층 구축",
         "description": "`src/features/comment/service.ts`를 생성하여 Supabase 클라이언트를 주입하고 비즈니스 규칙/검증을 캡슐화합니다.",
         "details": "- `getServerSupabase`를 사용해 서버 측 클라이언트를 획득합니다.\n- `listComments`, `createComment`, `editComment`, `removeComment` 등 고수준 함수를 제공하며, 입력은 Zod 스키마로 파싱합니다.\n```ts\nexport async function createComment(input: unknown) {\n  const client = getServerSupabase();\n  const parsed = commentInsertSchema.parse(input);\n  return repo.insertComment(client, {\n    parent_type: parsed.parentType,\n    parent_id: parsed.parentId,\n    body: parsed.body,\n  });\n}\n```\n- 필요 시 `author_id`가 null일 때 `users` 조회 등 후처리를 준비합니다.",
         "testStrategy": "서비스 함수를 대상으로 mock Supabase 클라이언트를 이용한 단위 테스트를 작성하고, 예외 케이스(권한 없음, 유효성 실패)를 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          21
+          "21"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 23,
+        "id": "23",
         "title": "댓글 목록·생성 라우트 Supabase 전환",
         "description": "`src/app/api/comments/route.ts`를 Supabase 서비스 호출로 교체하고 새로운 쿼리 파라미터(`parentType`, `parentId`, 커서`)를 지원합니다.",
         "details": "- Firebase 레포지토리 의존을 제거하고 `@/features/comment/service`를 import합니다.\n- GET 요청에서 `parentType`, `parentId`, `cursor`를 파싱해 서비스에 전달하고 결과를 `{ data: { items, nextCursor } }` 형태로 반환합니다.\n- POST 요청은 서비스의 유효성 검증 에러를 400으로 매핑하고, 성공 시 201을 반환합니다.\n```ts\nconst { items, nextCursor } = await svc.listComments({\n  limit: resolveLimit(url.searchParams.get('limit')),\n  parentType,\n  parentId,\n  cursor: decodeCursor(cursorParam),\n});\n```\n- `Cache-Control: no-store` 헤더를 유지합니다.",
         "testStrategy": "`npm run dev` 환경에서 로그인 사용자/비로그인 사용자로 GET/POST를 호출해 권한 처리와 응답 포맷이 요구사항과 일치하는지 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          22
+          "22"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 24,
+        "id": "24",
         "title": "댓글 단건 라우트 Supabase 전환",
         "description": "`src/app/api/comments/[id]/route.ts`를 서비스 계층으로 교체해 조회/수정/삭제를 Supabase 기반으로 수행합니다.",
         "details": "- `getComment`, `editComment`, `removeComment`를 사용하여 기존 Firebase 의존을 제거합니다.\n- PUT 요청은 Zod 검증 실패 시 400, 레코드 미존재 시 404, 성공 시 갱신된 데이터를 반환합니다.\n- DELETE 요청은 성공 시 204, 실패 시 500을 유지하되 에러 메시지를 Supabase 오류에 맞게 정리합니다.",
         "testStrategy": "API 라우트에 대해 `fetch` 기반 통합 테스트(또는 Thunder Client)로 200/204/400/404/403 케이스를 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          22
+          "22"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 25,
+        "id": "25",
         "title": "Firebase 댓글 리포지토리 및 의존 제거",
         "description": "`src/features/comment/repository.server.ts`와 관련 Firebase import를 삭제해 Supabase만 남도록 정리합니다.",
         "details": "- `repository.server.ts`를 삭제하고 `@/features/comment/api.ts`, API 라우트에서의 import를 Supabase 버전으로 교체합니다.\n- `tsconfig` 경로나 배럴 파일에서 불필요한 Firebase 경로를 제거합니다.\n```bash\ngit rm src/features/comment/repository.server.ts\n```\n- 남은 Firebase 의존이 없는지 ESLint/TS 에러를 확인합니다.",
         "testStrategy": "`tsc --noEmit`과 `npm run lint`를 실행해 Firebase 네임스페이스 참조가 더 이상 없음을 보증합니다.",
         "priority": "medium",
         "dependencies": [
-          23,
-          24
+          "23",
+          "24"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 26,
+        "id": "26",
         "title": "댓글 API 클라이언트 재작성",
         "description": "프런트엔드 fetch 래퍼(`src/features/comment/api.ts`)를 새로운 서버 응답 구조와 파라미터에 맞게 업데이트합니다.",
         "details": "- 함수 시그니처를 `{ parentType, parentId, limit, cursor }` 기반으로 재정의합니다.\n- 응답 타입을 Supabase 서비스 모델(`Comment`)에 맞춰 정리하고, 에러 시 throw 메시지를 개선합니다.\n```ts\nexport async function listComments({ parentType, parentId, limit, cursor }: ListParams) {\n  const qs = new URLSearchParams({ parentType, parentId, limit: String(limit) });\n  if (cursor) qs.set('cursor', encodeCursor(cursor));\n  const res = await fetch(`/api/comments?${qs}`);\n  return (await res.json()) as CommentsResponse;\n}\n```\n- POST/PUT 요청 본문 필드명을 `body`로 변경합니다.",
         "testStrategy": "브라우저에서 API 함수 호출 시 200 응답 및 파서가 정상 작동하는지 확인하고, `jest`/`vitest`로 fetch mock 기반 단위 테스트를 추가합니다.",
         "priority": "medium",
         "dependencies": [
-          23,
-          24
+          "23",
+          "24"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 27,
+        "id": "27",
         "title": "댓글 UI Supabase 인증 연동",
         "description": "`src/component/comment/comment.js`에서 Firebase 인증 훅을 제거하고 Supabase `useAuth`/`getBrowserSupabase` 기반으로 로그인 상태를 관리합니다.",
         "details": "- `react-firebase-hooks/auth`와 `@/lib/firebase/client` import를 제거합니다.\n- `useAuth()` 컨텍스트 또는 `getBrowserSupabase().auth`를 사용해 사용자 정보를 조회합니다.\n- 세션이 없을 때 경고 모달을 유지하되 안내 문구를 Supabase 로그인 흐름에 맞게 조정합니다.\n```ts\nconst { user, status } = useAuth();\nif (!user) { openAlert(MODAL_TEXT.loginRequired); }\n```\n- 댓글 생성 시 `user.id`를 그대로 사용하도록 수정합니다.",
         "testStrategy": "Supabase로 로그인/로그아웃 후 댓글 작성 버튼 동작을 수동 테스트하여 세션 인식이 정상인지 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          26
+          "26"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 28,
+        "id": "28",
         "title": "댓글 UI 데이터 매핑 및 부모 식별자 정비",
         "description": "UI가 새로운 API 응답(`body`, `parentType`, `parentId`)을 소비하도록 정리하고, 기존 prop(`type`)을 최소 변경으로 parent 식별자로 매핑합니다.",
         "details": "- API 응답을 UI 전용 모델로 변환하는 헬퍼를 추가해 `comment`, `writerName` 등 기존 렌더링 필드를 유지합니다.\n- `CommentArea` prop으로 들어오는 `type` 값을 `parentId`로 사용하고, `parentType`은 `'recipe'` 등 상수로 주입하거나 추가 prop으로 확장합니다.\n```ts\nconst uiItems = items.map((item) => ({\n  id: item.id,\n  comment: item.body,\n  writerName: item.authorDisplayName ?? '탈퇴회원',\n  createdAt: item.createdAt,\n}));\n```\n- 삭제된 사용자의 표시(예: \"탈퇴한 사용자\") 처리를 추가합니다.",
         "testStrategy": "UI 렌더링을 스토리북 또는 브라우저에서 확인하고, 데이터 매핑 유닛 테스트로 변환 결과를 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          27
+          "27"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 29,
+        "id": "29",
         "title": "댓글 권한 오류 UX 개선",
         "description": "Supabase RLS로 인해 발생할 수 있는 401/403 응답을 UI에서 사용자 친화적으로 처리합니다.",
         "details": "- API 호출 실패 시 status code를 확인해 로그인 필요/권한 없음 메시지를 맞춤 안내로 노출합니다.\n- 모달 텍스트/버튼을 Supabase 정책과 일치하도록 업데이트합니다.\n```ts\ntry {\n  await deleteComment(id);\n} catch (error) {\n  if (isForbidden(error)) openAlert(MODAL_TEXT.forbidden);\n}\n```\n- 감사 로그용 콘솔 경고를 유지하되, 사용자에게는 정제된 메시지를 제공합니다.",
         "testStrategy": "비로그인/타사용자 계정으로 댓글 수정·삭제를 시도해 UI가 적절한 경고를 띄우는지 수동 테스트합니다.",
         "priority": "medium",
         "dependencies": [
-          28
+          "28"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 30,
+        "id": "30",
         "title": "댓글 커서 페이지네이션 대응",
         "description": "프런트엔드에서 `nextCursor` 형태를 해석하고 추가 로드/무한 스크롤 UX를 지원하도록 로직을 보완합니다.",
         "details": "- `listComments` 응답의 `nextCursor`를 상태로 저장하고, \"더 보기\" 버튼 클릭 시 cursor를 포함해 재호출합니다.\n- 커서 인코딩/디코딩 유틸을 재사용하여 안정성을 확보합니다.\n```ts\nconst [cursor, setCursor] = useState(null);\nconst { items, nextCursor } = await listComments({ parentId, parentType, cursor });\nsetCursor(nextCursor);\n```\n- 한 번 가져온 댓글을 중복 없이 합치는 로직을 추가합니다.",
         "testStrategy": "댓글이 50개 이상인 테스트 데이터를 이용해 페이지네이션이 중복 없이 동작하는지 브라우저에서 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          26,
-          28
+          "26",
+          "28"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 31,
+        "id": "31",
         "title": "댓글 작성자 표시 로직 Supabase 연동",
         "description": "댓글 목록에 작성자 닉네임을 표시하기 위해 Supabase `users`/`users_public` 데이터를 조인하거나 서비스 단계에서 합성합니다.",
         "details": "- 리포지토리에서 `select` 컬럼에 `users(username, display_name)`을 조인하거나 서비스에서 `features/user/service`를 호출합니다.\n- UI용 모델에 `authorDisplayName` 필드를 추가하고 null 시 대체 문구를 설정합니다.\n```ts\nconst { data } = await client\n  .from('comments')\n  .select('*, users_public(display_name)')\n```\n- 조인 시 성능을 위해 필요한 컬럼만 선택하고 인덱스 활용을 검토합니다.",
         "testStrategy": "댓글 조회 시 작성자명이 정확히 표시되는지, 사용자 삭제 후 null 처리도 정상인지 통합 테스트로 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          22,
-          27
+          "22",
+          "27"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 32,
+        "id": "32",
         "title": "댓글 리포지토리·서비스 테스트 추가",
         "description": "Supabase 댓글 도메인에 대한 단위/통합 테스트를 작성해 주요 경로와 예외 케이스를 검증합니다.",
         "details": "- `vitest` 설정을 추가하거나 기존 테스트 러너를 재사용합니다.\n- 리포지토리: 커서 필터, parent 필터, author 필터 테스트.\n- 서비스: 유효성 실패, 비로그인 insert, 본인 아닌 update/delete 거부 케이스 검증.\n```ts\ntest('createComment rejects without session', async () => {\n  await expect(createComment({ ... })).rejects.toThrow('로그인');\n});\n```\n- Supabase 테스트 DB는 트랜잭션 롤백 또는 테스트용 schema를 사용합니다.",
         "testStrategy": "CI에서 테스트가 실행되도록 `npm test` 스크립트를 추가하고, 로컬에서도 동일하게 통과하는지 확인합니다.",
         "priority": "medium",
         "dependencies": [
-          21,
-          22
+          "21",
+          "22"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 33,
+        "id": "33",
         "title": "댓글 API 통합 테스트 작성",
         "description": "`/api/comments` 및 `/api/comments/[id]` 라우트에 대한 엔드투엔드 테스트를 추가해 HTTP 레이어를 검증합니다.",
         "details": "- `next/test` 또는 `supertest`를 사용해 서버 라우트를 직접 호출합니다.\n- 시나리오: 목록 조회, 작성→조회, 수정→조회, 삭제, 잘못된 입력(400), 권한 없음(403), 미존재(404).\n```ts\nconst res = await request(app).post('/api/comments').send(validPayload);\nexpect(res.status).toBe(201);\n```\n- 테스트 간 독립성을 위해 각 케이스 종료 후 레코드를 정리합니다.",
         "testStrategy": "CI에서 통합 테스트를 실행하고, Supabase 세션 쿠키 설정이 필요한 경우 테스트 유틸을 통해 인증 토큰을 주입합니다.",
         "priority": "medium",
         "dependencies": [
-          23,
-          24,
-          32
+          "23",
+          "24",
+          "32"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 34,
+        "id": "34",
         "title": "댓글 마이그레이션 문서화",
         "description": "PRD 기반 실행 절차를 `docs/comment-migration.md`로 정리해 팀 공유 문서를 업데이트합니다.",
         "details": "- 마이그레이션 순서(스키마 정리 → 타입 재생성 → 코드 교체 → 테스트)를 단계별로 기술합니다.\n- RLS 정책, 작성자 표시 전략, 프런트 변경사항을 표로 정리합니다.\n- 롤백 전략과 예상 리스크(권한 역전, parent 존재 검증)를 명시합니다.",
         "testStrategy": "문서를 팀 리뷰에 공유하고, Onboarding 체크리스트와 링크하여 누락된 단계가 없는지 피드백을 받습니다.",
         "priority": "medium",
         "dependencies": [
-          25,
-          27,
-          31
+          "25",
+          "27",
+          "31"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 35,
+        "id": "35",
         "title": "댓글 도메인 Firebase 재도입 방지 가드",
         "description": "댓글 영역에서 Firebase 모듈을 재사용하지 못하도록 ESLint 규칙 또는 코드 소나 가드를 추가합니다.",
         "details": "- `eslint-plugin-no-restricted-imports` 등을 활용해 `src/features/comment/**`에서 `@/lib/firebase/*` import를 금지합니다.\n```js\n\"no-restricted-imports\": [\"error\", {\n  \"paths\": [{ \"name\": \"@/lib/firebase/client\", \"message\": \"댓글 도메인은 Supabase만 사용\" }],\n  \"patterns\": [\"@/lib/firebase/*\"]\n}]\n```\n- 규칙을 `eslintrc` 또는 `eslint.config.js`에 추가하고, 필요 시 댓글 디렉터리별 override를 설정합니다.",
         "testStrategy": "`npm run lint`로 규칙이 작동하는지 확인하고, Firebase import를 임시로 추가해 lint가 실패하는지 검증합니다.",
         "priority": "medium",
         "dependencies": [
-          25
+          "25"
         ],
         "status": "pending",
         "subtasks": []
       }
     ],
     "metadata": {
-      "created": "2025-10-28T07:12:35.926Z",
-      "updated": "2025-10-28T07:12:35.927Z",
-      "description": "Tasks for master context"
+      "version": "1.0.0",
+      "lastModified": "2025-10-29T19:47:47.304Z",
+      "taskCount": 20,
+      "completedCount": 3,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
