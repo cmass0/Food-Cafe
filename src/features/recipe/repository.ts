@@ -104,7 +104,7 @@ export async function insertRecipeRecord(
     .insert(payload)
     .select("*")
     .single();
-  throwIfError(error);
+  if (error) throw error;
   if (!data) {
     throw new Error("레시피를 생성하지 못했습니다.");
   }

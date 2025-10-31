@@ -1,89 +1,94 @@
-﻿import "server-only";
-import { adminDb } from "@/lib/firebase/admin";
-import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
-import type { Comment, CommentCreateDTO, CommentUpdateDTO } from "./types";
+﻿import { CommentInsertDB, CommentRow, CommentSupabaseClient, FetchCommentsParams } from "./types";
 
-const COL = "Comment";
-
-function toDate(t?: Timestamp): Date | null {
-  return t?.toDate?.() ?? null;
+function mapRows(rows: CommentRow[]): CommentRow[] {
+  return Array.isArray(rows) ? (rows as CommentRow[]) : [];
 }
 
-export async function listComments(opts?: {
-  limit?: number;
-  cursor?: string;
-  type?: string;
-}): Promise<{ items: Comment[]; nextCursor: string | null }> {
-  const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 50);
-  let q = adminDb.collection(COL).orderBy("createdAt", "desc").orderBy(FieldPath.documentId());
-  if (opts?.type) q = q.where("type", "==", opts.type);
+export async function fetchComments(
+  client: CommentSupabaseClient,
+  params: FetchCommentsParams,
+): Promise<CommentRow[]> {
 
-  if (opts?.cursor) {
-    const [createdAtMs, id] = Buffer.from(opts.cursor, "base64").toString("utf8").split("|");
-    const createdAt = Timestamp.fromMillis(Number(createdAtMs) || 0);
-    q = q.startAfter(createdAt, id ?? "");
+  let query = client
+    .from("comments")
+    .select("*")
+    .eq("parent_type", params.parentType)
+    .eq("parent_id", params.parentId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .limit(params.limit); 
+
+  if (!params.includeDeleted) {
+    query = query.is("deleted_at", null);
   }
 
-  const snap = await q.limit(limit).get();
-  const items: Comment[] = snap.docs.map((d) => {
-    const x = d.data() as any;
-    return {
-      id: d.id,
-      comment: x.comment ?? "",
-      writerName: x.writerName ?? x.writer ?? "",
-      writerUid: x.writerUid ?? null,
-      type: x.type ?? "",
-      createdAt: toDate(x.createdAt) ?? toDate(x.date),
-      updatedAt: toDate(x.updatedAt) ?? toDate(x.date),
-    };
-  });
 
-  const last = snap.docs.at(-1);
-  const nextCursor = last
-    ? Buffer.from(`${(last.get("createdAt") as Timestamp)?.toMillis?.() ?? 0}|${last.id}`, "utf8").toString("base64")
-    : null;
+  if (params.cursor) {
+    query = query.or(
+      `created_at.lt.${params.cursor.createdAt},and(created_at.eq.${params.cursor.createdAt},id.gt.${params.cursor.id})`
+    );
+  }
+  
+  const { data, error } = await query;
+  if (error) throw error; 
 
-  return { items, nextCursor };
+  return mapRows(data);
 }
 
-export async function getComment(id: string): Promise<Comment | null> {
-  const doc = await adminDb.collection(COL).doc(id).get();
-  if (!doc.exists) return null;
-  const x = doc.data() as any;
-  return {
-    id: doc.id,
-    comment: x.comment ?? "",
-    writerName: x.writerName ?? x.writer ?? "",
-    writerUid: x.writerUid ?? null,
-    type: x.type ?? "",
-    createdAt: toDate(x.createdAt) ?? toDate(x.date),
-    updatedAt: toDate(x.updatedAt) ?? toDate(x.date),
-  };
+export async function selectCommentById(
+  client: CommentSupabaseClient,
+  id: string
+): Promise<CommentRow | null> {
+  const { data, error } = await client
+    .from("comments")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    throw new Error("댓글을 찾을 수 없습니다.");
+  }
+  return data ?? null;
 }
 
-export async function createComment(input: CommentCreateDTO): Promise<Comment> {
-  const ref = adminDb.collection(COL).doc();
-  const data = {
-    comment: input.comment,
-    writerName: input.writerName,
-    writerUid: input.writerUid ?? null,
-    type: input.type,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-    date: FieldValue.serverTimestamp(),
-  };
-  await ref.set({ id: ref.id, ...data });
-  return (await getComment(ref.id))!;
+export async function insertComment(
+  client: CommentSupabaseClient,
+  payload: CommentInsertDB,
+): Promise<CommentRow> {
+  const { data, error } = await client
+    .from("comments")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) {
+    throw new Error("댓글을 생성하지 못했습니다.");
+  }
+  return data;
 }
 
-export async function updateComment(id: string, patch: CommentUpdateDTO): Promise<Comment | null> {
-  const ref = adminDb.collection(COL).doc(id);
-  const update: Record<string, any> = { updatedAt: FieldValue.serverTimestamp() };
-  if (patch.comment !== undefined) update.comment = patch.comment;
-  await ref.update(update);
-  return getComment(id);
+export async function updateComment(
+  client: CommentSupabaseClient,
+  id: string,
+  payload: Partial<CommentInsertDB>,
+): Promise<CommentRow> {
+  const { data, error } = await client
+    .from("comments")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) {
+    throw new Error("댓글을 업데이트하지 못했습니다.");
+  }
+  return data;
 }
 
-export async function deleteComment(id: string): Promise<void> {
-  await adminDb.collection(COL).doc(id).delete();
-}
+export async function deleteComment(
+  client: CommentSupabaseClient,
+  id: string
+): Promise<void> {
+  const { error } = await client.from("comments").delete().eq("id", id);
+  if (error) throw error;
+} 
