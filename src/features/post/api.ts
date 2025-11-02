@@ -1,11 +1,22 @@
 ﻿
 
-export async function listPosts(params?: { limit?: number; cursor?: string; writerUid?: string; type?: string }) {
+export async function listPosts(
+  params?: {
+    limit?: number;
+    page?: number;
+    offset?: number;
+    writerUid?: string;
+    type?: string;
+    search?: string;
+  }
+) {
   const qs = new URLSearchParams();
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.cursor) qs.set("cursor", params.cursor);
+  if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
+  if (typeof params?.page === "number") qs.set("page", String(params.page));
+  if (typeof params?.offset === "number") qs.set("offset", String(params.offset));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.type) qs.set("type", params.type);
+  if (params?.search) qs.set("search", params.search);
 
   const res = await fetch(`/api/posts${qs.size ? `?${qs.toString()}` : ""}`, {
     cache: "no-store",

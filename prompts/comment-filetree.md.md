@@ -1,5 +1,4 @@
-
-supabase/
+﻿supabase/
 └─ sql/
    ├─ 0007_comments_align_with_posts.sql      # comments 컬럼 표준화 + 인덱스 + (선택) posts.comment_count 트리거 + RLS 재정의
    └─ 0008_comments_count_backfill.sql         # (선택) 과거 데이터로 posts.comment_count 재계산 스크립트

@@ -5,7 +5,7 @@
         "id": "16",
         "title": "Supabase 댓글 스키마 정밀 점검",
         "description": "기존 Supabase `public.comments` 테이블이 PRD 요구사항과 일치하는지 확인하고 수정이 필요한 항목(예: author null 허용, 인덱스/트리거 상태, enum 값)을 도출합니다.",
-        "details": "- `supabase/sql`과 `src/types/supabase.ts`를 교차 점검해 `author_id` NOT NULL + ON DELETE SET NULL 충돌 여부를 확인합니다.\n- `comment_parent_type` enum 값과 대소문자, 사용 중 도메인(`post`, `recipe`) 일치 여부를 확인합니다.\n- 트리거 `comments_set_author` 존재 여부 및 `auth.uid()` 반환 로직을 검토합니다.\n```sql\n-- 점검 예시\nselect column_name, is_nullable\nfrom information_schema.columns\nwhere table_name = 'comments';\nselect * from pg_trigger where tgname = 'tr_comments_set_author';\n```\n- `idx_comments_parent_created_at` 등 인덱스 활용 상황을 조사하여 커서 페이지네이션 요건을 충족하는지 확인합니다.",
+        "details": "- `supabase/sql`과 `src/types/supabase.ts`를 교차 점검해 `author_id` NOT NULL + ON DELETE SET NULL 충돌 여부를 확인합니다.\n- `comment_parent_type` enum 값과 대소문자, 사용 중 도메인(`post`, `recipe`) 일치 여부를 확인합니다.\n- 트리거 `comments_set_author` 존재 여부 및 `auth.uid()` 반환 로직을 검토합니다.\n```sql\n-- 점검 예시\nselect column_name, is_nullable\nfrom information_schema.columns\nwhere table_name = 'comments';\nselect * from pg_trigger where tgname = 'tr_comments_set_author';\n```\n- `idx_comments_parent_created_at` 등 인덱스 활용 상황을 조사하여 offset/page 기반 페이지네이션 요건을 충족하는지 확인합니다.",
         "testStrategy": "`supabase db inspect`/`supabase db diff`로 현재 스키마를 확인하고, 결과를 PRD 체크리스트와 비교해 수정 항목을 문서화합니다.",
         "priority": "medium",
         "dependencies": [],
@@ -44,7 +44,7 @@
         "id": "19",
         "title": "댓글 도메인 타입 재작성",
         "description": "`src/features/comment/types.ts`를 Supabase 기반 구조로 재작성해 도메인 모델과 DB 타입을 분리합니다.",
-        "details": "- `Database[\"public\"][\"Tables\"][\"comments\"]`를 사용하여 Row/Insert/Update 타입을 선언합니다.\n- 프런트 사용을 위한 View Model(`Comment`)을 정의하고 필드명을 카멜케이스로 정렬합니다.\n```ts\nexport type CommentRow = Tables<'comments'>;\nexport interface Comment {\n  id: string;\n  parentType: CommentRow['parent_type'];\n  parentId: string;\n  authorId: string | null;\n  body: string;\n  createdAt: string;\n  deletedAt: string | null;\n}\n```\n- 커서 페이지네이션용 `FetchCommentsParams` 타입을 추가합니다.",
+        "details": "- `Database[\"public\"][\"Tables\"][\"comments\"]`를 사용하여 Row/Insert/Update 타입을 선언합니다.\n- 프런트 사용을 위한 View Model(`Comment`)을 정의하고 필드명을 카멜케이스로 정렬합니다.\n```ts\nexport type CommentRow = Tables<'comments'>;\nexport interface Comment {\n  id: string;\n  parentType: CommentRow['parent_type'];\n  parentId: string;\n  authorId: string | null;\n  body: string;\n  createdAt: string;\n  deletedAt: string | null;\n}\n```\n- offset/page 페이지네이션용 `FetchCommentsParams` 타입을 추가합니다.",
         "testStrategy": "`tsc --noEmit`으로 타입 호환성을 검증하고, `features/post/types.ts`와 구조를 비교해 일관성을 확인합니다.",
         "priority": "medium",
         "dependencies": [
@@ -71,8 +71,8 @@
       {
         "id": "21",
         "title": "Supabase 댓글 리포지토리 구현",
-        "description": "`src/features/comment/repository.ts`를 추가해 Supabase Query 빌더 기반 CRUD와 커서 페이지네이션을 구현합니다.",
-        "details": "- `fetchComments`, `getComment`, `insertComment`, `updateComment`, `deleteComment` 함수를 작성합니다.\n- 커서 비교는 `created_at DESC, id ASC` 복합 정렬을 준수합니다.\n```ts\nlet query = client\n  .from('comments')\n  .select(COLUMNS)\n  .order('created_at', { ascending: false })\n  .order('id', { ascending: true });\nif (cursor) {\n  query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.gt.${cursor.id})`);\n}\n```\n- DB Row → 도메인 모델 변환 헬퍼를 별도 함수로 분리합니다.",
+        "description": "`src/features/comment/repository.ts`를 추가해 Supabase Query 빌더 기반 CRUD와 offset/page 페이지네이션을 구현합니다.",
+        "details": "- `fetchComments`, `getComment`, `insertComment`, `updateComment`, `deleteComment` 함수를 작성합니다.\n- 페이지 산출은 `created_at DESC, id ASC` 복합 정렬과 limit/offset 계산을 준수합니다.\n```ts\nlet query = client\n  .from('comments')\n  .select(COLUMNS, { count: 'exact' })\n  .order('created_at', { ascending: false })\n  .order('id', { ascending: true })\n  .range(offset, offset + limit - 1);\n```\n- DB Row → 도메인 모델 변환 헬퍼를 별도 함수로 분리합니다.",
         "testStrategy": "`vitest` 혹은 통합 테스트에서 Supabase 테스트 데이터베이스에 시드 후 각 메서드가 기대대로 동작하는지 검증합니다.",
         "priority": "medium",
         "dependencies": [
@@ -97,8 +97,8 @@
       {
         "id": "23",
         "title": "댓글 목록·생성 라우트 Supabase 전환",
-        "description": "`src/app/api/comments/route.ts`를 Supabase 서비스 호출로 교체하고 새로운 쿼리 파라미터(`parentType`, `parentId`, 커서`)를 지원합니다.",
-        "details": "- Firebase 레포지토리 의존을 제거하고 `@/features/comment/service`를 import합니다.\n- GET 요청에서 `parentType`, `parentId`, `cursor`를 파싱해 서비스에 전달하고 결과를 `{ data: { items, nextCursor } }` 형태로 반환합니다.\n- POST 요청은 서비스의 유효성 검증 에러를 400으로 매핑하고, 성공 시 201을 반환합니다.\n```ts\nconst { items, nextCursor } = await svc.listComments({\n  limit: resolveLimit(url.searchParams.get('limit')),\n  parentType,\n  parentId,\n  cursor: decodeCursor(cursorParam),\n});\n```\n- `Cache-Control: no-store` 헤더를 유지합니다.",
+        "description": "`src/app/api/comments/route.ts`를 Supabase 서비스 호출로 교체하고 새로운 쿼리 파라미터(`parentType`, `parentId`, `page`, `limit`)를 지원합니다.",
+        "details": "- Firebase 레포지토리 의존을 제거하고 `@/features/comment/service`를 import합니다.\n- GET 요청에서 `parentType`, `parentId`, `page`, `limit`을 파싱해 서비스에 전달하고 결과를 `{ data: { items, total, limit, offset, hasMore } }` 형태로 반환합니다.\n- POST 요청은 서비스의 유효성 검증 에러를 400으로 매핑하고, 성공 시 201을 반환합니다.\n```ts\nconst { items, total } = await svc.listComments({\n  limit: resolveLimit(url.searchParams.get('limit')),\n  page: resolvePage(url.searchParams.get('page')),\n  parentType,\n  parentId,\n});\n```\n- `Cache-Control: no-store` 헤더를 유지합니다.",
         "testStrategy": "`npm run dev` 환경에서 로그인 사용자/비로그인 사용자로 GET/POST를 호출해 권한 처리와 응답 포맷이 요구사항과 일치하는지 확인합니다.",
         "priority": "medium",
         "dependencies": [
@@ -138,7 +138,7 @@
         "id": "26",
         "title": "댓글 API 클라이언트 재작성",
         "description": "프런트엔드 fetch 래퍼(`src/features/comment/api.ts`)를 새로운 서버 응답 구조와 파라미터에 맞게 업데이트합니다.",
-        "details": "- 함수 시그니처를 `{ parentType, parentId, limit, cursor }` 기반으로 재정의합니다.\n- 응답 타입을 Supabase 서비스 모델(`Comment`)에 맞춰 정리하고, 에러 시 throw 메시지를 개선합니다.\n```ts\nexport async function listComments({ parentType, parentId, limit, cursor }: ListParams) {\n  const qs = new URLSearchParams({ parentType, parentId, limit: String(limit) });\n  if (cursor) qs.set('cursor', encodeCursor(cursor));\n  const res = await fetch(`/api/comments?${qs}`);\n  return (await res.json()) as CommentsResponse;\n}\n```\n- POST/PUT 요청 본문 필드명을 `body`로 변경합니다.",
+        "details": "- 함수 시그니처를 `{ parentType, parentId, page, limit }` 기반으로 재정의합니다.\n- 응답 타입을 Supabase 서비스 모델(`Comment`)에 맞춰 정리하고, 에러 시 throw 메시지를 개선합니다.\n```ts\nexport async function listComments({ parentType, parentId, page, limit }: ListParams) {\n  const qs = new URLSearchParams({ parentType, parentId, limit: String(limit), page: String(page) });\n  const res = await fetch(`/api/comments?${qs}`);\n  return (await res.json()) as CommentsResponse;\n}\n```\n- POST/PUT 요청 본문 필드명을 `body`로 변경합니다.",
         "testStrategy": "브라우저에서 API 함수 호출 시 200 응답 및 파서가 정상 작동하는지 확인하고, `jest`/`vitest`로 fetch mock 기반 단위 테스트를 추가합니다.",
         "priority": "medium",
         "dependencies": [
@@ -189,9 +189,9 @@
       },
       {
         "id": "30",
-        "title": "댓글 커서 페이지네이션 대응",
+        "title": "댓글 페이지 기반 페이지네이션 대응",
         "description": "프런트엔드에서 `nextCursor` 형태를 해석하고 추가 로드/무한 스크롤 UX를 지원하도록 로직을 보완합니다.",
-        "details": "- `listComments` 응답의 `nextCursor`를 상태로 저장하고, \"더 보기\" 버튼 클릭 시 cursor를 포함해 재호출합니다.\n- 커서 인코딩/디코딩 유틸을 재사용하여 안정성을 확보합니다.\n```ts\nconst [cursor, setCursor] = useState(null);\nconst { items, nextCursor } = await listComments({ parentId, parentType, cursor });\nsetCursor(nextCursor);\n```\n- 한 번 가져온 댓글을 중복 없이 합치는 로직을 추가합니다.",
+        "details": "- `listComments` 응답의 `offset`과 `hasMore`를 상태로 저장하고, \"더 보기\" 버튼 클릭 시 다음 페이지를 요청합니다.\n- 페이지/limit 정보를 재사용하여 안정성을 확보합니다.\n```ts\nconst [page, setPage] = useState(1);\nconst { items, hasMore } = await listComments({ parentId, parentType, page });\nif (hasMore) setPage((prev) => prev + 1);\n```\n- 한 번 가져온 댓글을 중복 없이 합치는 로직을 추가합니다.",
         "testStrategy": "댓글이 50개 이상인 테스트 데이터를 이용해 페이지네이션이 중복 없이 동작하는지 브라우저에서 확인합니다.",
         "priority": "medium",
         "dependencies": [
@@ -219,7 +219,7 @@
         "id": "32",
         "title": "댓글 리포지토리·서비스 테스트 추가",
         "description": "Supabase 댓글 도메인에 대한 단위/통합 테스트를 작성해 주요 경로와 예외 케이스를 검증합니다.",
-        "details": "- `vitest` 설정을 추가하거나 기존 테스트 러너를 재사용합니다.\n- 리포지토리: 커서 필터, parent 필터, author 필터 테스트.\n- 서비스: 유효성 실패, 비로그인 insert, 본인 아닌 update/delete 거부 케이스 검증.\n```ts\ntest('createComment rejects without session', async () => {\n  await expect(createComment({ ... })).rejects.toThrow('로그인');\n});\n```\n- Supabase 테스트 DB는 트랜잭션 롤백 또는 테스트용 schema를 사용합니다.",
+        "details": "- `vitest` 설정을 추가하거나 기존 테스트 러너를 재사용합니다.\n- 리포지토리: offset 계산, parent 필터, author 필터 테스트.\n- 서비스: 유효성 실패, 비로그인 insert, 본인 아닌 update/delete 거부 케이스 검증.\n```ts\ntest('createComment rejects without session', async () => {\n  await expect(createComment({ ... })).rejects.toThrow('로그인');\n});\n```\n- Supabase 테스트 DB는 트랜잭션 롤백 또는 테스트용 schema를 사용합니다.",
         "testStrategy": "CI에서 테스트가 실행되도록 `npm test` 스크립트를 추가하고, 로컬에서도 동일하게 통과하는지 확인합니다.",
         "priority": "medium",
         "dependencies": [

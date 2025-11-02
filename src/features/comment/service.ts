@@ -1,3 +1,2 @@
-import { CommentRow } from "./types";
-
+import * as repository from "./repository";
 

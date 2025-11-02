@@ -1,36 +1,38 @@
-# Comment 이관 & 리뉴얼 매뉴얼 (Supabase 기준)
-_작성일: 2025-10-27 18:53 KST_
+﻿> **UPDATED 2025-xx:** Repository now standardises on offset/page pagination. This document is archived for historical cursor-based guidance - follow prompts/migration-cursor-to-offset-verified.md for current steps.
 
-본 문서는 **Firebase 기반 Comment 기능**을 **Supabase(Postgres + RLS)** 방식으로 전면 이관하기 위한 단계별 가이드입니다.  
-이미 Supabase 전환을 완료한 `post`, `recipe`, `user` 도메인의 설계를 그대로 **재사용/정렬**합니다.
+# Comment ?닿? & 由щ돱??留ㅻ돱??(Supabase 湲곗?)
+_?묒꽦?? 2025-10-27 18:53 KST_
 
-> **대상 리포지토리**: `Food-Cafe-refactor-ts-architecture`  
-> **현 상태(발견된 파일)**  
+蹂?臾몄꽌??**Firebase 湲곕컲 Comment 湲곕뒫**??**Supabase(Postgres + RLS)** 諛⑹떇?쇰줈 ?꾨㈃ ?닿??섍린 ?꾪븳 ?④퀎蹂?媛?대뱶?낅땲??  
+?대? Supabase ?꾪솚???꾨즺??`post`, `recipe`, `user` ?꾨찓?몄쓽 ?ㅺ퀎瑜?洹몃?濡?**?ъ궗???뺣젹**?⑸땲??
+
+> **???由ы룷吏?좊━**: `Food-Cafe-refactor-ts-architecture`  
+> **???곹깭(諛쒓껄???뚯씪)**  
 > - API(Route Handlers):  
 >   - `src/app/api/comments/route.ts`  
 >   - `src/app/api/comments/[id]/route.ts`  
-> - Feature/Repository(파이어베이스):  
->   - `src/features/comment/repository.server.ts` (Firebase Admin 사용)  
-> - Feature/Types(옛 스키마):  
->   - `src/features/comment/types.ts` (Zod + 낡은 필드명: `comment`, `writerName`, `type` 등)  
+> - Feature/Repository(?뚯씠?대쿋?댁뒪):  
+>   - `src/features/comment/repository.server.ts` (Firebase Admin ?ъ슜)  
+> - Feature/Types(???ㅽ궎留?:  
+>   - `src/features/comment/types.ts` (Zod + ?≪? ?꾨뱶紐? `comment`, `writerName`, `type` ??  
 > - API Client(Fetch wrapper):  
 >   - `src/features/comment/api.ts`
 
 ---
 
-## 0) 목표 아키텍처
-- `features/post`와 동일한 **Supabase 도메인 레이어 4종**으로 통일
-  - `types.ts` — DB Row/Insert/Update 타입 정의 (`Database` 타입 기반)
-  - `schema.ts` — Zod 스키마 (입력 검증)
-  - `repository.ts` — **Supabase Query 빌더로 CRUD** (+ 커서 페이지네이션, 필터)
-  - `service.ts` — 비즈니스 규칙/권한 체크(필요 시)
-- **Route Handlers**는 Firebase 의존 제거 → `features/comment/repository.ts` 호출로 교체
-- **UI 컴포넌트**는 기존 props를 유지하되, 새 API shape에 맞춰 최소 수정
+## 0) 紐⑺몴 ?꾪궎?띿쿂
+- `features/post`? ?숈씪??**Supabase ?꾨찓???덉씠??4醫?*?쇰줈 ?듭씪
+  - `types.ts` ??DB Row/Insert/Update ????뺤쓽 (`Database` ???湲곕컲)
+  - `schema.ts` ??Zod ?ㅽ궎留?(?낅젰 寃利?
+  - `repository.ts` ??**Supabase Query 鍮뚮뜑濡?CRUD** (+ 而ㅼ꽌 ?섏씠吏?ㅼ씠?? ?꾪꽣)
+  - `service.ts` ??鍮꾩쫰?덉뒪 洹쒖튃/沅뚰븳 泥댄겕(?꾩슂 ??
+- **Route Handlers**??Firebase ?섏〈 ?쒓굅 ??`features/comment/repository.ts` ?몄텧濡?援먯껜
+- **UI 而댄룷?뚰듃**??湲곗〈 props瑜??좎??섎릺, ??API shape??留욎떠 理쒖냼 ?섏젙
 
 ---
 
-## 1) Supabase 테이블 정의 재점검
-요청자가 제공한 현재 스키마(요약):
+## 1) Supabase ?뚯씠釉??뺤쓽 ?ъ젏寃
+?붿껌?먭? ?쒓났???꾩옱 ?ㅽ궎留??붿빟):
 
 ```sql
 create table public.comments (
@@ -54,30 +56,28 @@ create index if not exists idx_comments_author_id
 create trigger tr_comments_set_author
 before insert on comments for each row execute function comments_set_author();
 ```
-### 중요 확인 포인트
-- `author_id`가 **NOT NULL**인데 FK가 `on delete set null` 입니다. 이 조합은 **충돌**을 일으킵니다.  
-  → **권장**: `author_id uuid null` 로 변경 **또는** FK의 `on delete` 동작을 `restrict`/`cascade`로 바꾸세요.  
-  Post/Recipe의 writer 전략과 **일관**을 추천합니다.
+### 以묒슂 ?뺤씤 ?ъ씤??- `author_id`媛 **NOT NULL**?몃뜲 FK媛 `on delete set null` ?낅땲?? ??議고빀? **異⑸룎**???쇱쑝?듬땲??  
+  ??**沅뚯옣**: `author_id uuid null` 濡?蹂寃?**?먮뒗** FK??`on delete` ?숈옉??`restrict`/`cascade`濡?諛붽씀?몄슂.  
+  Post/Recipe??writer ?꾨왂怨?**?쇨?**??異붿쿇?⑸땲??
 
-- `parent_type`은 `post | recipe` 같은 **enum**으로 추정됩니다. `public.comment_parent_type`에 값과 casing 일치 필요.
+- `parent_type`? `post | recipe` 媛숈? **enum**?쇰줈 異붿젙?⑸땲?? `public.comment_parent_type`??媛믨낵 casing ?쇱튂 ?꾩슂.
 
-- 트리거 `comments_set_author()`는 **현재 세션 사용자**를 `author_id`에 주입하는 함수여야 합니다. 없거나 동작이 다르면 아래 예시를 참고해 만드세요.
+- ?몃━嫄?`comments_set_author()`??**?꾩옱 ?몄뀡 ?ъ슜??*瑜?`author_id`??二쇱엯?섎뒗 ?⑥닔?ъ빞 ?⑸땲?? ?녾굅???숈옉???ㅻⅤ硫??꾨옒 ?덉떆瑜?李멸퀬??留뚮뱶?몄슂.
 
-> **참고**: 프로젝트의 Post 설계를 보면 `writer_uid`를 nullable로 두고 FK는 `on delete set null`을 사용하고 있습니다. Comment도 같은 철학을 따르는 게 유지보수에 안전합니다.
+> **李멸퀬**: ?꾨줈?앺듃??Post ?ㅺ퀎瑜?蹂대㈃ `writer_uid`瑜?nullable濡??먭퀬 FK??`on delete set null`???ъ슜?섍퀬 ?덉뒿?덈떎. Comment??媛숈? 泥좏븰???곕Ⅴ??寃??좎?蹂댁닔???덉쟾?⑸땲??
 
 ---
 
-## 2) 권장 SQL (안전 정렬 스크립트)
-`supabase/sql/000X_comments.sql` 로 신규 마이그레이션 파일을 추가하세요.
+## 2) 沅뚯옣 SQL (?덉쟾 ?뺣젹 ?ㅽ겕由쏀듃)
+`supabase/sql/000X_comments.sql` 濡??좉퇋 留덉씠洹몃젅?댁뀡 ?뚯씪??異붽??섏꽭??
 
 ```sql
 begin;
 
--- 2.1 컬럼/제약 정렬 (필요 시만 실행)
+-- 2.1 而щ읆/?쒖빟 ?뺣젹 (?꾩슂 ?쒕쭔 ?ㅽ뻾)
 alter table public.comments
-  alter column author_id drop not null;  -- on delete set null 과 정합성
-
--- 2.2 author 트리거 함수(미존재 시) 생성
+  alter column author_id drop not null;  -- on delete set null 怨??뺥빀??
+-- 2.2 author ?몃━嫄??⑥닔(誘몄〈???? ?앹꽦
 create or replace function public.comments_set_author()
 returns trigger
 language plpgsql
@@ -96,17 +96,17 @@ create trigger tr_comments_set_author
 before insert on public.comments
 for each row execute function public.comments_set_author();
 
--- 2.3 RLS 정책 (읽기 공개/쓰기 제한 예시)
+-- 2.3 RLS ?뺤콉 (?쎄린 怨듦컻/?곌린 ?쒗븳 ?덉떆)
 alter table public.comments enable row level security;
 
--- 누구나 읽기 (parent 기준 공개 정책은 필요 시 추가)
+-- ?꾧뎄???쎄린 (parent 湲곗? 怨듦컻 ?뺤콉? ?꾩슂 ??異붽?)
 drop policy if exists "comments_read_all" on public.comments;
 create policy "comments_read_all"
   on public.comments
   for select
   using (true);
 
--- 로그인 사용자만 작성 (트리거가 author_id 주입)
+-- 濡쒓렇???ъ슜?먮쭔 ?묒꽦 (?몃━嫄곌? author_id 二쇱엯)
 drop policy if exists "comments_insert_auth" on public.comments;
 create policy "comments_insert_auth"
   on public.comments
@@ -114,7 +114,7 @@ create policy "comments_insert_auth"
   to authenticated
   with check (true);
 
--- 본인만 수정/삭제
+-- 蹂몄씤留??섏젙/??젣
 drop policy if exists "comments_update_own" on public.comments;
 create policy "comments_update_own"
   on public.comments
@@ -133,23 +133,23 @@ create policy "comments_delete_own"
 commit;
 ```
 
-> **사이드 이펙트**: 기존 Firebase 경로에 있던 삭제/갱신 권한 로직이 DB로 이동합니다. FE는 오류를 핸들링만 하면 됩니다.
+> **?ъ씠???댄럺??*: 湲곗〈 Firebase 寃쎈줈???덈뜕 ??젣/媛깆떊 沅뚰븳 濡쒖쭅??DB濡??대룞?⑸땲?? FE???ㅻ쪟瑜??몃뱾留곷쭔 ?섎㈃ ?⑸땲??
 
 ---
 
-## 3) 코드 이관 — 파일 단위 액션
-### 3.1 제거/교체 대상 (Firebase 의존)
-- **삭제(또는 rename + keep for backup)**  
+## 3) 肄붾뱶 ?닿? ???뚯씪 ?⑥쐞 ?≪뀡
+### 3.1 ?쒓굅/援먯껜 ???(Firebase ?섏〈)
+- **??젣(?먮뒗 rename + keep for backup)**  
   - `src/features/comment/repository.server.ts`  
-    - Firebase Admin (`adminDb`) 사용. Supabase 전환 시 **완전 제거**.
-- **수정(내부 구현만 Supabase로 교체)**  
+    - Firebase Admin (`adminDb`) ?ъ슜. Supabase ?꾪솚 ??**?꾩쟾 ?쒓굅**.
+- **?섏젙(?대? 援ы쁽留?Supabase濡?援먯껜)**  
   - `src/app/api/comments/route.ts`  
   - `src/app/api/comments/[id]/route.ts`  
-  - `src/features/comment/api.ts` (엔드포인트는 유지)
+  - `src/features/comment/api.ts` (?붾뱶?ъ씤?몃뒗 ?좎?)
 
-> 레퍼런스(현재 파일 헤더 일부):
+> ?덊띁?곗뒪(?꾩옱 ?뚯씪 ?ㅻ뜑 ?쇰?):
 ```ts
-﻿import "server-only";
+癤퓁mport "server-only";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { Comment, CommentCreateDTO, CommentUpdateDTO } from "./types";
@@ -172,13 +172,12 @@ export async function listComments(opts?: {
 
 ```
 
-### 3.2 신규/대체 생성 (Post 도메인과 동일 구조)
-- `src/features/comment/types.ts` — **Supabase 타입 기반으로 재작성**
-- `src/features/comment/schema.ts` — **Zod** 스키마
-- `src/features/comment/repository.ts` — **Supabase** CRUD
-- `src/features/comment/service.ts` — 필요한 경우 권한/유효성 추가
+### 3.2 ?좉퇋/?泥??앹꽦 (Post ?꾨찓?멸낵 ?숈씪 援ъ“)
+- `src/features/comment/types.ts` ??**Supabase ???湲곕컲?쇰줈 ?ъ옉??*
+- `src/features/comment/schema.ts` ??**Zod** ?ㅽ궎留?- `src/features/comment/repository.ts` ??**Supabase** CRUD
+- `src/features/comment/service.ts` ???꾩슂??寃쎌슦 沅뚰븳/?좏슚??異붽?
 
-> 레퍼런스(게시글 Supabase 설계):
+> ?덊띁?곗뒪(寃뚯떆湲 Supabase ?ㅺ퀎):
 ```ts
 import type { PostgrestError } from "@supabase/supabase-js";
 
@@ -205,7 +204,7 @@ const POST_COLUMNS = [
 
 ---
 
-## 4) 새 구현 스펙 (샘플 코드 스케치)
+## 4) ??援ы쁽 ?ㅽ럺 (?섑뵆 肄붾뱶 ?ㅼ?移?
 
 ### 4.1 `src/features/comment/types.ts`
 ```ts
@@ -330,7 +329,7 @@ export async function deleteComment(client: CommentSupabaseClient, id: string) {
 }
 ```
 
-### 4.4 `src/features/comment/service.ts` (옵션)
+### 4.4 `src/features/comment/service.ts` (?듭뀡)
 ```ts
 import { getServerSupabase } from "@/lib/supabase/server";
 import { commentInsertSchema, commentUpdateSchema } from "./schema";
@@ -344,7 +343,7 @@ export async function listComments(params: Parameters<typeof repo.fetchComments>
 export async function createComment(input: unknown) {
   const client = getServerSupabase();
   const { parentType, parentId, body } = commentInsertSchema.parse(input);
-  // author_id는 트리거에서 주입
+  // author_id???몃━嫄곗뿉??二쇱엯
   return repo.insertComment(client, { parent_type: parentType, parent_id: parentId, body });
 }
 
@@ -360,11 +359,11 @@ export async function removeComment(id: string) {
 }
 ```
 
-### 4.5 Route Handlers 교체 (내부만 Supabase 호출로 변경)
-`src/app/api/comments/route.ts` / `[id]/route.ts`는 **현 엔드포인트를 유지**하고, 내부 의존만 바꾸세요.
+### 4.5 Route Handlers 援먯껜 (?대?留?Supabase ?몄텧濡?蹂寃?
+`src/app/api/comments/route.ts` / `[id]/route.ts`??**???붾뱶?ъ씤?몃? ?좎?**?섍퀬, ?대? ?섏〈留?諛붽씀?몄슂.
 
 ```ts
-// src/app/api/comments/route.ts (핵심만 예시)
+// src/app/api/comments/route.ts (?듭떖留??덉떆)
 import * as svc from "@/features/comment/service";
 
 export async function GET(req: Request) {
@@ -397,14 +396,14 @@ export async function POST(req: Request) {
 ```
 
 ```ts
-// src/app/api/comments/[id]/route.ts (핵심만 예시)
+// src/app/api/comments/[id]/route.ts (?듭떖留??덉떆)
 import * as svc from "@/features/comment/service";
 
 type Ctx = { params: { id: string } };
 
 export async function GET(_: Request, { params }: Ctx) {
   const item = await svc.listComments({ limit: 1, cursor: undefined, parentId: undefined, parentType: undefined });
-  // 또는 repo.getComment(getServerSupabase(), params.id)
+  // ?먮뒗 repo.getComment(getServerSupabase(), params.id)
   return Response.json({ data: item });
 }
 
@@ -420,61 +419,55 @@ export async function DELETE(_: Request, { params }: Ctx) {
 }
 ```
 
-> **사이드 이펙트**: 기존 `comment.js`(옛 UI)와의 데이터 shape 차이(`comment` → `body`, `writerName` → `authorId/프로필 조회`)로 인해 **UI 적응층**이 필요할 수 있습니다. 가능하면 `features/user`의 프로필 조회를 조합해 `author_id → display_name` 변환을 해주세요.
+> **?ъ씠???댄럺??*: 湲곗〈 `comment.js`(??UI)????곗씠??shape 李⑥씠(`comment` ??`body`, `writerName` ??`authorId/?꾨줈??議고쉶`)濡??명빐 **UI ?곸쓳痢?*???꾩슂?????덉뒿?덈떎. 媛?ν븯硫?`features/user`???꾨줈??議고쉶瑜?議고빀??`author_id ??display_name` 蹂?섏쓣 ?댁＜?몄슂.
 
 ---
 
-## 5) UI 영향 범위 (리스크 체크리스트)
-- 댓글 작성 폼: **익명 허용 여부**, 로그인 강제 여부 (RLS와 정책을 일치)
-- 작성자 표시: `author_id` → `users.display_name` join(뷰/쿼리) 필요 시 `comments_with_profile` 뷰 고려
-- 소프트 삭제(`deleted_at`) 표시 전략: 본문 마스킹, 복구 기능 필요 여부
-- 부모 연결: `parent_type`, `parent_id`에 대한 **유효성**. 존재하지 않는 부모에 대한 **FK 강제**를 원하면 별도 FK/트리거 필요
-- 페이지네이션: `created_at DESC, id ASC` 커서 정합성 → Post와 동일 패턴 유지
-- 캐시/ISR: 댓글은 쓰기/읽기 빈번 → 현재처럼 `cache: "no-store"` 유지 권장
+## 5) UI ?곹뼢 踰붿쐞 (由ъ뒪??泥댄겕由ъ뒪??
+- ?볤? ?묒꽦 ?? **?듬챸 ?덉슜 ?щ?**, 濡쒓렇??媛뺤젣 ?щ? (RLS? ?뺤콉???쇱튂)
+- ?묒꽦???쒖떆: `author_id` ??`users.display_name` join(酉?荑쇰━) ?꾩슂 ??`comments_with_profile` 酉?怨좊젮
+- ?뚰봽????젣(`deleted_at`) ?쒖떆 ?꾨왂: 蹂몃Ц 留덉뒪?? 蹂듦뎄 湲곕뒫 ?꾩슂 ?щ?
+- 遺紐??곌껐: `parent_type`, `parent_id`?????**?좏슚??*. 議댁옱?섏? ?딅뒗 遺紐⑥뿉 ???**FK 媛뺤젣**瑜??먰븯硫?蹂꾨룄 FK/?몃━嫄??꾩슂
+- ?섏씠吏?ㅼ씠?? `created_at DESC, id ASC` 而ㅼ꽌 ?뺥빀????Post? ?숈씪 ?⑦꽩 ?좎?
+- 罹먯떆/ISR: ?볤?? ?곌린/?쎄린 鍮덈쾲 ???꾩옱泥섎읆 `cache: "no-store"` ?좎? 沅뚯옣
 
 ---
 
-## 6) 단계별 실행 체크리스트
-1. **SQL 반영**: `supabase db push` 또는 Studio에서 실행 → RLS/트리거 적용
-2. **코드 교체**: 위 3.2/4절의 파일 생성 및 Route 내부 교체
-3. **Firebase 잔존 제거**: `repository.server.ts` 삭제, Firebase import 참조 전부 제거
-4. **타입 정리**: `src/features/comment/types.ts`를 **Supabase 타입 원천**으로 재작성
-5. **UI 연결**: 작성/수정/삭제/목록 화면 점검 및 `author` 표시 로직 보강
-6. **테스트**: 
-   - 비로그인 read 가능
-   - 로그인 insert 가능, 트리거로 author_id 주입 확인
-   - 본인만 update/delete 허용(RLS로 차단되는지)
-   - 커서 페이지네이션 진행/경계값 검증
-7. **문서화**: 이 매뉴얼을 리포에 `docs/comment-migration.md`로 커밋
+## 6) ?④퀎蹂??ㅽ뻾 泥댄겕由ъ뒪??1. **SQL 諛섏쁺**: `supabase db push` ?먮뒗 Studio?먯꽌 ?ㅽ뻾 ??RLS/?몃━嫄??곸슜
+2. **肄붾뱶 援먯껜**: ??3.2/4?덉쓽 ?뚯씪 ?앹꽦 諛?Route ?대? 援먯껜
+3. **Firebase ?붿〈 ?쒓굅**: `repository.server.ts` ??젣, Firebase import 李몄“ ?꾨? ?쒓굅
+4. **????뺣━**: `src/features/comment/types.ts`瑜?**Supabase ????먯쿇**?쇰줈 ?ъ옉??5. **UI ?곌껐**: ?묒꽦/?섏젙/??젣/紐⑸줉 ?붾㈃ ?먭? 諛?`author` ?쒖떆 濡쒖쭅 蹂닿컯
+6. **?뚯뒪??*: 
+   - 鍮꾨줈洹몄씤 read 媛??   - 濡쒓렇??insert 媛?? ?몃━嫄곕줈 author_id 二쇱엯 ?뺤씤
+   - 蹂몄씤留?update/delete ?덉슜(RLS濡?李⑤떒?섎뒗吏)
+   - 而ㅼ꽌 ?섏씠吏?ㅼ씠??吏꾪뻾/寃쎄퀎媛?寃利?7. **臾몄꽌??*: ??留ㅻ돱?쇱쓣 由ы룷??`docs/comment-migration.md`濡?而ㅻ컠
 
 ---
 
-## 7) 삭제/변경되는 심볼 요약
-- **삭제**: `src/features/comment/repository.server.ts`
-- **변경**:
-  - `src/features/comment/types.ts` — (옛) Firebase형 → (신) Supabase형
-  - `src/app/api/comments/*` — 내부 의존을 service/repository(Supabase)로 교체
+## 7) ??젣/蹂寃쎈릺???щ낵 ?붿빟
+- **??젣**: `src/features/comment/repository.server.ts`
+- **蹂寃?*:
+  - `src/features/comment/types.ts` ??(?? Firebase????(?? Supabase??  - `src/app/api/comments/*` ???대? ?섏〈??service/repository(Supabase)濡?援먯껜
 
 ---
 
-## 8) 회귀 위험(사이드 이펙트) 대비
-- **권한 역전**: FE에서 막던 것을 DB RLS로 옮기면서 **중복/누락**이 생길 수 있습니다. FE는 최소한의 **에러 핸들링 + UX 메시지**만 남기세요.
-- **작성자 삭제**: `users(id)`가 삭제될 때 `author_id`가 null로 바뀌는 정책을 택했다면, **UI에서 null 작성자 표기(Deleted User)** 처리가 필요합니다.
-- **parent 무결성**: 현재 스키마는 `parent_id` FK가 없습니다. 잘못된 parent로 insert 될 수 있으니 **서버에서 존재 검증** 또는 **뷰/제약** 추가를 고려하세요.
+## 8) ?뚭? ?꾪뿕(?ъ씠???댄럺?? ?鍮?- **沅뚰븳 ??쟾**: FE?먯꽌 留됰뜕 寃껋쓣 DB RLS濡???린硫댁꽌 **以묐났/?꾨씫**???앷만 ???덉뒿?덈떎. FE??理쒖냼?쒖쓽 **?먮윭 ?몃뱾留?+ UX 硫붿떆吏**留??④린?몄슂.
+- **?묒꽦????젣**: `users(id)`媛 ??젣????`author_id`媛 null濡?諛붾뚮뒗 ?뺤콉???앺뻽?ㅻ㈃, **UI?먯꽌 null ?묒꽦???쒓린(Deleted User)** 泥섎━媛 ?꾩슂?⑸땲??
+- **parent 臾닿껐??*: ?꾩옱 ?ㅽ궎留덈뒗 `parent_id` FK媛 ?놁뒿?덈떎. ?섎せ??parent濡?insert ?????덉쑝??**?쒕쾭?먯꽌 議댁옱 寃利?* ?먮뒗 **酉??쒖빟** 異붽?瑜?怨좊젮?섏꽭??
 
 ---
 
-## 9) 커밋 가이드
+## 9) 而ㅻ컠 媛?대뱶
 - `feat(comment): migrate to Supabase repository/service + add RLS policies`
 - `refactor(comment): replace route handlers to call service (remove Firebase admin)`
 - `chore(sql): comments trigger & policies & indexes`
 
 ---
 
-## 부록 A) 기존 파일 헤더 발췌 (비교 용)
+## 遺濡?A) 湲곗〈 ?뚯씪 ?ㅻ뜑 諛쒖톸 (鍮꾧탳 ??
 `src/app/api/comments/route.ts`
 ```ts
-﻿// src/app/api/comments/route.ts
+癤?/ src/app/api/comments/route.ts
 import { CommentCreateSchema } from "@/features/comment/types";
 import * as repo from "@/features/comment/repository.server";
 

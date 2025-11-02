@@ -8,12 +8,16 @@ export type UserSupabaseClient = SupabaseClient<Database>;
 
 export type UserListResult = {
   items: UserRow[];
-  nextCursor: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
 };
 
 export type UserListOptions = {
   limit?: number;
-  cursor?: string;
+  page?: number;
+  offset?: number;
   username?: string;
 };
 
@@ -23,14 +27,8 @@ export type UserUpdate = {
   email?: string | null;
 };
 
-export type UserCursorFilter = {
-  createdAt: string;
-  id: string;
-};
-
 export type FetchUsersParams = {
   limit: number;
+  offset: number;
   username?: string;
-  cursor?: UserCursorFilter | null;
 };
-

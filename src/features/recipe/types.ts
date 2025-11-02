@@ -55,7 +55,8 @@ export interface RecipeUpdateInput {
 
 export interface RecipeListOptions {
   limit?: number;
-  cursor?: string;
+  page?: number;
+  offset?: number;
   tag?: string;
   status?: number;
   writerUid?: string;
@@ -64,26 +65,20 @@ export interface RecipeListOptions {
 
 export interface RecipeListResult {
   items: Recipe[];
-  nextCursor: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
 }
-
-
-export type RecipeCursorFilter = {
-  createdAt: string;
-  id: string;
-};
 
 export type FetchRecipesParams = {
   limit: number;
+  offset: number;
   tag?: string;
   status?: number;
   writerUid?: string;
   search?: string;
-  cursor?: RecipeCursorFilter | null;
 };
-
-
-
 
 export type RecipeSupabaseClient = SupabaseClient<Database>;
 export type RecipeInsertDB = TablesInsert<"recipes">;

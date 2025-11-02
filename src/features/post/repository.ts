@@ -33,17 +33,24 @@ function escapeIlike(term: string): string {
   return term.replace(/[%_]/g, (match) => `\\${match}`);
 }
 
+export type FetchPostsResult = {
+  items: PostRow[];
+  total: number;
+};
+
 export async function fetchPosts(
   client: PostSupabaseClient,
   params: FetchPostsParams
-): Promise<PostRow[]> {
+): Promise<FetchPostsResult> {
   const safeLimit = Math.max(params.limit, 1);
+  const safeOffset = Math.max(params.offset, 0);
+  const rangeEnd = safeOffset + safeLimit - 1;
   let query = (client as any)
     .from("posts")
-    .select(POST_COLUMNS)
+    .select(POST_COLUMNS, { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
-    .limit(safeLimit);
+    .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
@@ -63,16 +70,12 @@ export async function fetchPosts(
     }
   }
 
-  if (params.cursor) {
-    const { createdAt, id } = params.cursor;
-    query = query.or(
-      `created_at.lt.${createdAt},and(created_at.eq.${createdAt},id.gt.${id})`
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   throwIfError(error);
-  return mapRows(data);
+  return {
+    items: mapRows(data),
+    total: count ?? 0,
+  };
 }
 
 export async function selectPostById(

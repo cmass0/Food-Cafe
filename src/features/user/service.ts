@@ -4,7 +4,6 @@ import type { User } from "@supabase/supabase-js";
 import { UserCreateSchema, UserUpdateSchema, type UserCreateInput, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
 import type {
-  UserCursorFilter,
   UserListOptions,
   UserListResult,
   UserRow,
@@ -29,11 +28,6 @@ function withCode<T extends Error>(error: T, code: string): T & { code: string }
   return error as T & { code: string };
 }
 
-type CursorPayload = {
-  created_at?: string;
-  id?: string;
-};
-
 function resolveLimit(limit?: number): number {
   if (typeof limit !== "number" || Number.isNaN(limit)) {
     return DEFAULT_LIMIT;
@@ -44,21 +38,15 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function parseCursor(cursor?: string | null): UserCursorFilter | null {
-  if (!cursor) return null;
-  try {
-    const decoded = Buffer.from(cursor, "base64url").toString("utf8");
-    const payload = JSON.parse(decoded) as CursorPayload;
-    if (!payload.created_at || !payload.id) return null;
-    return { createdAt: payload.created_at, id: payload.id };
-  } catch {
-    return null;
+function resolveOffset(offset: number | undefined, page: number | undefined, limit: number): number {
+  if (typeof offset === "number" && Number.isFinite(offset)) {
+    return Math.max(0, Math.trunc(offset));
   }
-}
-
-function toCursor(row: UserRow): string {
-  const payload = JSON.stringify({ created_at: row.created_at, id: row.id });
-  return Buffer.from(payload).toString("base64url");
+  if (typeof page === "number" && Number.isFinite(page)) {
+    const safePage = Math.max(1, Math.trunc(page));
+    return (safePage - 1) * limit;
+  }
+  return 0;
 }
 
 function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
@@ -138,19 +126,23 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
   const supabase = getServerSupabase();
   const limit = resolveLimit(options?.limit);
-  const rows = await repository.fetchUsers(supabase, {
-    limit: limit + 1,
+  const offset = resolveOffset(options?.offset, options?.page, limit);
+  const { items: rows, total: rawTotal } = await repository.fetchUsers(supabase, {
+    limit,
+    offset,
     username: options?.username,
-    cursor: parseCursor(options?.cursor),
   });
 
-  const hasExtra = rows.length > limit;
-  const items = hasExtra ? rows.slice(0, limit) : rows;
-  const cursorRow = hasExtra ? rows[limit] : null;
+  const items = rows;
+  const total = Math.max(rawTotal, offset + items.length);
+  const hasMore = offset + items.length < total;
 
   return {
     items,
-    nextCursor: cursorRow ? toCursor(cursorRow) : null,
+    total,
+    limit,
+    offset,
+    hasMore,
   };
 }
 

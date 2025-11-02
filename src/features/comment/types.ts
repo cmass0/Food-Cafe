@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -11,7 +11,7 @@ import type {
   Enums,
 } from "@/types/supabase";
 
-// Raw DB types from Supabase codegen
+
 export type CommentRow = Tables<"comments">;
 export type CommentInsertDB = TablesInsert<"comments">;
 export type CommentUpdateDB = TablesUpdate<"comments">;
@@ -19,7 +19,7 @@ export type CommentParentType = Enums<"comment_parent_type">;
 
 export type CommentSupabaseClient = SupabaseClient<Database>;
 
-// Domain model used by UI/service layers
+
 export interface Comment {
   id: string;
   parentType: CommentParentType;
@@ -32,22 +32,20 @@ export interface Comment {
   deletedAt: Date | null;
 }
 
-export type CommentCursor = {
-  createdAt: string; // ISO string of created_at
-  id: string;
-};
-
 export type FetchCommentsParams = {
   parentType: CommentParentType;
   parentId: string;
-  limit: number;
-  cursor?: CommentCursor | null;
+  limit?: number;
+  offset?: number;
   includeDeleted?: boolean;
 };
 
 export type CommentListResult = {
   items: Comment[];
-  nextCursor: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
 };
 
 export function mapRowToComment(row: CommentRow): Comment {

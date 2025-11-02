@@ -48,25 +48,24 @@ export interface Post {
 
 export type PostListResult = {
   items: Post[];
-  nextCursor: string | null;
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
 };
 
 export type PostListOptions = {
   limit?: number;
-  cursor?: string;
+  page?: number;
+  offset?: number;
   writerUid?: string;
   type?: string;
   search?: string;
 };
 
-export type PostCursorFilter = {
-  createdAt: string;
-  id: string;
-};
-
 export type FetchPostsParams = {
   limit: number;
-  cursor?: PostCursorFilter | null;
+  offset: number;
   writerUid?: string;
   type?: string;
   search?: string;

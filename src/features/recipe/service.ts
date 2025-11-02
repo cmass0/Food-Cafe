@@ -6,7 +6,6 @@
 import * as repository from "./repository";
 import type {
   Recipe,
-  RecipeCursorFilter,
   RecipeInsertDB,
   RecipeInsertInput,
   RecipeListOptions,
@@ -19,11 +18,6 @@ import type {
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-
-type CursorPayload = {
-  created_at?: string;
-  id?: string;
-};
 
 function normaliseTextArray(value: string[] | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
@@ -104,24 +98,15 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function parseCursor(cursor?: string | null): RecipeCursorFilter | null {
-  if (!cursor) return null;
-  try {
-    const decoded = Buffer.from(cursor, "base64url").toString("utf8");
-    const payload = JSON.parse(decoded) as CursorPayload;
-    if (!payload.created_at || !payload.id) return null;
-    return { createdAt: payload.created_at, id: payload.id };
-  } catch {
-    return null;
+function resolveOffset(offset: number | undefined, page: number | undefined, limit: number): number {
+  if (typeof offset === "number" && Number.isFinite(offset)) {
+    return Math.max(0, Math.trunc(offset));
   }
-}
-
-function toCursor(row: RecipeRow): string {
-  const payload = JSON.stringify({
-    created_at: row.created_at,
-    id: row.id,
-  });
-  return Buffer.from(payload).toString("base64url");
+  if (typeof page === "number" && Number.isFinite(page)) {
+    const safePage = Math.max(1, Math.trunc(page));
+    return (safePage - 1) * limit;
+  }
+  return 0;
 }
 
 export async function listRecipes(
@@ -130,22 +115,26 @@ export async function listRecipes(
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit);
-  const rows = await repository.fetchRecipes(client, {
-    limit: limit + 1,
+  const offset = resolveOffset(parsed.offset, parsed.page, limit);
+  const { items: rows, total: rawTotal } = await repository.fetchRecipes(client, {
+    limit,
+    offset,
     tag: parsed.tag,
     status: parsed.status,
     writerUid: parsed.writerUid,
     search: parsed.search,
-    cursor: parseCursor(parsed.cursor),
   });
 
-  const hasExtra = rows.length > limit;
-  const items = hasExtra ? rows.slice(0, limit) : rows;
-  const cursorRow = hasExtra ? rows[limit] : null;
+  const items = rows.map(mapRowToRecipe);
+  const total = Math.max(rawTotal, offset + items.length);
+  const hasMore = offset + items.length < total;
 
   return {
-    items: items.map(mapRowToRecipe),
-    nextCursor: cursorRow ? toCursor(cursorRow) : null,
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
   };
 }
 

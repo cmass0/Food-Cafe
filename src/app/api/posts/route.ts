@@ -9,16 +9,21 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limit = Number(url.searchParams.get("limit") ?? "");
-    const cursor = url.searchParams.get("cursor") ?? undefined;
+    const limitParam = Number(url.searchParams.get("limit") ?? "");
+    const pageParam = Number(url.searchParams.get("page") ?? "");
+    const offsetParam = Number(url.searchParams.get("offset") ?? "");
+    const limit = Number.isFinite(limitParam) ? limitParam : undefined;
+    const page = Number.isFinite(pageParam) ? pageParam : undefined;
+    const offset = Number.isFinite(offsetParam) ? offsetParam : undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
     const type = url.searchParams.get("type") ?? undefined;
     const search = url.searchParams.get("search") ?? undefined;
 
     const supabase = getServerSupabase();
     const data = await postService.listPosts(supabase, {
-      limit: Number.isFinite(limit) ? limit : undefined,
-      cursor,
+      limit,
+      page,
+      offset,
       writerUid,
       type,
       search,

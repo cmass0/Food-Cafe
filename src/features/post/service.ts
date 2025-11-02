@@ -2,7 +2,6 @@ import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./sch
 import * as repository from "./repository";
 import type {
   Post,
-  PostCursorFilter,
   PostInsertDB,
   PostRow,
   PostSupabaseClient,
@@ -11,8 +10,8 @@ import type {
   PostListResult,
 } from "./types";
 
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 10;
 
 function resolveLimit(limit?: number): number {
   if (typeof limit !== "number" || Number.isNaN(limit)) return DEFAULT_LIMIT;
@@ -20,6 +19,17 @@ function resolveLimit(limit?: number): number {
   if (truncated < 1) return 1;
   if (truncated > MAX_LIMIT) return MAX_LIMIT;
   return truncated;
+}
+
+function resolveOffset(offset: number | undefined, page: number | undefined, limit: number): number {
+  if (typeof offset === "number" && Number.isFinite(offset)) {
+    return Math.max(0, Math.trunc(offset));
+  }
+  if (typeof page === "number" && Number.isFinite(page)) {
+    const safePage = Math.max(1, Math.trunc(page));
+    return (safePage - 1) * limit;
+  }
+  return 0;
 }
 
 function mapRowToPost(row: PostRow): Post {
@@ -59,44 +69,31 @@ function buildUpdatePayload(parsed: ReturnType<typeof postUpdateSchema.parse>): 
   return payload;
 }
 
-function parseCursor(cursor?: string | null): PostCursorFilter | null {
-  if (!cursor) return null;
-  try {
-    const decoded = Buffer.from(cursor, "base64url").toString("utf8");
-    const payload = JSON.parse(decoded) as { created_at?: string; id?: string };
-    if (!payload.created_at || !payload.id) return null;
-    return { createdAt: payload.created_at, id: payload.id };
-  } catch {
-    return null;
-  }
-}
-
-function encodeCursor(row: PostRow): string {
-  const payload = JSON.stringify({ created_at: row.created_at, id: row.id });
-  return Buffer.from(payload).toString("base64url");
-}
-
 export async function listPosts(
   client: PostSupabaseClient,
   options?: PostListOptions
 ): Promise<PostListResult> {
   const parsed = postListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit);
-  const rows = await repository.fetchPosts(client, {
-    limit: limit + 1,
-    cursor: parseCursor(parsed.cursor),
+  const offset = resolveOffset(parsed.offset, parsed.page, limit);
+  const { items: rows, total: rawTotal } = await repository.fetchPosts(client, {
+    limit,
+    offset,
     writerUid: parsed.writerUid,
     type: parsed.type,
     search: parsed.search,
   });
 
-  const hasExtra = rows.length > limit;
-  const items = hasExtra ? rows.slice(0, limit) : rows;
-  const cursorRow = hasExtra ? rows[limit] : null;
+  const items = rows.map(mapRowToPost);
+  const total = Math.max(rawTotal, offset + items.length);
+  const hasMore = offset + items.length < total;
 
   return {
-    items: items.map(mapRowToPost),
-    nextCursor: cursorRow ? encodeCursor(cursorRow) : null,
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
   };
 }
 
@@ -171,4 +168,3 @@ export async function incrementPostView(
   await repository.incrementPostViewCount(client, id);
   return getPost(client, id);
 }
-

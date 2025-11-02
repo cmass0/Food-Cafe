@@ -6,32 +6,36 @@ function mapRows(rows: UserRow[] | null | undefined): UserRow[] {
   return Array.isArray(rows) ? (rows as UserRow[]) : [];
 }
 
+export type FetchUsersResult = {
+  items: UserRow[];
+  total: number;
+};
+
 export async function fetchUsers(
   client: UserSupabaseClient,
   params: FetchUsersParams,
-): Promise<UserRow[]> {
+): Promise<FetchUsersResult> {
   const safeLimit = Math.max(params.limit, 1);
+  const safeOffset = Math.max(params.offset, 0);
+  const rangeEnd = safeOffset + safeLimit - 1;
   let query = (client as any)
     .from("users_public")
-    .select("id, display_name, photo_url, created_at")
+    .select("id, display_name, photo_url, created_at", { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
-    .limit(safeLimit);
+    .range(safeOffset, Math.max(rangeEnd, safeOffset));
  
   if (params.username) {
     const escaped = params.username.replace(/[%_]/g, m => `\\${m}`);
     query = query.ilike("display_name",`%${escaped}%`);
   }
 
-  if (params.cursor) {
-    query = query.or(
-      `created_at.lt.${params.cursor.createdAt},and(created_at.eq.${params.cursor.createdAt},id.gt.${params.cursor.id})`
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw error;
-  return mapRows(data);
+  return {
+    items: mapRows(data),
+    total: count ?? 0,
+  };
 }
 
 export async function selectUserById(

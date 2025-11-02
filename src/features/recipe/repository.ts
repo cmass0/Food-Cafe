@@ -8,52 +8,28 @@ import type {
   RecipeUpdateDB,
 } from "./types";
 
-//추후 필요하다면 리터럴로 생성성
-// const RECIPE_COLUMNS = [
-//   "id",
-//   "id_text_old",
-//   "legacy_id",
-//   "title",
-//   "summary",
-//   "recipe",
-//   "image",
-//   "images",
-//   "category",
-//   "tags",
-//   "like_count",
-//   "view_count",
-//   "last_liked_at",
-//   "status",
-//   "writer_uid",
-//   "writer_uid_legacy",
-//   "writer_name",
-//   "writer_email",
-//   "created_at",
-//   "updated_at",
-// ].join(", ");
-
-function mapRows(rows: RecipeRow[] | null | undefined): RecipeRow[] {
-  return Array.isArray(rows) ? (rows as RecipeRow[]) : [];
-}
-
 function throwIfError(error: PostgrestError | null): void {
   if (error) throw error;
 }
 
-
-
+export type FetchRecipesResult = {
+  items: RecipeRow[];
+  total: number;
+};
 
 export async function fetchRecipes(
   client: RecipeSupabaseClient,
   params: FetchRecipesParams,
-): Promise<RecipeRow[]> {
+): Promise<FetchRecipesResult> {
   const safeLimit = Math.max(params.limit, 1);
+  const safeOffset = Math.max(params.offset, 0);
+  const rangeEnd = safeOffset + safeLimit - 1;
   let query = client
     .from("recipes")
-    .select("*")
+    .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
-    .limit(safeLimit);
+    .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.tag) {
     query = query.contains("tags", [params.tag]);
@@ -71,15 +47,12 @@ export async function fetchRecipes(
     query = query.textSearch("tsv", params.search, { type: "plain" });
   }
 
-  if (params.cursor) {
-    query = query.or(
-      `created_at.lt.${params.cursor.createdAt},and(created_at.eq.${params.cursor.createdAt},id.gt.${params.cursor.id})`
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   throwIfError(error);
-  return mapRows(data);
+  return {
+    items: (data as RecipeRow[]) ?? [],
+    total: count ?? 0,
+  };
 }
 
 export async function selectRecipeById(
@@ -135,4 +108,3 @@ export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: strin
   const { error } = await client.from("recipes").delete().eq("id", id);
   throwIfError(error);
 }
-

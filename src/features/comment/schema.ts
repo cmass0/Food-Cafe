@@ -48,6 +48,7 @@ export const commentListOptionsSchema = z.object({
   parentType: parentTypeEnum,
   parentId: z.string().uuid(),
   limit: z.number().int().min(1).max(100).optional(),
-  cursor: z.string().min(1).optional(),
+  page: z.number().int().min(1).optional(),
+  offset: z.number().int().min(0).optional(),
   includeDeleted: z.boolean().optional(),
 });
