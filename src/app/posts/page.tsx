@@ -27,18 +27,19 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const supabase = getServerSupabase();
 
   const pageValue = firstValue(searchParams?.page);
-  const limitValue = firstValue(searchParams?.limit);
+  // const limitValue = firstValue(searchParams?.limit);
   const writerUid = firstValue(searchParams?.writerUid);
   const type = firstValue(searchParams?.type);
   const searchValue = firstValue(searchParams?.search);
 
   const pageNumber = Number(pageValue);
-  const limitNumber = Number(limitValue);
+  // const limitNumber = Number(limitValue);
   const keyword = searchValue?.trim() ?? undefined;
+  const limit = 10;
 
-  const { items, total, limit, offset } = await postService.listPosts(supabase, {
+  const { items, total, offset } = await postService.listPosts(supabase, {
     page: Number.isFinite(pageNumber) ? pageNumber : undefined,
-    limit: Number.isFinite(limitNumber) ? limitNumber : undefined,
+    limit: limit,
     writerUid: writerUid ?? undefined,
     type: type ?? undefined,
     search: keyword && keyword.length > 0 ? keyword : undefined,
