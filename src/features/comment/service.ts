@@ -1,6 +1,7 @@
+
 import * as repository from "./repository";
-import { commentInsertSchema } from "./schema";
-import { Comment, CommentInsertDB, CommentRow } from "./types";
+import { commentInsertSchema, commentUpdateSchema } from "./schema";
+import { Comment, CommentInsertDB, CommentRow, CommentSupabaseClient } from "./types";
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -60,6 +61,77 @@ function buildUpdatePayload(
   if (input.writerName !== undefined) payload.writer_name = input.writerName;
   return payload;
 }
+
+
+
+export async function listComments(
+  client: CommentSupabaseClient,
+  params: {   
+    parentType: "recipe" | "post";
+    parentId: string;
+    page?: number;
+    limit?: number;
+    offset?: number;
+    includeDeleted?: boolean;
+  }
+): Promise<{ items: Comment[]; total: number }> {
+  const parsedLimit = resolveLimit(params.limit);
+  const offset = resolveOffset(params.offset, params.page, parsedLimit);
+  const { items: rows, total: rawTotal } = await repository.fetchComments(client, {
+    parentType: params.parentType,
+    parentId: params.parentId,  
+    limit: parsedLimit,
+    offset,
+    includeDeleted: params.includeDeleted ?? false,
+  });
+
+  const items = rows.map(mapRowToComment);
+  const total = Math.max(rawTotal, offset + items.length);  
+  return {
+    items,
+    total,
+  };
+}
+
+export async function getComment(
+  client: CommentSupabaseClient, 
+  id: string) : Promise<Comment | null> {
+  const row = await repository.selectCommentById(client, id);
+  return row ? mapRowToComment(row) : null;
+}
+
+export async function createComment(
+  client: CommentSupabaseClient,
+  writerUid: string,  
+  input: string
+): Promise<Comment> {
+  const parsed = commentInsertSchema.parse(input);
+  const payload = buildInsertPayload(parsed, writerUid);
+  const row = await repository.insertComment(client, payload);
+  return mapRowToComment(row);
+}
+
+export async function updateComment(
+  client: CommentSupabaseClient,
+  id: string,
+  input: string | {}
+): Promise<Comment> {
+  const parsed = input ? commentUpdateSchema.parse(input) : {};
+  const payload = buildUpdatePayload(parsed);
+  const row = await repository.updateComment(client, id, payload);
+  if(!row) {
+    throw new Error("댓글을 찾을 수 없습니다.");
+  }
+  return mapRowToComment(row);
+}
+
+export async function deleteComment(
+  client: CommentSupabaseClient,
+  id: string): Promise<void> {
+    await repository.deleteComment(client, id);
+
+}
+
   
   
 

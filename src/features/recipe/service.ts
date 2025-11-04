@@ -78,7 +78,7 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   const payload: RecipeUpdateDB = {};
-
+  // 바뀌는 필드만 if로 처리 
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;

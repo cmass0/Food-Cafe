@@ -62,6 +62,7 @@ function buildInsertPayload(
 
 function buildUpdatePayload(parsed: ReturnType<typeof postUpdateSchema.parse>): PostUpdateDB {
   const payload: PostUpdateDB = {};
+  
   if (parsed.title !== undefined) payload.title = parsed.title;
   if (parsed.content !== undefined) payload.content = parsed.content;
   if (parsed.writerName !== undefined) payload.writer_name = parsed.writerName;

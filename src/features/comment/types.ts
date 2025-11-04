@@ -48,16 +48,4 @@ export type CommentListResult = {
   hasMore: boolean;
 };
 
-export function mapRowToComment(row: CommentRow): Comment {
-  return {
-    id: row.id,
-    parentType: row.parent_type,
-    parentId: row.parent_id,
-    writerUid: row.writer_uid,
-    writerName: row.writer_name,
-    content: row.content,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
-  };
-}
+
