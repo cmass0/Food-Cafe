@@ -50,14 +50,13 @@ export type PostListResult = {
   items: Post[];
   total: number;
   limit: number;
-  offset: number;
   hasMore: boolean;
+  offset: number;
 };
 
 export type PostListOptions = {
   limit?: number;
   page?: number;
-  offset?: number;
   writerUid?: string;
   type?: string;
   search?: string;

@@ -1,7 +1,7 @@
 
 import * as repository from "./repository";
 import { commentInsertSchema, commentUpdateSchema } from "./schema";
-import { Comment, CommentInsertDB, CommentRow, CommentSupabaseClient } from "./types";
+import { Comment, CommentInsertDB, CommentListResult, CommentRow, CommentSupabaseClient } from "./types";
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -54,8 +54,8 @@ function buildUpdatePayload(
 ): Partial<CommentInsertDB> { 
   const payload: Partial<CommentInsertDB> = {};
   if (input.content !== undefined) payload.content = input.content;
-  if (input.parentId !== undefined) payload.parent_id = input.parentId;
-  if (input.parentType !== undefined) payload.parent_type = input.parentType;
+  // if (input.parentId !== undefined) payload.parent_id = input.parentId;
+  // if (input.parentType !== undefined) payload.parent_type = input.parentType;
   if (input.writerName !== undefined) payload.writer_name = input.writerName;
   return payload;
 }
@@ -72,9 +72,9 @@ export async function listComments(
     offset?: number;
     includeDeleted?: boolean;
   }
-): Promise<{ items: Comment[]; total: number }> {
+): Promise<CommentListResult> {
   const parsedLimit = resolveLimit(params.limit);
-  const offset = resolveOffset(params.offset, params.page, parsedLimit);
+  const offset = resolveOffset(params.page, parsedLimit);
   const { items: rows, total: rawTotal } = await repository.fetchComments(client, {
     parentType: params.parentType,
     parentId: params.parentId,  
@@ -85,9 +85,12 @@ export async function listComments(
 
   const items = rows.map(mapRowToComment);
   const total = Math.max(rawTotal, offset + items.length);  
+  const hasMore = offset + items.length < total;
   return {
     items,
     total,
+    limit: parsedLimit,
+    hasMore,
   };
 }
 
@@ -101,7 +104,7 @@ export async function getComment(
 export async function createComment(
   client: CommentSupabaseClient,
   writerUid: string,  
-  input: string
+  input: unknown,
 ): Promise<Comment> {
   const parsed = commentInsertSchema.parse(input);
   const payload = buildInsertPayload(parsed, writerUid);
@@ -112,9 +115,9 @@ export async function createComment(
 export async function updateComment(
   client: CommentSupabaseClient,
   id: string,
-  input: string | {}
+  input: unknown,
 ): Promise<Comment> {
-  const parsed = input ? commentUpdateSchema.parse(input) : {};
+  const parsed = commentUpdateSchema.parse(input);
   const payload = buildUpdatePayload(parsed);
   const row = await repository.updateComment(client, id, payload);
   if(!row) {

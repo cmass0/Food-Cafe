@@ -21,10 +21,7 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function resolveOffset(offset: number | undefined, page: number | undefined, limit: number): number {
-  if (typeof offset === "number" && Number.isFinite(offset)) {
-    return Math.max(0, Math.trunc(offset));
-  }
+function resolveOffsetFromPage(page: number | undefined, limit: number): number {
   if (typeof page === "number" && Number.isFinite(page)) {
     const safePage = Math.max(1, Math.trunc(page));
     return (safePage - 1) * limit;
@@ -76,10 +73,11 @@ export async function listPosts(
 ): Promise<PostListResult> {
   const parsed = postListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit);
-  const offset = resolveOffset(parsed.offset, parsed.page, limit);
+  const offset = resolveOffsetFromPage(parsed.page, limit);
   const { items: rows, total: rawTotal } = await repository.fetchPosts(client, {
     limit,
     offset,
+
     writerUid: parsed.writerUid,
     type: parsed.type,
     search: parsed.search,
@@ -93,8 +91,8 @@ export async function listPosts(
     items,
     total,
     limit,
-    offset,
     hasMore,
+    offset,
   };
 }
 

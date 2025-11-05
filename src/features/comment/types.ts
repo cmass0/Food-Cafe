@@ -44,7 +44,6 @@ export type CommentListResult = {
   items: Comment[];
   total: number;
   limit: number;
-  offset: number;
   hasMore: boolean;
 };
 
