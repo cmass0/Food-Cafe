@@ -57,7 +57,6 @@ export type PostListResult = {
 export type PostListOptions = {
   limit?: number;
   page?: number;
-  offset?: number;
   writerUid?: string;
   type?: string;
   search?: string;

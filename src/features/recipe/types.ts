@@ -56,7 +56,6 @@ export interface RecipeUpdateInput {
 export interface RecipeListOptions {
   limit?: number;
   page?: number;
-  offset?: number;
   tag?: string;
   status?: number;
   writerUid?: string;

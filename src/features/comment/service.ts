@@ -1,7 +1,7 @@
 
 import * as repository from "./repository";
 import { commentInsertSchema, commentUpdateSchema } from "./schema";
-import { Comment, CommentInsertDB, CommentRow, CommentSupabaseClient } from "./types";
+import { Comment, CommentInsertDB, CommentListResult, CommentRow, CommentSupabaseClient, CommentUpdateDB } from "./types";
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -15,48 +15,38 @@ function resolveLimit(limit?: number): number {
 }
 
 function resolveOffset(page: number | undefined, limit: number): number {
-  
   if (typeof page === "number" && Number.isFinite(page)) {
     const safePage = Math.max(1, Math.trunc(page));
     return (safePage - 1) * limit;
-  }    
+  }
   return 0;
 }
 function mapRowToComment(row: CommentRow): Comment {
   return {
+    id: row.id,
+    parentType: row.parent_type,
+    parentId: row.parent_id,
+    writerUid: row.writer_uid,
+    writerName: row.writer_name,
     content: row.content,
     createdAt: new Date(row.created_at),
-    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
-    id: row.id,
-    parentId: row.parent_id,
-    parentType: row.parent_type,
     updatedAt: new Date(row.updated_at),
-    writerName: row.writer_name,
-    writerUid: row.writer_uid,
+    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
   };
 }
-
-function buildInsertPayload(
-  input: ReturnType<typeof commentInsertSchema.parse>,
-  writerUid: string
-): CommentInsertDB {
+function buildInsertPayload(parsed: ReturnType<typeof commentInsertSchema.parse>): CommentInsertDB {
   return {
-    content: input.content,
-    parent_id: input.parentId,
-    parent_type: input.parentType,
-    writer_name: input.writerName,
-    writer_uid: writerUid,
+    content: parsed.content,
+    parent_id: parsed.parentId,
+    parent_type: parsed.parentType,
+    writer_name: parsed.writerName,
+    writer_uid: parsed.writerUid,
   };
 }
 
-function buildUpdatePayload(
-  input: Partial<ReturnType<typeof commentInsertSchema.parse>>
-): Partial<CommentInsertDB> { 
-  const payload: Partial<CommentInsertDB> = {};
-  if (input.content !== undefined) payload.content = input.content;
-  if (input.parentId !== undefined) payload.parent_id = input.parentId;
-  if (input.parentType !== undefined) payload.parent_type = input.parentType;
-  if (input.writerName !== undefined) payload.writer_name = input.writerName;
+function buildUpdatePayload(parsed: ReturnType<typeof commentUpdateSchema.parse>): Partial<CommentUpdateDB> {
+  const payload: Partial<CommentUpdateDB> = {};
+  if (parsed.content !== undefined) payload.content = parsed.content;
   return payload;
 }
 
@@ -69,12 +59,11 @@ export async function listComments(
     parentId: string;
     page?: number;
     limit?: number;
-    offset?: number;
     includeDeleted?: boolean;
   }
-): Promise<{ items: Comment[]; total: number }> {
+): Promise<CommentListResult> {
   const parsedLimit = resolveLimit(params.limit);
-  const offset = resolveOffset(params.offset, params.page, parsedLimit);
+  const offset = resolveOffset(params.page, parsedLimit);
   const { items: rows, total: rawTotal } = await repository.fetchComments(client, {
     parentType: params.parentType,
     parentId: params.parentId,  
@@ -85,9 +74,13 @@ export async function listComments(
 
   const items = rows.map(mapRowToComment);
   const total = Math.max(rawTotal, offset + items.length);  
+  const hasMore = offset + items.length < total;
   return {
     items,
     total,
+    offset,
+    limit: parsedLimit,
+    hasMore,
   };
 }
 
@@ -101,10 +94,10 @@ export async function getComment(
 export async function createComment(
   client: CommentSupabaseClient,
   writerUid: string,  
-  input: string
+  input: unknown,
 ): Promise<Comment> {
-  const parsed = commentInsertSchema.parse(input);
-  const payload = buildInsertPayload(parsed, writerUid);
+  const parsed = commentInsertSchema.parse({ ...(input as object), writerUid });
+  const payload = buildInsertPayload(parsed);
   const row = await repository.insertComment(client, payload);
   return mapRowToComment(row);
 }
@@ -112,14 +105,12 @@ export async function createComment(
 export async function updateComment(
   client: CommentSupabaseClient,
   id: string,
-  input: string | {}
-): Promise<Comment> {
-  const parsed = input ? commentUpdateSchema.parse(input) : {};
+  input: unknown,
+): Promise<Comment | null> {
+  const parsed =  commentUpdateSchema.parse(input);
   const payload = buildUpdatePayload(parsed);
   const row = await repository.updateComment(client, id, payload);
-  if(!row) {
-    throw new Error("댓글을 찾을 수 없습니다.");
-  }
+  if(!row) return null;
   return mapRowToComment(row);
 }
 

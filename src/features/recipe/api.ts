@@ -4,7 +4,6 @@ export async function listRecipes(
   params?: {
     limit?: number;
     page?: number;
-    offset?: number;
     writerUid?: string;
     tag?: string;
     status?: number;
@@ -14,7 +13,6 @@ export async function listRecipes(
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
-  if (typeof params?.offset === "number") qs.set("offset", String(params.offset));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.tag) qs.set("tag", params.tag);
   if (typeof params?.status === "number") qs.set("status", String(params.status));

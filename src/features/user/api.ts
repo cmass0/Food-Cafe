@@ -1,8 +1,7 @@
-export async function listUsers(params?: { limit?: number; page?: number; offset?: number }) {
+export async function listUsers(params?: { limit?: number; page?: number }) {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
-  if (typeof params?.offset === "number") qs.set("offset", String(params.offset));
   const res = await fetch(`/api/users${qs.size ? `?${qs.toString()}` : ""}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to list users: ${res.status}`);
   const json = await res.json();
