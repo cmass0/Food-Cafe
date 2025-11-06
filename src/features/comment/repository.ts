@@ -93,6 +93,10 @@ export async function deleteComment(
   client: CommentSupabaseClient,
   id: string
 ): Promise<void> {
-  const { error } = await client.from("comments").delete().eq("id", id);
+  const deletedAt = new Date().toISOString();
+  const { error } = await client
+    .from("comments")
+    .update({ deleted_at: deletedAt })
+    .eq("id", id);
   if (error) throw error;
 } 
