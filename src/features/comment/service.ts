@@ -1,7 +1,7 @@
 
 import * as repository from "./repository";
-import { commentInsertSchema, commentUpdateSchema } from "./schema";
-import { Comment, CommentInsertDB, CommentListResult, CommentRow, CommentSupabaseClient, CommentUpdateDB } from "./types";
+import { commentInsertSchema, commentListOptionsSchema, commentUpdateSchema } from "./schema";
+import { Comment, CommentInsertDB, CommentlistOption, CommentListResult, CommentRow, CommentSupabaseClient, CommentUpdateDB } from "./types";
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -54,22 +54,16 @@ function buildUpdatePayload(parsed: ReturnType<typeof commentUpdateSchema.parse>
 
 export async function listComments(
   client: CommentSupabaseClient,
-  params: {   
-    parentType: "recipe" | "post";
-    parentId: string;
-    page?: number;
-    limit?: number;
-    includeDeleted?: boolean;
-  }
+  options?: CommentlistOption,
 ): Promise<CommentListResult> {
-  const parsedLimit = resolveLimit(params.limit);
-  const offset = resolveOffset(params.page, parsedLimit);
+  const parsed = commentListOptionsSchema.parse(options);
+  const parsedLimit = resolveLimit(parsed.limit);
+  const offset = resolveOffset(parsed.page, parsedLimit);
   const { items: rows, total: rawTotal } = await repository.fetchComments(client, {
-    parentType: params.parentType,
-    parentId: params.parentId,  
+    parentType: parsed.parentType,
+    parentId: parsed.parentId,  
     limit: parsedLimit,
     offset,
-    includeDeleted: params.includeDeleted ?? false,
   });
 
   const items = rows.map(mapRowToComment);

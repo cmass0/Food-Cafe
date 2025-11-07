@@ -1,5 +1,6 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as commentService from "@/features/comment/service";
+import { commentUpdateSchema } from "@/features/comment/schema";
 
 export const runtime = "nodejs";  
 export const dynamic = "force-dynamic";
@@ -34,8 +35,9 @@ const mapAuthError = (error: unknown) => {
   return null;
 };
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: Ctx) {
   try {
+    
     const { id } = params;
     const supabase = getServerSupabase();
     const item = await commentService.getComment(supabase, id);
@@ -49,8 +51,50 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PUT(req: Request, { params }: Ctx) {
+  try{
+    if (!UUID_RE.test(params.id)) return badId();
+      const contentType = req.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return err(415, "UNSUPPORTED_MEDIA_TYPE", "application/json으로 전송해 주세요.");
+    }
 
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return err(400, "BAD_REQUEST", "유효하지 않은 JSON 형식입니다.");
+    }
+    const parsed = commentUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return err(400, "BAD_REQUEST", "유효하지 않은 요청입니다.", parsed.error.format());
+    }
+      const {id} = params;
+      const supabase = getServerSupabase();
+      const updated = await commentService.updateComment(supabase, id, body);
+      if(!updated){
+        return err(404, "NOT_FOUND", "댓글을 찾을 수 없습니다.");
+      }
+      return json({ data: updated });
+  }catch (error) {
+    const authErr = mapAuthError(error);
+    if (authErr) return authErr;
+    console.error("[comments] PUT failed", error);
+    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+  }
 }
 
-export async function DELETE(req: Request, { params }: Ctx) {}
+export async function DELETE(req: Request, { params }: Ctx) {
+  try{
+    if (!UUID_RE.test(params.id)) return badId();
+      const {id} = params;
+      const supabase = getServerSupabase();
+      await commentService.deleteComment(supabase, id);
+      return new Response(null, { status: 204 });
+  }catch (error) {
+    const authErr = mapAuthError(error);
+    if (authErr) return authErr;
+    console.error("[comments] DELETE failed", error);
+    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+  }
+}
 

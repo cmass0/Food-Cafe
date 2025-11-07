@@ -40,6 +40,13 @@ export type FetchCommentsParams = {
   includeDeleted?: boolean;
 };
 
+export type CommentlistOption = {
+  limit?: number,
+  page?: number,
+  parentType?: "recipe" | "post";
+  parentId?: string,
+}
+
 export type CommentListResult = {
   items: Comment[];
   total: number;
