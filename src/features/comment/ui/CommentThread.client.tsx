@@ -1,13 +1,15 @@
-"use client";
+﻿"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { listComments, createComment, deleteComment } from "@/features/comment/api";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createComment, deleteComment, listComments } from "../api";
 
 type ParentType = "post" | "recipe";
 
-type CommentItem = {
+type CommentListItem = {
   id: string;
   writerName: string;
   writerUid: string | null;
@@ -17,7 +19,7 @@ type CommentItem = {
   deletedAt: string | Date | null;
 };
 
-type Props = {
+export type CommentThreadProps = {
   parentType: ParentType;
   parentId: string;
   pageSize?: number;
@@ -27,20 +29,21 @@ type Props = {
 export default function CommentThread({
   parentType,
   parentId,
-  pageSize = 20,
+  pageSize = 10,
   defaultWriterName = "",
-}: Props) {
+}: CommentThreadProps) {
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<CommentItem[]>([]);
+  const [items, setItems] = useState<CommentListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   const [writerName, setWriterName] = useState(defaultWriterName);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const load = useCallback(async () => {
+  const fetchComments = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const payload = await listComments({
         parentType,
@@ -48,138 +51,145 @@ export default function CommentThread({
         page,
         limit: pageSize,
       });
-      const list: CommentItem[] = (payload?.items ?? []).map((c: any) => ({
-        id: c.id,
-        writerName: c.writerName,
-        writerUid: c.writerUid ?? null,
-        content: c.content,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-        deletedAt: c.deletedAt ?? null,
-      }));
-      setItems(list);
+      setItems(Array.isArray(payload?.items) ? payload.items : []);
       setTotal(payload?.total ?? 0);
     } catch (err) {
       console.error("Failed to load comments", err);
+      setError("댓글을 불러오는 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
-  }, [parentType, parentId, page, pageSize]);
+  }, [page, pageSize, parentId, parentType]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchComments();
+  }, [fetchComments]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
-  const handleSubmit = useCallback(async () => {
-    if (!content.trim() || !writerName.trim()) return;
+  const formatDate = (value: string | Date) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleString("ko-KR");
+  };
+
+  const handleSubmit = async () => {
+    if (!writerName.trim() || !content.trim()) return;
+    setSubmitting(true);
+    setError(null);
     try {
-      setSubmitting(true);
       await createComment({
-        content: content.trim(),
         parentType,
         parentId,
         writerName: writerName.trim(),
+        content: content.trim(),
       });
       setContent("");
-      // 새로 작성된 댓글이 첫 페이지에 보이도록 첫 페이지로 이동
       setPage(1);
-      await load();
+      await fetchComments();
     } catch (err) {
       console.error("Failed to create comment", err);
+      setError("댓글을 작성하는 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
-  }, [content, writerName, parentType, parentId, load]);
+  };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        await deleteComment(id);
-        await load();
-      } catch (err) {
-        console.error("Failed to delete comment", err);
-      }
-    },
-    [load]
-  );
+  const handleDelete = async (id: string) => {
+    if (!confirm("정말 댓글을 삭제하시겠습니까?")) return;
+    setError(null);
+    try {
+      await deleteComment(id);
+      await fetchComments();
+    } catch (err) {
+      console.error("Failed to delete comment", err);
+      setError("댓글을 삭제하는 중 오류가 발생했습니다.");
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <section className="space-y-4">
+      <div className="space-y-2 rounded-lg border p-4">
         <Input
           placeholder="작성자 이름"
           value={writerName}
-          onChange={(e) => setWriterName(e.target.value)}
+          onChange={(event) => setWriterName(event.target.value)}
         />
         <Textarea
-          placeholder="댓글을 입력하세요"
+          placeholder="댓글을 입력해주세요."
+          rows={4}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={3}
+          onChange={(event) => setContent(event.target.value)}
         />
-        <div className="flex gap-2">
+        <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={submitting || !content.trim() || !writerName.trim()}
+            disabled={submitting || !writerName.trim() || !content.trim()}
           >
             {submitting ? "작성 중..." : "댓글 작성"}
           </Button>
         </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
-      <div className="divide-y rounded-md border">
+      <div className="space-y-2">
         {loading ? (
-          <div className="p-4 text-sm text-muted-foreground">불러오는 중...</div>
+          <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
         ) : items.length === 0 ? (
-          <div className="p-4 text-sm text-muted-foreground">첫 번째 댓글을 남겨보세요.</div>
+          <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+            첫 번째 댓글을 남겨보세요!
+          </div>
         ) : (
-          items.map((c) => {
-            const isDeleted = !!c.deletedAt;
+          items.map((item) => {
+            const isDeleted = Boolean(item.deletedAt);
             return (
-              <div key={c.id} className="flex items-start justify-between gap-3 p-4">
-                <div className="space-y-1">
-                  <div className="text-sm font-medium">{c.writerName || "익명"}</div>
-                  <div className={"text-sm " + (isDeleted ? "text-muted-foreground italic" : "")}>
-                    {isDeleted ? "삭제된 댓글입니다." : c.content}
+              <div key={item.id} className="rounded-lg border p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">{item.writerName || "익명"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(item.updatedAt ?? item.createdAt)}
+                    </p>
                   </div>
+                  {!isDeleted ? (
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                      삭제
+                    </Button>
+                  ) : null}
                 </div>
-                {!isDeleted && (
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
-                    삭제
-                  </Button>
-                )}
+                <p className={`mt-2 text-sm ${isDeleted ? "text-muted-foreground italic" : ""}`}>
+                  {isDeleted ? "삭제된 댓글입니다." : item.content}
+                </p>
               </div>
             );
           })
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">전체 {total}개</div>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+        <span className="text-muted-foreground">총 {total}개</span>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
           >
             이전
           </Button>
-          <div className="text-sm leading-9">
+          <span>
             {page} / {totalPages}
-          </div>
+          </span>
           <Button
             variant="outline"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
           >
             다음
           </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
