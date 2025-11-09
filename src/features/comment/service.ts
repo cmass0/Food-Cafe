@@ -1,7 +1,14 @@
-
 import * as repository from "./repository";
 import { commentInsertSchema, commentListOptionsSchema, commentUpdateSchema } from "./schema";
-import { Comment, CommentInsertDB, CommentlistOption, CommentListResult, CommentRow, CommentSupabaseClient, CommentUpdateDB } from "./types";
+import {
+  Comment,
+  CommentInsertDB,
+  CommentListOptions,
+  CommentListResult,
+  CommentRow,
+  CommentSupabaseClient,
+  CommentUpdateDB,
+} from "./types";
 
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 50;
@@ -21,6 +28,7 @@ function resolveOffset(page: number | undefined, limit: number): number {
   }
   return 0;
 }
+
 function mapRowToComment(row: CommentRow): Comment {
   return {
     id: row.id,
@@ -34,6 +42,7 @@ function mapRowToComment(row: CommentRow): Comment {
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
   };
 }
+
 function buildInsertPayload(parsed: ReturnType<typeof commentInsertSchema.parse>): CommentInsertDB {
   return {
     content: parsed.content,
@@ -50,45 +59,42 @@ function buildUpdatePayload(parsed: ReturnType<typeof commentUpdateSchema.parse>
   return payload;
 }
 
-
-
 export async function listComments(
   client: CommentSupabaseClient,
-  options?: CommentlistOption,
+  options?: CommentListOptions
 ): Promise<CommentListResult> {
   const parsed = commentListOptionsSchema.parse(options);
-  const parsedLimit = resolveLimit(parsed.limit);
-  const offset = resolveOffset(parsed.page, parsedLimit);
+  const limit = resolveLimit(parsed.limit);
+  const offset = resolveOffset(parsed.page, limit);
   const { items: rows, total: rawTotal } = await repository.fetchComments(client, {
     parentType: parsed.parentType,
-    parentId: parsed.parentId,  
-    limit: parsedLimit,
+    parentId: parsed.parentId,
+    limit,
     offset,
   });
 
   const items = rows.map(mapRowToComment);
-  const total = Math.max(rawTotal, offset + items.length);  
+  const total = Math.max(rawTotal, offset + items.length);
   const hasMore = offset + items.length < total;
+
   return {
     items,
     total,
+    limit,
     offset,
-    limit: parsedLimit,
     hasMore,
   };
 }
 
-export async function getComment(
-  client: CommentSupabaseClient, 
-  id: string) : Promise<Comment | null> {
+export async function getComment(client: CommentSupabaseClient, id: string): Promise<Comment | null> {
   const row = await repository.selectCommentById(client, id);
   return row ? mapRowToComment(row) : null;
 }
 
 export async function createComment(
   client: CommentSupabaseClient,
-  writerUid: string,  
-  input: unknown,
+  writerUid: string,
+  input: unknown
 ): Promise<Comment> {
   const parsed = commentInsertSchema.parse({ ...(input as object), writerUid });
   const payload = buildInsertPayload(parsed);
@@ -99,24 +105,15 @@ export async function createComment(
 export async function updateComment(
   client: CommentSupabaseClient,
   id: string,
-  input: unknown,
+  input: unknown
 ): Promise<Comment | null> {
-  const parsed =  commentUpdateSchema.parse(input);
+  const parsed = commentUpdateSchema.parse(input);
   const payload = buildUpdatePayload(parsed);
   const row = await repository.updateComment(client, id, payload);
-  if(!row) return null;
+  if (!row) return null;
   return mapRowToComment(row);
 }
 
-export async function deleteComment(
-  client: CommentSupabaseClient,
-  id: string): Promise<void> {
-    await repository.deleteComment(client, id);
-
+export async function deleteComment(client: CommentSupabaseClient, id: string): Promise<void> {
+  await repository.deleteComment(client, id);
 }
-
-  
-  
-
-
-  

@@ -1,6 +1,5 @@
-// src/app/api/posts/route.ts
+import { ZodError } from "zod";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { postInsertSchema } from "@/features/post/schema";
 import * as postService from "@/features/post/service";
 
 export const runtime = "nodejs";
@@ -27,6 +26,12 @@ export async function GET(req: Request) {
     });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return Response.json(
+        { error: "VALIDATION_ERROR", details: error.flatten() },
+        { status: 400 }
+      );
+    }
     console.error("[posts] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
@@ -34,19 +39,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const json = await req.json();
-    const parsed = postInsertSchema.safeParse(json);
-    if (!parsed.success) {
+    const supabase = getServerSupabase();
+    const body = await req.json();
+    const created = await postService.createPost(supabase, body);
+    return Response.json({ data: created }, { status: 201 });
+  } catch (error) {
+    if (error instanceof ZodError) {
       return Response.json(
-        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { error: "VALIDATION_ERROR", details: error.flatten() },
         { status: 400 }
       );
     }
-
-    const supabase = getServerSupabase();
-    const created = await postService.createPost(supabase, parsed.data);
-    return Response.json({ data: created }, { status: 201 });
-  } catch (error) {
     console.error("[posts] POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }

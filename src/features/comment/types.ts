@@ -1,7 +1,3 @@
-﻿
-
-
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Database,
@@ -11,14 +7,12 @@ import type {
   Enums,
 } from "@/types/supabase";
 
-
 export type CommentRow = Tables<"comments">;
 export type CommentInsertDB = TablesInsert<"comments">;
 export type CommentUpdateDB = TablesUpdate<"comments">;
 export type CommentParentType = Enums<"comment_parent_type">;
 
 export type CommentSupabaseClient = SupabaseClient<Database>;
-
 
 export interface Comment {
   id: string;
@@ -35,17 +29,16 @@ export interface Comment {
 export type FetchCommentsParams = {
   parentType: CommentParentType;
   parentId: string;
-  limit?: number;
-  offset?: number;
-  includeDeleted?: boolean;
+  limit: number;
+  offset: number;
 };
 
-export type CommentlistOption = {
-  limit?: number,
-  page?: number,
+export type CommentListOptions = {
+  limit?: number;
+  page?: number;
   parentType?: "recipe" | "post";
-  parentId?: string,
-}
+  parentId?: string;
+};
 
 export type CommentListResult = {
   items: Comment[];
@@ -54,5 +47,3 @@ export type CommentListResult = {
   offset: number;
   hasMore: boolean;
 };
-
-

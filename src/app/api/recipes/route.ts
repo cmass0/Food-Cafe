@@ -1,4 +1,4 @@
-import { recipeInsertSchema } from "@/features/recipe/schema";
+import { ZodError } from "zod";
 import * as service from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -18,6 +18,12 @@ export async function GET(req: Request) {
     const data = await service.listRecipes(supabase, { limit, page, writerUid });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return Response.json(
+        { error: "VALIDATION_ERROR", details: error.flatten() },
+        { status: 400 }
+      );
+    }
     console.error("/api/recipes GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
@@ -25,21 +31,18 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const json = await req.json();
-    const parsed = recipeInsertSchema.safeParse(json);
-    if (!parsed.success) {
+    const supabase = getServerSupabase();
+    const body = await req.json();
+    const created = await service.createRecipe(supabase, body);
+    return Response.json({ data: created }, { status: 201 });
+  } catch (error) {
+    if (error instanceof ZodError) {
       return Response.json(
-        { error: "VALIDATION_ERROR", details: parsed.error.flatten() },
+        { error: "VALIDATION_ERROR", details: error.flatten() },
         { status: 400 }
       );
     }
-
-    const supabase = getServerSupabase();
-    const created = await service.createRecipe(supabase, parsed.data);
-    return Response.json({ data: created }, { status: 201 });
-  } catch (error) {
     console.error("/api/recipes POST failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
-
