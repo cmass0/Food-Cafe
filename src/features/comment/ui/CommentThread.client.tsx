@@ -1,10 +1,18 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { createComment, deleteComment, listComments } from "../api";
 
 type ParentType = "post" | "recipe";
@@ -67,6 +75,15 @@ export default function CommentThread({
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
 
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 1) return [];
+    const pages = new Set<number>([1, totalPages]);
+    for (let i = page - 1; i <= page + 1; i += 1) {
+      if (i > 1 && i < totalPages) pages.add(i);
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+  }, [page, totalPages]);
+
   const formatDate = (value: string | Date) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
@@ -108,13 +125,8 @@ export default function CommentThread({
   };
 
   return (
-    <section className="space-y-4">
-      <div className="space-y-2 rounded-lg border p-4">
-        <Input
-          placeholder="작성자 이름"
-          value={writerName}
-          onChange={(event) => setWriterName(event.target.value)}
-        />
+    <section className="space-y-4 pt-4">
+      <div className="space-y-2 pt-4 border-t-1">
         <Textarea
           placeholder="댓글을 입력해주세요."
           rows={4}
@@ -136,7 +148,7 @@ export default function CommentThread({
         {loading ? (
           <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
         ) : items.length === 0 ? (
-          <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+          <div >
             첫 번째 댓글을 남겨보세요!
           </div>
         ) : (
@@ -166,30 +178,63 @@ export default function CommentThread({
         )}
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-        <span className="text-muted-foreground">총 {total}개</span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-          >
-            이전
-          </Button>
-          <span>
-            {page} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-          >
-            다음
-          </Button>
-        </div>
-      </div>
+      {totalPages > 1 ? (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                aria-disabled={page <= 1}
+                prefetch={false}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (page <= 1) return;
+                  setPage((prev) => Math.max(1, prev - 1));
+                }}
+              />
+            </PaginationItem>
+            {visiblePages.map((pageNumber, index) => {
+              const prev = visiblePages[index - 1];
+              const needsEllipsis = index > 0 && prev !== undefined && pageNumber - prev > 1;
+              return (
+                <React.Fragment key={pageNumber}>
+                  {needsEllipsis ? (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null}
+                  <PaginationItem>
+                    <PaginationLink
+                      href="#"
+                      isActive={pageNumber === page}
+                      prefetch={false}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        if (pageNumber === page) return;
+                        setPage(pageNumber);
+                      }}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                </React.Fragment>
+              );
+            })}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                aria-disabled={page >= totalPages}
+                prefetch={false}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (page >= totalPages) return;
+                  setPage((prev) => Math.min(totalPages, prev + 1));
+                }}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      ) : null}
     </section>
   );
 }

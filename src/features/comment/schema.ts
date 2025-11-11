@@ -1,32 +1,29 @@
-
-import { z } from "zod";
+﻿import { z } from "zod";
 import { Constants } from "@/types/supabase";
-
 
 const parentTypeEnum = z.enum(
   [...Constants.public.Enums.comment_parent_type] as ["recipe", "post"]
 );
 
-// ?�라?�언?��? 직접 ?�력?�는 본문 ?�드�?검�?export const commentBodySchema = z.object({
+export const commentBodySchema = z.object({
   content: z
     .string()
     .trim()
-    .min(1, "?�용???�력?�주?�요.")
-    .max(1000, "?�용?� 최�? 1000?�입?�다."),
+    .min(1, "내용을 입력해주세요.")
+    .max(1000, "내용은 최대 1000자입니다."),
 });
 
-// ?�우??컨텍?�트(parent)�??�해 ?�버가 ?�보?�는 �?검�?export const commentContextSchema = z.object({
+export const commentContextSchema = z.object({
   parentType: parentTypeEnum,
-  parentId: z.string().uuid({ message: "parentId??UUID ?�식?�어???�니??" }),
-  writerUid: z.string().uuid({ message: "writerUid??UUID ?�식?�어???�니??" }),
+  parentId: z.string().uuid({ message: "parentId는 UUID 형식이어야 합니다." }),
+  writerUid: z.string().uuid({ message: "writerUid는 UUID 형식이어야 합니다." }),
   writerName: z
     .string()
     .trim()
-    .min(1, "?�성???�름???�력?�주?�요.")
-    .max(40, "?�성???�름?� 최�? 40?�입?�다."),
+    .min(1, "작성자 이름을 입력해주세요.")
+    .max(40, "작성자 이름은 최대 40자입니다."),
 });
 
-// ?�버?�서 body + context�??�쳐 최종 insert payload�?검증할 ???�용
 export const commentInsertSchema = commentBodySchema.merge(commentContextSchema);
 
 export const commentUpdateSchema = z
@@ -34,18 +31,17 @@ export const commentUpdateSchema = z
     content: z
       .string()
       .trim()
-      .min(1, "?�용???�력?�주?�요.")
-      .max(1000, "?�용?� 최�? 1000?�입?�다.")
+      .min(1, "내용을 입력해주세요.")
+      .max(1000, "내용은 최대 1000자입니다.")
       .optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, {
-    message: "최소 ??�??�상???�드�?보내주세??",
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "적어도 한 개 이상의 필드를 제공해야 합니다.",
   });
 
 export const commentListOptionsSchema = z.object({
   parentType: parentTypeEnum,
-  parentId: z.string().uuid(),
+  parentId: z.string().uuid({ message: "parentId는 UUID 형식이어야 합니다." }),
   limit: z.number().int().min(1).max(100).optional(),
   page: z.number().int().min(1).optional(),
 });
-
