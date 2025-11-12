@@ -135,8 +135,9 @@ export default function CommentThread({
         />
         <div className="flex justify-end">
           <Button
+           
             onClick={handleSubmit}
-            disabled={submitting || !writerName.trim() || !content.trim()}
+           
           >
             {submitting ? "작성 중..." : "댓글 작성"}
           </Button>
@@ -148,9 +149,7 @@ export default function CommentThread({
         {loading ? (
           <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
         ) : items.length === 0 ? (
-          <div >
-            첫 번째 댓글을 남겨보세요!
-          </div>
+          <div>첫 번째 댓글을 남겨보세요!</div>
         ) : (
           items.map((item) => {
             const isDeleted = Boolean(item.deletedAt);
