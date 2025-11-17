@@ -13,6 +13,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { createComment, deleteComment, listComments } from "../api";
 
 type ParentType = "post" | "recipe";
@@ -48,6 +50,9 @@ export default function CommentThread({
   const [writerName, setWriterName] = useState(defaultWriterName);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const { user, displayName } = useAuth();
+  const { openAuthModal } = useAuthModal();
 
   const fetchComments = useCallback(async () => {
     setLoading(true);
@@ -91,16 +96,36 @@ export default function CommentThread({
   };
 
   const handleSubmit = async () => {
-    if (!writerName.trim() || !content.trim()) return;
+    if (!content.trim()) return;
+
+    if (!user) {
+      const next =
+        typeof window !== "undefined"
+          ? window.location.pathname + window.location.search
+          : "/posts";
+      openAuthModal({ next });
+      return;
+    }
+
+    const effectiveWriterName =
+      writerName.trim() ||
+      displayName ||
+      user.email ||
+      (user.user_metadata?.name as string | undefined) ||
+      "익명";
+
     setSubmitting(true);
     setError(null);
     try {
       await createComment({
         parentType,
         parentId,
-        writerName: writerName.trim(),
+        writerName: effectiveWriterName,
         content: content.trim(),
       });
+      if (!writerName.trim()) {
+        setWriterName(effectiveWriterName);
+      }
       setContent("");
       setPage(1);
       await fetchComments();
@@ -126,7 +151,7 @@ export default function CommentThread({
 
   return (
     <section className="space-y-4 pt-4">
-      <div className="space-y-2 pt-4 border-t-1">
+      <div className="space-y-2 rounded-lg border p-4">
         <Textarea
           placeholder="댓글을 입력해주세요."
           rows={4}
@@ -134,11 +159,7 @@ export default function CommentThread({
           onChange={(event) => setContent(event.target.value)}
         />
         <div className="flex justify-end">
-          <Button
-           
-            onClick={handleSubmit}
-           
-          >
+          <Button onClick={handleSubmit} disabled={submitting || !content.trim()}>
             {submitting ? "작성 중..." : "댓글 작성"}
           </Button>
         </div>
@@ -149,7 +170,9 @@ export default function CommentThread({
         {loading ? (
           <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
         ) : items.length === 0 ? (
-          <div>첫 번째 댓글을 남겨보세요!</div>
+          <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+            첫 번째 댓글을 남겨보세요!
+          </div>
         ) : (
           items.map((item) => {
             const isDeleted = Boolean(item.deletedAt);
