@@ -2,8 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Pagination,
   PaginationContent,
@@ -15,21 +13,13 @@ import {
 } from "@/components/ui/pagination";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
+import { CommentForm } from "./CommentForm";
+import { CommentList, type CommentDisplayItem } from "./CommentList";
 import { createComment, deleteComment, listComments } from "../api";
 
 type ParentType = "post" | "recipe";
 
-type CommentListItem = {
-  id: string;
-  writerName: string;
-  writerUid: string | null;
-  content: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  deletedAt: string | Date | null;
-};
-
-export type CommentThreadProps = {
+type CommentThreadProps = {
   parentType: ParentType;
   parentId: string;
   pageSize?: number;
@@ -43,7 +33,7 @@ export default function CommentThread({
   defaultWriterName = "",
 }: CommentThreadProps) {
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<CommentListItem[]>([]);
+  const [items, setItems] = useState<CommentDisplayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +54,19 @@ export default function CommentThread({
         page,
         limit: pageSize,
       });
-      setItems(Array.isArray(payload?.items) ? payload.items : []);
+      setItems(
+        Array.isArray(payload?.items)
+          ? payload.items.map((item: any) => ({
+              id: item.id,
+              writerName: item.writerName,
+              writerUid: item.writerUid,
+              content: item.content,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+              deletedAt: item.deletedAt,
+            }))
+          : []
+      );
       setTotal(payload?.total ?? 0);
     } catch (err) {
       console.error("Failed to load comments", err);
@@ -151,54 +153,20 @@ export default function CommentThread({
 
   return (
     <section className="space-y-4 pt-4">
-      <div className="space-y-2 pt-4 border-t-1.5 border-black">
-        <Textarea
-          placeholder="댓글을 입력해주세요."
-          rows={4}
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-        />
-        <div className="flex justify-end">
-          <Button onClick={handleSubmit} disabled={submitting || !content.trim()}>
-            {submitting ? "작성 중..." : "댓글 작성"}
-          </Button>
-        </div>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      </div>
+      <CommentForm
+        content={content}
+        submitting={submitting}
+        error={error}
+        onChange={(value) => setContent(value)}
+        onSubmit={handleSubmit}
+      />
 
-      <div className="space-y-2">
-        {loading ? (
-          <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
-        ) : items.length === 0 ? (
-          <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-            첫 번째 댓글을 남겨보세요!
-          </div>
-        ) : (
-          items.map((item) => {
-            const isDeleted = Boolean(item.deletedAt);
-            return (
-              <div key={item.id} className="rounded-lg border p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold">{item.writerName || "익명"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(item.updatedAt ?? item.createdAt)}
-                    </p>
-                  </div>
-                  {!isDeleted ? (
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
-                      삭제
-                    </Button>
-                  ) : null}
-                </div>
-                <p className={`mt-2 text-sm ${isDeleted ? "text-muted-foreground italic" : ""}`}>
-                  {isDeleted ? "삭제된 댓글입니다." : item.content}
-                </p>
-              </div>
-            );
-          })
-        )}
-      </div>
+      <CommentList
+        items={items}
+        loading={loading}
+        onDelete={handleDelete}
+        formatDate={formatDate}
+      />
 
       {totalPages > 1 ? (
         <Pagination>
