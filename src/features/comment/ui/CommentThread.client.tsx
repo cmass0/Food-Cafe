@@ -151,7 +151,7 @@ export default function CommentThread({
 
   return (
     <section className="space-y-4 pt-4">
-      <div className="space-y-2 rounded-lg border p-4">
+      <div className="space-y-2 ">
         <Textarea
           placeholder="댓글을 입력해주세요."
           rows={4}
