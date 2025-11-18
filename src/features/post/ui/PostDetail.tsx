@@ -1,6 +1,4 @@
-﻿import CommentThread from "@/features/comment/ui/CommentThread.client";
-import type { Post } from "../types";
-import PostComments from "@/features/comment/ui/PostComments.client";
+﻿import type { Post } from "../types";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (
@@ -24,7 +22,6 @@ export default function PostDetail({ post }: { post: Post }) {
         </header>
         <section className="prose max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
       </article>
-      <PostComments postId={post.id} pageSize={10} />
     </div>
   );
 }
