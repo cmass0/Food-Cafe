@@ -25,14 +25,6 @@ export function CommentList({ items, loading, onDelete, formatDate }: CommentLis
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-        첫 번째 댓글을 남겨보세요!
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-2">
       {items.map((item) => {
