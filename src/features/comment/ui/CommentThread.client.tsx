@@ -49,8 +49,7 @@ export default function CommentThread({
       defaultWriterName.trim() ||
       displayName ||
       user.email ||
-      (user.user_metadata?.name as string | undefined) ||
-      "익명";
+      (user.user_metadata?.name as string | undefined);
 
     setSubmitting(true);
     setError(null);
@@ -102,4 +101,3 @@ export default function CommentThread({
     </section>
   );
 }
-

@@ -67,9 +67,18 @@ export default async function PostDetailPage({
   const isAuthor = user?.id && post.writerUid ? user.id === post.writerUid : false;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-3xl flex-col px-6 py-10">
       <PostViewIncrement id={post.id} />
       <PostDetail post={post} />
+
+      {isAuthor && (
+        <section className="space-y-4 pt-10">
+          <div className=" flex gap-2.5 justify-end">
+            <UpdateButton id={post.id} />
+            <DeleteButton action={deletePostAction} id={post.id} />
+          </div>
+        </section>
+      )}
 
       <section className="space-y-4">
         <CommentThread
@@ -87,15 +96,6 @@ export default async function PostDetailPage({
           limitParam="commentLimit"
         />
       </section>
-
-      {isAuthor && (
-        <section className="space-y-4">
-          <div className=" flex gap-2.5 justify-end">
-            <UpdateButton id={post.id} />
-            <DeleteButton action={deletePostAction} id={post.id} />
-          </div>
-        </section>
-      )}
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase/server";
+﻿import { getServerSupabase } from "@/lib/supabase/server";
 import * as postService from "@/features/post/service";
 import PostList from "@/features/post/ui/PostList";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
@@ -59,6 +59,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <h1 className="text-3xl font-semibold">게시글 목록</h1>
         <PostList posts={items} />
       </main>
+
       <footer>
         <PaginationComponent
           basePath="/posts"
