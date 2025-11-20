@@ -22,6 +22,8 @@ export const commentContextSchema = z.object({
     .trim()
     .min(1, "작성자 이름을 입력해주세요.")
     .max(40, "작성자 이름은 최대 40자입니다."),
+  wirterUid: z.string().uuid()
+ 
 });
 
 export const commentInsertSchema = commentBodySchema.merge(commentContextSchema);

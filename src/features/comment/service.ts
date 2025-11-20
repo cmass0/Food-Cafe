@@ -51,7 +51,7 @@ function buildInsertPayload(parsed: ReturnType<typeof commentInsertSchema.parse>
     parent_id: parsed.parentId,
     parent_type: parsed.parentType,
     writer_name: parsed.writerName,
-    writer_uid: parsed.writerUid,
+    writer_uid: parsed.wirterUid,
   };
 }
 

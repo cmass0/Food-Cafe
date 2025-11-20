@@ -34,7 +34,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
   );
 
   return (
-    <div className="border-border w-full rounded-md border p-4">
+    <div className="">
       {showCreateLink ? (
         <div className="mb-4 flex justify-end">
           <Button

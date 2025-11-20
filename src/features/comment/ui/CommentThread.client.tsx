@@ -7,7 +7,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { CommentForm } from "./CommentForm";
 import { CommentList } from "./CommentList";
-import type { CommentDisplayItem } from "./types";
+import type { CommentDisplayItem } from "../types";
 import { createComment, deleteComment } from "../api";
 
 type ParentType = "post" | "recipe";
@@ -78,7 +78,7 @@ export default function CommentThread({
       router.refresh();
     } catch (err) {
       console.error("Failed to delete comment", err);
-      setError("댓글을 삭제하는 중 오류가 발생했습니다.");
+    setError("댓글을 삭제하는 중 오류가 발생했습니다.");
     }
   };
 
@@ -92,12 +92,9 @@ export default function CommentThread({
         onSubmit={handleSubmit}
       />
 
-      <CommentList
-        items={items}
-        onDelete={handleDelete}
-        loading={false}
-        formatDate={(d: any) => new Date(d).toLocaleString()}
-      />
+      <CommentList items={items} onDelete={handleDelete} />
     </section>
   );
 }
+
+

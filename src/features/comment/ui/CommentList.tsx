@@ -1,24 +1,24 @@
 ﻿"use client";
 
+import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
-
-type CommentDisplayItem = {
-  id: string;
-  writerName: string;
-  content: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  deletedAt: string | Date | null;
-};
+import type { CommentDisplayItem } from "../types";
 
 type CommentListProps = {
   items: CommentDisplayItem[];
-  loading: boolean;
+  loading?: boolean;
   onDelete: (id: string) => void;
-  formatDate: (value: string | Date) => string;
 };
 
-export function CommentList({ items, loading, onDelete, formatDate }: CommentListProps) {
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("ko-KR");
+};
+
+export function CommentList({ items, loading, onDelete }: CommentListProps) {
+  const currentUserID = useAuth().user?.id;
+
   if (loading) {
     return (
       <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
@@ -38,7 +38,7 @@ export function CommentList({ items, loading, onDelete, formatDate }: CommentLis
                   {formatDate(item.updatedAt ?? item.createdAt)}
                 </p>
               </div>
-              {!isDeleted ? (
+              {!isDeleted && currentUserID === item.writerUid ? (
                 <Button variant="ghost" size="sm" onClick={() => onDelete(item.id)}>
                   삭제
                 </Button>
@@ -53,5 +53,3 @@ export function CommentList({ items, loading, onDelete, formatDate }: CommentLis
     </div>
   );
 }
-
-export type { CommentDisplayItem };

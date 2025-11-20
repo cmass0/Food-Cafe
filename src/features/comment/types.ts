@@ -47,3 +47,13 @@ export type CommentListResult = {
   offset: number;
   hasMore: boolean;
 };
+
+export type CommentDisplayItem = {
+  id: string;
+  writerName: string;
+  writerUid: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};

@@ -6,12 +6,12 @@ import * as commentService from "@/features/comment/service";
 import PostDetail from "@/features/post/ui/PostDetail";
 import CommentThread from "@/features/comment/ui/CommentThread.client";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
-import type { CommentDisplayItem } from "@/features/comment/ui/types";
 
 import DeleteButton from "./DeleteButton";
 import { deletePostAction } from "../actions";
 import PostViewIncrement from "@/features/post/ui/PostViewIncrement.client";
 import UpdateButton from "./UpdateButton";
+import { CommentDisplayItem } from "@/features/comment/types";
 
 type SearchParamValue = string | string[] | undefined;
 
