@@ -38,10 +38,7 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-function resolveOffset(offset: number | undefined, page: number | undefined, limit: number): number {
-  if (typeof offset === "number" && Number.isFinite(offset)) {
-    return Math.max(0, Math.trunc(offset));
-  }
+function resolveOffset(page: number | undefined, limit: number): number {
   if (typeof page === "number" && Number.isFinite(page)) {
     const safePage = Math.max(1, Math.trunc(page));
     return (safePage - 1) * limit;
@@ -126,7 +123,7 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
   const supabase = getServerSupabase();
   const limit = resolveLimit(options?.limit);
-  const offset = resolveOffset(options?.offset, options?.page, limit);
+  const offset = resolveOffset(options?.page, limit);
   const { items: rows, total: rawTotal } = await repository.fetchUsers(supabase, {
     limit,
     offset,

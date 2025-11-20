@@ -15,11 +15,9 @@ export async function GET(req: Request) {
 
     const limitParam = Number(url.searchParams.get("limit") ?? "");
     const pageParam = Number(url.searchParams.get("page") ?? "");
-    const offsetParam = Number(url.searchParams.get("offset") ?? "");
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
-    const offset = Number.isFinite(offsetParam) ? offsetParam : undefined;
-    const data = await userService.listUsers({ limit, page, offset });
+    const data = await userService.listUsers({ limit, page });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("[users] GET failed", error);

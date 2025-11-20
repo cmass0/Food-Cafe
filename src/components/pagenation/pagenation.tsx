@@ -1,4 +1,4 @@
-import {
+﻿import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -16,6 +16,8 @@ type PaginationComponentProps = {
   pageSize: number;
   total: number;
   query?: Record<string, string | number | undefined>;
+  pageParam?: string;
+  limitParam?: string;
 };
 
 export function PaginationComponent({
@@ -24,6 +26,8 @@ export function PaginationComponent({
   pageSize,
   total,
   query,
+  pageParam = "page",
+  limitParam = "limit",
 }: PaginationComponentProps) {
   if (pageSize <= 0) return null;
 
@@ -40,8 +44,8 @@ export function PaginationComponent({
         qs.set(key, String(value));
       }
     }
-    qs.set("page", String(targetPage));
-    qs.set("limit", String(pageSize));
+    qs.set(pageParam, String(targetPage));
+    qs.set(limitParam, String(pageSize));
     const queryString = qs.toString();
     return queryString ? `${basePath}?${queryString}` : basePath;
   };

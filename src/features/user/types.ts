@@ -17,7 +17,6 @@ export type UserListResult = {
 export type UserListOptions = {
   limit?: number;
   page?: number;
-  offset?: number;
   username?: string;
 };
 

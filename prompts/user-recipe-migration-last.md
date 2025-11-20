@@ -76,9 +76,7 @@ export async function getUser(id: string): Promise<UsersRow | null> {
 
 export async function createUser(input: Pick<UsersInsert, "display_name" | "photo_url" | "is_admin">): Promise<UsersRow> {
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const {data: { user },} = await supabase.auth.getUser();
   if (!user) throw new Error("로그인이 필요합니다.");
 
   // RLS 충족: id는 auth.uid()로 고정

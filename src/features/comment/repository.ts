@@ -1,4 +1,4 @@
-﻿import { CommentInsertDB, CommentRow, CommentSupabaseClient, FetchCommentsParams } from "./types";
+import { CommentInsertDB, CommentRow, CommentSupabaseClient, CommentUpdateDB, FetchCommentsParams } from "./types";
 
 function mapRows(rows: CommentRow[]): CommentRow[] {
   return Array.isArray(rows) ? (rows as CommentRow[]) : [];
@@ -11,12 +11,12 @@ export type FetchCommentsResult = {
 
 export async function fetchComments(
   client: CommentSupabaseClient,
-  params: FetchCommentsParams,
+  params: FetchCommentsParams
 ): Promise<FetchCommentsResult> {
-  const limit = Math.max(params.limit ?? 1, 1);
-  const offset = Math.max(params.offset ?? 0, 0);
-  
-  let query = client
+  const limit = Math.max(params.limit, 1);
+  const offset = Math.max(params.offset, 0);
+
+  const query = client
     .from("comments")
     .select("*", { count: "exact" })
     .eq("parent_type", params.parentType)
@@ -25,13 +25,8 @@ export async function fetchComments(
     .order("id", { ascending: true })
     .range(offset, Math.max(offset + limit - 1, offset));
 
-  if (!params.includeDeleted) {
-    query = query.is("deleted_at", null);
-  }
-
-
   const { data, error, count } = await query;
-  if (error) throw error; 
+  if (error) throw error;
 
   return {
     items: mapRows(data),
@@ -50,14 +45,14 @@ export async function selectCommentById(
     .maybeSingle();
   if (error) throw error;
   if (!data) {
-    throw new Error("댓글을 찾을 수 없습니다.");
+    throw new Error("Comment not found.");
   }
   return data ?? null;
 }
 
 export async function insertComment(
   client: CommentSupabaseClient,
-  payload: CommentInsertDB,
+  payload: CommentInsertDB
 ): Promise<CommentRow> {
   const { data, error } = await client
     .from("comments")
@@ -66,7 +61,7 @@ export async function insertComment(
     .single();
   if (error) throw error;
   if (!data) {
-    throw new Error("댓글을 생성하지 못했습니다.");
+    throw new Error("Failed to create comment.");
   }
   return data as CommentRow;
 }
@@ -74,7 +69,7 @@ export async function insertComment(
 export async function updateComment(
   client: CommentSupabaseClient,
   id: string,
-  payload: Partial<CommentInsertDB>,
+  payload: Partial<CommentUpdateDB>
 ): Promise<CommentRow | null> {
   const { data, error } = await client
     .from("comments")
@@ -84,7 +79,7 @@ export async function updateComment(
     .single();
   if (error) throw error;
   if (!data) {
-    throw new Error("댓글을 업데이트하지 못했습니다.");
+    throw new Error("Failed to update comment.");
   }
   return (data as CommentRow | null) ?? null;
 }
@@ -93,6 +88,12 @@ export async function deleteComment(
   client: CommentSupabaseClient,
   id: string
 ): Promise<void> {
-  const { error } = await client.from("comments").delete().eq("id", id);
+  const deletedAt = new Date().toISOString();
+  const { error } = await client
+    .from("comments")
+    .update({ deleted_at: deletedAt })
+    .eq("id", id);
   if (error) throw error;
-} 
+}
+
+
