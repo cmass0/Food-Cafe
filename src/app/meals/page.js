@@ -1,20 +1,21 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getAuth } from "firebase/auth";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useRouter } from "next/navigation";
-import { Button, Tabs, Tab } from "@heroui/react";
 import { Plus } from "lucide-react";
 
 import Gridracipe from "@/component/recipe/display-racipe";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/features/recipe/api";
 
 import style from "./page.module.css";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
-  { key: "like", title: "인기" },
+  { key: "like", title: "좋아요" },
   { key: "check", title: "조회" },
 ];
 
@@ -22,11 +23,13 @@ export default function MealsPage() {
   const [recipes, setRecipes] = useState([]);
   const [sort, setSort] = useState("recent");
   const [loading, setLoading] = useState(true);
-  const auth = getAuth();
-  const [user] = useAuthState(auth);
   const router = useRouter();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
 
   useEffect(() => {
+    let mounted = true;
+
     async function fetchRecipes() {
       try {
         const data = await listRecipes({ limit: 100 });
@@ -35,15 +38,19 @@ export default function MealsPage() {
           createdAt: item?.createdAt ? new Date(item.createdAt) : null,
           updatedAt: item?.updatedAt ? new Date(item.updatedAt) : null,
         }));
-        setRecipes(items);
+        if (mounted) setRecipes(items);
       } catch (error) {
-        console.error("레시피 목록을 불러오지 못했습니다.", error);
+        console.error("레시피 목록을 가져오는 데 실패했습니다.", error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
     fetchRecipes();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const sortedRecipes = useMemo(() => {
@@ -61,9 +68,10 @@ export default function MealsPage() {
     });
   }, [recipes, sort]);
 
-  function handleShare() {
+  function handleShare(event) {
+    event?.preventDefault();
     if (!user) {
-      alert("로그인이 필요합니다.");
+      openAuthModal({ next: "/meals/share" });
       return;
     }
     router.push("/meals/share");
@@ -75,29 +83,21 @@ export default function MealsPage() {
         <div className={style.headerTop}>
           <div className={style.titleGroup}>
             <h1 className={style.title}>레시피</h1>
-            <p className={style.subtitle}>새로운 요리를 발견하고, 나만의 레시피를 공유해 보세요.</p>
+            <p className={style.subtitle}>새로운 레시피를 추가하고, 좋아하는 레시피를 발견해 보세요.</p>
           </div>
-          <Button
-            color="primary"
-            radius="full"
-            size="lg"
-            startContent={<Plus size={18} />}
-            onPress={handleShare}
-          >
+          <Button className="gap-2 rounded-full px-5 py-2 text-base" onClick={handleShare}>
+            <Plus className="h-4 w-4" />
             레시피 공유하기
           </Button>
         </div>
-        <Tabs
-          aria-label="레시피 정렬"
-          selectedKey={sort}
-          onSelectionChange={(key) => setSort(String(key))}
-          variant="bordered"
-          radius="full"
-          color="primary"
-        >
-          {SORT_OPTIONS.map(({ key, title }) => (
-            <Tab key={key} title={title} />
-          ))}
+        <Tabs value={sort} onValueChange={setSort} className="w-full">
+          <TabsList className="grid w-full max-w-sm grid-cols-3 rounded-full px-1.5 py-1">
+            {SORT_OPTIONS.map(({ key, title }) => (
+              <TabsTrigger key={key} value={key} className="rounded-full text-sm">
+                {title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </Tabs>
       </section>
 
@@ -107,4 +107,3 @@ export default function MealsPage() {
     </div>
   );
 }
-
