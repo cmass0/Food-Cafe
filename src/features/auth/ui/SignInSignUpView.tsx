@@ -10,10 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import AuthButtons from "@/features/user/ui/AuthButtons";
-import { getBrowserSupabase } from "@/lib/supabase";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import AuthButtons from "@/features/user/ui/AuthButtons";
+import { getBrowserSupabase } from "@/lib/supabase";
 import { setRemember } from "@/lib/auth/login-maintain";
 
 type SignInSignUpViewProps = {
@@ -52,7 +52,7 @@ export default function SignInSignUpView({
     setRemember(maintainLogin);
 
     if (!email || !password) {
-      setSignInError("이메일과 비밀번호를 입력해주세요.");
+      setSignInError("이메일과 비밀번호를 입력해 주세요.");
       return;
     }
 
@@ -74,11 +74,11 @@ export default function SignInSignUpView({
     setSignUpMessage(null);
 
     if (!displayName.trim()) {
-      setSignUpError("닉네임을 입력해주세요.");
+      setSignUpError("닉네임을 입력해 주세요.");
       return;
     }
     if (!signUpEmail || !signUpPassword) {
-      setSignUpError("이메일과 비밀번호를 입력해주세요.");
+      setSignUpError("이메일과 비밀번호를 입력해 주세요.");
       return;
     }
     if (signUpPassword !== confirmPassword) {
@@ -109,7 +109,7 @@ export default function SignInSignUpView({
         onAuthSuccess?.(next);
         router.replace(next);
       } else {
-        setSignUpMessage("확인 메일이 발송되었습니다. 이메일을 확인해주세요.");
+        setSignUpMessage("인증 메일을 발송했으니 이메일을 확인해 주세요.");
         setMode("signin");
       }
     });
@@ -117,7 +117,7 @@ export default function SignInSignUpView({
 
   return (
     <div className="items-center justify-center">
-      <Card className="flex h-full max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden shadow-lg">
+      <Card className="flex h/full max-h-[calc(100dvh-2rem)] w/full max-w-md flex-col overflow-hidden shadow-lg">
         <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
           <ScrollArea type="always" className="h-full">
             <div className="p-6">
@@ -132,7 +132,7 @@ export default function SignInSignUpView({
               ) : null}
 
               <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")} className="w-full">
-                <TabsList className="mb-6 grid w-full grid-cols-2">
+                <TabsList className="mb-6 grid w/full grid-cols-2">
                   <TabsTrigger value="signin">로그인</TabsTrigger>
                   <TabsTrigger value="signup">회원가입</TabsTrigger>
                 </TabsList>
@@ -166,7 +166,7 @@ export default function SignInSignUpView({
                     {signInError ? (
                       <p className="text-sm font-medium text-destructive">{signInError}</p>
                     ) : null}
-                    <Button className="w-full" type="submit" disabled={isSigningIn}>
+                    <Button className="w/full" type="submit" disabled={isSigningIn}>
                       {isSigningIn ? "로그인 중..." : "이메일로 로그인"}
                     </Button>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -233,7 +233,7 @@ export default function SignInSignUpView({
                       <p className="text-sm font-medium text-destructive">{signUpError}</p>
                     ) : null}
                     {signUpMessage ? <p className="text-sm text-green-600">{signUpMessage}</p> : null}
-                    <Button className="w-full" type="submit" disabled={isSigningUp}>
+                    <Button className="w/full" type="submit" disabled={isSigningUp}>
                       {isSigningUp ? "가입 중..." : "회원가입"}
                     </Button>
                   </form>
@@ -246,7 +246,11 @@ export default function SignInSignUpView({
               </div>
 
               <div className="mt-4 flex flex-col items-center gap-2 text-xs text-muted-foreground/80">
-                <div>{mode === "signin" ? "계정이 없으신가요? 상단 탭에서 회원가입을 선택하세요." : "이미 계정이 있으신가요? 상단 탭에서 로그인을 선택하세요."}</div>
+                <div>
+                  {mode === "signin"
+                    ? "계정이 없으신가요? 상단 탭에서 회원가입을 선택하세요."
+                    : "이미 계정이 있으신가요? 상단 탭에서 로그인을 선택하세요."}
+                </div>
               </div>
             </div>
           </ScrollArea>
