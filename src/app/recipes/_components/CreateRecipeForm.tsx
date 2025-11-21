@@ -9,5 +9,5 @@ export default function CreateRecipeForm() {
     await createRecipeAction(values);
   };
 
-  return <RecipeForm onSubmit={handleSubmit} submitLabel="레시피 등록" />;
+  return <RecipeForm onSubmit={(values) => handleSubmit(values)} submitLabel="레시피 등록" />;
 }

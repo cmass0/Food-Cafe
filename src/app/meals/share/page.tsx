@@ -1,134 +1,88 @@
-﻿"use client";
+"use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
 
-import ImagePreview from "@/component/imgpreview/imgpreview";
-import { auth } from "@/lib/firebase/client";
-import { uploadRecipeImage } from "@/lib/storage";
-import { fetchUsernameByUid } from "@/features/user/client";
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
+import RecipeForm from "@/features/recipe/ui/RecipeForm";
+import type { RecipeInsertInput } from "@/features/recipe/types";
 import { createRecipe, updateRecipe } from "@/features/recipe/api";
+import { uploadRecipeImage } from "@/lib/storage";
 import { getBrowserSupabase } from "@/lib/supabase";
 
 import style from "./page.module.css";
 
 export default function ShareMeal() {
-  const [userName, setUserName] = useState("user");
-  const [imageSelected, setImageSelected] = useState(false);
-  const [user] = useAuthState(auth);
   const router = useRouter();
+  const { user, displayName } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-    const loginIdentifier = user?.providerData?.[0]?.providerId;
-
-    async function resolveDisplayName() {
-      if (loginIdentifier === "password") {
-        const username = await fetchUsernameByUid(user?.uid as string);
-        setUserName(username ?? (user?.displayName ?? "user"));
-      } else {
-        setUserName(user?.displayName ?? "user");
-      }
-    }
-
-    resolveDisplayName();
-  }, [user]);
-
-  const handleSelect = (selected: boolean) => {
-    setImageSelected(selected);
-    if (!selected) {
-      alert("이미지를 선택해주세요!");
-    }
-  };
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const handleSubmit = async (values: RecipeInsertInput, extras?: { imageFile: File | null }) => {
     if (!user) {
-      alert("로그인이 필요합니다.");
+      openAuthModal({ next: "/meals/share" });
       return;
     }
 
-    const formData = new FormData(event.currentTarget as HTMLFormElement);
-    const imageFile = formData.get("image") as File | null;
-    if (!imageFile) {
-      alert("이미지를 선택해주세요!");
+    const imageFile = extras?.imageFile ?? null;
+    const imageUrl = values.image?.trim() || "";
+
+    if (!imageFile && !imageUrl) {
+      setError("대표 이미지를 업로드하거나 URL을 입력해 주세요.");
       return;
     }
 
+    setSubmitting(true);
+    setError(null);
     const supabase = getBrowserSupabase();
+
     try {
-      // 1) 레시피 먼저 생성(이미지 없이)
       const created = await createRecipe({
-        title: String(formData.get("title") ?? ""),
-        summary: formData.get("summary") ? String(formData.get("summary")) : undefined,
-        recipe: String(formData.get("recipe") ?? ""),
-        image: null,
-        writerName: userName,
-        writerUid: user.uid,
-        writerEmail: formData.get("email") ? String(formData.get("email")) : undefined,
+        ...values,
+        image: imageUrl || null,
+        writerName: displayName ?? user.email ?? "user",
+        writerUid: user.id,
+        writerEmail: user.email ?? undefined,
       });
 
-      // 2) Storage 업로드 (recipes/<id>/...)
-      const { publicUrl, signedUrl } = await uploadRecipeImage(
-        supabase,
-        created.id,
-        imageFile,
-        { contentType: imageFile.type, upsert: false }
-      );
-      const finalUrl = publicUrl ?? signedUrl ?? null;
+      if (imageFile) {
+        const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, created.id, imageFile, {
+          contentType: imageFile.type,
+          upsert: false,
+        });
+        const finalUrl = publicUrl ?? signedUrl ?? null;
+        if (finalUrl) {
+          await updateRecipe(created.id, { image: finalUrl });
+        }
+      }
 
-      // 3) 이미지 URL 업데이트 후 이동
-      await updateRecipe(created.id, { image: finalUrl });
       router.push("/meals");
-    } catch (error) {
-      console.error("레시피 저장/업로드 중 오류가 발생했습니다.", error);
-      alert("레시피를 저장하지 못했습니다. 다시 시도해주세요.");
+    } catch (err) {
+      console.error("레시피 생성/업로드 중 오류가 발생했습니다.", err);
+      setError("업로드에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className={style.pagecontainer}>
       <header className={style.header}>
-        <h1>식사 공유, 레시피를 올려보세요</h1>
+        <h1>맛있는 경험, 함께 나눠요</h1>
+        <p className={style.subtitle}>나만의 꿀조합을 공유하고, 다른 사람들의 아이디어도 구경하세요.</p>
       </header>
+
       <main className={style.shareform}>
-        <form className={style.form} onSubmit={handleSubmit}>
-          <div className={style.formcontentsbox}>
-            <div className={style.row1}>
-              <div>
-                <label htmlFor="creator">이름</label>
-                <input type="text" name="creator" id="creator" value={userName} readOnly />
-              </div>
-              <div>
-                <label htmlFor="email">E-Mail</label>
-                <input type="email" name="email" id="email" />
-              </div>
-            </div>
-
-            <div className={style.row2}>
-              <label htmlFor="title">레시피 제목</label>
-              <input type="text" name="title" id="title" required />
-            </div>
-
-            <div className={style.row3}>
-              <label htmlFor="summary">레시피 설명</label>
-              <input type="text" name="summary" id="summary" maxLength={51} />
-            </div>
-
-            <div className={style.row4}>
-              <label htmlFor="recipe">레시피 내용</label>
-              <textarea name="recipe" id="recipe" rows={15} required />
-            </div>
-          </div>
-          <ImagePreview label="이미지" name="image" isselect={handleSelect} />
-          <button type="submit" className={style.formbtn}>
-            등록하기
-          </button>
-        </form>
+        <RecipeForm
+          enableImageUpload
+          requireImageUpload
+          onSubmit={handleSubmit}
+          submitLabel={submitting ? "공유 중..." : "레시피 공유하기"}
+        />
+        {error ? <p className="mt-3 text-sm font-medium text-destructive">{error}</p> : null}
       </main>
     </div>
   );
 }
-
-

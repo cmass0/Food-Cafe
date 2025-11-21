@@ -41,7 +41,7 @@ export const recipeInsertSchema = z.object({
     .string()
     .trim()
     .min(1, "레시피 내용을 입력해 주세요."),
-  image: imageUrlSchema,
+  image: imageUrlSchema.optional().nullable(),
   images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
   category: z
     .string()

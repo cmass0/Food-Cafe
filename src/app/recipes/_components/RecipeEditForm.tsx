@@ -40,8 +40,7 @@ export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
         category: recipe.category ?? undefined,
       }}
       submitLabel="수정하기"
-      onSubmit={handleSubmit}
+      onSubmit={(values) => handleSubmit(values)}
     />
   );
 }
-
