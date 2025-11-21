@@ -9,12 +9,32 @@ import type { Post } from "../types";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type PostListProps = {
   posts: Post[];
   className?: string;
   showCreateLink?: boolean;
 };
+
+function formatDate(date: Date) {
+  const now = new Date();
+  const sameYear = date.getFullYear() === now.getFullYear();
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+
+  return sameYear ? `${month}-${day}` : `${year}-${month}-${day}`;
+}
 
 export default function PostList({ posts, className, showCreateLink = true }: PostListProps) {
   const route = useRouter();
@@ -49,29 +69,41 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
       {posts.length === 0 && <p className={className}>등록된 게시글이 없습니다.</p>}
 
       {posts.length !== 0 && (
-        <ul className="divide-y divide-border rounded border border-border bg-card">
-          {posts.map((post) => (
-            <li key={post.id} className="flex flex-col gap-1 px-4 py-3">
-              <div className="flex items-center justify-between gap-2">
-                <Link className="text-base font-semibold text-primary" href={`/posts/${post.id}`}>
-                  {post.title}
-                </Link>
-                <span className="text-xs text-muted-foreground">조회수 {post.check}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>작성자 {post.writerName}</span>
-                <span aria-hidden="true">·</span>
-                <span>{post.createdAt.toLocaleDateString("ko-KR")}</span>
-                {post.type ? (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>{post.type}</span>
-                  </>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
+        <Table>
+          <TableHeader className="bg-emerald-100">
+            <TableRow className="text">
+              <TableHead className="w-[100px] text-center">번호</TableHead>
+              <TableHead className="w-2/5 text-center">제목</TableHead>
+              <TableHead className="w-1/5 text-center">글쓴이</TableHead>
+              <TableHead className="w-[140px] text-center">날짜</TableHead>
+              <TableHead className="w-[80px] text-center">조회</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {posts.map((post, index) => {
+              const rowNumber = post.number ?? index + 1;
+
+              return (
+                <TableRow key={post.id}>
+                  <TableCell className="w-[100px] text-center font-medium">{rowNumber}</TableCell>
+                  <TableCell className="text-left">
+                    <Link
+                      className="line-clamp-1 text-base font-semibold text-primary"
+                      href={`/posts/${post.id}`}
+                    >
+                      {post.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="truncate text-center">{post.writerName}</TableCell>
+                  <TableCell className="text-center">{formatDate(post.createdAt)}</TableCell>
+                  <TableCell className="w-[80px] text-center text-xs text-muted-foreground">
+                    {post.check}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
