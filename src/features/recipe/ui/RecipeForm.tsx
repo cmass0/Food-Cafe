@@ -24,10 +24,7 @@ type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
   enableImageUpload?: boolean;
   requireImageUpload?: boolean;
-  onSubmit: (
-    values: RecipeInsertInput,
-    extras?: { imageFile: File | null }
-  ) => Promise<void> | void;
+  onSubmit: (values: RecipeInsertInput, extras?: { imageFile: File | null }) => Promise<void> | void;
   submitLabel?: string;
 };
 
@@ -49,18 +46,28 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // React Hook Form 기본값을 필수 스키마에 맞게 채워서 타입 오류를 방지
+  const defaultValuesForForm: RecipeInsertInput = {
+    idTextOld: defaultValues?.idTextOld ?? "",
+    legacyId: defaultValues?.legacyId ?? null,
+    title: defaultValues?.title ?? "",
+    summary: defaultValues?.summary ?? "",
+    recipe: defaultValues?.recipe ?? "",
+    image: defaultValues?.image ?? "",
+    images: defaultValues?.images ?? [],
+    category: defaultValues?.category ?? null,
+    tags: defaultValues?.tags ?? [],
+    status: defaultValues?.status ?? null,
+    writerUid: defaultValues?.writerUid ?? null,
+    writerUidLegacy: defaultValues?.writerUidLegacy ?? null,
+    writerName: defaultValues?.writerName ?? null,
+    writerEmail: defaultValues?.writerEmail ?? null,
+  };
+
   const form = useForm<RecipeInsertInput>({
     resolver: zodResolver(recipeInsertSchema),
     mode: "onChange",
-    defaultValues: {
-      ...defaultValues,
-      title: defaultValues?.title ?? "",
-      summary: defaultValues?.summary ?? "",
-      recipe: defaultValues?.recipe ?? "",
-      image: defaultValues?.image ?? "",
-      tags: defaultValues?.tags ?? [],
-      category: defaultValues?.category ?? "",
-    },
+    defaultValues: defaultValuesForForm,
   });
 
   const summaryLength = (form.watch("summary") ?? "").length;
@@ -74,7 +81,7 @@ export default function RecipeForm({
     }
 
     const payload: RecipeInsertInput = {
-      ...defaultValues,
+      ...defaultValuesForForm,
       ...values,
       summary: values.summary?.trim() ? values.summary.trim() : null,
       recipe: values.recipe?.trim() ?? "",
@@ -188,11 +195,7 @@ export default function RecipeForm({
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                             {imagePreview ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={imagePreview}
-                                alt="이미지 미리보기"
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={imagePreview} alt="이미지 미리보기" className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                                 이미지 미리보기
@@ -248,12 +251,7 @@ export default function RecipeForm({
                   </div>
                   <FormControl>
                     <Textarea
-                      placeholder={[
-                        "1) 재료 준비",
-                        "2) 손질/밑간",
-                        "3) 조리 순서",
-                        "4) 플레이팅 팁",
-                      ].join("\n")}
+                      placeholder={["1) 재료 준비", "2) 손질/밑간", "3) 조리 순서", "4) 플레이팅 팁"].join("\n")}
                       rows={8}
                       className="min-h-[220px]"
                       {...field}
