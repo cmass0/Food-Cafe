@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent } from "react";
+import { useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -20,11 +21,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { recipeInsertSchema } from "../schema";
 import type { RecipeInsertInput } from "../types";
 
+type StepInput = { text: string };
+type FormValues = RecipeInsertInput & { steps: StepInput[] };
+
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
   enableImageUpload?: boolean;
   requireImageUpload?: boolean;
-  onSubmit: (values: RecipeInsertInput, extras?: { imageFile: File | null }) => Promise<void> | void;
+  onSubmit: (
+    values: RecipeInsertInput,
+    extras?: { imageFile: File | null }
+  ) => Promise<void> | void;
   submitLabel?: string;
 };
 
@@ -46,8 +53,14 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // React Hook Form 기본값을 필수 스키마에 맞게 채워서 타입 오류를 방지
-  const defaultValuesForForm: RecipeInsertInput = {
+  const initialSteps: StepInput[] = defaultValues?.recipe
+    ?.split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text) => ({ text })) ?? [{ text: "" }, { text: "" }];
+
+  // React Hook Form 기본값을 스키마 형태로 맞춰 타입 오류를 방지
+  const defaultValuesForForm: FormValues = {
     idTextOld: defaultValues?.idTextOld ?? "",
     legacyId: defaultValues?.legacyId ?? null,
     title: defaultValues?.title ?? "",
@@ -62,12 +75,18 @@ export default function RecipeForm({
     writerUidLegacy: defaultValues?.writerUidLegacy ?? null,
     writerName: defaultValues?.writerName ?? null,
     writerEmail: defaultValues?.writerEmail ?? null,
+    steps: initialSteps,
   };
 
-  const form = useForm<RecipeInsertInput>({
-    resolver: zodResolver(recipeInsertSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(recipeInsertSchema) as unknown as Resolver<FormValues>,
     mode: "onChange",
     defaultValues: defaultValuesForForm,
+  });
+
+  const stepsArray = useFieldArray({
+    control: form.control,
+    name: "steps",
   });
 
   const summaryLength = (form.watch("summary") ?? "").length;
@@ -80,11 +99,17 @@ export default function RecipeForm({
       return;
     }
 
+    const stepLines = (values.steps ?? []).map((step) => step.text.trim()).filter(Boolean);
+    const recipeFromSteps =
+      stepLines.length > 0
+        ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
+        : (values.recipe?.trim() ?? "");
+
     const payload: RecipeInsertInput = {
       ...defaultValuesForForm,
       ...values,
       summary: values.summary?.trim() ? values.summary.trim() : null,
-      recipe: values.recipe?.trim() ?? "",
+      recipe: recipeFromSteps,
       image: values.image?.trim() ?? "",
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
@@ -195,7 +220,11 @@ export default function RecipeForm({
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                             {imagePreview ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={imagePreview} alt="이미지 미리보기" className="h-full w-full object-cover" />
+                              <img
+                                src={imagePreview}
+                                alt="이미지 미리보기"
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                                 이미지 미리보기
@@ -219,6 +248,90 @@ export default function RecipeForm({
               />
             </div>
 
+            {/* 단계별 레시피 작성 Form */}
+            <div className="border-2 rounded-md p-4">
+              <FormField
+                control={form.control}
+                name="steps"
+                render={() => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-base">만드는 법 (단계별)</FormLabel>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{stepsArray.fields.length} / 15단계</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={stepsArray.fields.length >= 15}
+                          onClick={() => stepsArray.append({ text: "" })}
+                        >
+                          단계 추가
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {stepsArray.fields.map((field, index) => (
+                        <div key={field.id} className="border-muted-foreground/20 p-3">
+                          <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
+                            <span>{index + 1}단계</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={index === 0}
+                                onClick={() => stepsArray.move(index, index - 1)}
+                              >
+                                ↑
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={index === stepsArray.fields.length - 1}
+                                onClick={() => stepsArray.move(index, index + 1)}
+                              >
+                                ↓
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => stepsArray.remove(index)}
+                              >
+                                삭제
+                              </Button>
+                            </div>
+                          </div>
+                          <FormField
+                            control={form.control}
+                            name={`steps.${index}.text`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="이 단계에서 해야 할 일을 구체적으로 적어주세요."
+                                    rows={3}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <FormDescription>
+                      단계에 내용을 입력하면 제출 시 자동으로 한 줄씩 번호를 붙여 만드는 법에
+                      반영됩니다.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="summary"
@@ -235,29 +348,6 @@ export default function RecipeForm({
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="recipe"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between gap-2">
-                    <FormLabel>만드는 법</FormLabel>
-                    <span className="text-xs text-muted-foreground">{recipeLength}자</span>
-                  </div>
-                  <FormControl>
-                    <Textarea
-                      placeholder={["1) 재료 준비", "2) 손질/밑간", "3) 조리 순서", "4) 플레이팅 팁"].join("\n")}
-                      rows={8}
-                      className="min-h-[220px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>단계별로 번호를 붙이면 읽기 쉬워요.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
