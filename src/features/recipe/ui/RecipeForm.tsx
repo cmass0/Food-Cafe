@@ -22,16 +22,22 @@ import { recipeInsertSchema } from "../schema";
 import type { RecipeInsertInput } from "../types";
 
 type StepInput = { text: string };
-type FormValues = RecipeInsertInput & { steps: StepInput[] };
+// RHF는 문자열을 기대하므로 nullable 필드는 문자열로 맞추고, 제출 시 null로 변환
+type FormValues = RecipeInsertInput & {
+  steps: StepInput[];
+  summary: string;
+  recipe: string;
+  image: string;
+  category: string;
+  writerName: string;
+  writerEmail: string;
+};
 
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
   enableImageUpload?: boolean;
   requireImageUpload?: boolean;
-  onSubmit: (
-    values: RecipeInsertInput,
-    extras?: { imageFile: File | null }
-  ) => Promise<void> | void;
+  onSubmit: (values: RecipeInsertInput, extras?: { imageFile: File | null }) => Promise<void> | void;
   submitLabel?: string;
 };
 
@@ -53,13 +59,13 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const initialSteps: StepInput[] = defaultValues?.recipe
-    ?.split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((text) => ({ text })) ?? [{ text: "" }, { text: "" }];
+  const initialSteps: StepInput[] =
+    defaultValues?.recipe
+      ?.split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((text) => ({ text })) ?? [{ text: "" }];
 
-  // React Hook Form 기본값을 스키마 형태로 맞춰 타입 오류를 방지
   const defaultValuesForForm: FormValues = {
     idTextOld: defaultValues?.idTextOld ?? "",
     legacyId: defaultValues?.legacyId ?? null,
@@ -68,13 +74,13 @@ export default function RecipeForm({
     recipe: defaultValues?.recipe ?? "",
     image: defaultValues?.image ?? "",
     images: defaultValues?.images ?? [],
-    category: defaultValues?.category ?? null,
+    category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     status: defaultValues?.status ?? null,
     writerUid: defaultValues?.writerUid ?? null,
     writerUidLegacy: defaultValues?.writerUidLegacy ?? null,
-    writerName: defaultValues?.writerName ?? null,
-    writerEmail: defaultValues?.writerEmail ?? null,
+    writerName: defaultValues?.writerName ?? "",
+    writerEmail: defaultValues?.writerEmail ?? "",
     steps: initialSteps,
   };
 
@@ -103,7 +109,7 @@ export default function RecipeForm({
     const recipeFromSteps =
       stepLines.length > 0
         ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : (values.recipe?.trim() ?? "");
+        : values.recipe?.trim() ?? "";
 
     const payload: RecipeInsertInput = {
       ...defaultValuesForForm,
@@ -113,6 +119,8 @@ export default function RecipeForm({
       image: values.image?.trim() ?? "",
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
+      writerName: values.writerName?.trim() || null,
+      writerEmail: values.writerEmail?.trim() || null,
     };
 
     await onSubmit(payload, { imageFile });
@@ -220,11 +228,7 @@ export default function RecipeForm({
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                             {imagePreview ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={imagePreview}
-                                alt="이미지 미리보기"
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={imagePreview} alt="이미지 미리보기" className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                                 이미지 미리보기
@@ -248,8 +252,7 @@ export default function RecipeForm({
               />
             </div>
 
-            {/* 단계별 레시피 작성 Form */}
-            <div className="border-2 rounded-md p-4">
+            <div className="rounded-md border border-muted-foreground/30 p-4">
               <FormField
                 control={form.control}
                 name="steps"
@@ -272,7 +275,7 @@ export default function RecipeForm({
                     </div>
                     <div className="space-y-3">
                       {stepsArray.fields.map((field, index) => (
-                        <div key={field.id} className="border-muted-foreground/20 p-3">
+                        <div key={field.id} className="rounded-md border border-muted-foreground/20 p-3">
                           <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
                             <span>{index + 1}단계</span>
                             <div className="flex items-center gap-2">
@@ -324,8 +327,7 @@ export default function RecipeForm({
                       ))}
                     </div>
                     <FormDescription>
-                      단계에 내용을 입력하면 제출 시 자동으로 한 줄씩 번호를 붙여 만드는 법에
-                      반영됩니다.
+                      단계에 내용을 입력하면 제출 시 자동으로 한 줄씩 번호를 붙여 만드는 법에 반영됩니다.
                     </FormDescription>
                   </FormItem>
                 )}
