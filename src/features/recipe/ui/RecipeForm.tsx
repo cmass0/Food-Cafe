@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, type ChangeEvent } from "react";
-import { useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +21,8 @@ import { recipeInsertSchema } from "../schema";
 import type { RecipeInsertInput } from "../types";
 
 type StepInput = { text: string };
-// RHF는 문자열을 기대하므로 nullable 필드는 문자열로 맞추고, 제출 시 null로 변환
+
+// RHF에서 사용하는 값은 모두 문자열로 맞추고, 제출 시 DB가 기대하는 null로 변환합니다.
 type FormValues = RecipeInsertInput & {
   steps: StepInput[];
   summary: string;
@@ -106,6 +106,12 @@ export default function RecipeForm({
     }
 
     const stepLines = (values.steps ?? []).map((step) => step.text.trim()).filter(Boolean);
+    if (stepLines.length === 0) {
+      form.setError("steps", { type: "manual", message: "최소 1개 이상의 단계를 입력해 주세요." });
+      return;
+    }
+    form.clearErrors("steps");
+
     const recipeFromSteps =
       stepLines.length > 0
         ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
@@ -147,72 +153,84 @@ export default function RecipeForm({
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-semibold">나만의 레시피 공유</CardTitle>
             <p className="text-sm text-muted-foreground">
-              한 줄 소개와 핵심 팁을 남겨두면 다른 사람들에게 더 사랑받아요.
+              레시피 기본 정보 → 대표 이미지 → 단계별 작성 순서로 차근차근 입력해 주세요.
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>레시피 제목</FormLabel>
-                    <FormControl>
-                      <Input placeholder="예) 에어프라이어로 만드는 갈릭버터 새우" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      검색이 잘 되도록 재료/조리법 키워드를 포함해 주세요.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <CardContent className="space-y-8">
+            {/* 기본 정보 */}
+            <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground">기본 정보</h3>
+                <span className="text-xs text-muted-foreground">제목 · 카테고리 · 태그</span>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>레시피 제목</FormLabel>
+                      <FormControl>
+                        <Input placeholder="예) 에어프라이어로 만드는 갈릭버터 새우" {...field} />
+                      </FormControl>
+                      <FormDescription>검색이 잘 되도록 재료/조리법 키워드를 포함해 주세요.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>카테고리 (선택)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="예) 한식 · 브런치 · 다이어트" {...field} />
-                    </FormControl>
-                    <FormDescription>요리 분위기나 콘셉트를 한 단어로 남겨주세요.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>카테고리 (선택)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="예) 한식 · 브런치 · 다이어트" {...field} />
+                      </FormControl>
+                      <FormDescription>요리 분위기나 콘셉트를 한 단어로 남겨주세요.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>태그 (쉼표로 구분)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="예) 10분완성, 캠핑, 초간단"
-                        value={tagsInput}
-                        onChange={(event) => {
-                          const next = event.target.value;
-                          setTagsInput(next);
-                          field.onChange(normalizeTags(next));
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>최대 20개까지 입력할 수 있어요.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="tags"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>태그 (쉼표로 구분)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="예) 10분완성, 캠핑, 초간단"
+                          value={tagsInput}
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            setTagsInput(next);
+                            field.onChange(normalizeTags(next));
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>최대 20개까지 입력할 수 있어요.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
+            {/* 대표 이미지 */}
+            <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground">대표 이미지</h3>
+                <span className="text-xs text-muted-foreground">URL 입력 또는 파일 업로드</span>
+              </div>
               <FormField
                 control={form.control}
                 name="image"
                 render={({ field }) => (
-                  <div className="md:col-span-2 space-y-4">
+                  <div className="space-y-4">
                     <FormItem>
                       <FormLabel>대표 이미지 URL</FormLabel>
                       <FormControl>
@@ -223,7 +241,7 @@ export default function RecipeForm({
                     </FormItem>
 
                     {enableImageUpload ? (
-                      <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
+                      <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center">
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                             {imagePreview ? (
@@ -252,7 +270,8 @@ export default function RecipeForm({
               />
             </div>
 
-            <div className="rounded-md border border-muted-foreground/30 p-4">
+            {/* 단계별 작성 */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
               <FormField
                 control={form.control}
                 name="steps"
@@ -275,7 +294,7 @@ export default function RecipeForm({
                     </div>
                     <div className="space-y-3">
                       {stepsArray.fields.map((field, index) => (
-                        <div key={field.id} className="rounded-md border border-muted-foreground/20 p-3">
+                        <div key={field.id} className="rounded-md border border-primary/20 bg-background p-3 shadow-sm">
                           <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
                             <span>{index + 1}단계</span>
                             <div className="flex items-center gap-2">
@@ -301,6 +320,7 @@ export default function RecipeForm({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
+                                disabled={stepsArray.fields.length <= 1}
                                 onClick={() => stepsArray.remove(index)}
                               >
                                 삭제
@@ -327,33 +347,38 @@ export default function RecipeForm({
                       ))}
                     </div>
                     <FormDescription>
-                      단계에 내용을 입력하면 제출 시 자동으로 한 줄씩 번호를 붙여 만드는 법에 반영됩니다.
+                      단계에 내용을 입력하면 제출 시 자동으로 번호를 붙여 만드는 법에 반영됩니다.
                     </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="summary"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between gap-2">
-                    <FormLabel>한 줄 소개</FormLabel>
-                    <span className="text-xs text-muted-foreground">{summaryLength}/500</span>
-                  </div>
-                  <FormControl>
-                    <Textarea
-                      placeholder="재료 준비 팁이나 요리의 매력을 짧게 적어주세요."
-                      maxLength={500}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* 요약/소개 */}
+            <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
+              <FormField
+                control={form.control}
+                name="summary"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-base">한 줄 소개</FormLabel>
+                      <span className="text-xs text-muted-foreground">{summaryLength}/500</span>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        placeholder="재료 준비 팁이나 요리의 매력을 짧게 적어주세요."
+                        maxLength={500}
+                        className="bg-background"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 
