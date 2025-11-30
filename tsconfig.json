@@ -21,6 +21,6 @@
 
     "plugins": [{ "name": "next" }]
   },
-  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx", "src/component/nav-bar.js"],
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx", "src/component/nav-bar.tsx"],
   "exclude": ["node_modules"]
 }
