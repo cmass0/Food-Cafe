@@ -42,7 +42,10 @@ export default function ClientUserNav({ session }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9">
+        <Button
+          variant="secondary"
+          className="h-9 rounded-full bg-emerald-50 px-4 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
+        >
           {name}
         </Button>
       </DropdownMenuTrigger>
