@@ -30,9 +30,9 @@ export default function TopRecipesCarousel({ label }: TopRecipesCarouselProps) {
   }
 
   return (
-    <div className="relative pr-4 pl-4">
+    <div className="relative">
       <div className="mb-2 text-xs text-muted-foreground">{label} TOP 10</div>
-      <div className="relative">
+      <div className="relative pr-10 pl-10">
         <div
           ref={scrollRef}
           className="flex gap-4 overflow-x-auto scroll-smooth pb-2"
@@ -105,4 +105,3 @@ export default function TopRecipesCarousel({ label }: TopRecipesCarouselProps) {
     </div>
   );
 }
-
