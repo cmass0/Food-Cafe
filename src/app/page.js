@@ -38,17 +38,11 @@ export default function Home() {
             </h1>
             <h1 className={style.highlight3}>ONLY FOR YOU</h1>
             <div className={style["main-headerbtnarea"]}>
-              <button
-                className={style["main-headerbtn"]}
-                onClick={() => handleCta("/posts")}
-              >
+              <button className={style["main-headerbtn"]} onClick={() => handleCta("/posts")}>
                 커뮤니티 참여하기
               </button>
 
-              <button
-                className={style["main-headerbtn"]}
-                onClick={() => handleCta("/meals/share")}
-              >
+              <button className={style["main-headerbtn"]} onClick={() => handleCta("/meals/share")}>
                 음식 공유하기
               </button>
             </div>
@@ -73,12 +67,12 @@ export default function Home() {
           <section className={style.section}>
             <h2>이 커뮤니티를 활용하는 법</h2>
             <p>
-              자신만의 레시피를 공유하거나, 다른 사람들의 레시피를 참고해보세요. 질문을 올리고 답변을
-              받으며 요리에 대한 지식을 넓힐 수 있습니다.
+              자신만의 레시피를 공유하거나, 다른 사람들의 레시피를 참고해보세요. 질문을 올리고
+              답변을 받으며 요리에 대한 지식을 넓힐 수 있습니다.
             </p>
             <p>
-              또한, 레시피 사진과 후기 공유를 통해 더욱 생생한 경험을 나눌 수 있습니다. 여러분의 이야기를
-              기다리고 있어요!
+              또한, 레시피 사진과 후기 공유를 통해 더욱 생생한 경험을 나눌 수 있습니다. 여러분의
+              이야기를 기다리고 있어요!
             </p>
           </section>
         </main>
