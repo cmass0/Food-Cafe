@@ -7,7 +7,7 @@ import MonthlyTopRecipe from "./monthly-top";
 
 export default function FooterSlide() {
   return (
-    <section className="border-t bg-muted/40 px-4 py-8">
+    <section className="rounded-2xl border-1.5 bg-muted/40 px-4 py-8">
       <div className="mx-auto max-w-6xl space-y-4">
         <div className="flex items-baseline justify-between">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">인기 레시피</h2>
