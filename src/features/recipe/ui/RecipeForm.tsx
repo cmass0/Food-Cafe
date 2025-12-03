@@ -19,6 +19,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { recipeInsertSchema } from "../schema";
 import type { RecipeInsertInput } from "../types";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type StepInput = { text: string };
 
@@ -37,7 +46,10 @@ type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
   enableImageUpload?: boolean;
   requireImageUpload?: boolean;
-  onSubmit: (values: RecipeInsertInput, extras?: { imageFile: File | null }) => Promise<void> | void;
+  onSubmit: (
+    values: RecipeInsertInput,
+    extras?: { imageFile: File | null }
+  ) => Promise<void> | void;
   submitLabel?: string;
 };
 
@@ -59,12 +71,11 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const initialSteps: StepInput[] =
-    defaultValues?.recipe
-      ?.split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((text) => ({ text })) ?? [{ text: "" }];
+  const initialSteps: StepInput[] = defaultValues?.recipe
+    ?.split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text) => ({ text })) ?? [{ text: "" }];
 
   const defaultValuesForForm: FormValues = {
     idTextOld: defaultValues?.idTextOld ?? "",
@@ -115,7 +126,7 @@ export default function RecipeForm({
     const recipeFromSteps =
       stepLines.length > 0
         ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : values.recipe?.trim() ?? "";
+        : (values.recipe?.trim() ?? "");
 
     const payload: RecipeInsertInput = {
       ...defaultValuesForForm,
@@ -157,7 +168,7 @@ export default function RecipeForm({
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 ">
             {/* 기본 정보 */}
             <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <div className="flex items-center justify-between">
@@ -174,7 +185,9 @@ export default function RecipeForm({
                       <FormControl>
                         <Input placeholder="예) 에어프라이어로 만드는 갈릭버터 새우" {...field} />
                       </FormControl>
-                      <FormDescription>검색이 잘 되도록 재료/조리법 키워드를 포함해 주세요.</FormDescription>
+                      <FormDescription>
+                        검색이 잘 되도록 재료/조리법 키워드를 포함해 주세요.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -187,9 +200,24 @@ export default function RecipeForm({
                     <FormItem>
                       <FormLabel>카테고리 (선택)</FormLabel>
                       <FormControl>
-                        <Input placeholder="예) 한식 · 브런치 · 다이어트" {...field} />
+                        <Select>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="1">한식</SelectItem>
+                              <SelectItem value="2">일식</SelectItem>
+                              <SelectItem value="3">양식</SelectItem>
+                              <SelectItem value="4">중식</SelectItem>
+                              <SelectItem value="5">아시안</SelectItem>
+                              <SelectItem value="6">디저트 · 베이커리</SelectItem>
+                              <SelectItem value="7">분식 · 간단 한 끼</SelectItem>
+                              <SelectItem value="8">다이어트</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
-                      <FormDescription>요리 분위기나 콘셉트를 한 단어로 남겨주세요.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -246,7 +274,11 @@ export default function RecipeForm({
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                             {imagePreview ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={imagePreview} alt="이미지 미리보기" className="h-full w-full object-cover" />
+                              <img
+                                src={imagePreview}
+                                alt="이미지 미리보기"
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                                 이미지 미리보기
@@ -294,7 +326,10 @@ export default function RecipeForm({
                     </div>
                     <div className="space-y-3">
                       {stepsArray.fields.map((field, index) => (
-                        <div key={field.id} className="rounded-md border border-primary/20 bg-background p-3 shadow-sm">
+                        <div
+                          key={field.id}
+                          className="rounded-md border border-primary/20 bg-background p-3 shadow-sm"
+                        >
                           <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
                             <span>{index + 1}단계</span>
                             <div className="flex items-center gap-2">
