@@ -209,14 +209,14 @@ export default function RecipeForm({
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectItem value="1">한식</SelectItem>
-                              <SelectItem value="2">일식</SelectItem>
-                              <SelectItem value="3">양식</SelectItem>
-                              <SelectItem value="4">중식</SelectItem>
-                              <SelectItem value="5">아시안</SelectItem>
-                              <SelectItem value="6">디저트 · 베이커리</SelectItem>
-                              <SelectItem value="7">분식 · 간단 한 끼</SelectItem>
-                              <SelectItem value="8">다이어트</SelectItem>
+                              <SelectItem value="한식">한식</SelectItem>
+                              <SelectItem value="일식">일식</SelectItem>
+                              <SelectItem value="양식">양식</SelectItem>
+                              <SelectItem value="중식">중식</SelectItem>
+                              <SelectItem value="아시안">아시안</SelectItem>
+                              <SelectItem value="디저트">디저트</SelectItem>
+                              <SelectItem value="분식">분식</SelectItem>
+                              <SelectItem value="다이어트">다이어트</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
