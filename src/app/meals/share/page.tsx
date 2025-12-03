@@ -21,7 +21,9 @@ export default function ShareMeal() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (values: RecipeInsertInput, extras?: { imageFile: File | null }) => {
+    console.log("클릭");
     if (!user) {
+      console.log("클릭1");
       openAuthModal({ next: "/meals/share" });
       return;
     }
@@ -30,6 +32,7 @@ export default function ShareMeal() {
     const imageUrl = values.image?.trim() || "";
 
     if (!imageFile && !imageUrl) {
+      console.log("클릭2");
       setError("대표 이미지를 업로드하거나 URL을 입력해 주세요.");
       return;
     }
@@ -71,7 +74,9 @@ export default function ShareMeal() {
     <div className={style.pagecontainer}>
       <header className={style.header}>
         <h1>맛있는 경험, 함께 나눠요</h1>
-        <p className={style.subtitle}>나만의 꿀조합을 공유하고, 다른 사람들의 아이디어도 구경하세요.</p>
+        <p className={style.subtitle}>
+          나만의 꿀조합을 공유하고, 다른 사람들의 아이디어도 구경하세요.
+        </p>
       </header>
 
       <main className={style.shareform}>

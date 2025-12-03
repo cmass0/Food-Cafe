@@ -61,19 +61,19 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
   return {
     id_text_old: input.idTextOld ?? generateLegacyId(),
     legacy_id: input.legacyId ?? null,
-    title: input.title,
-    summary: input.summary ?? null,
-    recipe: input.recipe ?? null,
-    image: input.image ?? null,
-    images: input.images ?? [],
-    category: input.category ?? null,
-    tags: input.tags ?? [],
-    status: input.status ?? 0,
-    writer_uid: input.writerUid ?? null,
-    writer_uid_legacy: input.writerUidLegacy ?? null,
-    writer_name: input.writerName ?? null,
-    writer_email: input.writerEmail ?? null,
-  };
+  title: input.title,
+  summary: input.summary ?? null,
+  recipe: input.recipe ?? null,
+  image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
+  images: input.images ?? [],
+  category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
+  tags: input.tags ?? [],
+  status: input.status ?? 0,
+  writer_uid: input.writerUid ?? null,
+  writer_uid_legacy: input.writerUidLegacy ?? null,
+  writer_name: input.writerName && input.writerName.trim().length > 0 ? input.writerName.trim() : null,
+  writer_email: input.writerEmail && input.writerEmail.trim().length > 0 ? input.writerEmail.trim() : null,
+};
 }
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {

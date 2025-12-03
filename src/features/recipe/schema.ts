@@ -41,7 +41,8 @@ export const recipeInsertSchema = z.object({
     .string()
     .trim()
     .min(1, "레시피 내용을 입력해 주세요."),
-  image: imageUrlSchema.optional().nullable(),
+  // 파일 업로드만 사용하는 경우를 위해 빈 문자열도 허용
+  image: z.union([imageUrlSchema, z.literal("")]).optional().nullable(),
   images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
   category: z
     .string()

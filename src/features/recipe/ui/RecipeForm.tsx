@@ -111,8 +111,8 @@ export default function RecipeForm({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     setUploadError(null);
-    if (enableImageUpload && requireImageUpload && !imageFile && !values.image?.trim()) {
-      setUploadError("대표 이미지를 업로드하거나 URL을 입력해 주세요.");
+    if (enableImageUpload && requireImageUpload && !imageFile) {
+      setUploadError("대표 이미지 파일을 업로드해 주세요.");
       return;
     }
 
@@ -133,7 +133,7 @@ export default function RecipeForm({
       ...values,
       summary: values.summary?.trim() ? values.summary.trim() : null,
       recipe: recipeFromSteps,
-      image: values.image?.trim() ?? "",
+      image: null, // 파일 업로드로만 처리하므로 URL은 비움
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
       writerName: values.writerName?.trim() || null,
@@ -145,6 +145,7 @@ export default function RecipeForm({
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
     if (!file) {
       setImageFile(null);
       setImagePreview(null);
@@ -262,15 +263,6 @@ export default function RecipeForm({
                 name="image"
                 render={({ field }) => (
                   <div className="space-y-4">
-                    <FormItem>
-                      <FormLabel>대표 이미지 URL</FormLabel>
-                      <FormControl>
-                        <Input type="url" placeholder="https://example.com/image.jpg" {...field} />
-                      </FormControl>
-                      <FormDescription>완성 샷을 올리면 클릭률이 올라가요.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-
                     {enableImageUpload ? (
                       <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center">
