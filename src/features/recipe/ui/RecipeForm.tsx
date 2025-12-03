@@ -200,7 +200,10 @@ export default function RecipeForm({
                     <FormItem>
                       <FormLabel>카테고리 (선택)</FormLabel>
                       <FormControl>
-                        <Select>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={(val) => field.onChange(val)}
+                        >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select a type" />
                           </SelectTrigger>
