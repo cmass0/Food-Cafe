@@ -21,19 +21,14 @@ export default function ShareMeal() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (values: RecipeInsertInput, extras?: { imageFile: File | null }) => {
-    console.log("클릭");
     if (!user) {
-      console.log("클릭1");
       openAuthModal({ next: "/meals/share" });
       return;
     }
 
     const imageFile = extras?.imageFile ?? null;
-    const imageUrl = values.image?.trim() || "";
-
-    if (!imageFile && !imageUrl) {
-      console.log("클릭2");
-      setError("대표 이미지를 업로드하거나 URL을 입력해 주세요.");
+    if (!imageFile) {
+      setError("대표 이미지를 파일로 올려주세요.");
       return;
     }
 
@@ -44,27 +39,25 @@ export default function ShareMeal() {
     try {
       const created = await createRecipe({
         ...values,
-        image: imageUrl || null,
+        image: null,
         writerName: displayName ?? user.email ?? "user",
         writerUid: user.id,
         writerEmail: user.email ?? undefined,
       });
 
-      if (imageFile) {
-        const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, created.id, imageFile, {
-          contentType: imageFile.type,
-          upsert: false,
-        });
-        const finalUrl = publicUrl ?? signedUrl ?? null;
-        if (finalUrl) {
-          await updateRecipe(created.id, { image: finalUrl });
-        }
+      const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, created.id, imageFile, {
+        contentType: imageFile.type,
+        upsert: false,
+      });
+      const finalUrl = publicUrl ?? signedUrl ?? null;
+      if (finalUrl) {
+        await updateRecipe(created.id, { image: finalUrl });
       }
 
       router.push("/meals");
     } catch (err) {
-      console.error("레시피 생성/업로드 중 오류가 발생했습니다.", err);
-      setError("업로드에 실패했습니다. 다시 시도해주세요.");
+      console.error("레시피 등록/업로드 과정에서 오류가 발생했습니다.", err);
+      setError("업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +68,7 @@ export default function ShareMeal() {
       <header className={style.header}>
         <h1>맛있는 경험, 함께 나눠요</h1>
         <p className={style.subtitle}>
-          나만의 꿀조합을 공유하고, 다른 사람들의 아이디어도 구경하세요.
+          나만의 레시피를 공유하고, 다른 사람의 아이디어도 영감으로 받아보세요.
         </p>
       </header>
 
