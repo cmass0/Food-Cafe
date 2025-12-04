@@ -24,14 +24,12 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 
 type StepInput = { text: string };
 
-// RHF에서 사용하는 값은 모두 문자열로 맞추고, 제출 시 DB가 기대하는 null로 변환합니다.
 type FormValues = RecipeInsertInput & {
   steps: StepInput[];
   summary: string;
@@ -40,6 +38,7 @@ type FormValues = RecipeInsertInput & {
   category: string;
   writerName: string;
   writerEmail: string;
+  tags: string[];
 };
 
 type RecipeFormProps = {
@@ -71,11 +70,12 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const initialSteps: StepInput[] = defaultValues?.recipe
-    ?.split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((text) => ({ text })) ?? [{ text: "" }];
+  const initialSteps: StepInput[] =
+    defaultValues?.recipe
+      ?.split(/\n+/)
+      .map((line) => line.replace(/^\d+\)\s*/, "").trim())
+      .filter(Boolean)
+      .map((text) => ({ text })) ?? [{ text: "" }];
 
   const defaultValuesForForm: FormValues = {
     idTextOld: defaultValues?.idTextOld ?? "",
@@ -107,12 +107,11 @@ export default function RecipeForm({
   });
 
   const summaryLength = (form.watch("summary") ?? "").length;
-  const recipeLength = (form.watch("recipe") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
     setUploadError(null);
     if (enableImageUpload && requireImageUpload && !imageFile) {
-      setUploadError("대표 이미지 파일을 업로드해 주세요.");
+      setUploadError("대표 이미지를 파일로 올려주세요.");
       return;
     }
 
@@ -126,14 +125,14 @@ export default function RecipeForm({
     const recipeFromSteps =
       stepLines.length > 0
         ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : (values.recipe?.trim() ?? "");
+        : values.recipe?.trim() ?? "";
 
     const payload: RecipeInsertInput = {
       ...defaultValuesForForm,
       ...values,
       summary: values.summary?.trim() ? values.summary.trim() : null,
       recipe: recipeFromSteps,
-      image: null, // 파일 업로드로만 처리하므로 URL은 비움
+      image: null, // 파일 업로드 후 서버에서 URL을 채운다.
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
       writerName: values.writerName?.trim() || null,
@@ -165,7 +164,7 @@ export default function RecipeForm({
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-semibold">나만의 레시피 공유</CardTitle>
             <p className="text-sm text-muted-foreground">
-              레시피 기본 정보 → 대표 이미지 → 단계별 작성 순서로 차근차근 입력해 주세요.
+              핵심 정보, 대표 이미지, 만드는 법을 단계별로 적어 주세요.
             </p>
           </CardHeader>
 
@@ -184,7 +183,7 @@ export default function RecipeForm({
                     <FormItem className="md:col-span-2">
                       <FormLabel>레시피 제목</FormLabel>
                       <FormControl>
-                        <Input placeholder="예) 에어프라이어로 만드는 갈릭버터 새우" {...field} />
+                        <Input placeholder="예) 10분 완성 크림 파스타" {...field} />
                       </FormControl>
                       <FormDescription>
                         검색이 잘 되도록 재료/조리법 키워드를 포함해 주세요.
@@ -206,18 +205,17 @@ export default function RecipeForm({
                           onValueChange={(val) => field.onChange(val)}
                         >
                           <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select a type" />
+                            <SelectValue placeholder="카테고리 선택" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
                               <SelectItem value="한식">한식</SelectItem>
+                              <SelectItem value="중식">중식</SelectItem>
                               <SelectItem value="일식">일식</SelectItem>
                               <SelectItem value="양식">양식</SelectItem>
-                              <SelectItem value="중식">중식</SelectItem>
-                              <SelectItem value="아시안">아시안</SelectItem>
-                              <SelectItem value="디저트">디저트</SelectItem>
                               <SelectItem value="분식">분식</SelectItem>
-                              <SelectItem value="다이어트">다이어트</SelectItem>
+                              <SelectItem value="디저트">디저트</SelectItem>
+                              <SelectItem value="기타">기타</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -232,7 +230,7 @@ export default function RecipeForm({
                   name="tags"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>태그 (쉼표로 구분)</FormLabel>
+                      <FormLabel>태그 (콤마로 구분)</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="예) 10분완성, 캠핑, 초간단"
@@ -244,7 +242,7 @@ export default function RecipeForm({
                           }}
                         />
                       </FormControl>
-                      <FormDescription>최대 20개까지 입력할 수 있어요.</FormDescription>
+                      <FormDescription>최대 20개까지 입력할 수 있습니다.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -256,12 +254,12 @@ export default function RecipeForm({
             <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-muted-foreground">대표 이미지</h3>
-                <span className="text-xs text-muted-foreground">URL 입력 또는 파일 업로드</span>
+                <span className="text-xs text-muted-foreground">파일 업로드만 사용</span>
               </div>
               <FormField
                 control={form.control}
                 name="image"
-                render={({ field }) => (
+                render={() => (
                   <div className="space-y-4">
                     {enableImageUpload ? (
                       <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
@@ -271,7 +269,7 @@ export default function RecipeForm({
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={imagePreview}
-                                alt="이미지 미리보기"
+                                alt="대표 이미지 미리보기"
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -283,7 +281,7 @@ export default function RecipeForm({
                           <div className="flex-1 space-y-2">
                             <Input type="file" accept="image/*" onChange={handleFileChange} />
                             <p className="text-xs text-muted-foreground">
-                              이미지 파일을 업로드하거나 위 URL 필드에 직접 링크를 입력할 수 있어요.
+                              로컬 이미지를 올리면 미리보기에 표시되고, 서버에서 업로드 후 URL을 저장합니다.
                             </p>
                             {uploadError ? (
                               <p className="text-xs font-medium text-destructive">{uploadError}</p>
@@ -297,15 +295,15 @@ export default function RecipeForm({
               />
             </div>
 
-            {/* 단계별 작성 */}
+            {/* 만드는 법 (단계) */}
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
               <FormField
                 control={form.control}
                 name="steps"
                 render={() => (
                   <FormItem>
-                    <div className="flex items-center justify-between">
-                      <FormLabel className="text-base">만드는 법 (단계별)</FormLabel>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <FormLabel className="text-base">만드는 법 (단계)</FormLabel>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{stepsArray.fields.length} / 15단계</span>
                         <Button
@@ -364,7 +362,7 @@ export default function RecipeForm({
                               <FormItem>
                                 <FormControl>
                                   <Textarea
-                                    placeholder="이 단계에서 해야 할 일을 구체적으로 적어주세요."
+                                    placeholder="이 단계에서 할 일을 구체적으로 적어주세요."
                                     rows={3}
                                     {...field}
                                   />
@@ -376,9 +374,7 @@ export default function RecipeForm({
                         </div>
                       ))}
                     </div>
-                    <FormDescription>
-                      단계에 내용을 입력하면 제출 시 자동으로 번호를 붙여 만드는 법에 반영됩니다.
-                    </FormDescription>
+                    <FormDescription>최소 1개 이상 입력해야 합니다.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -393,12 +389,12 @@ export default function RecipeForm({
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-base">한 줄 소개</FormLabel>
+                      <FormLabel className="text-base">요약/소개</FormLabel>
                       <span className="text-xs text-muted-foreground">{summaryLength}/500</span>
                     </div>
                     <FormControl>
                       <Textarea
-                        placeholder="재료 준비 팁이나 요리의 매력을 짧게 적어주세요."
+                        placeholder="재료 준비와 요리 포인트를 간단히 적어주세요."
                         maxLength={500}
                         className="bg-background"
                         {...field}
