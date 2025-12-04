@@ -4,7 +4,12 @@ import { Skeleton } from "@heroui/react";
 import Recipe from "./recipe";
 import style from "./display-racipe.module.css";
 
-export default function Gridracipe({ MealsData = [], loading = false }) {
+type GridracipeProps = {
+  MealsData: any[];
+  loading: boolean;
+};
+
+export default function Gridracipe({ MealsData = [], loading = false }: GridracipeProps) {
   if (loading) {
     return (
       <div className={style.displaygrid}>
@@ -32,4 +37,3 @@ export default function Gridracipe({ MealsData = [], loading = false }) {
     </div>
   );
 }
-
