@@ -12,6 +12,14 @@ const imageUrlSchema = z
   .url("올바른 이미지 URL을 입력해 주세요.")
   .max(2048, "이미지 URL은 2048자 이하만 가능합니다.");
 
+// 대표 이미지는 파일 업로드로 채워지므로 URL 검증을 강제하지 않고 길이만 제한
+const imageFieldSchema = z
+  .string()
+  .trim()
+  .max(2048, "이미지 경로는 2048자 이하만 가능합니다.")
+  .nullable()
+  .optional();
+
 const tagSchema = z
   .string()
   .trim()
@@ -37,12 +45,8 @@ export const recipeInsertSchema = z.object({
     .max(500, "요약은 500자 이하만 가능합니다.")
     .nullable()
     .optional(),
-  recipe: z
-    .string()
-    .trim()
-    .min(1, "레시피 내용을 입력해 주세요."),
-  // 파일 업로드만 사용하는 경우를 위해 빈 문자열도 허용
-  image: z.union([imageUrlSchema, z.literal("")]).optional().nullable(),
+  recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요."),
+  image: imageFieldSchema,
   images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
   category: z
     .string()
@@ -82,13 +86,8 @@ export const recipeUpdateSchema = z
       .max(500, "요약은 500자 이하만 가능합니다.")
       .nullable()
       .optional(),
-    recipe: z
-      .string()
-      .trim()
-      .min(1, "레시피 내용을 입력해 주세요.")
-      .nullable()
-      .optional(),
-    image: imageUrlSchema.optional(),
+    recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
+    image: imageFieldSchema,
     images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
     category: z
       .string()
