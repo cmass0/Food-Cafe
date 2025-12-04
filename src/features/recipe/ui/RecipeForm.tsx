@@ -115,16 +115,18 @@ export default function RecipeForm({
       return;
     }
 
-    const stepLines = (values.steps ?? []).map((step) => step.text.trim()).filter(Boolean);
-    if (stepLines.length === 0) {
-      form.setError("steps", { type: "manual", message: "최소 1개 이상의 단계를 입력해 주세요." });
+    const rawSteps = values.steps ?? [];
+    const trimmedSteps = rawSteps.map((step) => step.text.trim());
+    const hasEmptyStep = trimmedSteps.some((text) => text.length === 0);
+    if (hasEmptyStep || trimmedSteps.length === 0) {
+      form.setError("steps", { type: "manual", message: "모든 단계에 내용을 입력해 주세요." });
       return;
     }
     form.clearErrors("steps");
 
     const recipeFromSteps =
-      stepLines.length > 0
-        ? stepLines.map((line, index) => `${index + 1}) ${line}`).join("\n")
+      trimmedSteps.length > 0
+        ? trimmedSteps.map((line, index) => `${index + 1}) ${line}`).join("\n")
         : values.recipe?.trim() ?? "";
 
     const payload: RecipeInsertInput = {
