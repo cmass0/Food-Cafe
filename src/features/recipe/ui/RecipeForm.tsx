@@ -104,10 +104,10 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    console.log("t1");
+    console.log("RecipeForm handleSubmit called with values:", values);
     setUploadError(null);
     if (enableImageUpload && requireImageUpload && !imageFile) {
-      console.log("t2");
+      console.log("Image upload required but no file provided");
       setUploadError("대표 이미지를 파일로 올려주세요.");
       return;
     }
@@ -116,6 +116,7 @@ export default function RecipeForm({
     const trimmedSteps = rawSteps.map((step) => step.text.trim());
     const hasEmptyStep = trimmedSteps.some((text) => text.length === 0);
     if (hasEmptyStep || trimmedSteps.length === 0) {
+      console.log("Validation error: empty steps detected");
       form.setError("steps", { type: "manual", message: "모든 단계에 내용을 입력해 주세요." });
       return;
     }
@@ -137,6 +138,7 @@ export default function RecipeForm({
       writerName: values.writerName?.trim() || null,
       writerEmail: values.writerEmail?.trim() || null,
     };
+    console.log("RecipeForm handleSubmit payload:", payload);
 
     await onSubmit(payload, { imageFile });
   });

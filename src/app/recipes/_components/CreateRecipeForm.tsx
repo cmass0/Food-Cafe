@@ -19,13 +19,16 @@ export default function CreateRecipeForm() {
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (values: RecipeInsertInput, extras?: { imageFile: File | null }) => {
+    console.log("CreateRecipeForm handleSubmit called");
     if (!user) {
+      console.log("User not authenticated, opening auth modal");
       openAuthModal({ next: "/recipes/new" });
       return;
     }
 
     const imageFile = extras?.imageFile ?? null;
     if (!imageFile) {
+      console.log("No image file provided, setting error");
       setError("대표 이미지를 파일로 올려주세요.");
       return;
     }
