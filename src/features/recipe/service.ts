@@ -24,24 +24,13 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
-function generateLegacyId(): string {
-  const cryptoApi = globalThis.crypto as Crypto | undefined;
-  if (cryptoApi && typeof cryptoApi.randomUUID === "function") {
-    return cryptoApi.randomUUID();
-  }
-  return `tmp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
 function mapRowToRecipe(row: RecipeRow): Recipe {
   return {
     id: row.id,
-    idTextOld: row.id_text_old,
-    legacyId: row.legacy_id,
     title: row.title,
     summary: row.summary,
     recipe: row.recipe,
     image: row.image,
-    images: normaliseTextArray(row.images),
     category: row.category,
     tags: normaliseTextArray(row.tags),
     likeCount: row.like_count ?? 0,
@@ -49,7 +38,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     lastLikedAt: row.last_liked_at,
     status: row.status,
     writerUid: row.writer_uid,
-    writerUidLegacy: row.writer_uid_legacy,
     writerName: row.writer_name,
     writerEmail: row.writer_email,
     createdAt: new Date(row.created_at),
@@ -59,21 +47,17 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
 
 function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
   return {
-    id_text_old: input.idTextOld ?? generateLegacyId(),
-    legacy_id: input.legacyId ?? null,
-  title: input.title,
-  summary: input.summary ?? null,
-  recipe: input.recipe ?? null,
-  image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
-  images: input.images ?? [],
-  category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
-  tags: input.tags ?? [],
-  status: input.status ?? 0,
-  writer_uid: input.writerUid ?? null,
-  writer_uid_legacy: input.writerUidLegacy ?? null,
-  writer_name: input.writerName && input.writerName.trim().length > 0 ? input.writerName.trim() : null,
-  writer_email: input.writerEmail && input.writerEmail.trim().length > 0 ? input.writerEmail.trim() : null,
-};
+    title: input.title,
+    summary: input.summary ?? null,
+    recipe: input.recipe ?? null,
+    image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
+    category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
+    tags: input.tags ?? [],
+    status: input.status ?? 0,
+    writer_uid: input.writerUid ?? null,
+    writer_name: input.writerName && input.writerName.trim().length > 0 ? input.writerName.trim() : null,
+    writer_email: input.writerEmail && input.writerEmail.trim().length > 0 ? input.writerEmail.trim() : null,
+  };
 }
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {

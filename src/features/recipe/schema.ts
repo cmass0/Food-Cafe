@@ -1,11 +1,5 @@
 ﻿import { z } from "zod";
 
-export const recipeIdTextSchema = z
-  .string()
-  .trim()
-  .min(1, "레거시 ID를 입력해 주세요.")
-  .max(128, "레거시 ID는 128자 이하만 가능합니다.");
-
 const imageUrlSchema = z
   .string()
   .trim()
@@ -27,13 +21,6 @@ const tagSchema = z
   .max(50, "태그는 50자 이하만 가능합니다.");
 
 export const recipeInsertSchema = z.object({
-  idTextOld: recipeIdTextSchema.optional(),
-  legacyId: z
-    .string()
-    .trim()
-    .max(128, "legacyId는 128자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
   title: z
     .string()
     .trim()
@@ -52,7 +39,6 @@ export const recipeInsertSchema = z.object({
     .max(8000, "레시피는 8000자 이하로 입력해 주세요.")
     .optional(),
   image: imageFieldSchema,
-  images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
   category: z
     .string()
     .trim()
@@ -62,12 +48,6 @@ export const recipeInsertSchema = z.object({
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
   status: z.number().int().min(0).max(9).nullable().optional(),
   writerUid: z.string().uuid("작성자 UID가 올바르지 않습니다.").nullable().optional(),
-  writerUidLegacy: z
-    .string()
-    .trim()
-    .max(120, "레거시 UID는 120자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
   writerName: z
     .string()
     .trim()

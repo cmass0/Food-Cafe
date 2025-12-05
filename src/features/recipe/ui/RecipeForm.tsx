@@ -70,26 +70,21 @@ export default function RecipeForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const initialSteps: StepInput[] =
-    defaultValues?.recipe
-      ?.split(/\n+/)
-      .map((line) => line.replace(/^\d+\)\s*/, "").trim())
-      .filter(Boolean)
-      .map((text) => ({ text })) ?? [{ text: "" }];
+  const initialSteps: StepInput[] = defaultValues?.recipe
+    ?.split(/\n+/)
+    .map((line) => line.replace(/^\d+\)\s*/, "").trim())
+    .filter(Boolean)
+    .map((text) => ({ text })) ?? [{ text: "" }];
 
   const defaultValuesForForm: FormValues = {
-    idTextOld: defaultValues?.idTextOld ?? "",
-    legacyId: defaultValues?.legacyId ?? null,
     title: defaultValues?.title ?? "",
     summary: defaultValues?.summary ?? "",
     recipe: defaultValues?.recipe ?? "",
     image: defaultValues?.image ?? "",
-    images: defaultValues?.images ?? [],
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     status: defaultValues?.status ?? null,
     writerUid: defaultValues?.writerUid ?? null,
-    writerUidLegacy: defaultValues?.writerUidLegacy ?? null,
     writerName: defaultValues?.writerName ?? "",
     writerEmail: defaultValues?.writerEmail ?? "",
     steps: initialSteps,
@@ -109,8 +104,10 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
+    console.log("t1");
     setUploadError(null);
     if (enableImageUpload && requireImageUpload && !imageFile) {
+      console.log("t2");
       setUploadError("대표 이미지를 파일로 올려주세요.");
       return;
     }
@@ -127,7 +124,7 @@ export default function RecipeForm({
     const recipeFromSteps =
       trimmedSteps.length > 0
         ? trimmedSteps.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : values.recipe?.trim() ?? "";
+        : (values.recipe?.trim() ?? "");
 
     const payload: RecipeInsertInput = {
       ...defaultValuesForForm,
@@ -283,7 +280,8 @@ export default function RecipeForm({
                           <div className="flex-1 space-y-2">
                             <Input type="file" accept="image/*" onChange={handleFileChange} />
                             <p className="text-xs text-muted-foreground">
-                              로컬 이미지를 올리면 미리보기에 표시되고, 서버에서 업로드 후 URL을 저장합니다.
+                              로컬 이미지를 올리면 미리보기에 표시되고, 서버에서 업로드 후 URL을
+                              저장합니다.
                             </p>
                             {uploadError ? (
                               <p className="text-xs font-medium text-destructive">{uploadError}</p>

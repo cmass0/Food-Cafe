@@ -5,13 +5,10 @@ export type RecipeRow = Tables<"recipes">;
 
 export interface Recipe {
   id: string;
-  idTextOld: string;
-  legacyId: string | null;
   title: string;
   summary: string | null;
   recipe: string | null;
   image: string | null;
-  images: string[];
   category: string | null;
   tags: string[];
   likeCount: number;
@@ -19,7 +16,6 @@ export interface Recipe {
   lastLikedAt: string | null;
   status: number | null;
   writerUid: string | null;
-  writerUidLegacy: string | null;
   writerName: string | null;
   writerEmail: string | null;
   createdAt: Date;
@@ -27,18 +23,14 @@ export interface Recipe {
 }
 
 export interface RecipeInsertInput {
-  idTextOld?: string;
-  legacyId?: string | null;
   title: string;
   summary?: string | null;
   recipe?: string | null;
   image?: string | null;
-  images?: string[];
   category?: string | null;
   tags?: string[];
   status?: number | null;
   writerUid?: string | null;
-  writerUidLegacy?: string | null;
   writerName?: string | null;
   writerEmail?: string | null;
 }
@@ -48,7 +40,6 @@ export interface RecipeUpdateInput {
   summary?: string | null;
   recipe?: string | null;
   image?: string | null;
-  images?: string[];
   category?: string | null;
   tags?: string[];
 }
