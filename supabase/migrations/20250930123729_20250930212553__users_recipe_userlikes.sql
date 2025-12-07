@@ -1,13 +1,10 @@
--- =========================================================
---  users / recipes / user_likes migration (idempotent)
---  Note: ���� DB���� �̹��� �÷����� image_path ��� �Ʒ��� image ���۷����� image_path �� ��ü�ϼ���.
--- =========================================================
+
 begin;
 
--- 0) ���� ����: ��Ű�� ����
+
 create schema if not exists public;
 
--- 1) USERS: �÷� ǥ��ȭ �� ����
+
 do $$
 begin
   -- rename columns if exist
@@ -27,7 +24,7 @@ alter table if exists public.users
   add column if not exists email        text,
   add column if not exists updated_at   timestamptz default now();
 
--- �Ļ�(admin): role='admin'�̸� true
+
 do $$
 begin
   if not exists (select 1 from information_schema.columns
@@ -37,7 +34,7 @@ begin
   end if;
 end $$;
 
--- (����) ������ is_admin(uid) �Լ� ���� - SECURITY DEFINER
+
 do $$
 begin
   if not exists (
@@ -59,8 +56,6 @@ begin
   end if;
 end $$;
 
--- 2) RECIPES: �ۼ��� FK + �ڵ� ���� Ʈ���� + �̹��� ��Ģ
--- FK (���� Ȯ�� �� �߰�)
 do $$
 begin
   if not exists (
@@ -74,7 +69,6 @@ begin
   end if;
 end $$;
 
--- writer_uid �ڵ� ���� Ʈ���� (������ ����/����)
 create or replace function public.set_writer_uid()
 returns trigger language plpgsql as $$
 begin
@@ -89,7 +83,7 @@ create trigger trg_recipes_set_writer
 before insert on public.recipes
 for each row execute function public.set_writer_uid();
 
--- �̹��� �ʼ� CHECK (�� ���ڿ� ����). NOT NULL�� ���Ž� ���� �Ϸ� �� ���� ���� ����.
+
 alter table public.recipes
   drop constraint if exists recipes_image_required;
 
@@ -97,11 +91,7 @@ alter table public.recipes
   add constraint recipes_image_required
   check (coalesce(nullif(trim(image), ''), null) is not null);
 
--- �ʿ� ��, ���� �Ϸ� �� �Ʒ� �ּ� ����
--- alter table public.recipes
---   alter column image set not null;
 
--- 3) USER_LIKES: ���� ���̺� + �ε��� + RLS
 create table if not exists public.user_likes (
   user_id   uuid not null references public.users(id)   on delete cascade,
   recipe_id uuid not null references public.recipes(id) on delete cascade,
@@ -133,8 +123,6 @@ on public.user_likes for delete
 to authenticated
 using (user_id = auth.uid());
 
--- 4) USERS ���̺� RLS(����: ���� ��Ģ ����/����)
--- �ʿ��� ��쿡�� Ȱ��ȭ/�����ϼ���. (�̹� �ִٸ� ��ŵ��)
 alter table public.users enable row level security;
 
 drop policy if exists users_select_all on public.users;

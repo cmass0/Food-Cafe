@@ -20,7 +20,30 @@ export async function POST(req: Request) {
     const parsed = requestSchema.parse(body);
 
     const supabase = getServerSupabase();
-    const recipe = await recipeService.createRecipe(supabase, parsed);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError) {
+      console.error("Failed to get auth user", userError);
+      return NextResponse.json({ error: "Failed to create recipe" }, { status: 500 });
+    }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const writerName =
+      (user.user_metadata as any)?.name ??
+      (user.user_metadata as any)?.full_name ??
+      (user.user_metadata as any)?.display_name ??
+      null;
+    const writerEmail = user.email ?? null;
+
+    const recipe = await recipeService.createRecipe(supabase, parsed, {
+      uid: user.id,
+      name: writerName ?? writerEmail,
+      email: writerEmail,
+    });
     return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (error) {
     console.error("Failed to create recipe", error);

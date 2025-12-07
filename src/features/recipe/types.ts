@@ -69,6 +69,9 @@ export type RecipeInsertDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  writer_uid?: string | null;
+  writer_name?: string | null;
+  writer_email?: string | null;
 };
 
 export type RecipeUpdateDB = {
@@ -78,4 +81,10 @@ export type RecipeUpdateDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+};
+
+export type RecipeWriterInfo = {
+  uid?: string | null;
+  name?: string | null;
+  email?: string | null;
 };

@@ -23,7 +23,29 @@ function handleError(error: unknown): never {
 export async function createRecipeAction(input: RecipeInsertInput) {
   try {
     const supabase = getServerSupabase();
-    const recipe = await recipeService.createRecipe(supabase, input);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) {  
+      throw new Error("알 수 없는 오류가 발생했습니다.");
+    }
+    if (!user) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const writerName =
+      user.user_metadata?.name ??
+      user.user_metadata?.full_name ??
+      user.user_metadata?.display_name ??
+      null;
+    const writerEmail = user.email ?? null;
+
+    const recipe = await recipeService.createRecipe(supabase, input, {
+      uid: user.id,
+      name: writerName ?? writerEmail,
+      email: writerEmail,
+    });
     revalidatePath("/recipes");
     revalidatePath("/search");
     redirect(`/recipes/${recipe.id}`);
@@ -66,4 +88,3 @@ export async function likeOnceAction(recipeId: string) {
 export async function likeMetaAction(recipeId: string) {
   return getLikeMeta(recipeId);
 }
-

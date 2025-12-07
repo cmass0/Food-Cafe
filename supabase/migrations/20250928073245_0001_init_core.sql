@@ -49,10 +49,10 @@ $$;
 
 -- Firestore-friendly recipes (text PK, plus legacy uid)
 create table if not exists public.recipes (
-  id               text primary key,                         -- Firestore document id
+  id               text primary key,                  
   title            text not null,
   summary          text,
-  recipe           text,                                     -- legacy 'content' mapped here
+  recipe           text,                                    
   image            text,
   images           text[] not null default '{}',
   category         text,

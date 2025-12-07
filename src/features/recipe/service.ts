@@ -14,10 +14,13 @@ import type {
   RecipeSupabaseClient,
   RecipeUpdateDB,
   RecipeUpdateInput,
+  RecipeWriterInfo,
 } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+
+
 
 function normaliseTextArray(value: string[] | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
@@ -41,7 +44,7 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
   };
 }
 
-function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
+function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo): RecipeInsertDB {
   return {
     title: input.title,
     summary: input.summary ?? null,
@@ -49,6 +52,9 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
     image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
+    ...(writer?.uid ? { writer_uid: writer.uid } : {}),
+    ...(writer?.name ? { writer_name: writer.name } : {}),
+    ...(writer?.email ? { writer_email: writer.email } : {}),
   };
 }
 
@@ -119,10 +125,11 @@ export async function getRecipe(
 
 export async function createRecipe(
   client: RecipeSupabaseClient,
-  input: RecipeInsertInput
+  input: RecipeInsertInput,
+  writer?: RecipeWriterInfo
 ): Promise<Recipe> {
   const parsed = recipeInsertSchema.parse(input);
-  const payload = buildInsertPayload(parsed);
+  const payload = buildInsertPayload(parsed, writer);
   const row = await repository.insertRecipeRecord(client, payload);
   return mapRowToRecipe(row);
 }
