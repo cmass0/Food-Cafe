@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { recipeInsertSchema } from "@/features/recipe/schema";
+
 import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -33,9 +33,9 @@ export async function POST(req: Request) {
     }
 
     const writerName =
-      (user.user_metadata as any)?.name ??
-      (user.user_metadata as any)?.full_name ??
-      (user.user_metadata as any)?.display_name ??
+      (user.user_metadata)?.name ??
+      (user.user_metadata)?.full_name ??
+      (user.user_metadata)?.display_name ??
       null;
     const writerEmail = user.email ?? null;
 
@@ -46,7 +46,12 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create recipe", error);
-    return NextResponse.json({ error: "Failed to create recipe" }, { status: 500 });
+    const info = {
+      message: (error as any)?.message,
+      code: (error as any)?.code,
+      details: (error as any)?.details ?? (error as any)?.hint,
+    };
+    console.error("Failed to create recipe", info, error);
+    return NextResponse.json({ error: "Failed to create recipe", details: info }, { status: 500 });
   }
 }
