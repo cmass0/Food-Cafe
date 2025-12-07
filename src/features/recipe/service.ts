@@ -67,7 +67,6 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
   if (patch.image !== undefined) payload.image = patch.image;
-  if (patch.images !== undefined) payload.images = patch.images;
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
 

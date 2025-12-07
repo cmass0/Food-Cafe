@@ -1,11 +1,5 @@
 ﻿import { z } from "zod";
 
-const imageUrlSchema = z
-  .string()
-  .trim()
-  .url("올바른 이미지 URL을 입력해 주세요.")
-  .max(2048, "이미지 URL은 2048자 이하만 가능합니다.");
-
 // 대표 이미지는 파일 업로드로 채워지므로 URL 검증을 강제하지 않고 길이만 제한
 const imageFieldSchema = z
   .string()
@@ -73,7 +67,6 @@ export const recipeUpdateSchema = z
       .optional(),
     recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
     image: imageFieldSchema,
-    images: z.array(imageUrlSchema).max(12, "이미지는 최대 12개까지 추가할 수 있습니다.").optional(),
     category: z
       .string()
       .trim()
