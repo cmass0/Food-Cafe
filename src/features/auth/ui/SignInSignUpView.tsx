@@ -117,7 +117,7 @@ export default function SignInSignUpView({
 
   return (
     <div className="items-center justify-center">
-      <Card className="flex h/full max-h-[calc(100dvh-2rem)] w/full max-w-md flex-col overflow-hidden shadow-lg">
+      <Card className="flex h-full max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden shadow-lg">
         <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
           <ScrollArea type="always" className="h-full">
             <div className="p-6">
@@ -132,7 +132,7 @@ export default function SignInSignUpView({
               ) : null}
 
               <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")} className="w-full">
-                <TabsList className="mb-6 grid w/full grid-cols-2">
+                <TabsList className="mb-6 grid w-full grid-cols-2">
                   <TabsTrigger value="signin">로그인</TabsTrigger>
                   <TabsTrigger value="signup">회원가입</TabsTrigger>
                 </TabsList>
@@ -166,7 +166,7 @@ export default function SignInSignUpView({
                     {signInError ? (
                       <p className="text-sm font-medium text-destructive">{signInError}</p>
                     ) : null}
-                    <Button className="w/full" type="submit" disabled={isSigningIn}>
+                    <Button className="w-full" type="submit" disabled={isSigningIn}>
                       {isSigningIn ? "로그인 중..." : "이메일로 로그인"}
                     </Button>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -233,7 +233,7 @@ export default function SignInSignUpView({
                       <p className="text-sm font-medium text-destructive">{signUpError}</p>
                     ) : null}
                     {signUpMessage ? <p className="text-sm text-green-600">{signUpMessage}</p> : null}
-                    <Button className="w/full" type="submit" disabled={isSigningUp}>
+                    <Button className="w-full" type="submit" disabled={isSigningUp}>
                       {isSigningUp ? "가입 중..." : "회원가입"}
                     </Button>
                   </form>

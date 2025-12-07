@@ -21,20 +21,37 @@ export async function listRecipes(
   return json.data;
 }
 
+async function throwApiError(res: Response): Promise<never> {
+  try {
+    const data = await res.json();
+    const message =
+      data?.details?.message ||
+      data?.details?.hint ||
+      data?.details ||
+      data?.message ||
+      data?.error ||
+      res.statusText ||
+      `Request failed: ${res.status}`;
+    throw new Error(message);
+  } catch {
+    throw new Error(res.statusText || `Request failed: ${res.status}`);
+  }
+}
+
 export async function createRecipe(body: unknown) {
   const res = await fetch(`/api/recipes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Failed to create recipe: ${res.status}`);
+  if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
 }
 
 export async function getRecipe(id: string) {
   const res = await fetch(`/api/recipes/${id}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to get recipe: ${res.status}`);
+  if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
 }
@@ -45,12 +62,12 @@ export async function updateRecipe(id: string, body: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Failed to update recipe: ${res.status}`);
+  if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
 }
 
 export async function deleteRecipe(id: string) {
   const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
-  if (!res.ok && res.status !== 204) throw new Error(`Failed to delete recipe: ${res.status}`);
+  if (!res.ok && res.status !== 204) await throwApiError(res);
 }

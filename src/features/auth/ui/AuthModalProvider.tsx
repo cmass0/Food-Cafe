@@ -46,10 +46,10 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     <AuthModalContext.Provider value={{ openAuthModal, closeAuthModal }}>
       {children}
       <Dialog open={state.open} onOpenChange={(open) => (open ? null : closeAuthModal())}>
-        <DialogContent className="w-[92vw] max-w-[420px] p-0 bg-background shadow-lg">
+        <DialogContent className="w-[92vw] max-w-[420px] max-h-[calc(100dvh-1.5rem)] overflow-hidden p-0 border-0 bg-transparent shadow-none">
           {/* Radix 접근성 요구사항 충족용 숨김 제목 */}
           <h2 className="sr-only">로그인 / 회원가입</h2>
-          <div className="max-h-[80vh] overflow-y-auto p-6">
+          <div className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-6">
             <SignInSignUpView
               next={state.next}
               defaultMode={state.mode}
