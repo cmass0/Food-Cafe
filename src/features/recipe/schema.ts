@@ -14,6 +14,9 @@ const imageFieldSchema = z.preprocess(
     .optional()
 );
 
+
+
+
 const tagSchema = z
   .string()
   .trim()
@@ -48,6 +51,8 @@ export const recipeInsertSchema = z.object({
     .optional(),
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
 });
+
+
 
 export const recipeUpdateSchema = z
   .object({

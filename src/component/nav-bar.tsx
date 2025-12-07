@@ -15,7 +15,6 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 
-import { fetchUsernameByUid } from "@/features/user/client";
 import { useAuth } from "@/app/auth/auth-context";
 
 export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
@@ -65,9 +64,6 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
         {/* Right: 토글 + 유저 + 슬롯 */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {displayName ? (
-            <span className="hidden text-xs text-emerald-50/90 sm:inline">{displayName}님</span>
-          ) : null}
           {rightSlot}
         </div>
       </div>
