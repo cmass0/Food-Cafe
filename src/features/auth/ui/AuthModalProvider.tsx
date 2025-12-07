@@ -46,14 +46,12 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     <AuthModalContext.Provider value={{ openAuthModal, closeAuthModal }}>
       {children}
       <Dialog open={state.open} onOpenChange={(open) => (open ? null : closeAuthModal())}>
-        <DialogContent className="w-[90vw] max-w-[400px] p-0 overflow-hidden max-h-[90vh]">
-          <div className="max-h-[90vh] overflow-y-auto">
-            <SignInSignUpView
-              next={state.next}
-              defaultMode={state.mode}
-              onAuthSuccess={closeAuthModal}
-            />
-          </div>
+        <DialogContent className="w-[92vw] max-w-[420px] p-0 max-h-[90vh] overflow-y-auto">
+          <SignInSignUpView
+            next={state.next}
+            defaultMode={state.mode}
+            onAuthSuccess={closeAuthModal}
+          />
         </DialogContent>
       </Dialog>
     </AuthModalContext.Provider>
