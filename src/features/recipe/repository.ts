@@ -74,7 +74,7 @@ export async function insertRecipeRecord(
 ): Promise<RecipeRow> {
   const { data, error } = await client
     .from("recipes")
-    .insert(payload as any)
+    .insert(payload)
     .select("*")
     .single();
   if (error) throw error;
@@ -91,7 +91,7 @@ export async function updateRecipeRecordByOwner(
 ): Promise<RecipeRow> {
   const { data, error } = await client
     .from("recipes")
-    .update(payload as any)
+    .update(payload)
     .eq("id", id)
     .select("*")
     .single();

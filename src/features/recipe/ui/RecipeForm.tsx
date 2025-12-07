@@ -105,7 +105,7 @@ export default function RecipeForm({
       return;
     }
 
-    // Zod resolver가 schema에 없는 필드는 제거하므로, form state에서 직접 읽어온다.
+
     const rawSteps = form.getValues("steps") ?? [];
     const trimmedSteps = rawSteps.map((step) => step.text.trim());
     const hasEmptyStep = trimmedSteps.some((text) => text.length === 0);
@@ -129,7 +129,7 @@ export default function RecipeForm({
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
     };
-
+    console.log("Final payload to submit:", payload);
     await onSubmit(payload, { imageFile });
   });
 
