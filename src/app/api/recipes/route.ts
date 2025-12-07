@@ -1,48 +1,30 @@
-import { ZodError } from "zod";
-import * as service from "@/features/recipe/service";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { recipeInsertSchema } from "@/features/recipe/schema";
+import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export async function GET(req: Request) {
-  try {
-    const url = new URL(req.url);
-    const limitParam = Number(url.searchParams.get("limit") ?? "20");
-    const limit = Number.isFinite(limitParam) ? limitParam : 20;
-    const pageParam = Number(url.searchParams.get("page") ?? "");
-    const page = Number.isFinite(pageParam) ? pageParam : undefined;
-    const writerUid = url.searchParams.get("writerUid") ?? undefined;
-
-    const supabase = getServerSupabase();
-    const data = await service.listRecipes(supabase, { limit, page, writerUid });
-    return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    console.error("/api/recipes GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
-  }
-}
+const requestSchema = z.object({
+  title: z.string(),
+  summary: z.string().nullable().optional(),
+  recipe: z.string().nullable().optional(),
+  image: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.number().nullable().optional(),
+});
 
 export async function POST(req: Request) {
   try {
-    const supabase = getServerSupabase();
     const body = await req.json();
-    const created = await service.createRecipe(supabase, body);
-    return Response.json({ data: created }, { status: 201 });
+    const parsed = requestSchema.parse(body);
+
+    const supabase = getServerSupabase();
+    const recipe = await recipeService.createRecipe(supabase, parsed);
+    return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    console.error("/api/recipes POST failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("Failed to create recipe", error);
+    return NextResponse.json({ error: "Failed to create recipe" }, { status: 500 });
   }
 }

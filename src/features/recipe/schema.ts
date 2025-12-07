@@ -40,15 +40,6 @@ export const recipeInsertSchema = z.object({
     .nullable()
     .optional(),
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-  status: z.number().int().min(0).max(9).nullable().optional(),
-  writerUid: z.string().uuid("작성자 UID가 올바르지 않습니다.").nullable().optional(),
-  writerName: z
-    .string()
-    .trim()
-    .max(120, "작성자 이름은 120자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
-  writerEmail: z.string().email("이메일 형식이 올바르지 않습니다.").nullable().optional(),
 });
 
 export const recipeUpdateSchema = z

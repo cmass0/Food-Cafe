@@ -36,8 +36,6 @@ type FormValues = RecipeInsertInput & {
   recipe: string;
   image: string;
   category: string;
-  writerName: string;
-  writerEmail: string;
   tags: string[];
 };
 
@@ -83,10 +81,6 @@ export default function RecipeForm({
     image: defaultValues?.image ?? "",
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
-    status: defaultValues?.status ?? null,
-    writerUid: defaultValues?.writerUid ?? null,
-    writerName: defaultValues?.writerName ?? "",
-    writerEmail: defaultValues?.writerEmail ?? "",
     steps: initialSteps,
   };
 
@@ -104,19 +98,18 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    console.log("RecipeForm handleSubmit called with values:", values);
+    console.log("Submitting form with values:", values.steps, "and imageFile:", imageFile);
     setUploadError(null);
     if (enableImageUpload && requireImageUpload && !imageFile) {
-      console.log("Image upload required but no file provided");
       setUploadError("대표 이미지를 파일로 올려주세요.");
       return;
     }
 
-    const rawSteps = values.steps ?? [];
+    // Zod resolver가 schema에 없는 필드는 제거하므로, form state에서 직접 읽어온다.
+    const rawSteps = form.getValues("steps") ?? [];
     const trimmedSteps = rawSteps.map((step) => step.text.trim());
     const hasEmptyStep = trimmedSteps.some((text) => text.length === 0);
     if (hasEmptyStep || trimmedSteps.length === 0) {
-      console.log("Validation error: empty steps detected");
       form.setError("steps", { type: "manual", message: "모든 단계에 내용을 입력해 주세요." });
       return;
     }
@@ -135,10 +128,7 @@ export default function RecipeForm({
       image: null, // 파일 업로드 후 서버에서 URL을 채운다.
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
-      writerName: values.writerName?.trim() || null,
-      writerEmail: values.writerEmail?.trim() || null,
     };
-    console.log("RecipeForm handleSubmit payload:", payload);
 
     await onSubmit(payload, { imageFile });
   });

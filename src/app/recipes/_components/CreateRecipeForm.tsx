@@ -13,7 +13,7 @@ import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function CreateRecipeForm() {
   const router = useRouter();
-  const { user, displayName } = useAuth();
+  const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +38,6 @@ export default function CreateRecipeForm() {
       const created = await createRecipe({
         ...values,
         image: null,
-        writerName: displayName ?? user.email ?? "user",
-        writerUid: user.id,
-        writerEmail: user.email ?? undefined,
       });
 
       const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, created.id, imageFile, {

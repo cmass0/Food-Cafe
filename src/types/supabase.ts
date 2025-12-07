@@ -126,11 +126,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
-          id_text_old: string
           image?: string | null
-          images?: string[]
           last_liked_at?: string | null
-          legacy_id?: string | null
           like_count?: number
           recipe?: string | null
           status?: number | null
@@ -143,7 +140,6 @@ export type Database = {
           writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
-          writer_uid_legacy?: string | null
         }
         Update: {
           category?: string | null
