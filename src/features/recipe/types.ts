@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
+import type { Database, Tables } from "@/types/supabase";
 
 export type RecipeRow = Tables<"recipes">;
 
 export interface Recipe {
   id: string;
+  idTextOld?: string | null;
   legacyId?: string | null;
   title: string;
   summary: string | null;
@@ -25,6 +26,7 @@ export interface Recipe {
 }
 
 export interface RecipeInsertInput {
+  idTextOld?: string | null;
   legacyId?: string | null;
   title: string;
   summary?: string | null;
@@ -46,6 +48,11 @@ export interface RecipeUpdateInput {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  status?: number | null;
+  writerUid?: string | null;
+  writerUidLegacy?: string | null;
+  writerName?: string | null;
+  writerEmail?: string | null;
 }
 
 export interface RecipeListOptions {
@@ -75,5 +82,34 @@ export type FetchRecipesParams = {
 };
 
 export type RecipeSupabaseClient = SupabaseClient<Database>;
-export type RecipeInsertDB = TablesInsert<"recipes">;
-export type RecipeUpdateDB = TablesUpdate<"recipes">;
+
+// Supabase 테이블과 동일하지만 사용 중인 필드만 명시
+export type RecipeInsertDB = {
+  id_text_old?: string | null;
+  legacy_id?: string | null;
+  title: string;
+  summary: string | null;
+  recipe: string | null;
+  image: string | null;
+  category: string | null;
+  tags: string[];
+  status: number | null;
+  writer_uid: string | null;
+  writer_uid_legacy?: string | null;
+  writer_name: string | null;
+  writer_email: string | null;
+};
+
+export type RecipeUpdateDB = {
+  title?: string;
+  summary?: string | null;
+  recipe?: string | null;
+  image?: string | null;
+  category?: string | null;
+  tags?: string[];
+  status?: number | null;
+  writer_uid?: string | null;
+  writer_uid_legacy?: string | null;
+  writer_name?: string | null;
+  writer_email?: string | null;
+};
