@@ -110,7 +110,6 @@ export type Database = {
           legacy_id: string | null
           like_count: number
           recipe: string | null
-          status: number | null
           summary: string | null
           tags: string[]
           title: string
@@ -130,7 +129,6 @@ export type Database = {
           last_liked_at?: string | null
           like_count?: number
           recipe?: string | null
-          status?: number | null
           summary?: string | null
           tags?: string[]
           title: string
@@ -152,7 +150,6 @@ export type Database = {
           legacy_id?: string | null
           like_count?: number
           recipe?: string | null
-          status?: number | null
           summary?: string | null
           tags?: string[]
           title?: string
@@ -321,7 +318,6 @@ export type Database = {
           legacy_id: string | null
           like_count: number
           recipe: string | null
-          status: number | null
           summary: string | null
           tags: string[]
           title: string
@@ -353,7 +349,6 @@ export type Database = {
           legacy_id: string | null
           like_count: number
           recipe: string | null
-          status: number | null
           summary: string | null
           tags: string[]
           title: string
@@ -509,4 +504,3 @@ export const Constants = {
     },
   },
 } as const
-

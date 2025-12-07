@@ -35,10 +35,6 @@ export async function fetchRecipes(
     query = query.contains("tags", [params.tag]);
   }
 
-  if (params.status !== undefined) {
-    query = query.eq("status", params.status);
-  }
-
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
   }

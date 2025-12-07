@@ -36,7 +36,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     likeCount: row.like_count ?? 0,
     viewCount: row.view_count ?? 0,
     lastLikedAt: row.last_liked_at,
-    status: row.status,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -50,7 +49,6 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
     image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
-    status: input.status ?? 0,
   };
 }
 
@@ -63,7 +61,6 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.image !== undefined) payload.image = patch.image;
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
-  if (patch.status !== undefined) payload.status = patch.status;
 
   return payload;
 }
@@ -95,7 +92,6 @@ export async function listRecipes(
     limit,
     offset,
     tag: parsed.tag,
-    status: parsed.status,
     writerUid: parsed.writerUid,
     search: parsed.search,
   });

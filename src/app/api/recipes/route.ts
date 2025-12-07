@@ -12,7 +12,6 @@ const requestSchema = z.object({
   image: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
-  status: z.number().nullable().optional(),
 });
 
 export async function POST(req: Request) {

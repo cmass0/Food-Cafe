@@ -6,7 +6,6 @@ export async function listRecipes(
     page?: number;
     writerUid?: string;
     tag?: string;
-    status?: number;
     search?: string;
   }
 ) {
@@ -15,7 +14,6 @@ export async function listRecipes(
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.tag) qs.set("tag", params.tag);
-  if (typeof params?.status === "number") qs.set("status", String(params.status));
   if (params?.search) qs.set("search", params.search);
   const res = await fetch(`/api/recipes${qs.size ? `?${qs.toString()}` : ""}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to list recipes: ${res.status}`);

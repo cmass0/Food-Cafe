@@ -14,7 +14,6 @@ export interface Recipe {
   likeCount: number;
   viewCount: number;
   lastLikedAt: string | null;
-  status: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,7 +25,6 @@ export interface RecipeInsertInput {
   image?: string | null;
   category?: string | null;
   tags?: string[];
-  status?: number | null;
 }
 
 export interface RecipeUpdateInput {
@@ -36,14 +34,12 @@ export interface RecipeUpdateInput {
   image?: string | null;
   category?: string | null;
   tags?: string[];
-  status?: number | null;
 }
 
 export interface RecipeListOptions {
   limit?: number;
   page?: number;
   tag?: string;
-  status?: number;
   writerUid?: string;
   search?: string;
 }
@@ -60,7 +56,6 @@ export type FetchRecipesParams = {
   limit: number;
   offset: number;
   tag?: string;
-  status?: number;
   writerUid?: string;
   search?: string;
 };
@@ -74,7 +69,6 @@ export type RecipeInsertDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
-  status?: number | null;
 };
 
 export type RecipeUpdateDB = {
@@ -84,5 +78,4 @@ export type RecipeUpdateDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
-  status?: number | null;
 };
