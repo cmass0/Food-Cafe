@@ -5,8 +5,6 @@ export type RecipeRow = Tables<"recipes">;
 
 export interface Recipe {
   id: string;
-  idTextOld?: string | null;
-  legacyId?: string | null;
   title: string;
   summary: string | null;
   recipe: string | null;
@@ -17,17 +15,11 @@ export interface Recipe {
   viewCount: number;
   lastLikedAt: string | null;
   status: number | null;
-  writerUid: string | null;
-  writerUidLegacy?: string | null;
-  writerName: string | null;
-  writerEmail: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface RecipeInsertInput {
-  idTextOld?: string | null;
-  legacyId?: string | null;
   title: string;
   summary?: string | null;
   recipe?: string | null;
@@ -35,10 +27,6 @@ export interface RecipeInsertInput {
   category?: string | null;
   tags?: string[];
   status?: number | null;
-  writerUid?: string | null;
-  writerUidLegacy?: string | null;
-  writerName?: string | null;
-  writerEmail?: string | null;
 }
 
 export interface RecipeUpdateInput {
@@ -49,10 +37,6 @@ export interface RecipeUpdateInput {
   category?: string | null;
   tags?: string[];
   status?: number | null;
-  writerUid?: string | null;
-  writerUidLegacy?: string | null;
-  writerName?: string | null;
-  writerEmail?: string | null;
 }
 
 export interface RecipeListOptions {
@@ -83,28 +67,15 @@ export type FetchRecipesParams = {
 
 export type RecipeSupabaseClient = SupabaseClient<Database>;
 
-// Supabase 테이블과 동일하지만 사용 중인 필드만 명시
+// Supabase 테이블 정의를 기반으로, 현재 컬럼을 optional 포함해 유연하게 매핑
 export type RecipeInsertDB = {
   id_text_old?: string | null;
   legacy_id?: string | null;
   title: string;
-  summary: string | null;
-  recipe: string | null;
-  image: string | null;
-  category: string | null;
-  tags: string[];
-  status: number | null;
-  writer_uid: string | null;
-  writer_uid_legacy?: string | null;
-  writer_name: string | null;
-  writer_email: string | null;
-};
-
-export type RecipeUpdateDB = {
-  title?: string;
   summary?: string | null;
   recipe?: string | null;
   image?: string | null;
+  images?: string[]; // 테이블에 남아 있다면 호환용
   category?: string | null;
   tags?: string[];
   status?: number | null;
@@ -112,4 +83,27 @@ export type RecipeUpdateDB = {
   writer_uid_legacy?: string | null;
   writer_name?: string | null;
   writer_email?: string | null;
+  like_count?: number;
+  view_count?: number;
+  last_liked_at?: string | null;
+};
+
+export type RecipeUpdateDB = {
+  id_text_old?: string | null;
+  legacy_id?: string | null;
+  title?: string;
+  summary?: string | null;
+  recipe?: string | null;
+  image?: string | null;
+  images?: string[];
+  category?: string | null;
+  tags?: string[];
+  status?: number | null;
+  writer_uid?: string | null;
+  writer_uid_legacy?: string | null;
+  writer_name?: string | null;
+  writer_email?: string | null;
+  like_count?: number;
+  view_count?: number;
+  last_liked_at?: string | null;
 };

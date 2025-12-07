@@ -87,16 +87,9 @@ export async function insertRecipeRecord(
 export async function updateRecipeRecordByOwner(
   client: RecipeSupabaseClient,
   id: string,
-  ownerUid: string,
   payload: RecipeUpdateDB
 ): Promise<RecipeRow> {
-  const { data, error } = await client
-    .from("recipes")
-    .update(payload)
-    .eq("id", id)
-    .eq("writer_uid", ownerUid)
-    .select("*")
-    .single();
+  const { data, error } = await client.from("recipes").update(payload).eq("id", id).select("*").single();
   throwIfError(error);
   if (!data) {
     throw new Error("레시피를 수정하지 못했습니다.");

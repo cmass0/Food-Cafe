@@ -27,8 +27,6 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
 function mapRowToRecipe(row: RecipeRow): Recipe {
   return {
     id: row.id,
-    idTextOld: (row as any).id_text_old ?? null,
-    legacyId: (row as any).legacy_id ?? null,
     title: row.title,
     summary: row.summary,
     recipe: row.recipe,
@@ -39,10 +37,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     viewCount: row.view_count ?? 0,
     lastLikedAt: row.last_liked_at,
     status: row.status,
-    writerUid: row.writer_uid,
-    writerUidLegacy: (row as any).writer_uid_legacy ?? null,
-    writerName: row.writer_name,
-    writerEmail: row.writer_email,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -50,8 +44,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
 
 function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
   return {
-    id_text_old: input.idTextOld ?? null,
-    legacy_id: input.legacyId ?? null,
     title: input.title,
     summary: input.summary ?? null,
     recipe: input.recipe ?? null,
@@ -59,10 +51,6 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
     status: input.status ?? null,
-    writer_uid: input.writerUid ?? null,
-    writer_uid_legacy: input.writerUidLegacy ?? null,
-    writer_name: input.writerName && input.writerName.trim().length > 0 ? input.writerName.trim() : null,
-    writer_email: input.writerEmail && input.writerEmail.trim().length > 0 ? input.writerEmail.trim() : null,
   };
 }
 
@@ -76,10 +64,6 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
   if (patch.status !== undefined) payload.status = patch.status;
-  if (patch.writerUid !== undefined) payload.writer_uid = patch.writerUid;
-  if (patch.writerUidLegacy !== undefined) payload.writer_uid_legacy = patch.writerUidLegacy;
-  if (patch.writerName !== undefined) payload.writer_name = patch.writerName;
-  if (patch.writerEmail !== undefined) payload.writer_email = patch.writerEmail;
 
   return payload;
 }
@@ -152,17 +136,10 @@ export async function updateRecipe(
   id: string,
   patch: RecipeUpdateInput
 ): Promise<Recipe> {
-  // 1) 로그인 사용자 확인
-  const { data: auth } = await client.auth.getUser();
-  const me = auth?.user;
-  if (!me) throw new Error("로그인이 필요합니다.");
-
-  // 2) 유효성 검사 및 허용된 필드만 추출
   const parsed = recipeUpdateSchema.parse(patch);
   const payload = buildUpdatePayload(parsed);
 
-  // 3) 소유자(writer_uid)가 일치할 때만 업데이트 수행
-  const row = await repository.updateRecipeRecordByOwner(client, id, me.id, payload);
+  const row = await repository.updateRecipeRecordByOwner(client, id, payload);
   return mapRowToRecipe(row);
 }
 
