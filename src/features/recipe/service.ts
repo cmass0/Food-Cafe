@@ -50,7 +50,7 @@ function buildInsertPayload(input: RecipeInsertInput): RecipeInsertDB {
     image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
-    status: input.status ?? null,
+    status: input.status ?? 0,
   };
 }
 
