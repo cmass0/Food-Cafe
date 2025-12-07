@@ -1,0 +1,110 @@
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>?úÍ∑∏ (ÏΩ§ÎßàÎ°?Íµ¨Î∂Ñ)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="?? 10Î∂ÑÏôÑ?? Ï∫†Ìïë, Ï¥àÍ∞Ñ??
+                          value={tagsInput}
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            setTagsInput(next);
+                            field.onChange(normalizeTags(next));
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>ÏµúÎ? 20Í∞úÍπåÏßÄ ?ÖÎ†•?????àÏäµ?àÎã§.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* ?Ä???¥Î?ÏßÄ */}
+            <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground">?Ä???¥Î?ÏßÄ</h3>
+                <span className="text-xs text-muted-foreground">?åÏùº ?ÖÎ°ú?úÎßå ?¨Ïö©</span>
+              </div>
+              <FormField
+                control={form.control}
+                name="image"
+                render={() => (
+                  <div className="space-y-4">
+                    {enableImageUpload ? (
+                      <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                          <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
+                            {imagePreview ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={imagePreview}
+                                alt="?Ä???¥Î?ÏßÄ ÎØ∏Î¶¨Î≥¥Í∏∞"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                                ?¥Î?ÏßÄ ÎØ∏Î¶¨Î≥¥Í∏∞
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <Input type="file" accept="image/*" onChange={handleFileChange} />
+                            <p className="text-xs text-muted-foreground">
+                              Î°úÏª¨ ?¥Î?ÏßÄÎ•??¨Î¶¨Î©?ÎØ∏Î¶¨Î≥¥Í∏∞???úÏãú?òÍ≥†, ?úÎ≤Ñ?êÏÑú ?ÖÎ°ú????URL??
+                              ?Ä?•Ìï©?àÎã§.
+                            </p>
+                            {uploadError ? (
+                              <p className="text-xs font-medium text-destructive">{uploadError}</p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* ÎßåÎìú??Î≤?(?®Í≥Ñ) */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <FormField
+                control={form.control}
+                name="steps"
+                render={() => (
+                  <FormItem>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <FormLabel className="text-base">ÎßåÎìú??Î≤?(?®Í≥Ñ)</FormLabel>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{stepsArray.fields.length} / 15?®Í≥Ñ</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={stepsArray.fields.length >= 15}
+                          onClick={() => stepsArray.append({ text: "" })}
+                        >
+                          ?®Í≥Ñ Ï∂îÍ?
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {stepsArray.fields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-md border border-primary/20 bg-background p-3 shadow-sm"
+                        >
+                          <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
+                            <span>{index + 1}?®Í≥Ñ</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={index === 0}
+                                onClick={() => stepsArray.move(index, index - 1)}
+                              >
+                                ??
+                              </Button>
+                              <Button
+                                type="button"

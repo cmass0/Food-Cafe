@@ -7,7 +7,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import RecipeForm from "@/features/recipe/ui/RecipeForm";
 import type { RecipeInsertInput } from "@/features/recipe/types";
-import { createRecipe, updateRecipe } from "@/features/recipe/api";
+import { createRecipe } from "@/features/recipe/api";
 import { uploadRecipeImage } from "@/lib/storage";
 import { getBrowserSupabase } from "@/lib/supabase";
 
@@ -35,19 +35,21 @@ export default function CreateRecipeForm() {
     const supabase = getBrowserSupabase();
 
     try {
-      const created = await createRecipe({
-        ...values,
-        image: null,
-      });
-
-      const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, created.id, imageFile, {
+      const recipeId = crypto.randomUUID();
+      const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, recipeId, imageFile, {
         contentType: imageFile.type,
         upsert: false,
       });
       const finalUrl = publicUrl ?? signedUrl ?? null;
-      if (finalUrl) {
-        await updateRecipe(created.id, { image: finalUrl });
+      if (!finalUrl) {
+        throw new Error("이미지 URL 생성에 실패했습니다.");
       }
+
+      const created = await createRecipe({
+        ...values,
+        id: recipeId,
+        image: finalUrl,
+      });
 
       router.push(`/recipes/${created.id}`);
     } catch (err) {

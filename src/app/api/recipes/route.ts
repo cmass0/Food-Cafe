@@ -6,10 +6,11 @@ import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 const requestSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z.string(),
   summary: z.string().nullable().optional(),
   recipe: z.string().nullable().optional(),
-  image: z.string().nullable().optional(),
+  image: z.string().trim().min(1),
   category: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
 });

@@ -19,10 +19,11 @@ export interface Recipe {
 }
 
 export interface RecipeInsertInput {
+  id?: string;
   title: string;
   summary?: string | null;
   recipe?: string | null;
-  image?: string | null;
+  image?: string;
   category?: string | null;
   tags?: string[];
 }
@@ -63,6 +64,7 @@ export type FetchRecipesParams = {
 export type RecipeSupabaseClient = SupabaseClient<Database>;
 
 export type RecipeInsertDB = {
+  id?: string;
   title: string;
   summary?: string | null;
   recipe?: string | null;

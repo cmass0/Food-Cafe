@@ -1,12 +1,18 @@
 ﻿import { z } from "zod";
 
-// 대표 이미지는 파일 업로드로 채워지므로 URL 검증을 강제하지 않고 길이만 제한
-const imageFieldSchema = z
-  .string()
-  .trim()
-  .max(2048, "이미지 경로는 2048자 이하만 가능합니다.")
-  .nullable()
-  .optional();
+// 대표 이미지는 서버에서 최종 URL을 받지만, 폼 단계에서는 빈 문자열을 허용하고 undefined로 정규화
+const imageFieldSchema = z.preprocess(
+  (value) => {
+    if (typeof value === "string" && value.trim() === "") return undefined;
+    return value;
+  },
+  z
+    .string()
+    .trim()
+    .min(1, "이미지 경로를 확인해 주세요.")
+    .max(2048, "이미지 경로는 2048자 이하만 가능합니다.")
+    .optional()
+);
 
 const tagSchema = z
   .string()
@@ -15,6 +21,7 @@ const tagSchema = z
   .max(50, "태그는 50자 이하만 가능합니다.");
 
 export const recipeInsertSchema = z.object({
+  id: z.string().uuid().optional(),
   title: z
     .string()
     .trim()
@@ -57,7 +64,7 @@ export const recipeUpdateSchema = z
       .nullable()
       .optional(),
     recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
-    image: imageFieldSchema,
+    image: imageFieldSchema.optional(),
     category: z
       .string()
       .trim()

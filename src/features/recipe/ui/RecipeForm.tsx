@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,29 @@ import {
 
 type StepInput = { text: string };
 
-type FormValues = RecipeInsertInput & {
+const imageFileSchema = z
+  .union([z.instanceof(File), z.null()], { required_error: "´ëÇ¥ ÀÌ¹ÌÁö¸¦ ÆÄÀÏ·Î ¼±ÅÃÇØ ÁÖ¼¼¿ä." })
+  .superRefine((file, ctx) => {
+    if (!file) {
+      ctx.addIssue({ code: "custom", message: "´ëÇ¥ ÀÌ¹ÌÁö¸¦ ÆÄÀÏ·Î ¼±ÅÃÇØ ÁÖ¼¼¿ä." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      ctx.addIssue({ code: "custom", message: "ÆÄÀÏ Å©±â´Â 5MB ÀÌÇÏ¸¸ °¡´ÉÇÕ´Ï´Ù." });
+    }
+    if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
+      ctx.addIssue({ code: "custom", message: "Áö¿øÇÏÁö ¾Ê´Â ÆÄÀÏ Çü½ÄÀÔ´Ï´Ù." });
+    }
+  });
+
+const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
+  imageFile: imageFileSchema,
+});
+
+type FormValues = z.infer<typeof recipeFormSchema> & {
   steps: StepInput[];
   summary: string;
   recipe: string;
-  image: string;
   category: string;
   tags: string[];
 };
@@ -61,12 +80,11 @@ export default function RecipeForm({
   onSubmit,
   enableImageUpload = false,
   requireImageUpload = false,
-  submitLabel = "ë ˆì‹œí”¼ ë“±ë¡",
+  submitLabel = "·¹½ÃÇÇ µî·Ï",
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const shouldRenderImageField = enableImageUpload || requireImageUpload;
 
   const initialSteps: StepInput[] = defaultValues?.recipe
     ?.split(/\n+/)
@@ -78,14 +96,14 @@ export default function RecipeForm({
     title: defaultValues?.title ?? "",
     summary: defaultValues?.summary ?? "",
     recipe: defaultValues?.recipe ?? "",
-    image: defaultValues?.image ?? "",
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     steps: initialSteps,
+    imageFile: null,
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(recipeInsertSchema) as unknown as Resolver<FormValues>,
+    resolver: zodResolver(recipeFormSchema) as unknown as Resolver<FormValues>,
     mode: "onChange",
     defaultValues: defaultValuesForForm,
   });
@@ -98,19 +116,18 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    console.log("Submitting form with values:", values.steps, "and imageFile:", imageFile);
-    setUploadError(null);
-    if (enableImageUpload && requireImageUpload && !imageFile) {
-      setUploadError("ëŒ€í‘œ ì´ë¯¸ì§€ë¥¼ íŒŒì¼ë¡œ ì˜¬ë ¤ì£¼ì„¸ìš”.");
+    console.log("Submitting form with values:", values.steps, "and imageFile:", values.imageFile);
+
+    if (!values.imageFile) {
+      form.setError("imageFile", { type: "manual", message: "´ëÇ¥ ÀÌ¹ÌÁö¸¦ ÆÄÀÏ·Î ¼±ÅÃÇØ ÁÖ¼¼¿ä." });
       return;
     }
-
 
     const rawSteps = form.getValues("steps") ?? [];
     const trimmedSteps = rawSteps.map((step) => step.text.trim());
     const hasEmptyStep = trimmedSteps.some((text) => text.length === 0);
     if (hasEmptyStep || trimmedSteps.length === 0) {
-      form.setError("steps", { type: "manual", message: "ëª¨ë“  ë‹¨ê³„ì— ë‚´ìš©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”." });
+      form.setError("steps", { type: "manual", message: "¸ğµç ´Ü°è¸¦ ÀÔ·ÂÇØ ÁÖ¼¼¿ä." });
       return;
     }
     form.clearErrors("steps");
@@ -118,31 +135,29 @@ export default function RecipeForm({
     const recipeFromSteps =
       trimmedSteps.length > 0
         ? trimmedSteps.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : (values.recipe?.trim() ?? "");
+        : values.recipe?.trim() ?? "";
 
     const payload: RecipeInsertInput = {
-      ...defaultValuesForForm,
-      ...values,
+      title: values.title,
       summary: values.summary?.trim() ? values.summary.trim() : null,
       recipe: recipeFromSteps,
-      image: null, // íŒŒì¼ ì—…ë¡œë“œ í›„ ì„œë²„ì—ì„œ URLì„ ì±„ìš´ë‹¤.
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
     };
     console.log("Final payload to submit:", payload);
-    await onSubmit(payload, { imageFile });
+    await onSubmit(payload, { imageFile: values.imageFile });
   });
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) {
-      setImageFile(null);
+      form.setValue("imageFile", null, { shouldValidate: true });
       setImagePreview(null);
       return;
     }
-    setUploadError(null);
-    setImageFile(file);
+    form.clearErrors("imageFile");
+    form.setValue("imageFile", file, { shouldValidate: true });
     const reader = new FileReader();
     reader.onload = () => setImagePreview(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
@@ -153,18 +168,18 @@ export default function RecipeForm({
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="border border-muted-foreground/10 shadow-sm">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold">ë‚˜ë§Œì˜ ë ˆì‹œí”¼ ê³µìœ </CardTitle>
+            <CardTitle className="text-2xl font-semibold">ÀÚ¶ûÇÒ ·¹½ÃÇÇ °øÀ¯</CardTitle>
             <p className="text-sm text-muted-foreground">
-              í•µì‹¬ ì •ë³´, ëŒ€í‘œ ì´ë¯¸ì§€, ë§Œë“œëŠ” ë²•ì„ ë‹¨ê³„ë³„ë¡œ ì ì–´ ì£¼ì„¸ìš”.
+              Àç·á Á¤º¸, ´ëÇ¥ ÀÌ¹ÌÁö, ¸¸µå´Â ¹ıÀ» ´Ü°èº°·Î Àû¾î ÁÖ¼¼¿ä.
             </p>
           </CardHeader>
 
           <CardContent className="space-y-8 ">
-            {/* ê¸°ë³¸ ì •ë³´ */}
+            {/* ±âº» Á¤º¸ */}
             <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-muted-foreground">ê¸°ë³¸ ì •ë³´</h3>
-                <span className="text-xs text-muted-foreground">ì œëª© Â· ì¹´í…Œê³ ë¦¬ Â· íƒœê·¸</span>
+                <h3 className="text-sm font-semibold text-muted-foreground">±âº» Á¤º¸</h3>
+                <span className="text-xs text-muted-foreground">Á¦¸ñ ¡¤ Ä«Å×°í¸® ¡¤ ÅÂ±×</span>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
@@ -172,12 +187,12 @@ export default function RecipeForm({
                   name="title"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>ë ˆì‹œí”¼ ì œëª©</FormLabel>
+                      <FormLabel>·¹½ÃÇÇ Á¦¸ñ</FormLabel>
                       <FormControl>
-                        <Input placeholder="ì˜ˆ) 10ë¶„ ì™„ì„± í¬ë¦¼ íŒŒìŠ¤íƒ€" {...field} />
+                        <Input placeholder="¿¹: 10ºĞ ¿Ï¼º ¾Æº¸Ä«µµ Åä½ºÆ®" {...field} />
                       </FormControl>
                       <FormDescription>
-                        ê²€ìƒ‰ì´ ì˜ ë˜ë„ë¡ ì¬ë£Œ/ì¡°ë¦¬ë²• í‚¤ì›Œë“œë¥¼ í¬í•¨í•´ ì£¼ì„¸ìš”.
+                        °Ë»öÀÌ Àß µÇµµ·Ï ÇÙ½É Å°¿öµå¸¦ Æ÷ÇÔÇØ ÁÖ¼¼¿ä.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -189,24 +204,24 @@ export default function RecipeForm({
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ì¹´í…Œê³ ë¦¬ (ì„ íƒ)</FormLabel>
+                      <FormLabel>Ä«Å×°í¸® (¼±ÅÃ)</FormLabel>
                       <FormControl>
                         <Select
                           value={field.value ?? ""}
                           onValueChange={(val) => field.onChange(val)}
                         >
                           <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="ì¹´í…Œê³ ë¦¬ ì„ íƒ" />
+                            <SelectValue placeholder="Ä«Å×°í¸® ¼±ÅÃ" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectItem value="í•œì‹">í•œì‹</SelectItem>
-                              <SelectItem value="ì¤‘ì‹">ì¤‘ì‹</SelectItem>
-                              <SelectItem value="ì¼ì‹">ì¼ì‹</SelectItem>
-                              <SelectItem value="ì–‘ì‹">ì–‘ì‹</SelectItem>
-                              <SelectItem value="ë¶„ì‹">ë¶„ì‹</SelectItem>
-                              <SelectItem value="ë””ì €íŠ¸">ë””ì €íŠ¸</SelectItem>
-                              <SelectItem value="ê¸°íƒ€">ê¸°íƒ€</SelectItem>
+                              <SelectItem value="ÇÑ½Ä">ÇÑ½Ä</SelectItem>
+                              <SelectItem value="Áß½Ä">Áß½Ä</SelectItem>
+                              <SelectItem value="ÀÏ½Ä">ÀÏ½Ä</SelectItem>
+                              <SelectItem value="¾ç½Ä">¾ç½Ä</SelectItem>
+                              <SelectItem value="ºĞ½Ä">ºĞ½Ä</SelectItem>
+                              <SelectItem value="µğÀúÆ®">µğÀúÆ®</SelectItem>
+                              <SelectItem value="±âÅ¸">±âÅ¸</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -221,10 +236,10 @@ export default function RecipeForm({
                   name="tags"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>íƒœê·¸ (ì½¤ë§ˆë¡œ êµ¬ë¶„)</FormLabel>
+                      <FormLabel>ÅÂ±× (ÄŞ¸¶ ±¸ºĞ)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="ì˜ˆ) 10ë¶„ì™„ì„±, ìº í•‘, ì´ˆê°„ë‹¨"
+                          placeholder="¿¹: 10ºĞ¿Ï¼º, ÃÊ°£Æí"
                           value={tagsInput}
                           onChange={(event) => {
                             const next = event.target.value;
@@ -233,7 +248,7 @@ export default function RecipeForm({
                           }}
                         />
                       </FormControl>
-                      <FormDescription>ìµœëŒ€ 20ê°œê¹Œì§€ ì…ë ¥í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.</FormDescription>
+                      <FormDescription>ÃÖ´ë 20°³±îÁö ÀÔ·ÂÇÒ ¼ö ÀÖ½À´Ï´Ù.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -241,18 +256,18 @@ export default function RecipeForm({
               </div>
             </div>
 
-            {/* ëŒ€í‘œ ì´ë¯¸ì§€ */}
+            {/* ´ëÇ¥ ÀÌ¹ÌÁö */}
             <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-muted-foreground">ëŒ€í‘œ ì´ë¯¸ì§€</h3>
-                <span className="text-xs text-muted-foreground">íŒŒì¼ ì—…ë¡œë“œë§Œ ì‚¬ìš©</span>
+                <h3 className="text-sm font-semibold text-muted-foreground">´ëÇ¥ ÀÌ¹ÌÁö</h3>
+                <span className="text-xs text-muted-foreground">ÆÄÀÏ ¾÷·Îµå¸¸ »ç¿ë</span>
               </div>
               <FormField
                 control={form.control}
-                name="image"
-                render={() => (
+                name="imageFile"
+                render={({ field }) => (
                   <div className="space-y-4">
-                    {enableImageUpload ? (
+                    {shouldRenderImageField ? (
                       <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center">
                           <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
@@ -260,24 +275,32 @@ export default function RecipeForm({
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={imagePreview}
-                                alt="ëŒ€í‘œ ì´ë¯¸ì§€ ë¯¸ë¦¬ë³´ê¸°"
+                                alt="´ëÇ¥ ÀÌ¹ÌÁö ¹Ì¸®º¸±â"
                                 className="h-full w-full object-cover"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                                ì´ë¯¸ì§€ ë¯¸ë¦¬ë³´ê¸°
+                                ´ëÇ¥ ÀÌ¹ÌÁö ¹Ì¸®º¸±â
                               </div>
                             )}
                           </div>
                           <div className="flex-1 space-y-2">
-                            <Input type="file" accept="image/*" onChange={handleFileChange} />
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(event) => {
+                                handleFileChange(event);
+                                const nextFile = event.target.files?.[0] ?? null;
+                                field.onChange(nextFile);
+                              }}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
                             <p className="text-xs text-muted-foreground">
-                              ë¡œì»¬ ì´ë¯¸ì§€ë¥¼ ì˜¬ë¦¬ë©´ ë¯¸ë¦¬ë³´ê¸°ì— í‘œì‹œë˜ê³ , ì„œë²„ì—ì„œ ì—…ë¡œë“œ í›„ URLì„
-                              ì €ì¥í•©ë‹ˆë‹¤.
+                              ·ÎÄÃ ÀÌ¹ÌÁö¸¦ ¿Ã¸®¸é ¹Ì¸®º¸±â¿¡ Ç¥½ÃµÇ°í, ¼­¹ö¿¡¼­ ¾÷·Îµå ÈÄ URLÀ» ÀúÀåÇÕ´Ï´Ù.
                             </p>
-                            {uploadError ? (
-                              <p className="text-xs font-medium text-destructive">{uploadError}</p>
-                            ) : null}
+                            <FormMessage />
                           </div>
                         </div>
                       </div>
@@ -287,7 +310,7 @@ export default function RecipeForm({
               />
             </div>
 
-            {/* ë§Œë“œëŠ” ë²• (ë‹¨ê³„) */}
+            {/* ¸¸µå´Â ¹ı(´Ü°è) */}
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
               <FormField
                 control={form.control}
@@ -295,9 +318,9 @@ export default function RecipeForm({
                 render={() => (
                   <FormItem>
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <FormLabel className="text-base">ë§Œë“œëŠ” ë²• (ë‹¨ê³„)</FormLabel>
+                      <FormLabel className="text-base">¸¸µå´Â ¹ı(´Ü°è)</FormLabel>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{stepsArray.fields.length} / 15ë‹¨ê³„</span>
+                        <span>{stepsArray.fields.length} / 15´Ü°è</span>
                         <Button
                           type="button"
                           variant="outline"
@@ -305,7 +328,7 @@ export default function RecipeForm({
                           disabled={stepsArray.fields.length >= 15}
                           onClick={() => stepsArray.append({ text: "" })}
                         >
-                          ë‹¨ê³„ ì¶”ê°€
+                          ´Ü°è Ãß°¡
                         </Button>
                       </div>
                     </div>
@@ -316,7 +339,7 @@ export default function RecipeForm({
                           className="rounded-md border border-primary/20 bg-background p-3 shadow-sm"
                         >
                           <div className="mb-2 flex items-center justify-between text-sm font-medium text-muted-foreground">
-                            <span>{index + 1}ë‹¨ê³„</span>
+                            <span>{index + 1}´Ü°è</span>
                             <div className="flex items-center gap-2">
                               <Button
                                 type="button"
@@ -325,7 +348,7 @@ export default function RecipeForm({
                                 disabled={index === 0}
                                 onClick={() => stepsArray.move(index, index - 1)}
                               >
-                                â†‘
+                                ¡è
                               </Button>
                               <Button
                                 type="button"
@@ -334,7 +357,7 @@ export default function RecipeForm({
                                 disabled={index === stepsArray.fields.length - 1}
                                 onClick={() => stepsArray.move(index, index + 1)}
                               >
-                                â†“
+                                ¡é
                               </Button>
                               <Button
                                 type="button"
@@ -343,7 +366,7 @@ export default function RecipeForm({
                                 disabled={stepsArray.fields.length <= 1}
                                 onClick={() => stepsArray.remove(index)}
                               >
-                                ì‚­ì œ
+                                »èÁ¦
                               </Button>
                             </div>
                           </div>
@@ -354,7 +377,7 @@ export default function RecipeForm({
                               <FormItem>
                                 <FormControl>
                                   <Textarea
-                                    placeholder="ì´ ë‹¨ê³„ì—ì„œ í•  ì¼ì„ êµ¬ì²´ì ìœ¼ë¡œ ì ì–´ì£¼ì„¸ìš”."
+                                    placeholder="ÀÌ ´Ü°è¿¡¼­ ÇØ¾ß ÇÒ ÀÏÀ» ±¸Ã¼ÀûÀ¸·Î Àû¾î ÁÖ¼¼¿ä."
                                     rows={3}
                                     {...field}
                                   />
@@ -366,14 +389,14 @@ export default function RecipeForm({
                         </div>
                       ))}
                     </div>
-                    <FormDescription>ìµœì†Œ 1ê°œ ì´ìƒ ì…ë ¥í•´ì•¼ í•©ë‹ˆë‹¤.</FormDescription>
+                    <FormDescription>ÃÖ¼Ò 1´Ü°è ÀÌ»ó ÀÔ·ÂÇØ¾ß ÇÕ´Ï´Ù.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            {/* ìš”ì•½/ì†Œê°œ */}
+            {/* ¿ä¾à/¼Ò°³ */}
             <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <FormField
                 control={form.control}
@@ -381,12 +404,12 @@ export default function RecipeForm({
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel className="text-base">ìš”ì•½/ì†Œê°œ</FormLabel>
+                      <FormLabel className="text-base">¿ä¾à/¼Ò°³</FormLabel>
                       <span className="text-xs text-muted-foreground">{summaryLength}/500</span>
                     </div>
                     <FormControl>
                       <Textarea
-                        placeholder="ì¬ë£Œ ì¤€ë¹„ì™€ ìš”ë¦¬ í¬ì¸íŠ¸ë¥¼ ê°„ë‹¨íˆ ì ì–´ì£¼ì„¸ìš”."
+                        placeholder="¿ä¸®¸¦ ¸¸µç ÀÌÀ¯³ª Æ÷ÀÎÆ®¸¦ °£´ÜÇÏ°Ô Àû¾î ÁÖ¼¼¿ä."
                         maxLength={500}
                         className="bg-background"
                         {...field}
@@ -402,7 +425,7 @@ export default function RecipeForm({
 
         <div className="flex justify-end">
           <Button type="submit" disabled={form.formState.isSubmitting} className="px-6">
-            {form.formState.isSubmitting ? "ì €ì¥ ì¤‘..." : submitLabel}
+            {form.formState.isSubmitting ? "ÀúÀå Áß.." : submitLabel}
           </Button>
         </div>
       </form>

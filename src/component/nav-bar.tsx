@@ -14,43 +14,17 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { auth } from "@/lib/firebase/client";
+
 import { fetchUsernameByUid } from "@/features/user/client";
+import { useAuth } from "@/app/auth/auth-context";
 
 export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
   const [searchText, setSearchText] = useState("");
-  const [userName, setUserName] = useState("");
-  const [user] = useAuthState(auth);
   const router = useRouter();
 
-  useEffect(() => {
-    let cancelled = false;
+  const { displayName, status } = useAuth();
 
-    async function resolveUserName() {
-      if (!user) {
-        if (!cancelled) setUserName("");
-        return;
-      }
-
-      const loginIdentifier = user.providerData[0]?.providerId;
-      if (loginIdentifier === "password") {
-        try {
-          const resolved = await fetchUsernameByUid(user.uid);
-          if (!cancelled) setUserName(resolved ?? user.displayName ?? "user");
-          return;
-        } catch (error) {
-          console.error("Failed to resolve nav username", error);
-        }
-      }
-
-      if (!cancelled) setUserName(user.displayName || "user");
-    }
-
-    resolveUserName();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  status === "authenticated" && displayName ? displayName : "";
 
   function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,8 +65,8 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
         {/* Right: 토글 + 유저 + 슬롯 */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {userName ? (
-            <span className="hidden text-xs text-emerald-50/90 sm:inline">{userName}님</span>
+          {displayName ? (
+            <span className="hidden text-xs text-emerald-50/90 sm:inline">{displayName}님</span>
           ) : null}
           {rightSlot}
         </div>

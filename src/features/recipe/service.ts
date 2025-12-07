@@ -45,11 +45,16 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
 }
 
 function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo): RecipeInsertDB {
+  const image = input.image?.trim();
+  if (!image) {
+    throw new Error("이미지 경로가 필요합니다.");
+  }
   return {
+    ...(input.id ? { id: input.id } : {}),
     title: input.title,
     summary: input.summary ?? null,
     recipe: input.recipe ?? null,
-    image: input.image && input.image.trim().length > 0 ? input.image.trim() : null,
+    image,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
     ...(writer?.uid ? { writer_uid: writer.uid } : {}),
