@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { recipeInsertSchema } from "../schema";
+import { recipeFormSchema, recipeInsertSchema } from "../schema";
 import type { RecipeInsertInput } from "../types";
 import {
   Select,
@@ -30,29 +30,6 @@ import {
 } from "@/components/ui/select";
 
 type StepInput = { text: string };
-
-// 파일 자체를 검증하기 위한 스키마
-const imageFileSchema = z
-  .union([z.instanceof(File), z.null()], {
-    required_error: "대표 이미지를 파일로 선택해 주세요.",
-  })
-  .superRefine((file, ctx) => {
-    if (!file) {
-      ctx.addIssue({ code: "custom", message: "대표 이미지를 파일로 선택해 주세요." });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      ctx.addIssue({ code: "custom", message: "파일 크기는 5MB 이하만 가능합니다." });
-    }
-    if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
-      ctx.addIssue({ code: "custom", message: "지원하지 않는 파일 형식입니다." });
-    }
-  });
-
-// 폼 전용 스키마: API 스키마에서 image/id는 빼고, imageFile(File)을 추가
-const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
-  imageFile: imageFileSchema,
-});
 
 type FormValues = z.infer<typeof recipeFormSchema> & {
   steps: StepInput[];
@@ -81,7 +58,6 @@ const normalizeTags = (text: string) =>
 export default function RecipeForm({
   defaultValues,
   onSubmit,
-
   submitLabel = "레시피 등록",
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
@@ -117,8 +93,6 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    console.log("Submitting form with values:", values.steps, "and imageFile:", values.imageFile);
-
     if (!values.imageFile) {
       form.setError("imageFile", {
         type: "manual",
