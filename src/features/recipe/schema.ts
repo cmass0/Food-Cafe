@@ -14,6 +14,23 @@ const imageFieldSchema = z.preprocess(
     .optional()
 );
 
+export const imageFileSchema = z
+  .union([z.instanceof(File), z.null()], {
+    required_error: "대표 이미지를 파일로 선택해 주세요.",
+  })
+  .superRefine((file, ctx) => {
+    if (!file) {
+      ctx.addIssue({ code: "custom", message: "대표 이미지를 파일로 선택해 주세요." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      ctx.addIssue({ code: "custom", message: "파일 크기는 5MB 이하만 가능합니다." });
+    }
+    if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
+      ctx.addIssue({ code: "custom", message: "지원하지 않는 파일 형식입니다." });
+    }
+  });
+
 
 
 
@@ -52,6 +69,9 @@ export const recipeInsertSchema = z.object({
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
 });
 
+export const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
+  imageFile: imageFileSchema,
+});
 
 
 export const recipeUpdateSchema = z
