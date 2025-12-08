@@ -18,7 +18,7 @@ create policy "upload_post_images_by_owner"
 on storage.objects
 for insert to authenticated
 with check (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -33,14 +33,8 @@ create policy "upload_recipe_images_by_owner"
 on storage.objects
 for insert to authenticated
 with check (
-  bucket_id = 'food-cafe'
-  and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
-  and exists (
-    select 1
-    from public.recipes r
-    where r.id = substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid
-      and r.writer_uid = auth.uid()
-  )
+  bucket_id = 'Food-Cafe'
+  and name ~ '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/'
 );
 
 -- ---------------------------------------------------------------
@@ -53,7 +47,7 @@ create policy "update_post_images_by_owner"
 on storage.objects
 for update to authenticated
 using (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -63,7 +57,7 @@ using (
   )
 )
 with check (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -78,7 +72,7 @@ create policy "update_recipe_images_by_owner"
 on storage.objects
 for update to authenticated
 using (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -88,7 +82,7 @@ using (
   )
 )
 with check (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -106,7 +100,7 @@ create policy "delete_post_images_by_owner"
 on storage.objects
 for delete to authenticated
 using (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^posts/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
@@ -121,7 +115,7 @@ create policy "delete_recipe_images_by_owner"
 on storage.objects
 for delete to authenticated
 using (
-  bucket_id = 'food-cafe'
+  bucket_id = 'Food-Cafe'
   and substring(name from '^recipes/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/')::uuid is not null
   and exists (
     select 1
