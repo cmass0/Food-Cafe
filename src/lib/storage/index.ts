@@ -1,7 +1,7 @@
 ﻿import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
-const BUCKET = "food-cafe";
+const BUCKET = "Food-Cafe";
 
 export function sanitizeFilename(name: string): string {
   const trimmed = name.trim().replace(/\s+/g, "-");
@@ -30,6 +30,7 @@ export function recipeImagePath(recipeId: string, filename: string): string {
 
 export type StorageClient = SupabaseClient<Database>;
 
+// post img
 export async function uploadPostImage(
   client: StorageClient,
   postId: string,
@@ -54,6 +55,7 @@ export async function uploadPostImage(
   return { path, publicUrl: data.publicUrl ?? null, signedUrl };
 }
 
+// recipe img
 export async function uploadRecipeImage(
   client: StorageClient,
   recipeId: string,
