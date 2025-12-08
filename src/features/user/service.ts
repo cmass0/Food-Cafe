@@ -1,13 +1,11 @@
 import { getServerSupabase } from "@/lib/supabase/server";
-import type { User } from "@supabase/supabase-js";
 
-import { UserCreateSchema, UserUpdateSchema, type UserCreateInput, type UserUpdateInput } from "./schema";
+import { UserUpdateSchema, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
 import type {
   UserListOptions,
   UserListResult,
   UserRow,
-  UserInsertDB,
   UserUpdateDB,
 } from "./types";
 
@@ -15,13 +13,10 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
 const ERROR_UNAUTHORIZED = "UNAUTHORIZED";
-const ERROR_ALREADY_EXISTS = "USER_ALREADY_EXISTS";
 const ERROR_VALIDATION = "VALIDATION_ERROR";
 
 const MESSAGE_LOGIN_REQUIRED = "\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
 const MESSAGE_DISPLAY_NAME_REQUIRED = "\uC774\uB984\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694.";
-const MESSAGE_EMAIL_MISMATCH = "\uC694\uCCAD\uD55C \uC774\uBA54\uC77C\uC774 \uC778\uC99D \uACC4\uC815\uACFC \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.";
-const MESSAGE_PROFILE_EXISTS = "\uC774\uBBF8 \uC0AC\uC6A9\uC790 \uD504\uB85C\uD544\uC774 \uC874\uC7AC\uD569\uB2C8\uB2E4.";
 
 function withCode<T extends Error>(error: T, code: string): T & { code: string } {
   (error as T & { code: string }).code = code;
@@ -65,25 +60,6 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
   }
 
   return payload;
-}
-
-function pickAvatarURL(user: User): string | null {
-  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const candidates = [metadata.avatar_url, metadata.picture, metadata.avatarUrl];
-  const selected = candidates.find((value) => typeof value === "string" && value.trim().length > 0);
-  return typeof selected === "string" ? selected : null;
-}
-
-function buildInsertPayload(authUser: User, parsed: UserCreateInput): UserInsertDB {
-  const now = new Date().toISOString();
-  return {
-    id: authUser.id,
-    display_name: parsed.username,
-    email: parsed.email ?? authUser.email ?? null,
-    photo_url: pickAvatarURL(authUser),
-    created_at: now,
-    updated_at: now,
-  };
 }
 
 export async function getSelf(): Promise<UserRow | null> {

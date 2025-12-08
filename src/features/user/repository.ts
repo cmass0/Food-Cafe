@@ -1,4 +1,4 @@
-import type { FetchUsersParams, UserInsertDB, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
+import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
 
 
 
@@ -62,19 +62,6 @@ export async function selectUserByDisplayName(
     .maybeSingle();
   if (error) throw error;
   return data ?? null;
-}
-
-export async function insertUserRecord(
-  client: UserSupabaseClient,
-  payload: UserInsertDB
-): Promise<UserRow> {
-  const { data, error } = await client
-    .from("users")
-    .insert(payload)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as UserRow;
 }
 
 export async function updateUserRecord(
