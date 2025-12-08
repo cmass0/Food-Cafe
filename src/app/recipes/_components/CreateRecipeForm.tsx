@@ -62,12 +62,7 @@ export default function CreateRecipeForm() {
 
   return (
     <div className="space-y-2">
-      <RecipeForm
-        enableImageUpload
-        requireImageUpload
-        onSubmit={handleSubmit}
-        submitLabel={submitting ? "등록 중..." : "레시피 등록"}
-      />
+      <RecipeForm onSubmit={handleSubmit} submitLabel={submitting ? "등록 중..." : "레시피 등록"} />
       {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
     </div>
   );
