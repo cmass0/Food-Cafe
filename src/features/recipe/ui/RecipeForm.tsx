@@ -64,8 +64,7 @@ type FormValues = z.infer<typeof recipeFormSchema> & {
 
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
-  enableImageUpload?: boolean;
-  requireImageUpload?: boolean;
+
   onSubmit: (
     values: RecipeInsertInput,
     extras?: { imageFile: File | null }
