@@ -57,7 +57,7 @@ export default function Recipe({ data }) {
         </div>
         <Button
           as={Link}
-          href={`/meals/${data.id}`}
+          href={`/recipes/${data.id}`}
           size="sm"
           color="primary"
           radius="full"

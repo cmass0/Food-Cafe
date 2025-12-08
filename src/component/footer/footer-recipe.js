@@ -26,7 +26,7 @@ export default function FooterRecipe({ data, index, curindex }) {
             <p>{data.summary}</p>
           </div>
           <div className={style.detailLink}>
-            <Link href={`/meals/${data.id}`}>상세보기</Link>
+            <Link href={`/recipes/${data.id}`}>상세보기</Link>
           </div>
         </div>
       </main>

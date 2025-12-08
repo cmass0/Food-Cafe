@@ -19,7 +19,7 @@ export default function SearchDisplay({ contents }) {
             <span className={style.creatortext}>작성자</span>: {contents.name}
           </p>
           <p>{contents.summary}</p>
-          <Link href={`/meals/${contents.id}`} className={style.searchdetail}>
+          <Link href={`/recipes/${contents.id}`} className={style.searchdetail}>
             자세히 보기
           </Link>
         </div>

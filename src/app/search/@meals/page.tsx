@@ -36,7 +36,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
       }}
     >
       {results.map((r: any) => (
-        <Card as={Link} href={`/meals/${r.id}`} isPressable key={r.id} shadow="sm">
+        <Card as={Link} href={`/recipes/${r.id}`} isPressable key={r.id} shadow="sm">
           {r.image && (
             <Image
               alt={r.title}
