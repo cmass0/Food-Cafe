@@ -82,13 +82,11 @@ const normalizeTags = (text: string) =>
 export default function RecipeForm({
   defaultValues,
   onSubmit,
-  enableImageUpload = false,
-  requireImageUpload = false,
+
   submitLabel = "레시피 등록",
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const shouldRenderImageField = enableImageUpload || requireImageUpload;
 
   const initialSteps: StepInput[] = defaultValues?.recipe
     ?.split(/\n+/)
@@ -145,7 +143,7 @@ export default function RecipeForm({
     const recipeFromSteps =
       trimmedSteps.length > 0
         ? trimmedSteps.map((line, index) => `${index + 1}) ${line}`).join("\n")
-        : values.recipe?.trim() ?? "";
+        : (values.recipe?.trim() ?? "");
 
     const payload: RecipeInsertInput = {
       title: values.title,
@@ -277,44 +275,43 @@ export default function RecipeForm({
                 name="imageFile"
                 render={({ field }) => (
                   <div className="space-y-4">
-                    {shouldRenderImageField ? (
-                      <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                          <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
-                            {imagePreview ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={imagePreview}
-                                alt="대표 이미지 미리보기"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                                대표 이미지 미리보기
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 space-y-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(event) => {
-                                handleFileChange(event);
-                                const nextFile = event.target.files?.[0] ?? null;
-                                field.onChange(nextFile);
-                              }}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
+                    <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                        <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
+                          {imagePreview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={imagePreview}
+                              alt="대표 이미지 미리보기"
+                              className="h-full w-full object-cover"
                             />
-                            <p className="text-xs text-muted-foreground">
-                              로컬 이미지를 올리면 미리보기에 표시되고, 서버에서 업로드 후 URL을 저장합니다.
-                            </p>
-                            <FormMessage />
-                          </div>
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                              대표 이미지 미리보기
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => {
+                              handleFileChange(event);
+                              const nextFile = event.target.files?.[0] ?? null;
+                              field.onChange(nextFile);
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            로컬 이미지를 올리면 미리보기에 표시되고, 서버에서 업로드 후 URL을
+                            저장합니다.
+                          </p>
+                          <FormMessage />
                         </div>
                       </div>
-                    ) : null}
+                    </div>
                   </div>
                 )}
               />
