@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
+import { z, ZodError } from "zod";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -14,6 +14,54 @@ const requestSchema = z.object({
   category: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
 });
+
+const isPostgrestError = (error: unknown): error is PostgrestError =>
+  typeof (error as PostgrestError)?.code === "string";
+
+const respondWithSupabaseError = (error: PostgrestError) => {
+  const status = error.code === "42501" ? 403 : 400;
+  return NextResponse.json(
+    {
+      error: error.code,
+      message: error.message,
+      details: error.details ?? error.hint,
+    },
+    { status }
+  );
+};
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const limitParam = Number(url.searchParams.get("limit") ?? "");
+    const pageParam = Number(url.searchParams.get("page") ?? "");
+    const limit = Number.isFinite(limitParam) ? limitParam : undefined;
+    const page = Number.isFinite(pageParam) ? pageParam : undefined;
+    const writerUid = url.searchParams.get("writerUid") ?? undefined;
+    const tag = url.searchParams.get("tag") ?? undefined;
+    const search = url.searchParams.get("search") ?? undefined;
+
+    const supabase = getServerSupabase();
+    const recipes = await recipeService.listRecipes(supabase, {limit, page, writerUid, tag, search});
+  
+    return NextResponse.json({ data: recipes }, { headers: { "Cache-control": "no-store" } });
+
+  }catch (error) {
+
+    if (error instanceof ZodError) {
+          return Response.json(
+            { error: "VALIDATION_ERROR", details: error.flatten() },
+            { status: 400 }
+          );
+        }
+        if (isPostgrestError(error)) {
+          return respondWithSupabaseError(error);
+        }
+        console.error("[recipes] GET failed", error);
+        return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+  }
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -47,6 +95,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (error) {
+    if (isPostgrestError(error)) {
+      console.error("Failed to create recipe", error);
+      return respondWithSupabaseError(error);
+    }
     const info = {
       message: (error as any)?.message,
       code: (error as any)?.code,

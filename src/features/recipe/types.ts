@@ -13,6 +13,9 @@ export interface Recipe {
   tags: string[];
   likeCount: number;
   viewCount: number;
+  writerUid: string | null;
+  writerName: string | null;
+  writerEmail: string | null;
   lastLikedAt: string | null;
   createdAt: Date;
   updatedAt: Date;

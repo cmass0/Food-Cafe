@@ -31,10 +31,10 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           <LikeButton recipeId={recipe.id} initialLiked={liked} initialCount={count} />
         </div>
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">레시피 수정</h2>
+          <h2 className="text-2xl font-semibold"></h2>
           <DeleteRecipeButton recipeId={recipe.id} />
         </div>
-        <RecipeEditForm recipe={recipe} />
+        {/* <RecipeEditForm recipe={recipe} /> */}
       </section>
     </main>
   );

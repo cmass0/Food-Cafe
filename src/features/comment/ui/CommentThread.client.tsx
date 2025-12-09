@@ -15,6 +15,7 @@ type ParentType = "post" | "recipe";
 type CommentThreadProps = {
   parentType: ParentType;
   parentId: string;
+  pageSize?: number;
   items: CommentDisplayItem[];
   defaultWriterName?: string;
 };
@@ -22,6 +23,7 @@ type CommentThreadProps = {
 export default function CommentThread({
   parentType,
   parentId,
+  pageSize,
   items,
   defaultWriterName = "",
 }: CommentThreadProps) {
@@ -78,7 +80,7 @@ export default function CommentThread({
       router.refresh();
     } catch (err) {
       console.error("Failed to delete comment", err);
-    setError("댓글을 삭제하는 중 오류가 발생했습니다.");
+      setError("댓글을 삭제하는 중 오류가 발생했습니다.");
     }
   };
 
@@ -96,5 +98,3 @@ export default function CommentThread({
     </section>
   );
 }
-
-

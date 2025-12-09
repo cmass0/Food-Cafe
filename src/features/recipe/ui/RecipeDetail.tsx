@@ -30,7 +30,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
           />
         ) : null}
       </article>
-      <RecipeComments recipeId={recipe.id} pageSize={10} />
+      <RecipeComments recipeId={recipe.id} pageSize={10} items={[]} />
     </div>
   );
 }

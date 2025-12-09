@@ -30,7 +30,7 @@ export default function RecipesPage() {
 
     async function fetchRecipes() {
       try {
-        const data = await listRecipes({ limit: 100 });
+        const data = await listRecipes({ limit: 30, page: 10 });
         const items = (data?.items ?? []).map((item: any) => ({
           ...item,
           createdAt: item?.createdAt ? new Date(item.createdAt) : null,

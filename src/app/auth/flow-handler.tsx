@@ -11,8 +11,6 @@ export default function AuthFlowHandler() {
 
   useEffect(() => {
 
-    // Detect OAuth/email confirmation return params
-    // const state = searchParams?.get("state");
     const code = searchParams?.get("code");
     if (!code) return;
     const supabase = getBrowserSupabase();
@@ -28,7 +26,6 @@ export default function AuthFlowHandler() {
         console.error("Auth exchange failed", e);
       } finally {
         // Clean auth params from URL then refresh to sync server-side session
-       
         const url = new URL(window.location.href);
         url.searchParams.delete("code");
         url.searchParams.delete("state");

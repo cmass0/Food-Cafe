@@ -41,6 +41,9 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     lastLikedAt: row.last_liked_at,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    writerUid: row.writer_uid ?? null,
+    writerName: row.writer_name ?? null,
+    writerEmail: row.writer_email ?? null,
   };
 }
 
