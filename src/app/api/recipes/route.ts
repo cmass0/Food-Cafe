@@ -30,6 +30,28 @@ const respondWithSupabaseError = (error: PostgrestError) => {
   );
 };
 
+const serializeUnknownError = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause ?? null,
+    };
+  }
+  if (typeof error === "string") {
+    return { message: error };
+  }
+  if (typeof error === "object" && error !== null) {
+    try {
+      return JSON.parse(JSON.stringify(error));
+    } catch {
+      return { message: error.toString() };
+    }
+  }
+  return { message: String(error) };
+};
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -46,19 +68,14 @@ export async function GET(req: Request) {
   
     return NextResponse.json({ data: recipes }, { headers: { "Cache-control": "no-store" } });
 
-  }catch (error) {
-
-    if (error instanceof ZodError) {
-          return Response.json(
-            { error: "VALIDATION_ERROR", details: error.flatten() },
-            { status: 400 }
-          );
-        }
-        if (isPostgrestError(error)) {
-          return respondWithSupabaseError(error);
-        }
-        console.error("[recipes] GET failed", error);
-        return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+  } catch (error) {
+    if (isPostgrestError(error)) {
+      console.error("Failed to get recipe", error);
+      return respondWithSupabaseError(error);
+    }
+    const info = serializeUnknownError(error);
+    console.error("Failed to get recipe", info, error);
+    return NextResponse.json({ error: "Failed to get recipe", details: info }, { status: 500 });
   }
 }
 
@@ -99,11 +116,7 @@ export async function POST(req: Request) {
       console.error("Failed to create recipe", error);
       return respondWithSupabaseError(error);
     }
-    const info = {
-      message: (error as any)?.message,
-      code: (error as any)?.code,
-      details: (error as any)?.details ?? (error as any)?.hint,
-    };
+    const info = serializeUnknownError(error);
     console.error("Failed to create recipe", info, error);
     return NextResponse.json({ error: "Failed to create recipe", details: info }, { status: 500 });
   }

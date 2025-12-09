@@ -1,5 +1,7 @@
 
 
+import type { RecipeListResult } from "./types";
+
 export async function listRecipes(
   params?: {
     limit?: number;
@@ -8,7 +10,7 @@ export async function listRecipes(
     tag?: string;
     search?: string;
   }
-) {
+): Promise<RecipeListResult> {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
@@ -18,7 +20,7 @@ export async function listRecipes(
   const res = await fetch(`/api/recipes${qs.size ? `?${qs.toString()}` : ""}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to list recipes: ${res.status}`);
   const json = await res.json();
-  return json.data;
+  return json.data as RecipeListResult;
 }
 
 async function throwApiError(res: Response): Promise<never> {

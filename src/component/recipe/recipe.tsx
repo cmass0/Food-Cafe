@@ -5,12 +5,13 @@ import Link from "next/link";
 import { Card, CardBody, CardFooter, CardHeader, Button, Chip } from "@heroui/react";
 import { Eye, Heart } from "lucide-react";
 import style from "./recipe.module.css";
+import { Recipe } from "@/features/recipe/types";
 
-export default function Recipe({ data }) {
-  const likeLabel = data.likeCount ?? data.like ?? 0;
-  const viewLabel = data.viewCount ?? data.check ?? 0;
-  const writerName = data.writerName ?? data.name ?? "";
-  const imageSrc = data.image ?? (Array.isArray(data.images) ? data.images[0] : null);
+export default function RecipeCard({ data }: { data: Recipe }) {
+  const likeLabel = data.likeCount ?? data.likeCount ?? 0;
+  const viewLabel = data.viewCount ?? data.viewCount ?? 0;
+  const writerName = data.writerName ?? data.writerName ?? "";
+  const imageSrc = data.image ?? data.image ?? "";
 
   return (
     <Card shadow="lg" radius="lg" className={style.card} isPressable>
@@ -69,4 +70,3 @@ export default function Recipe({ data }) {
     </Card>
   );
 }
-

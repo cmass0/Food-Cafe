@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import Gridracipe from "@/component/recipe/display-racipe";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/features/recipe/api";
+import type { Recipe, RecipeListResult } from "@/features/recipe/types";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -17,26 +19,50 @@ const SORT_OPTIONS = [
   { key: "view", title: "조회" },
 ];
 
+const DEFAULT_LIMIT = 12;
+
 export default function RecipesPage() {
-  const [recipes, setRecipes] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [sort, setSort] = useState<string>("recent");
   const [loading, setLoading] = useState(true);
+  const [pageMeta, setPageMeta] = useState<Pick<RecipeListResult, "limit" | "offset" | "total">>({
+    limit: DEFAULT_LIMIT,
+    offset: 0,
+    total: 0,
+  });
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+
+  const pageParam = searchParams.get("page");
+  const limitParam = searchParams.get("limit");
 
   useEffect(() => {
     let mounted = true;
 
     async function fetchRecipes() {
+      const parsedPage = Number(pageParam);
+      const parsedLimit = Number(limitParam);
+      const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
+      const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+      setLoading(true);
       try {
-        const data = await listRecipes({ limit: 30, page: 10 });
+        const data = await listRecipes({ limit, page });
         const items = (data?.items ?? []).map((item: any) => ({
           ...item,
           createdAt: item?.createdAt ? new Date(item.createdAt) : null,
           updatedAt: item?.updatedAt ? new Date(item.updatedAt) : null,
         }));
-        if (mounted) setRecipes(items);
+        if (mounted) {
+          setRecipes(items);
+          setPageMeta({
+            limit: data.limit,
+            offset: data.offset,
+            total: data.total,
+          });
+        }
       } catch (error) {
         console.error("레시피 목록을 불러오는데 실패했습니다.", error);
       } finally {
@@ -48,7 +74,7 @@ export default function RecipesPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [pageParam, limitParam]);
 
   const sortedRecipes = useMemo(() => {
     const base = [...recipes];
@@ -74,6 +100,9 @@ export default function RecipesPage() {
     router.push("/recipes/new");
   }
 
+  const pageSize = pageMeta.limit > 0 ? pageMeta.limit : DEFAULT_LIMIT;
+  const currentPage = pageSize > 0 ? Math.floor(pageMeta.offset / pageSize) + 1 : 1;
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
       <section className="flex flex-col gap-4">
@@ -81,7 +110,7 @@ export default function RecipesPage() {
           <div className="space-y-1">
             <h1 className="text-3xl font-semibold">레시피</h1>
             <p className="text-sm text-muted-foreground">
-              새 레시피를 공유하고, 좋아요/조회순으로 인기 레시피를 살펴보세요.
+              다양한 레시피를 찾아보고, 나만의 레시피도 공유해보세요!
             </p>
           </div>
           <Button className="gap-2 rounded-full px-5 py-2 text-base" onClick={handleShare}>
@@ -104,6 +133,15 @@ export default function RecipesPage() {
       <section>
         <Gridracipe MealsData={sortedRecipes} loading={loading} />
       </section>
+
+      <footer className="flex justify-center">
+        <PaginationComponent
+          basePath="/recipes"
+          page={currentPage}
+          pageSize={pageSize}
+          total={pageMeta.total}
+        />
+      </footer>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 ﻿"use client";
 
 import { Skeleton } from "@heroui/react";
-import Recipe from "./recipe";
 import style from "./display-racipe.module.css";
+import { Recipe } from "@/features/recipe/types";
+import RecipeDetail from "./recipe";
+import RecipeCard from "./recipe";
 
 type GridracipeProps = {
-  MealsData: any[];
+  MealsData: Recipe[];
   loading: boolean;
 };
 
@@ -14,7 +16,7 @@ export default function Gridracipe({ MealsData = [], loading = false }: Gridraci
     return (
       <div className={style.displaygrid}>
         {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className={style.cardSkeleton} radius="lg" />
+          <Skeleton key={index} className={style.cardSkeleton} />
         ))}
       </div>
     );
@@ -32,7 +34,7 @@ export default function Gridracipe({ MealsData = [], loading = false }: Gridraci
   return (
     <div className={style.displaygrid}>
       {MealsData.map((data, index) => (
-        <Recipe key={data.id ?? index} data={data} />
+        <RecipeCard key={data.id ?? index} data={data} />
       ))}
     </div>
   );
