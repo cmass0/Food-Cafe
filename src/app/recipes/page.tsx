@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 
-import Gridracipe from "@/component/recipe/display-racipe";
+import RecipeList from "@/features/recipe/ui/RecipeList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
@@ -12,6 +12,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/features/recipe/api";
 import type { Recipe, RecipeListResult } from "@/features/recipe/types";
+import type { Recipe as RecipeType } from "@/features/recipe/types";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -37,6 +38,8 @@ export default function RecipesPage() {
 
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
+  const [likedSet, setLikedSet] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +65,8 @@ export default function RecipesPage() {
             offset: data.offset,
             total: data.total,
           });
+          setLikedSet({});
+          setLikeCounts({});
         }
       } catch (error) {
         console.error("레시피 목록을 불러오는데 실패했습니다.", error);
@@ -75,6 +80,42 @@ export default function RecipesPage() {
       mounted = false;
     };
   }, [pageParam, limitParam]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchLikeMeta(current: RecipeType[]) {
+      if (!current.length) {
+        setLikedSet({});
+        setLikeCounts({});
+        return;
+      }
+      const ids = current.map((r) => r.id);
+      const params = new URLSearchParams({ ids: ids.join(",") });
+      try {
+        const res = await fetch(`/api/recipes/like-meta?${params.toString()}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        const likedIds: string[] = json?.data?.liked ?? [];
+        const counts: Record<string, number> = json?.data?.counts ?? {};
+        const nextSet: Record<string, boolean> = {};
+        likedIds.forEach((id) => {
+          nextSet[id] = true;
+        });
+        setLikedSet(nextSet);
+        setLikeCounts(counts);
+      } catch (e) {
+        console.error("레시피 좋아요 정보를 불러오지 못했습니다.", e);
+      }
+    }
+
+    fetchLikeMeta(recipes);
+    return () => {
+      cancelled = true;
+    };
+  }, [recipes]);
 
   const sortedRecipes = useMemo(() => {
     const base = [...recipes];
@@ -131,7 +172,7 @@ export default function RecipesPage() {
       </section>
 
       <section>
-        <Gridracipe MealsData={sortedRecipes} loading={loading} />
+        <RecipeList recipes={sortedRecipes} initset={likedSet} initialCounts={likeCounts} className="mt-4" />
       </section>
 
       <footer className="flex justify-center">
