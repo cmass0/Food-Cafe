@@ -21,9 +21,7 @@ function resolveLimit(limit?: number): number {
   return truncated;
 }
 
-
 function resolveOffset(page: number | undefined, limit: number): number {
-
   if (typeof page === "number" && Number.isFinite(page)) {
     const safePage = Math.max(1, Math.trunc(page));
     return (safePage - 1) * limit;
@@ -61,7 +59,7 @@ function buildInsertPayload(
 
 function buildUpdatePayload(parsed: ReturnType<typeof postUpdateSchema.parse>): PostUpdateDB {
   const payload: PostUpdateDB = {};
-  
+
   if (parsed.title !== undefined) payload.title = parsed.title;
   if (parsed.content !== undefined) payload.content = parsed.content;
   if (parsed.writerName !== undefined) payload.writer_name = parsed.writerName;
@@ -75,13 +73,11 @@ export async function listPosts(
 ): Promise<PostListResult> {
   const parsed = postListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit);
-
   const offset = resolveOffset(parsed.page, limit);
 
   const { items: rows, total: rawTotal } = await repository.fetchPosts(client, {
     limit,
     offset,
-
     writerUid: parsed.writerUid,
     type: parsed.type,
     search: parsed.search,
@@ -117,7 +113,7 @@ export async function createPost(
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다.");
+  if (!user) throw new Error("로그인 상태가 아닙니다.");
 
   const parsed = postInsertSchema.parse(input);
   const payload = buildInsertPayload(parsed, user.id);
@@ -131,11 +127,6 @@ export async function updatePost(
   input: unknown
 ): Promise<Post | null> {
   const parsed = postUpdateSchema.parse(input);
-
-  if (parsed.checkIncrement) {
-    await repository.incrementPostViewCount(client, id);
-  }
-
   const updatePayload = buildUpdatePayload(parsed);
   let row: PostRow | null = null;
 
@@ -145,7 +136,7 @@ export async function updatePost(
       error,
     } = await client.auth.getUser();
     if (error) throw error;
-    if (!user) throw new Error("로그인이 필요합니다.");
+    if (!user) throw new Error("로그인 상태가 아닙니다.");
     row = await repository.updatePostRecordByOwner(client, id, user.id, updatePayload);
   } else {
     row = await repository.selectPostById(client, id);
@@ -160,14 +151,7 @@ export async function removePost(client: PostSupabaseClient, id: string): Promis
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다.");
+  if (!user) throw new Error("로그인 상태가 아닙니다.");
   await repository.deletePostRecord(client, id, user.id);
 }
 
-export async function incrementPostView(
-  client: PostSupabaseClient,
-  id: string
-): Promise<Post | null> {
-  await repository.incrementPostViewCount(client, id);
-  return getPost(client, id);
-}

@@ -135,11 +135,3 @@ export async function deletePostRecord(
     .eq("writer_uid", ownerUid);
   throwIfError(error);
 }
-
-export async function incrementPostViewCount(
-  client: PostSupabaseClient,
-  id: string
-): Promise<void> {
-  const { error } = await (client as any).rpc("increment_post_view_count", { target: id });
-  throwIfError(error);
-}

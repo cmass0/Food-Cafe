@@ -9,7 +9,6 @@ import { PaginationComponent } from "@/components/pagenation/pagenation";
 
 import DeleteButton from "./DeleteButton";
 import { deletePostAction } from "../actions";
-import PostViewIncrement from "@/features/post/ui/PostViewIncrement.client";
 import UpdateButton from "./UpdateButton";
 import { CommentDisplayItem } from "@/features/comment/types";
 
@@ -68,7 +67,6 @@ export default async function PostDetailPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col px-6 py-10">
-      <PostViewIncrement id={post.id} />
       <PostDetail post={post} />
 
       {isAuthor && (

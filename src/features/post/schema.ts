@@ -13,7 +13,6 @@ export const postUpdateSchema = z
     content: z.string().min(1).optional(),
     writerName: z.string().trim().min(1).max(120).optional(),
     type: z.string().trim().max(40).optional(),
-    checkIncrement: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "수정할 항목을 한 가지 이상 입력해 주세요.",
