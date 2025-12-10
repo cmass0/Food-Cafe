@@ -102,3 +102,4 @@ export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: strin
   const { error } = await client.from("recipes").delete().eq("id", id);
   throwIfError(error);
 }
+
