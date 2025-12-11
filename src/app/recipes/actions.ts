@@ -7,7 +7,7 @@ import { ZodError } from "zod";
 import { getServerSupabase } from "@/lib/supabase/server";
 import * as recipeService from "@/features/recipe/service";
 import type { RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
-import { getLikeMeta, likeOnceForCurrentUser } from "@/features/user_like/service";
+import { getLikeMeta } from "@/features/user_like/service";
 
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
@@ -79,11 +79,6 @@ export async function deleteRecipeAction(id: string) {
   }
 }
 
-export async function likeOnceAction(recipeId: string) {
-  const result = await likeOnceForCurrentUser(recipeId);
-  revalidatePath("/recipes");
-  return result;
-}
 
 export async function likeMetaAction(recipeId: string) {
   return getLikeMeta(recipeId);

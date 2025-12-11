@@ -2,13 +2,9 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { getCurrentUserId } from "./service";
 
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = getServerSupabase();
-  const { data, error} = await supabase.auth.getUser();
-  if (error) throw error;
-  return data?.user?.id ?? null;
-}
+
 
 export async function fetchLikedRecipeIds(
   client: SupabaseClient<Database>,
@@ -27,9 +23,8 @@ export async function fetchLikedRecipeIds(
 
 
 
-export async function isLiked(recipeId: string): Promise<boolean> {
+export async function isLiked(recipeId: string, userId: string): Promise<boolean> {
   const supabase = getServerSupabase();
-  const userId = await getCurrentUserId();
   if (!userId) return false;
 
   const { data, error } = await supabase
@@ -55,24 +50,30 @@ export async function countLikes(recipeId: string): Promise<number> {
 }
 
 
-export async function likeOnce(recipeId: string): Promise<{ liked: true; count: number }> {
-  const supabase = getServerSupabase();
-  const userId = await getCurrentUserId();
-  if (!userId) throw new Error("UNAUTHENTICATED");
+export async function setRecipeLike(
+  client: SupabaseClient<Database>,
+  params: { userId: string; recipeId: string; like: boolean }
+): Promise<void> {
+  const { userId, recipeId, like } = params;
 
-  // 이미 눌렀으면 카운트만 반환
-  if (await isLiked(recipeId)) {
-    const count = await countLikes(recipeId);
-    return { liked: true, count };
+  if (like) {
+    // 좋아요 추가 중복은 무시
+    const { error } = await client
+      .from("user_likes")
+      .upsert(
+        { user_id: userId, recipe_id: recipeId },
+        { onConflict: "user_id,recipe_id", ignoreDuplicates: true }
+      );
+
+    if (error) throw error;
+  } else {
+    // 좋아요 취소
+    const { error } = await client
+      .from("user_likes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("recipe_id", recipeId);
+
+    if (error) throw error;
   }
-
-  // 최초 시도: UNIQUE 충돌은 동시성 no-op로 처리
-  const { error: insErr } = await supabase
-    .from("user_likes")
-    .upsert({ user_id: userId, recipe_id: recipeId }, { onConflict: "user_id,recipe_id", ignoreDuplicates: true });
-
-    if (insErr) throw insErr;
-
-  const count = await countLikes(recipeId);
-  return { liked: true, count };
 }

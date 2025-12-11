@@ -117,6 +117,7 @@ export default function RecipesPage() {
     };
   }, [recipes]);
 
+  // 레시피 정렬
   const sortedRecipes = useMemo(() => {
     const base = [...recipes];
     if (sort === "like") {

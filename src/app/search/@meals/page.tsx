@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Card, CardBody, CardFooter, Image } from "@heroui/react";
 import { listRecipes } from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { buildLikedSet } from "@/features/user_like/service";
 import LikeButton from "@/features/user_like/ui/likebutton";
 
 export const revalidate = 0;
@@ -25,7 +24,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
   if (results.length === 0) return <p>검색 결과가 없습니다.</p>;
   const supabase = getServerSupabase();
   const ids = results.map((r: any ) => r.id);
-  const linkSet = await buildLikedSet(supabase, ids);
+  // 검색 결과에서는 개별 카드에서만 좋아요 상태를 관리
 
   return (
     <div
@@ -53,7 +52,12 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
           </CardBody>
           <CardFooter>
             <small style={{ color: "#666" }}>by {r.writerName ?? "user"}</small>
-            <LikeButton recipeId={r.id} initialLiked={linkSet.has(r.id)} initialCount={r.likeCount ?? 0} />
+            <LikeButton
+              recipeId={r.id}
+              liked={false}
+              count={r.likeCount ?? 0}
+              onChange={() => {}}
+            />
           </CardFooter>
         </Card>
       ))}

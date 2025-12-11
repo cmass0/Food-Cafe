@@ -14,6 +14,9 @@ type RecipeCardProps = {
 };
 
 export default function RecipeCard({ initialLiked, initialCount, recipe }: RecipeCardProps) {
+  const [liked, setLiked] = useState(initialLiked);
+  const [likeCount, setLikeCount] = useState(initialCount ?? recipe.likeCount ?? 0);
+
   const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "short",
@@ -49,10 +52,17 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
             </p>
           </div>
           <LikeButton
-          
             recipeId={recipe.id}
-            initialLiked={initialLiked}
-            initialCount={initialCount ?? recipe.likeCount ?? 0}
+            liked={liked}
+            count={likeCount}
+            onChange={({ liked: nextLiked }) => {
+              setLiked(nextLiked);
+              setLikeCount((prev) => {
+                if (nextLiked && !liked) return prev + 1;
+                if (!nextLiked && liked) return Math.max(0, prev - 1);
+                return prev;
+              });
+            }}
           />
         </div>
       </div>
@@ -68,7 +78,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5">
               <Heart className="h-3 w-3 fill-emerald-300/80 text-emerald-50" />
-              <span>{recipe.likeCount ?? 0}</span>
+              <span>{likeCount}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Eye className="h-3 w-3 text-emerald-100" />
