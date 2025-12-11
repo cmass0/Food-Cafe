@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LikeButton from "@/features/user_like/ui/likebutton";
 import type { Recipe } from "../types";
+import { useState } from "react";
 
 type RecipeCardProps = {
   recipe: Recipe;
@@ -14,8 +15,8 @@ type RecipeCardProps = {
 };
 
 export default function RecipeCard({ initialLiked, initialCount, recipe }: RecipeCardProps) {
-  const [liked, setLiked] = useState(initialLiked);
-  const [likeCount, setLikeCount] = useState(initialCount ?? recipe.likeCount ?? 0);
+  const [liked, setLiked] = useState<boolean>(initialLiked);
+  const [likeCount, setLikeCount] = useState<number>(initialCount ?? recipe.likeCount ?? 0);
 
   const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
     year: "numeric",

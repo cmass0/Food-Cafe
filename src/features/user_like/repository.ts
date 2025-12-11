@@ -2,7 +2,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentUserId } from "./service";
+
 
 
 

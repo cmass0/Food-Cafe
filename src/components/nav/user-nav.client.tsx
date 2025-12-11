@@ -1,17 +1,17 @@
 "use client";
 
+import { usePathname, useSearchParams } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import LoginPage from "@/app/auth/signin-signup/page";
 
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { useAuth } from "@/app/auth/auth-context";
 
 type Props = { session: Session | null };
@@ -19,23 +19,25 @@ type Props = { session: Session | null };
 export default function ClientUserNav({ session }: Props) {
   const user = session?.user ?? null;
   const name = useAuth().displayName;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { openAuthModal } = useAuthModal();
+
+  const handleOpenAuth = () => {
+    const params = searchParams.toString();
+    const next = pathname ? (params ? `${pathname}?${params}` : pathname) : "/";
+    openAuthModal({ next });
+  };
 
   if (!user) {
     return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="rounded-xl bg-green-800">
-            <div className="flex items-center gap-1 text-white">
-              <div className="text-sm">로그인</div>
-              <div>/</div>
-              <div className="text-sm">회원가입</div>
-            </div>
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[400px] p-0">
-          <LoginPage />
-        </DialogContent>
-      </Dialog>
+      <Button className="rounded-xl bg-green-800" onClick={handleOpenAuth}>
+        <div className="flex items-center gap-1 text-white">
+          <div className="text-sm">로그인</div>
+          <div>/</div>
+          <div className="text-sm">회원가입</div>
+        </div>
+      </Button>
     );
   }
 
