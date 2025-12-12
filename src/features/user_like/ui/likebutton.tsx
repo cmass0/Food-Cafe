@@ -1,8 +1,11 @@
 "use client";
 import * as React from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Heart } from "lucide-react";
 
 import { toggleRecipeLike } from "../api";
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 
 type Props = {
   recipeId: string;
@@ -14,8 +17,18 @@ type Props = {
 export default function LikeButton({ recipeId, liked, count, onChange }: Props) {
   const [pending, start] = React.useTransition();
   const disabled = pending;
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   function handleClick() {
+    if (!user) {
+      const search = searchParams.toString();
+      const next = search ? `${pathname}?${search}` : pathname || "/recipes";
+      openAuthModal({ next });
+      return;
+    }
     start(async () => {
       try {
         const { liked: nextLiked } = await toggleRecipeLike(recipeId, liked);
