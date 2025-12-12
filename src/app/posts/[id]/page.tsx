@@ -1,7 +1,6 @@
 ﻿import { notFound } from "next/navigation";
 
 import { getServerSupabase } from "@/lib/supabase/server";
-import * as postService from "@/features/post/service";
 import * as commentService from "@/features/comment/service";
 import PostDetail from "@/features/post/ui/PostDetail";
 import CommentThread from "@/features/comment/ui/CommentThread.client";
@@ -11,6 +10,7 @@ import DeleteButton from "./DeleteButton";
 import { deletePostAction } from "../actions";
 import UpdateButton from "./UpdateButton";
 import { CommentDisplayItem } from "@/features/comment/types";
+import type { Post } from "@/features/post/types";
 
 type SearchParamValue = string | string[] | undefined;
 
@@ -26,11 +26,32 @@ export default async function PostDetailPage({
   params: { id: string };
   searchParams?: { commentPage?: SearchParamValue };
 }) {
-  const supabase = getServerSupabase();
-  const post = await postService.getPost(supabase, params.id);
-  if (!post) {
+  const apiBase = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const response = await fetch(`${apiBase}/api/posts/${params.id}`, {
+    cache: "no-store",
+  });
+  if (response.status === 404) {
     notFound();
   }
+  if (!response.ok) {
+    throw new Error("Failed to load post");
+  }
+  const { data } = await response.json();
+
+  const post: Post = {
+    id: data.id,
+    title: data.title,
+    content: data.content,
+    writerName: data.writerName ?? data.writer_name ?? "",
+    writerUid: data.writerUid ?? data.writer_uid ?? null,
+    number: data.number ?? null,
+    check: data.check ?? data.view_count ?? 0,
+    type: data.type ?? "board",
+    createdAt: new Date(data.createdAt ?? data.created_at),
+    updatedAt: new Date(data.updatedAt ?? data.updated_at),
+  };
+
+  const supabase = getServerSupabase();
 
   const commentPageValue = firstValue(searchParams?.commentPage);
   const commentPageNumber = Number(commentPageValue);
