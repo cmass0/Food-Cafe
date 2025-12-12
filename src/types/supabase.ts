@@ -276,7 +276,7 @@ export type Database = {
       }
     }
     Functions: {
-      increment_post_view_count: {
+      increment_post_view: {
         Args: { target: string }
         Returns: undefined
       }
@@ -336,7 +336,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      recipe_increment_view: {
+      increment_recipe_view: {
         Args: { p_recipe_id: string }
         Returns: {
           category: string | null

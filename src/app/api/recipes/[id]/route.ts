@@ -40,7 +40,7 @@ export async function GET(_: Request, { params }: Ctx) {
   try {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
-    await supabase.rpc('recipe_increment_view', { p_recipe_id: params.id });
+    await supabase.rpc('increment_recipe_view', { p_recipe_id: params.id });
     const item = await service.getRecipe(supabase, params.id);
     if (!item) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
     return json({ data: item }, 200, { "Cache-Control": "no-store" });
