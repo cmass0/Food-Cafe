@@ -4,16 +4,9 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { requestRecipeSchema } from "@/features/recipe/schema";
 
-const requestSchema = z.object({
-  id: z.string().uuid().optional(),
-  title: z.string(),
-  summary: z.string().nullable().optional(),
-  recipe: z.string().nullable().optional(),
-  image: z.string().trim().min(1),
-  category: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
-});
+
 
 const isPostgrestError = (error: unknown): error is PostgrestError =>
   typeof (error as PostgrestError)?.code === "string";
@@ -83,7 +76,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const parsed = requestSchema.parse(body);
+    const parsed = requestRecipeSchema.parse(body);
 
     const supabase = getServerSupabase();
     const {

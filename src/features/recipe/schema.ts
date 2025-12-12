@@ -110,6 +110,16 @@ export const recipeListOptionsSchema = z.object({
   search: z.string().trim().max(200).optional(),
 });
 
+export const requestRecipeSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string(),
+  summary: z.string().nullable().optional(),
+  recipe: z.string().nullable().optional(),
+  image: z.string().trim().min(1),
+  category: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
 export type RecipeInsertSchema = z.infer<typeof recipeInsertSchema>;
 export type RecipeUpdateSchema = z.infer<typeof recipeUpdateSchema>;
 export type RecipeListOptionsSchema = z.infer<typeof recipeListOptionsSchema>;
