@@ -34,7 +34,22 @@ export async function POST(req: Request, { params }: RouteParams) {
       currentlyLiked,
     });
 
-    return NextResponse.json({ liked: result.liked });
+    // recipe_adjust_like(p_recipe_id, p_delta) 로 like_count를 원자적으로 증감
+    const delta = result.liked ? 1 : -1;
+    const { data: adjusted, error: adjustError } = await supabase.rpc("recipe_adjust_like", {
+      p_recipe_id: recipeId,
+      p_delta: delta,
+    });
+    if (adjustError) {
+      console.error("[recipes.like] rpc error:", adjustError);
+      return NextResponse.json({ error: "LIKE_ADJUST_FAILED" }, { status: 500 });
+    }
+
+    const likeCount = Array.isArray(adjusted)
+      ? (adjusted[0]?.like_count as number | undefined) ?? null
+      : (adjusted as any)?.like_count ?? null;
+
+    return NextResponse.json({ liked: result.liked, likeCount });
   } catch (error) {
     console.error("[recipes.like] POST error:", error);
     return NextResponse.json(

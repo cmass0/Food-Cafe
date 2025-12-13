@@ -2,7 +2,7 @@
 export async function toggleRecipeLike(
   recipeId: string,
   currentlyLiked: boolean
-): Promise<{ liked: boolean }> {
+): Promise<{ liked: boolean; likeCount: number | null }> {
   const res = await fetch(`/api/recipes/${recipeId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

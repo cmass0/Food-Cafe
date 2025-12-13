@@ -11,7 +11,7 @@ type Props = {
   recipeId: string;
   liked: boolean;
   count: number;
-  onChange(next: { liked: boolean }): void;
+  onChange(next: { liked: boolean; likeCount?: number | null }): void;
 };
 
 export default function LikeButton({ recipeId, liked, count, onChange }: Props) {
@@ -31,8 +31,8 @@ export default function LikeButton({ recipeId, liked, count, onChange }: Props) 
     }
     start(async () => {
       try {
-        const { liked: nextLiked } = await toggleRecipeLike(recipeId, liked);
-        onChange({ liked: nextLiked });
+        const { liked: nextLiked, likeCount } = await toggleRecipeLike(recipeId, liked);
+        onChange({ liked: nextLiked, likeCount });
       } catch (error) {
         console.error("Failed to toggle like:", error);
       }
@@ -56,4 +56,3 @@ export default function LikeButton({ recipeId, liked, count, onChange }: Props) 
     </button>
   );
 }
-

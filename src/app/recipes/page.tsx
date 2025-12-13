@@ -81,6 +81,7 @@ export default function RecipesPage() {
     };
   }, [pageParam, limitParam]);
 
+  // 좋아요 메타 정보 조회 (사용자별 liked + 최신 카운트)
   useEffect(() => {
     let cancelled = false;
     async function fetchLikeMeta(current: RecipeType[]) {
@@ -92,7 +93,7 @@ export default function RecipesPage() {
       const ids = current.map((r) => r.id);
       const params = new URLSearchParams({ ids: ids.join(",") });
       try {
-        const res = await fetch(`/api/recipes/like-meta?${params.toString()}`, {
+        const res = await fetch(`/api/recipes/like?${params.toString()}`, {
           cache: "no-store",
         });
         if (!res.ok) return;
@@ -173,7 +174,12 @@ export default function RecipesPage() {
       </section>
 
       <section>
-        <RecipeList recipes={sortedRecipes} initset={likedSet} initialCounts={likeCounts} className="mt-4" />
+        <RecipeList
+          recipes={sortedRecipes}
+          initset={likedSet}
+          initialCounts={likeCounts}
+          className="mt-4"
+        />
       </section>
 
       <footer className="flex justify-center">
