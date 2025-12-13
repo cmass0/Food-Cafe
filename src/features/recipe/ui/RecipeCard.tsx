@@ -23,8 +23,6 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
     month: "short",
     day: "numeric",
   });
-  
-  
 
   return (
     <Card className="group flex h-full flex-col overflow-hidden rounded-none border border-border bg-gradient-to-b from-emerald-900/85 via-emerald-900/70 to-emerald-950/95 text-emerald-50 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl">
@@ -32,7 +30,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
         {recipe.image ? (
           <Image
             src={recipe.image}
-            alt={recipe.title || "?�시???��?지"}
+            alt={recipe.title || "레시피 이미지"}
             fill
             priority={false}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -40,7 +38,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-emerald-950/80 text-sm text-emerald-200/70">
-            ?��?지가 ?�직 ?�어??
+            이미지가 준비되지 않았어요
           </div>
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
@@ -51,7 +49,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
               {recipe.title}
             </h3>
             <p className="line-clamp-1 text-[11px] text-emerald-100/80">
-              by {recipe.writerName || "���� ����"} �� {createdLabel}
+              by {recipe.writerName || "무명 셰프"} · {createdLabel}
             </p>
           </div>
           <LikeButton
@@ -76,7 +74,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
 
       <CardContent className="flex flex-1 flex-col gap-3 p-5 pb-2 min-h-[100px]">
         <p className="line-clamp-5 text-sm leading-relaxed text-emerald-50/90">
-          {recipe.summary || "?�뜻????그릇?�로 ?�늘??채워 보세??"}
+          {recipe.summary || "설명이 준비되지 않았어요"}
         </p>
       </CardContent>
 
@@ -99,7 +97,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
             className="h-8 rounded-full bg-emerald-400 px-4 text-[11px] font-medium text-emerald-950 shadow-sm hover:bg-emerald-300"
           >
             <Link href={`/recipes/${recipe.id}`} prefetch={false}>
-              ?�시??보기
+              레시피 보기
             </Link>
           </Button>
         </div>
@@ -118,4 +116,3 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
     </Card>
   );
 }
-
