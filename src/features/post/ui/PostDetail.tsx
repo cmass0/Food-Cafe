@@ -1,4 +1,5 @@
-﻿import type { Post } from "../types";
+import type { Post } from "../types";
+import ViewCount from "@/features/view/ui/ViewCount.client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -15,7 +16,9 @@ export default function PostDetail({ post }: { post: Post }) {
             <span>|</span>
             <span>{post.createdAt.toLocaleString("ko-KR")}</span>
             <span>|</span>
-            <span>조회수 {post.check}</span>
+            <span>
+              조회수 <ViewCount type="post" id={post.id} initialCount={post.check} />
+            </span>
             {post.type ? (
               <>
                 <span>|</span>
@@ -29,3 +32,4 @@ export default function PostDetail({ post }: { post: Post }) {
     </div>
   );
 }
+

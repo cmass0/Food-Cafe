@@ -1,5 +1,6 @@
 import RecipeComments from "@/features/comment/ui/RecipeComments.client";
 import type { Recipe } from "../types";
+import ViewCount from "@/features/view/ui/ViewCount.client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -17,7 +18,9 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
             <span aria-hidden="true">·</span>
             <span>{recipe.createdAt.toLocaleString("ko-KR")}</span>
             <span aria-hidden="true">·</span>
-            <span>조회수 {recipe.viewCount ?? 0}</span>
+            <span>
+              조회수 <ViewCount type="recipe" id={recipe.id} initialCount={recipe.viewCount ?? 0} />
+            </span>
             {recipe.category ? (
               <>
                 <span aria-hidden="true">·</span>

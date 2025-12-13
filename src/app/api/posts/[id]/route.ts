@@ -41,8 +41,6 @@ export async function GET(_: Request, { params }: Ctx) {
   try {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
-    await supabase.rpc('increment_post_view', { target: params.id });
-
     const item = await postService.getPost(supabase, params.id);
     if (!item) return err(404, "NOT_FOUND", "게시글을 찾을 수 없습니다.");
     return json({ data: item }, 200, { "Cache-Control": "no-store" });
