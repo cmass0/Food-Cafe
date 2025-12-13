@@ -26,7 +26,7 @@ export default async function PostDetailPage({
   params: { id: string };
   searchParams?: { commentPage?: SearchParamValue };
 }) {
-  const apiBase = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const apiBase = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const response = await fetch(`${apiBase}/api/posts/${params.id}`, {
     cache: "no-store",
   });

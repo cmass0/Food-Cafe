@@ -29,7 +29,7 @@ function mapRecipeFromApi(payload: any): Recipe {
 }
 
 export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
-  const apiBase = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const apiBase = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   const response = await fetch(`${apiBase}/api/recipes/${params.id}`, {
     cache: "no-store",
   });

@@ -92,7 +92,9 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
             size="sm"
             className="h-8 rounded-full bg-emerald-400 px-4 text-[11px] font-medium text-emerald-950 shadow-sm hover:bg-emerald-300"
           >
-            <Link href={`/recipes/${recipe.id}`}>레시피 보기</Link>
+            <Link href={`/recipes/${recipe.id}`} prefetch={false}>
+              레시피 보기
+            </Link>
           </Button>
         </div>
 

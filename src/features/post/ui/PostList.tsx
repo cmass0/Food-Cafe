@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -90,6 +89,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
                     <Link
                       className="line-clamp-1 text-base font-semibold text-primary"
                       href={`/posts/${post.id}`}
+                      prefetch={false}
                     >
                       {post.title}
                     </Link>

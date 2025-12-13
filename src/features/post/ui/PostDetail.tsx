@@ -1,5 +1,9 @@
 ﻿import type { Post } from "../types";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
 export default function PostDetail({ post }: { post: Post }) {
   return (
     <div>

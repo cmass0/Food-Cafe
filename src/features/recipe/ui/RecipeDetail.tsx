@@ -1,6 +1,10 @@
 import RecipeComments from "@/features/comment/ui/RecipeComments.client";
 import type { Recipe } from "../types";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
 export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   return (
     <div>
