@@ -5,16 +5,12 @@ type RecipeListProps = {
   recipes: Recipe[];
   emptyMessage?: string;
   className?: string;
-  initset: Record<string, boolean>;
-  initialCounts?: Record<string, number>;
 };
 
 export default function RecipeList({
   recipes,
   emptyMessage = "등록된 레시피가 없습니다.",
   className,
-  initset,
-  initialCounts,
 }: RecipeListProps) {
   if (!recipes.length) {
     return <p className={className}>{emptyMessage}</p>;
@@ -27,8 +23,8 @@ export default function RecipeList({
           <li key={recipe.id}>
             <RecipeCard
               recipe={recipe}
-              initialLiked={initset?.[recipe.id] ?? false}
-              initialCount={initialCounts?.[recipe.id] ?? recipe.likeCount ?? 0}
+              initialLiked={recipe.liked ?? false}
+              initialCount={recipe.likeCount ?? 0}
             />
           </li>
         ))}
@@ -36,4 +32,3 @@ export default function RecipeList({
     </div>
   );
 }
-

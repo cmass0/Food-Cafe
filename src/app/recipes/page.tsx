@@ -12,7 +12,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/features/recipe/api";
 import type { Recipe, RecipeListResult } from "@/features/recipe/types";
-import type { Recipe as RecipeType } from "@/features/recipe/types";
+
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -38,9 +38,8 @@ export default function RecipesPage() {
 
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
-  const [likedSet, setLikedSet] = useState<Record<string, boolean>>({});
-  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
+  // 현재 page에 대한 recipe 목록
   useEffect(() => {
     let mounted = true;
 
@@ -65,8 +64,6 @@ export default function RecipesPage() {
             offset: data.offset,
             total: data.total,
           });
-          setLikedSet({});
-          setLikeCounts({});
         }
       } catch (error) {
         console.error("레시피 목록을 불러오는데 실패했습니다.", error);
@@ -81,42 +78,6 @@ export default function RecipesPage() {
     };
   }, [pageParam, limitParam]);
 
-  // 좋아요 메타 정보 조회 (사용자별 liked + 최신 카운트)
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchLikeMeta(current: RecipeType[]) {
-      if (!current.length) {
-        setLikedSet({});
-        setLikeCounts({});
-        return;
-      }
-      const ids = current.map((r) => r.id);
-      const params = new URLSearchParams({ ids: ids.join(",") });
-      try {
-        const res = await fetch(`/api/recipes/like?${params.toString()}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (cancelled) return;
-        const likedIds: string[] = json?.data?.liked ?? [];
-        const counts: Record<string, number> = json?.data?.counts ?? {};
-        const nextSet: Record<string, boolean> = {};
-        likedIds.forEach((id) => {
-          nextSet[id] = true;
-        });
-        setLikedSet(nextSet);
-        setLikeCounts(counts);
-      } catch (e) {
-        console.error("레시피 좋아요 정보를 불러오지 못했습니다.", e);
-      }
-    }
-
-    fetchLikeMeta(recipes);
-    return () => {
-      cancelled = true;
-    };
-  }, [recipes]);
 
   // 레시피 정렬
   const sortedRecipes = useMemo(() => {
@@ -174,12 +135,7 @@ export default function RecipesPage() {
       </section>
 
       <section>
-        <RecipeList
-          recipes={sortedRecipes}
-          initset={likedSet}
-          initialCounts={likeCounts}
-          className="mt-4"
-        />
+        <RecipeList recipes={sortedRecipes} className="mt-4" />
       </section>
 
       <footer className="flex justify-center">

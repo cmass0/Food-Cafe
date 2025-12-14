@@ -25,8 +25,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       );
     }
 
-    const body = await req.json().catch(() => ({}));
-    const currentlyLiked = Boolean(body.currentlyLiked);
+    const body = await req.json();
+    const currentlyLiked = body.currentlyLiked;
 
     const result = await userLikeService.toggleRecipeLike(supabase, {
       userId: user.id,
@@ -34,8 +34,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       currentlyLiked,
     });
 
-    // recipe_adjust_like(p_recipe_id, p_delta) 로 like_count를 원자적으로 증감
-    const delta = result.liked ? 1 : -1;
+
+    const delta = result ? 1 : -1;
     const { data: adjusted, error: adjustError } = await supabase.rpc("recipe_adjust_like", {
       p_recipe_id: recipeId,
       p_delta: delta,
@@ -49,7 +49,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       ? (adjusted[0]?.like_count as number | undefined) ?? null
       : (adjusted as any)?.like_count ?? null;
 
-    return NextResponse.json({ liked: result.liked, likeCount });
+    return NextResponse.json({ liked: result, likeCount });
   } catch (error) {
     console.error("[recipes.like] POST error:", error);
     return NextResponse.json(

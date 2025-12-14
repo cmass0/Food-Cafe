@@ -16,6 +16,7 @@ import type {
   RecipeUpdateInput,
   RecipeWriterInfo,
 } from "./types";
+import { buildLikedSet } from "../user_like/service";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -110,9 +111,20 @@ export async function listRecipes(
     search: parsed.search,
   });
 
-  const items = rows.map(mapRowToRecipe);
+  let items = rows.map(mapRowToRecipe);
   const total = Math.max(rawTotal, offset + items.length);
   const hasMore = offset + items.length < total;
+  let likedSet = new Set<string>();
+  const {data : {user}} = await client.auth.getUser();
+  if(user){
+    const ids = rows.map((row) => row.id);
+    likedSet = await buildLikedSet(client, ids);
+  }
+  items = items.map((item) => ({
+    ...item,
+    liked: likedSet.has(item.id),
+  }));
+  
 
   return {
     items,
@@ -160,7 +172,6 @@ export async function removeRecipe(
 ): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
-
 
 
 

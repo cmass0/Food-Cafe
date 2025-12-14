@@ -50,7 +50,7 @@ export default function LikeButton({ recipeId, liked, count, onChange }: Props) 
       <Heart
         className={`h-4 w-4 transition-colors ${
           liked ? "fill-emerald-400 text-emerald-400" : "text-emerald-100"
-        }`}
+        }`}   
       />
       <span className="sr-only">좋아요 {count}개</span>
     </button>

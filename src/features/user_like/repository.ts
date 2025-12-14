@@ -5,7 +5,6 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 
 
-
 export async function fetchLikedRecipeIds(
   client: SupabaseClient<Database>,
   userId: string,
@@ -73,6 +72,7 @@ export async function setRecipeLike(
       .delete()
       .eq("user_id", userId)
       .eq("recipe_id", recipeId);
+      console.log("success unlike");
 
     if (error) throw error;
   }

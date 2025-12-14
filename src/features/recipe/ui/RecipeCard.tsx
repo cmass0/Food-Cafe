@@ -24,6 +24,13 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
     day: "numeric",
   });
 
+  async function LikeButtonHD(likedState: { liked: boolean; likeCount?: number | null }) {
+    setLiked(likedState.liked);
+    if (typeof likedState.likeCount === "number") {
+      setLikeCount(likedState.likeCount);
+    }
+  }
+
   return (
     <Card className="group flex h-full flex-col overflow-hidden rounded-none border border-border bg-gradient-to-b from-emerald-900/85 via-emerald-900/70 to-emerald-950/95 text-emerald-50 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl">
       <div className="relative h-56 w-full overflow-hidden">
@@ -56,18 +63,7 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
             recipeId={recipe.id}
             liked={liked}
             count={likeCount}
-            onChange={({ liked: nextLiked, likeCount: serverCount }) => {
-              setLiked(nextLiked);
-              if (typeof serverCount === "number") {
-                setLikeCount(serverCount);
-              } else {
-                setLikeCount((prev) => {
-                  if (nextLiked && !liked) return prev + 1;
-                  if (!nextLiked && liked) return Math.max(0, prev - 1);
-                  return prev;
-                });
-              }
-            }}
+            onChange={LikeButtonHD}
           />
         </div>
       </div>

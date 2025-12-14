@@ -17,3 +17,11 @@ export function toUserLike(row: UserLikeRow): UserLike {
     createdAt: row.created_at ?? "",
   };
 }
+
+export type ToggleRecipeLikeParams = {
+  userId: string;
+  recipeId: string;
+  currentlyLiked: boolean; 
+};
+
+

@@ -19,6 +19,7 @@ export interface Recipe {
   lastLikedAt: string | null;
   createdAt: Date;
   updatedAt: Date;
+  liked?: boolean;
 }
 
 export interface RecipeInsertInput {

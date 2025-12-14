@@ -5,16 +5,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import * as userLikeRepo from "./repository";
 import { Database } from "@/types/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { ToggleRecipeLikeParams } from './types';
 
-type ToggleRecipeLikeParams = {
-  userId: string;
-  recipeId: string;
-  currentlyLiked: boolean; 
-};
 
-type ToggleRecipeLikeResult = {
-  liked: boolean;
-};
 
 function assertRecipeId(id: string) {
   if (typeof id !== "string" || id.length < 1) {
@@ -33,7 +26,7 @@ export async function buildLikedSet(
 
 export async function getLikeMeta(recipeId: string) {
   const supabase = getServerSupabase();
-  const {data, error} = await supabase.auth.getUser();
+  const {data} = await supabase.auth.getUser();
   if (!data.user) throw new Error("UNAUTHENTICATED");
   
   assertRecipeId(recipeId);
@@ -44,10 +37,10 @@ export async function getLikeMeta(recipeId: string) {
 export async function toggleRecipeLike(
   client: SupabaseClient<Database>,
   params: ToggleRecipeLikeParams
-): Promise<ToggleRecipeLikeResult> {
+): Promise<boolean> {
   const { userId, recipeId, currentlyLiked } = params;
 
-  const nextLiked = !currentlyLiked;
+  const nextLiked: boolean = !currentlyLiked;
 
   await userLikeRepo.setRecipeLike(client, {
     userId,
@@ -55,7 +48,7 @@ export async function toggleRecipeLike(
     like: nextLiked,
   });
 
-  return { liked: nextLiked };
+  return nextLiked;
 }
 
 
