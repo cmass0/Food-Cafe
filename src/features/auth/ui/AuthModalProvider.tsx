@@ -35,9 +35,13 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const openAuthModal = React.useCallback((options?: AuthModalOptions) => {
+    const currentPath =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search || ""}`
+        : "/";
     setState({
       open: true,
-      next: options?.next ?? "/",
+      next: options?.next ?? currentPath,
       mode: options?.mode ?? "signin",
     });
   }, []);
