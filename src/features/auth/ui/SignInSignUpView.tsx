@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -52,7 +52,7 @@ export default function SignInSignUpView({
     setRemember(maintainLogin);
 
     if (!email || !password) {
-      setSignInError("이메일과 비밀번호를 입력해 주세요.");
+      setSignInError("이메일과 비밀번호를 입력해주세요.");
       return;
     }
 
@@ -74,11 +74,11 @@ export default function SignInSignUpView({
     setSignUpMessage(null);
 
     if (!displayName.trim()) {
-      setSignUpError("닉네임을 입력해 주세요.");
+      setSignUpError("이름을 입력해주세요.");
       return;
     }
     if (!signUpEmail || !signUpPassword) {
-      setSignUpError("이메일과 비밀번호를 입력해 주세요.");
+      setSignUpError("이메일과 비밀번호를 입력해주세요.");
       return;
     }
     if (signUpPassword !== confirmPassword) {
@@ -101,7 +101,31 @@ export default function SignInSignUpView({
       });
 
       if (error) {
-        setSignUpError(error.message);
+        const msg = error.message.toLowerCase();
+        console.log("sign up error", { error, msg });
+        if (error.code === "weak_password") {
+          // supabase 설정 on
+          setSignUpError(
+            "비밀번호는 최소 6자 이상 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
+          );
+          return;
+        }
+        if (msg.includes("already registered") || msg.includes("already exists")) {
+          setSignUpError(
+            "이미 가입된 이메일입니다. 기존 로그인(구글/카카오 등)으로 진행하거나 비밀번호 재설정을 이용해 주세요."
+          );
+        } else {
+          setSignUpError(error.message);
+        }
+        return;
+      }
+
+      const identities = (data.user as any)?.identities;
+      if (Array.isArray(identities) && identities.length === 0) {
+        // 중복 가입 시 Supabase가 error 없이 identities를 빈 배열로 반환처리
+        setSignUpError(
+          "이미 가입된 이메일입니다. 기존 로그인(구글/카카오 등)으로 진행하거나 비밀번호 재설정을 이용해 주세요."
+        );
         return;
       }
 
@@ -109,7 +133,7 @@ export default function SignInSignUpView({
         onAuthSuccess?.(next);
         router.replace(next);
       } else {
-        setSignUpMessage("인증 메일을 발송했으니 이메일을 확인해 주세요.");
+        setSignUpMessage("입력하신 이메일로 인증 메일이 발송되었습니다. 메일함을 확인해주세요.");
         setMode("signin");
       }
     });
@@ -131,7 +155,11 @@ export default function SignInSignUpView({
                 </div>
               ) : null}
 
-              <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")} className="w-full">
+              <Tabs
+                value={mode}
+                onValueChange={(value) => setMode(value as "signin" | "signup")}
+                className="w-full"
+              >
                 <TabsList className="mb-6 grid w-full grid-cols-2">
                   <TabsTrigger value="signin">로그인</TabsTrigger>
                   <TabsTrigger value="signup">회원가입</TabsTrigger>
@@ -167,15 +195,18 @@ export default function SignInSignUpView({
                       <p className="text-sm font-medium text-destructive">{signInError}</p>
                     ) : null}
                     <Button className="w-full" type="submit" disabled={isSigningIn}>
-                      {isSigningIn ? "로그인 중..." : "이메일로 로그인"}
+                      {isSigningIn ? "로그인 중..." : "로그인"}
                     </Button>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <Checkbox id="remember" onCheckedChange={(v) => setMaintainLogin(Boolean(v))} />
-                        <Label htmlFor="remember">로그인 유지</Label>
+                        <Checkbox
+                          id="remember"
+                          onCheckedChange={(v) => setMaintainLogin(Boolean(v))}
+                        />
+                        <Label htmlFor="remember">로그인 상태 유지</Label>
                       </div>
                       <Link href="/reset-password" className="hover:underline">
-                        비밀번호 찾기
+                        비밀번호 재설정
                       </Link>
                     </div>
                   </form>
@@ -184,10 +215,10 @@ export default function SignInSignUpView({
                 <TabsContent value="signup">
                   <form className="grid gap-4" onSubmit={handleSignUp}>
                     <div className="grid gap-2">
-                      <Label htmlFor="signup-display-name">닉네임</Label>
+                      <Label htmlFor="signup-display-name">이름</Label>
                       <Input
                         id="signup-display-name"
-                        placeholder="사용자 이름"
+                        placeholder="홍길동"
                         value={displayName}
                         onChange={(event) => setDisplayName(event.target.value)}
                         disabled={isSigningUp}
@@ -232,7 +263,9 @@ export default function SignInSignUpView({
                     {signUpError ? (
                       <p className="text-sm font-medium text-destructive">{signUpError}</p>
                     ) : null}
-                    {signUpMessage ? <p className="text-sm text-green-600">{signUpMessage}</p> : null}
+                    {signUpMessage ? (
+                      <p className="text-sm text-green-600">{signUpMessage}</p>
+                    ) : null}
                     <Button className="w-full" type="submit" disabled={isSigningUp}>
                       {isSigningUp ? "가입 중..." : "회원가입"}
                     </Button>
@@ -248,8 +281,8 @@ export default function SignInSignUpView({
               <div className="mt-4 flex flex-col items-center gap-2 text-xs text-muted-foreground/80">
                 <div>
                   {mode === "signin"
-                    ? "계정이 없으신가요? 상단 탭에서 회원가입을 선택하세요."
-                    : "이미 계정이 있으신가요? 상단 탭에서 로그인을 선택하세요."}
+                    ? "계정이 없으신가요? 회원가입 후 로그인해 주세요."
+                    : "이미 계정이 있으신가요? 로그인으로 이동해 주세요."}
                 </div>
               </div>
             </div>
