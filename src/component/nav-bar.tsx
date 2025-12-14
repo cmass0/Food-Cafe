@@ -31,7 +31,7 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-emerald-700 bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 text-white shadow-lg">
+    <header className="min-w-[1500px] sticky top-0 z-40 border-b border-emerald-700 bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 text-white shadow-lg ">
       {/* Top bar: 브랜드 / 메뉴 / 액션 */}
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {/* Left: 로고 + 메인 메뉴 */}
@@ -40,7 +40,7 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
             Food Cafe
           </Link>
           <NavigationMenu>
-            <NavigationMenuList className="hidden gap-2 text-sm font-medium text-emerald-50 md:flex">
+            <NavigationMenuList className=" gap-2 text-sm font-medium text-emerald-50 md:flex">
               <NavigationMenuItem>
                 <NavigationMenuLink
                   asChild
@@ -61,14 +61,14 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
           </NavigationMenu>
         </div>
 
-        {/* Right: 토글 + 유저 + 슬롯 */}
+        {/* 다크모드 & 유저 슬롯*/}
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {rightSlot}
         </div>
       </div>
 
-      {/* Bottom bar: 검색 영역 */}
+      {/* navbar 하단 검색 */}
       <div className="border-t border-emerald-500/40 bg-emerald-700/95">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           {/* 앞으로 카테고리/필터 드롭다운을 둘 자리 */}
