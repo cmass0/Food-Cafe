@@ -76,7 +76,7 @@ export default function RecipesPage() {
     return () => {
       mounted = false;
     };
-  }, [pageParam, limitParam]);
+  }, [pageParam, limitParam, user?.id]);
 
 
   // 레시피 정렬
