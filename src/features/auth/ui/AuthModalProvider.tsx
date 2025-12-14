@@ -36,6 +36,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
 
   const openAuthModal = React.useCallback((options?: AuthModalOptions) => {
     const currentPath =
+     // ssr 시점 error 방지
       typeof window !== "undefined"
         ? `${window.location.pathname}${window.location.search || ""}`
         : "/";
