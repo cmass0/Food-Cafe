@@ -51,27 +51,6 @@ begin
   return new;
 end $$;
 
--- 작성자 표시명 스냅샷
-create or replace function public.comments_fill_writer_name()
-returns trigger
-language plpgsql security definer set search_path = public as $$
-declare v_name text;
-begin
-  if new.writer_uid is not null then
-    select coalesce(u.display_name,
-                    au.raw_user_meta_data->>'full_name',
-                    au.email,
-                    '')
-      into v_name
-      from public.users u
-      full join auth.users au on au.id = new.writer_uid
-     where (u.id = new.writer_uid) or (au.id = new.writer_uid)
-     limit 1;
-    new.writer_name := coalesce(v_name, '');
-  end if;
-  return new;
-end $$;
-
 -- 5) 트리거 설정
 create trigger tr_comments_set_writer
 before insert on public.comments
@@ -80,14 +59,6 @@ for each row execute function public.comments_set_writer();
 create trigger trg_comments_updated
 before update on public.comments
 for each row execute function public.set_updated_at();
-
-create trigger tr_comments_fill_writer_name_ins
-before insert on public.comments
-for each row execute function public.comments_fill_writer_name();
-
-create trigger tr_comments_fill_writer_name_upd
-before update of writer_uid on public.comments
-for each row execute function public.comments_fill_writer_name();
 
 -- 6) 인덱스(조회 최적화)
 create index if not exists idx_comments_parent_created_at

@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import * as commentService from "@/features/comment/service";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { CommentInsertInput } from "@/features/comment/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +29,9 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
+    const detail = (error as any)?.message ?? String(error);
     console.error("[comments] GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR", detail }, { status: 500 });
   }
 }
 
@@ -40,12 +42,14 @@ export async function POST(req: Request) {
       data: { user },
       error,
     } = await supabase.auth.getUser();
+    const body : CommentInsertInput = await req.json();
+
     if (error) throw error;
     if (!user) {
       return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
     }
-
-    const body = await req.json();
+ 
+ 
     const created = await commentService.createComment(supabase, user.id, body);
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
@@ -55,7 +59,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    const detail = (error as any)?.message ?? String(error);
     console.error("[comments] POST failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return Response.json({ error: "INTERNAL_ERROR", detail }, { status: 500 });
   }
 }
