@@ -30,6 +30,20 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
             ) : null}
           </div>
         </header>
+        {recipe.ingredients && recipe.ingredients.length > 0 ? (
+          <section data-block="ingredients">
+            <h2>재료</h2>
+            <ul>
+              {recipe.ingredients.map((item, idx) => {
+                const unitText = item.unit === "__custom__" ? item.unitCustom : item.unit;
+                const qty = item.amount ? `${item.amount}${unitText ?? ""}` : (unitText ?? "");
+                return (
+                  <li key={`${item.name}-${idx}`}>{qty ? `${item.name} (${qty})` : item.name}</li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
 
         {recipe.recipe ? (
           <section
