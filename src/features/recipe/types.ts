@@ -8,6 +8,7 @@ export interface Recipe {
   title: string;
   summary: string | null;
   recipe: string | null;
+  ingredients: RecipeIngredient[];
   image: string | null;
   category: string | null;
   tags: string[];
@@ -22,11 +23,19 @@ export interface Recipe {
   liked?: boolean;
 }
 
+export type RecipeIngredient = {
+  name: string;
+  amount: string;
+  unit: string;
+  unitCustom?: string;
+};
+
 export interface RecipeInsertInput {
   id?: string;
   title: string;
   summary?: string | null;
   recipe?: string | null;
+  ingredients?: RecipeIngredient[];
   image?: string;
   category?: string | null;
   tags?: string[];
@@ -36,6 +45,7 @@ export interface RecipeUpdateInput {
   title?: string;
   summary?: string | null;
   recipe?: string | null;
+  ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
   tags?: string[];
@@ -72,6 +82,7 @@ export type RecipeInsertDB = {
   title: string;
   summary?: string | null;
   recipe?: string | null;
+  ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
   tags?: string[];
@@ -84,6 +95,7 @@ export type RecipeUpdateDB = {
   title?: string;
   summary?: string | null;
   recipe?: string | null;
+  ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
   tags?: string[];

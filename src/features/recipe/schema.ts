@@ -40,6 +40,13 @@ const tagSchema = z
   .min(1, "태그는 1자 이상이어야 합니다.")
   .max(50, "태그는 50자 이하만 가능합니다.");
 
+const ingredientItemSchema = z.object({
+  name: z.string().trim().min(1, "재료명을 입력해 주세요.").max(200),
+  amount: z.string().trim().max(100).optional().default(""),
+  unit: z.string().trim().max(50).optional().default(""),
+  unitCustom: z.string().trim().max(100).optional().default(""),
+});
+
 export const recipeInsertSchema = z.object({
   id: z.string().uuid().optional(),
   title: z
@@ -58,6 +65,10 @@ export const recipeInsertSchema = z.object({
     .string()
     .trim()
     .max(8000, "레시피는 8000자 이하로 입력해 주세요.")
+    .optional(),
+  ingredients: z
+    .array(ingredientItemSchema)
+    .max(200, "재료는 최대 200개까지 입력할 수 있습니다.")
     .optional(),
   image: imageFieldSchema,
   category: z
@@ -89,6 +100,7 @@ export const recipeUpdateSchema = z
       .nullable()
       .optional(),
     recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
+    ingredients: z.array(ingredientItemSchema).optional(),
     image: imageFieldSchema.optional(),
     category: z
       .string()
@@ -115,6 +127,7 @@ export const requestRecipeSchema = z.object({
   title: z.string(),
   summary: z.string().nullable().optional(),
   recipe: z.string().nullable().optional(),
+  ingredients: z.array(ingredientItemSchema).optional(),
   image: z.string().trim().min(1),
   category: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),

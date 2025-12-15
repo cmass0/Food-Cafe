@@ -8,6 +8,7 @@ import type {
   Recipe,
   RecipeInsertDB,
   RecipeInsertInput,
+  RecipeIngredient,
   RecipeListOptions,
   RecipeListResult,
   RecipeRow,
@@ -28,12 +29,29 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
+function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): RecipeIngredient[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const name = typeof (item as any).name === "string" ? (item as any).name.trim() : "";
+      const amount = typeof (item as any).amount === "string" ? (item as any).amount.trim() : "";
+      const unit = typeof (item as any).unit === "string" ? (item as any).unit.trim() : "";
+      const unitCustom =
+        typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
+      if (!name && !amount && !unit && !unitCustom) return null;
+      return { name, amount, unit, unitCustom };
+    })
+    .filter((item): item is RecipeIngredient => Boolean(item));
+}
+
 function mapRowToRecipe(row: RecipeRow): Recipe {
   return {
     id: row.id,
     title: row.title,
     summary: row.summary,
     recipe: row.recipe,
+    ingredients: normaliseIngredients((row as any).ingredients),
     image: row.image,
     category: row.category,
     tags: normaliseTextArray(row.tags),
@@ -58,6 +76,7 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
     title: input.title,
     summary: input.summary ?? null,
     recipe: input.recipe ?? null,
+    ingredients: input.ingredients ?? [],
     image,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
@@ -73,6 +92,7 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
+  if (patch.ingredients !== undefined) payload.ingredients = patch.ingredients;
   if (patch.image !== undefined) payload.image = patch.image;
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
@@ -172,6 +192,5 @@ export async function removeRecipe(
 ): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
-
 
 

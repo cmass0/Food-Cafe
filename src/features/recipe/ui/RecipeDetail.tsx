@@ -1,6 +1,7 @@
 import RecipeComments from "@/features/comment/ui/RecipeComments.client";
 import type { Recipe } from "../types";
 import ViewCount from "@/features/view/ui/ViewCount.client";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -35,6 +36,11 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
             className="prose max-w-none"
             dangerouslySetInnerHTML={{ __html: recipe.recipe }}
           />
+        ) : null}
+        {recipe.image ? (
+          <section className="w-[400px]  h-[400px] relative overflow-hidden rounded-md border border-border">
+            <Image src={recipe.image} alt={recipe.title} fill className="rounded-md" />
+          </section>
         ) : null}
       </article>
       <RecipeComments recipeId={recipe.id} pageSize={10} items={[]} />
