@@ -126,7 +126,7 @@ export const requestRecipeSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string(),
   summary: z.string().nullable().optional(),
-  recipe: z.string().nullable().optional(),
+  recipe: z.string().optional(),
   ingredients: z.array(ingredientItemSchema).optional(),
   image: z.string().trim().min(1),
   category: z.string().nullable().optional(),

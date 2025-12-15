@@ -25,7 +25,6 @@ export default function CommentThread({
   parentId,
   pageSize,
   items,
-  defaultWriterName = "",
 }: CommentThreadProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -47,19 +46,13 @@ export default function CommentThread({
       return;
     }
 
-    const effectiveWriterName =
-      defaultWriterName.trim() ||
-      displayName ||
-      user.email ||
-      (user.user_metadata?.name as string | undefined);
-
     setSubmitting(true);
     setError(null);
     try {
       await createComment({
         parentType,
         parentId,
-        writerName: effectiveWriterName,
+        writerName: displayName || user.user_metadata?.name || user.email,
         content: content.trim(),
       });
       setContent("");
@@ -93,7 +86,6 @@ export default function CommentThread({
         onChange={setContent}
         onSubmit={handleSubmit}
       />
-
       <CommentList items={items} onDelete={handleDelete} />
     </section>
   );

@@ -57,3 +57,10 @@ export type CommentDisplayItem = {
   updatedAt: string;
   deletedAt: string | null;
 };
+
+export type CommentInsertInput = {
+  parentType: CommentParentType;
+  parentId: string;
+  writerName: string;
+  content: string;
+};

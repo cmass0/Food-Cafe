@@ -4,6 +4,7 @@ import { commentInsertSchema, commentListOptionsSchema, commentUpdateSchema } fr
 import {
   Comment,
   CommentInsertDB,
+  CommentInsertInput,
   CommentListOptions,
   CommentListResult,
   CommentRow,
@@ -51,7 +52,7 @@ function buildInsertPayload(parsed: ReturnType<typeof commentInsertSchema.parse>
     parent_id: parsed.parentId,
     parent_type: parsed.parentType,
     writer_name: parsed.writerName,
-    writer_uid: parsed.wirterUid,
+    writer_uid: parsed.writerUid,
   };
 }
 
@@ -95,10 +96,8 @@ export async function getComment(client: CommentSupabaseClient, id: string): Pro
 
 export async function createComment(
   client: CommentSupabaseClient,
-
   writerUid: string,
-  input: unknown
-
+  input: CommentInsertInput,
 ): Promise<Comment> {
   const parsed = commentInsertSchema.parse({ ...(input as object), writerUid });
   const payload = buildInsertPayload(parsed);
@@ -109,7 +108,6 @@ export async function createComment(
 export async function updateComment(
   client: CommentSupabaseClient,
   id: string,
-
   input: unknown
 ): Promise<Comment | null> {
 

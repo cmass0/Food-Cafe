@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { Constants } from "@/types/supabase";
 
@@ -22,7 +23,7 @@ export const commentContextSchema = z.object({
     .trim()
     .min(1, "작성자 이름을 입력해주세요.")
     .max(40, "작성자 이름은 최대 40자입니다."),
-  wirterUid: z.string().uuid()
+  writerUid: z.string().uuid()
  
 });
 
@@ -47,3 +48,5 @@ export const commentListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(100).optional(),
   page: z.number().int().min(1).optional(),
 });
+
+

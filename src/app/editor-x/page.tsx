@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { SerializedEditorState } from "lexical"
+import { useState } from "react";
+import { SerializedEditorState } from "lexical";
 
-import { Editor } from "@/components/blocks/editor-x/editor"
+import { Editor } from "@/components/blocks/editor-x/editor";
 
 export const initialValue = {
   root: {
@@ -15,7 +15,7 @@ export const initialValue = {
             format: 0,
             mode: "normal",
             style: "",
-            text: "Hello World 🚀",
+            text: "내용을 입력해주세요.",
             type: "text",
             version: 1,
           },
@@ -33,15 +33,14 @@ export const initialValue = {
     type: "root",
     version: 1,
   },
-} as unknown as SerializedEditorState
+} as unknown as SerializedEditorState;
 
 export default function EditorPage() {
-  const [editorState, setEditorState] =
-    useState<SerializedEditorState>(initialValue)
+  const [editorState, setEditorState] = useState<SerializedEditorState>(initialValue);
   return (
     <Editor
       editorSerializedState={editorState}
       onSerializedChange={(value) => setEditorState(value)}
     />
-  )
+  );
 }

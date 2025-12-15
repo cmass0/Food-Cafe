@@ -1,3 +1,5 @@
+import { CommentInsertInput } from "./types";
+
 export async function listComments(
   params: { 
     parentType: "recipe" | "post";
@@ -36,7 +38,7 @@ export async function getComment(id: string) {
   return json.data;
 }
 
-export async function createComment(body: unknown) {
+export async function createComment(body: CommentInsertInput) {
   const res = await fetch(`/api/comments`, {
     method: "POST",
     headers: {

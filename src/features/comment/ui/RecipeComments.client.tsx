@@ -13,16 +13,9 @@ type RecipeCommentsProps = {
 export default function RecipeComments({
   recipeId,
   pageSize,
-  defaultWriterName,
   items,
 }: RecipeCommentsProps) {
   return (
-    <CommentThread
-      parentType="recipe"
-      parentId={recipeId}
-      pageSize={pageSize}
-      defaultWriterName={defaultWriterName}
-      items={items}
-    />
+    <CommentThread parentType="recipe" parentId={recipeId} pageSize={pageSize} items={items} />
   );
 }
