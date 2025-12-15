@@ -1,5 +1,7 @@
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/types/supabase";
+import { recipeFormSchema, recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 
 export type RecipeRow = Tables<"recipes">;
 
@@ -30,34 +32,9 @@ export type RecipeIngredient = {
   unitCustom?: string;
 };
 
-export interface RecipeInsertInput {
-  id?: string;
-  title: string;
-  summary?: string | null;
-  recipe?: string | null;
-  ingredients?: RecipeIngredient[];
-  image?: string;
-  category?: string | null;
-  tags?: string[];
-}
-
-export interface RecipeUpdateInput {
-  title?: string;
-  summary?: string | null;
-  recipe?: string | null;
-  ingredients?: RecipeIngredient[];
-  image?: string | null;
-  category?: string | null;
-  tags?: string[];
-}
-
-export interface RecipeListOptions {
-  limit?: number;
-  page?: number;
-  tag?: string;
-  writerUid?: string;
-  search?: string;
-}
+export type RecipeInsertInput = z.infer<typeof recipeInsertSchema>;
+export type RecipeUpdateInput = z.infer<typeof recipeUpdateSchema>;
+export type RecipeListOptions = z.infer<typeof recipeListOptionsSchema>;
 
 export interface RecipeListResult {
   items: Recipe[];
@@ -105,4 +82,35 @@ export type RecipeWriterInfo = {
   uid?: string | null;
   name?: string | null;
   email?: string | null;
+};
+
+export type IngredientUnit =
+  | "g"
+  | "kg"
+  | "ml"
+  | "L"
+  | "개"
+  | "장"
+  | "컵"
+  | "큰술"
+  | "작은술"
+  | "꼬집"
+  | "__custom__";
+
+  export type IngredientInput = {
+    name: string;
+    amount: string;
+    unit: IngredientUnit;
+    unitCustom: string;
+  };
+  
+export type StepInput = { text: string };
+
+export type FormValues = z.infer<typeof recipeFormSchema> & {
+  ingredients: IngredientInput[];
+  steps: StepInput[];
+  summary: string;
+  recipe: string;
+  category: string;
+  tags: string[];
 };
