@@ -63,22 +63,14 @@ function useOAuthSignIn() {
     async (provider: Provider) => {
       const supabase = getBrowserSupabase();
       const scopes = getScope(provider);
-      const origin = location.origin;
-
-      // next 우선순위: 쿼리의 next(/로 시작) -> 현재 페이지 경로
-      const rawNext = searchParams?.get("next");
-      const next =
-        rawNext && rawNext.startsWith("/")
-          ? rawNext
-          : `${location.pathname}${location.search || ""}`;
-
-      // OAuth도 /auth/callback을 거쳐 세션 확정 후 next로 이동
-      const redirectTo = new URL("/auth/callback", origin);
-      redirectTo.searchParams.set("next", next);
+      const next = searchParams?.get("next");
+      const url = new URL(location.href);
+      if (next && !url.searchParams.get("next")) url.searchParams.set("next", next);
+      const redirectTo = url.toString();
 
       await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: redirectTo.toString(), scopes },
+        options: { redirectTo, scopes },
       });
     },
     [searchParams]
