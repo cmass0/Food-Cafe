@@ -18,8 +18,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { recipeFormSchema, recipeInsertSchema } from "../schema";
-import type { RecipeInsertInput } from "../types";
+import { recipeFormSchema } from "../schema";
+import type {
+  FormValues,
+  IngredientInput,
+  IngredientUnit,
+  RecipeInsertInput,
+  StepInput,
+} from "../types";
 import {
   Select,
   SelectContent,
@@ -28,37 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type StepInput = { text: string };
-
-type IngredientUnit =
-  | "g"
-  | "kg"
-  | "ml"
-  | "L"
-  | "개"
-  | "장"
-  | "컵"
-  | "큰술"
-  | "작은술"
-  | "꼬집"
-  | "__custom__";
-
-type IngredientInput = {
-  name: string;
-  amount: string;
-  unit: IngredientUnit;
-  unitCustom: string;
-};
-
-type FormValues = z.infer<typeof recipeFormSchema> & {
-  ingredients: IngredientInput[];
-  steps: StepInput[];
-  summary: string;
-  recipe: string;
-  category: string;
-  tags: string[];
-};
 
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertInput>;
@@ -84,7 +59,7 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
-const buildRecipeHtml = (ingredients: IngredientInput[], steps: string[]) => {
+const buildIngredientListItem = (ingredients: IngredientInput[]) => {
   const safeIngredients = ingredients
     .map((item) => ({
       name: item.name.trim(),
@@ -94,28 +69,11 @@ const buildRecipeHtml = (ingredients: IngredientInput[], steps: string[]) => {
     }))
     .filter((item) => item.name.length > 0);
 
+  return safeIngredients;
+};
+
+const buildRecipeHtml = (steps: string[]) => {
   const safeSteps = steps.map((step) => step.trim()).filter((step) => step.length > 0);
-
-  const ingredientList =
-    safeIngredients.length > 0
-      ? `<section data-block="ingredients"><h2>재료</h2><ul>${safeIngredients
-          .map((item) => {
-            const unitText = item.unit === "__custom__" ? item.unitCustom : item.unit;
-            const qty = item.amount ? `${item.amount}${unitText}` : unitText;
-            const label = qty
-              ? `${escapeHtml(item.name)} (${escapeHtml(qty)})`
-              : escapeHtml(item.name);
-            const attrs = [
-              `data-name="${escapeHtml(item.name)}"`,
-              `data-amount="${escapeHtml(item.amount)}"`,
-              `data-unit="${escapeHtml(item.unit)}"`,
-              `data-unit-custom="${escapeHtml(item.unitCustom)}"`,
-            ].join(" ");
-            return `<li ${attrs}>${label}</li>`;
-          })
-          .join("")}</ul></section>`
-      : "";
-
   const stepList =
     safeSteps.length > 0
       ? `<section data-block="steps"><h2>만드는 법</h2><ol>${safeSteps
@@ -123,7 +81,7 @@ const buildRecipeHtml = (ingredients: IngredientInput[], steps: string[]) => {
           .join("")}</ol></section>`
       : "";
 
-  return `${ingredientList}${ingredientList && stepList ? "\n" : ""}${stepList}`;
+  return `${stepList ? "\n" : ""}${stepList}`;
 };
 
 const parseRecipeHtml = (value: string | null | undefined) => {
@@ -173,11 +131,11 @@ export default function RecipeForm({
   const initialSteps: StepInput[] =
     parsedRecipe?.steps && parsedRecipe.steps.length > 0
       ? parsedRecipe.steps
-      : defaultValues?.recipe
+      : (defaultValues?.recipe
           ?.split(/\n+/)
           .map((line) => line.replace(/^\d+\)\s*/, "").trim())
           .filter(Boolean)
-          .map((text) => ({ text })) ?? [{ text: "" }];
+          .map((text) => ({ text })) ?? [{ text: "" }]);
 
   const initialIngredients: IngredientInput[] =
     parsedRecipe?.ingredients && parsedRecipe.ingredients.length > 0
@@ -238,7 +196,7 @@ export default function RecipeForm({
     const normalizedIngredients = rawIngredients.map((item) => ({
       name: item.name.trim(),
       amount: item.amount.trim(),
-      unit: item.unit,
+      unit: item.unit as IngredientUnit,
       unitCustom: item.unitCustom.trim(),
     }));
 
@@ -269,7 +227,8 @@ export default function RecipeForm({
 
     if (hasIngredientError) return;
 
-    const recipeHtml = buildRecipeHtml(normalizedIngredients, trimmedSteps);
+    const recipeHtml = buildRecipeHtml(trimmedSteps);
+    const IngredientListHtml = buildIngredientListItem(normalizedIngredients);
 
     const payload: RecipeInsertInput = {
       title: values.title,
@@ -277,6 +236,7 @@ export default function RecipeForm({
       recipe: recipeHtml,
       category: values.category?.trim() ? values.category.trim() : null,
       tags: normalizeTags(tagsInput),
+      ingredients: IngredientListHtml,
     };
     console.log("Final payload to submit:", payload);
     await onSubmit(payload, { imageFile: values.imageFile });
@@ -443,7 +403,7 @@ export default function RecipeForm({
               />
             </div>
 
-            {/* 재료 */} 
+            {/* 재료 */}
             <div className="rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
               <FormField
                 control={form.control}
