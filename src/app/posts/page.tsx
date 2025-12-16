@@ -27,17 +27,16 @@ function firstValue(value: SearchParamValue): string | undefined {
 }
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
-  noStore(); // disable router cache so back navigation refetches fresh list
+  noStore();
   const supabase = getServerSupabase();
 
   const pageValue = firstValue(searchParams?.page);
-  // const limitValue = firstValue(searchParams?.limit);
+  const pageNumber = Number(pageValue);
+
   const writerUid = firstValue(searchParams?.writerUid);
   const type = firstValue(searchParams?.type);
   const searchValue = firstValue(searchParams?.search);
 
-  const pageNumber = Number(pageValue);
-  // const limitNumber = Number(limitValue);
   const keyword = searchValue?.trim() ?? undefined;
   const limit = 10;
 

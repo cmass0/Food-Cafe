@@ -16,14 +16,14 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
   const keyword = q.trim().toLowerCase();
 
   const all = (await listRecipes(getServerSupabase(), { limit: 200 })).items;
-  const results =  all.filter((r: any) => {
+  const results = all.filter((r: any) => {
     const hay = `${r.title ?? ""} ${r.writerName ?? ""} ${r.summary ?? ""}`.toLowerCase();
     return keyword ? hay.includes(keyword) : true;
   });
- 
+
   if (results.length === 0) return <p>검색 결과가 없습니다.</p>;
   const supabase = getServerSupabase();
-  const ids = results.map((r: any ) => r.id);
+  const ids = results.map((r: any) => r.id);
   // 검색 결과에서는 개별 카드에서만 좋아요 상태를 관리
 
   return (
