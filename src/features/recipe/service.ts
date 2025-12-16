@@ -31,7 +31,7 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
 
 function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): RecipeIngredient[] {
   if (!Array.isArray(value)) return [];
-
+  
   const result: RecipeIngredient[] = [];
   for (const item of value) {
     if (!item || typeof item !== "object") continue;
