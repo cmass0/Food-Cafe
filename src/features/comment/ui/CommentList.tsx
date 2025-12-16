@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
-import type { CommentDisplayItem } from "../types";
+import type { Comment, CommentDisplayItem } from "../types";
 
 type CommentListProps = {
   items: CommentDisplayItem[];

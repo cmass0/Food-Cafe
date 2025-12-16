@@ -7,7 +7,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { CommentForm } from "./CommentForm";
 import { CommentList } from "./CommentList";
-import type { CommentDisplayItem } from "../types";
+import type { Comment, CommentDisplayItem } from "../types";
 import { createComment, deleteComment } from "../api";
 
 type ParentType = "post" | "recipe";

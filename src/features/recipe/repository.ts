@@ -31,8 +31,8 @@ export async function fetchRecipes(
     .order("id", { ascending: true })
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
-  if (params.tag) {
-    query = query.contains("tags", [params.tag]);
+  if (params.tags && params.tags.length > 0) {
+    query = query.contains("tags", params.tags);
   }
 
   if (params.writerUid) {
@@ -102,4 +102,3 @@ export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: strin
   const { error } = await client.from("recipes").delete().eq("id", id);
   throwIfError(error);
 }
-

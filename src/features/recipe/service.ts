@@ -126,7 +126,7 @@ export async function listRecipes(
   const { items: rows, total: rawTotal } = await repository.fetchRecipes(client, {
     limit,
     offset,
-    tag: parsed.tag,
+    tags: parsed.tags,
     writerUid: parsed.writerUid,
     search: parsed.search,
   });

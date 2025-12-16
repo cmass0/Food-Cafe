@@ -117,7 +117,7 @@ export const recipeUpdateSchema = z
 export const recipeListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
-  tag: tagSchema.optional(),
+  tags: z.array(tagSchema).optional(),
   writerUid: z.string().uuid().optional(),
   search: z.string().trim().max(200).optional(),
 });

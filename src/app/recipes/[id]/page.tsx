@@ -8,10 +8,8 @@ import RecipeDetail from "@/features/recipe/ui/RecipeDetail";
 import CommentThread from "@/features/comment/ui/CommentThread.client";
 
 import { PaginationComponent } from "@/components/pagenation/pagenation";
-
-type RecipeDetailPageProps = {
-  params: { id: string };
-};
+import { listComments } from "@/features/comment/service";
+import { CommentDisplayItem } from "@/features/comment/types";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -27,10 +25,28 @@ export default async function RecipeDetailPage({
   noStore();
   const supabase = getServerSupabase();
   const recipe = await getRecipe(supabase, params.id);
+  if (!recipe) notFound();
 
-  if (!recipe) {
-    notFound();
-  }
+  const pageValue = searchParams?.commentPage ?? searchParams?.commentpage;
+  const pageNumber = Number(pageValue);
+  const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+  const commentLimit = 5;
+  const { items, total } = await listComments(supabase, {
+    parentType: "recipe",
+    parentId: recipe.id,
+    page: currentPage,
+    limit: commentLimit,
+  });
+
+  const displayItems: CommentDisplayItem[] = items.map((c) => ({
+    id: c.id,
+    writerName: c.writerName,
+    writerUid: c.writerUid,
+    content: c.content,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+    deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
+  }));
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
@@ -47,17 +63,16 @@ export default async function RecipeDetailPage({
         <CommentThread
           parentType="recipe"
           parentId={recipe.id}
-          pageSize={10}
-          items={[]}
+          pageSize={commentLimit}
+          items={displayItems}
         ></CommentThread>
 
         <PaginationComponent
           basePath={`/recipes/${params.id}`}
-          page={1}
-          pageSize={10}
-          total={0}
+          page={currentPage}
+          pageSize={commentLimit}
+          total={total}
           pageParam="commentPage"
-          limitParam="commentLimit"
         />
       </section>
     </main>

@@ -47,7 +47,7 @@ export interface RecipeListResult {
 export type FetchRecipesParams = {
   limit: number;
   offset: number;
-  tag?: string;
+  tags?: string[];
   writerUid?: string;
   search?: string;
 };
