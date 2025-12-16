@@ -31,18 +31,23 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
 
 function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): RecipeIngredient[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const name = typeof (item as any).name === "string" ? (item as any).name.trim() : "";
-      const amount = typeof (item as any).amount === "string" ? (item as any).amount.trim() : "";
-      const unit = typeof (item as any).unit === "string" ? (item as any).unit.trim() : "";
-      const unitCustom =
-        typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
-      if (!name && !amount && !unit && !unitCustom) return null;
-      return { name, amount, unit, unitCustom };
-    })
-    .filter((item): item is RecipeIngredient => Boolean(item));
+
+  const result: RecipeIngredient[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const name = typeof (item as any).name === "string" ? (item as any).name.trim() : "";
+    const amount = typeof (item as any).amount === "string" ? (item as any).amount.trim() : "";
+    const unit = typeof (item as any).unit === "string" ? (item as any).unit.trim() : "";
+    const unitCustom =
+      typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
+
+    // 모든 필드가 비어 있으면 스킵
+    if (!name && !amount && !unit && !unitCustom) continue;
+
+    result.push({ name, amount, unit, unitCustom });
+  }
+
+  return result;
 }
 
 function mapRowToRecipe(row: RecipeRow): Recipe {
