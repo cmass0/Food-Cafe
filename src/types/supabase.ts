@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -103,13 +103,11 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
-          id_text_old: string
           image: string | null
-          images: string[]
+          ingredients: Json
           last_liked_at: string | null
-          legacy_id: string | null
           like_count: number
-          recipe: string | null
+          recipe: string
           summary: string | null
           tags: string[]
           title: string
@@ -119,16 +117,16 @@ export type Database = {
           writer_email: string | null
           writer_name: string | null
           writer_uid: string | null
-          writer_uid_legacy: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
           id?: string
           image?: string | null
+          ingredients?: Json
           last_liked_at?: string | null
           like_count?: number
-          recipe?: string | null
+          recipe?: string
           summary?: string | null
           tags?: string[]
           title: string
@@ -143,13 +141,11 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
-          id_text_old?: string
           image?: string | null
-          images?: string[]
+          ingredients?: Json
           last_liked_at?: string | null
-          legacy_id?: string | null
           like_count?: number
-          recipe?: string | null
+          recipe?: string
           summary?: string | null
           tags?: string[]
           title?: string
@@ -159,7 +155,6 @@ export type Database = {
           writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
-          writer_uid_legacy?: string | null
         }
         Relationships: [
           {
@@ -167,13 +162,6 @@ export type Database = {
             columns: ["writer_uid"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_writer_fk"
-            columns: ["writer_uid"]
-            isOneToOne: false
-            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -209,43 +197,42 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       users: {
         Row: {
           created_at: string
           display_name: string
-          email: string | null
+          email: string
           id: string
           is_admin: boolean | null
+          last_sign_in_at: string | null
           photo_url: string | null
+          provider: string | null
           role: string
           updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at: string
           display_name: string
-          email?: string | null
+          email: string
           id?: string
           is_admin?: boolean | null
+          last_sign_in_at?: string | null
           photo_url?: string | null
+          provider?: string | null
           role?: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string
           display_name?: string
-          email?: string | null
+          email?: string
           id?: string
           is_admin?: boolean | null
+          last_sign_in_at?: string | null
           photo_url?: string | null
+          provider?: string | null
           role?: string
           updated_at?: string | null
         }
@@ -253,32 +240,37 @@ export type Database = {
       }
     }
     Views: {
-      users_public: {
-        Row: {
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          photo_url: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          photo_url?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      increment_post_view: {
-        Args: { target: string }
-        Returns: undefined
+      increment_post_view: { Args: { target: string }; Returns: undefined }
+      increment_recipe_view: {
+        Args: { p_recipe_id: string }
+        Returns: {
+          category: string | null
+          created_at: string
+          id: string
+          image: string | null
+          ingredients: Json
+          last_liked_at: string | null
+          like_count: number
+          recipe: string
+          summary: string | null
+          tags: string[]
+          title: string
+          tsv: unknown
+          updated_at: string
+          view_count: number
+          writer_email: string | null
+          writer_name: string | null
+          writer_uid: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recipes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       post_adjust_like: {
@@ -311,13 +303,11 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
-          id_text_old: string
           image: string | null
-          images: string[]
+          ingredients: Json
           last_liked_at: string | null
-          legacy_id: string | null
           like_count: number
-          recipe: string | null
+          recipe: string
           summary: string | null
           tags: string[]
           title: string
@@ -327,38 +317,6 @@ export type Database = {
           writer_email: string | null
           writer_name: string | null
           writer_uid: string | null
-          writer_uid_legacy: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "recipes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      increment_recipe_view: {
-        Args: { p_recipe_id: string }
-        Returns: {
-          category: string | null
-          created_at: string
-          id: string
-          id_text_old: string
-          image: string | null
-          images: string[]
-          last_liked_at: string | null
-          legacy_id: string | null
-          like_count: number
-          recipe: string | null
-          summary: string | null
-          tags: string[]
-          title: string
-          tsv: unknown
-          updated_at: string
-          view_count: number
-          writer_email: string | null
-          writer_name: string | null
-          writer_uid: string | null
-          writer_uid_legacy: string | null
         }
         SetofOptions: {
           from: "*"
