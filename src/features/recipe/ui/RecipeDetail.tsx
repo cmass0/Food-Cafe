@@ -1,4 +1,3 @@
-import RecipeComments from "@/features/comment/ui/RecipeComments.client";
 import type { Recipe } from "../types";
 import ViewCount from "@/features/view/ui/ViewCount.client";
 import Image from "next/image";
@@ -7,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
+export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
   return (
     <div>
       <article className="space-y-4">
@@ -57,7 +56,6 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
           </section>
         ) : null}
       </article>
-      <RecipeComments recipeId={recipe.id} pageSize={10} items={[]} />
     </div>
   );
 }

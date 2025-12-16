@@ -1,4 +1,4 @@
-import { unstable_noStore as noStore } from "next/cache";
+﻿import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -88,8 +88,8 @@ export default async function PostDetailPage({
         <CommentThread
           parentType="post"
           parentId={post.id}
+          pageSize={commentPageSize}
           items={comments}
-          defaultWriterName={post.writerName ?? ""}
         />
         <PaginationComponent
           basePath={`/posts/${params.id}`}
