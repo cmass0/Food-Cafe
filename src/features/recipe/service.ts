@@ -75,12 +75,15 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
   if (!recipe) {
     throw new Error("레시피 본문이 필요합니다.");
   }
+  if (!input.ingredients || input.ingredients.length === 0) {
+    throw new Error("재료를 한 개 이상 입력해 주세요.");
+  }
   return {
     ...(input.id ? { id: input.id } : {}),
     title: input.title,
     summary: input.summary ?? null,
     recipe,
-    ingredients: input.ingredients ?? [],
+    ingredients: input.ingredients,
     image,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
@@ -196,4 +199,3 @@ export async function removeRecipe(
 ): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
-

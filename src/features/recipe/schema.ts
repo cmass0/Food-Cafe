@@ -67,8 +67,8 @@ export const recipeInsertSchema = z.object({
     .max(8000, "레시피는 8000자 이하로 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
-    .max(200, "재료는 최대 200개까지 입력할 수 있습니다.")
-    .optional(),
+    .min(1, "재료를 한 개 이상 입력해 주세요.")
+    .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
   image: imageFieldSchema,
   category: z
     .string()
@@ -99,7 +99,7 @@ export const recipeUpdateSchema = z
       .nullable()
       .optional(),
     recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
-    ingredients: z.array(ingredientItemSchema).optional(),
+    ingredients: z.array(ingredientItemSchema).min(1, "재료를 한 개 이상 입력해 주세요.").optional(),
     image: imageFieldSchema.optional(),
     category: z
       .string()
