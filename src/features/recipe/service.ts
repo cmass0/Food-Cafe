@@ -68,14 +68,18 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
 
 function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo): RecipeInsertDB {
   const image = input.image?.trim();
+  const recipe = input.recipe?.trim();
   if (!image) {
     throw new Error("이미지 경로가 필요합니다.");
+  }
+  if (!recipe) {
+    throw new Error("레시피 본문이 필요합니다.");
   }
   return {
     ...(input.id ? { id: input.id } : {}),
     title: input.title,
     summary: input.summary ?? null,
-    recipe: input.recipe ?? null,
+    recipe,
     ingredients: input.ingredients ?? [],
     image,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
@@ -192,5 +196,4 @@ export async function removeRecipe(
 ): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
-
 

@@ -60,12 +60,11 @@ export const recipeInsertSchema = z.object({
     .max(500, "요약은 500자 이하만 가능합니다.")
     .nullable()
     .optional(),
-  // 단계 기반 입력을 허용하기 위해 빈 문자열도 통과시키고, 실제 값은 단계에서 생성
   recipe: z
     .string()
     .trim()
-    .max(8000, "레시피는 8000자 이하로 입력해 주세요.")
-    .optional(),
+    .min(1, "레시피 내용을 입력해 주세요.")
+    .max(8000, "레시피는 8000자 이하로 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
     .max(200, "재료는 최대 200개까지 입력할 수 있습니다.")
@@ -126,7 +125,7 @@ export const requestRecipeSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string(),
   summary: z.string().nullable().optional(),
-  recipe: z.string().optional(),
+  recipe: z.string(),
   ingredients: z.array(ingredientItemSchema).optional(),
   image: z.string().trim().min(1),
   category: z.string().nullable().optional(),
