@@ -58,7 +58,7 @@ export type RecipeInsertDB = {
   id?: string;
   title: string;
   summary?: string | null;
-  recipe?: string | null;
+  recipe?: string;
   ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
@@ -71,7 +71,7 @@ export type RecipeInsertDB = {
 export type RecipeUpdateDB = {
   title?: string;
   summary?: string | null;
-  recipe?: string | null;
+  recipe?: string;
   ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
