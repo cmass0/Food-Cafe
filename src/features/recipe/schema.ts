@@ -98,7 +98,7 @@ export const recipeUpdateSchema = z
       .max(500, "요약은 500자 이하만 가능합니다.")
       .nullable()
       .optional(),
-    recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요.").nullable().optional(),
+    recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요."),
     ingredients: z.array(ingredientItemSchema).min(1, "재료를 한 개 이상 입력해 주세요.").optional(),
     image: imageFieldSchema.optional(),
     category: z
