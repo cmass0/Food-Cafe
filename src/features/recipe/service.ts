@@ -51,6 +51,7 @@ function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): Reci
 }
 
 function mapRowToRecipe(row: RecipeRow): Recipe {
+  const anyRow = row as any;
   return {
     id: row.id,
     title: row.title,
@@ -60,6 +61,9 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     image: row.image,
     category: row.category,
     tags: normaliseTextArray(row.tags),
+    difficulty: anyRow.difficulty ?? null,
+    timeMinutes: anyRow.time_minutes ?? null,
+    servings: anyRow.servings ?? null,
     likeCount: row.like_count ?? 0,
     viewCount: row.view_count ?? 0,
     lastLikedAt: row.last_liked_at,
@@ -92,6 +96,9 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
     image,
     category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
     tags: input.tags ?? [],
+    difficulty: (input as any).difficulty ?? null,
+    time_minutes: (input as any).time_minutes ?? null,
+    servings: (input as any).servings ?? null,
     ...(writer?.uid ? { writer_uid: writer.uid } : {}),
     ...(writer?.name ? { writer_name: writer.name } : {}),
     ...(writer?.email ? { writer_email: writer.email } : {}),
@@ -108,6 +115,10 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.image !== undefined) payload.image = patch.image;
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
+  if ((patch as any).difficulty !== undefined) payload.difficulty = (patch as any).difficulty ?? null;
+  if ((patch as any).time_minutes !== undefined)
+    payload.time_minutes = (patch as any).time_minutes ?? null;
+  if ((patch as any).servings !== undefined) payload.servings = (patch as any).servings ?? null;
 
   return payload;
 }

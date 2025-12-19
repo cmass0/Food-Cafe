@@ -77,6 +77,25 @@ export const recipeInsertSchema = z.object({
     .nullable()
     .optional(),
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+  difficulty: z
+    .string()
+    .trim()
+    .max(50, "난이도는 50자 이하만 가능합니다.")
+    .nullable()
+    .optional(),
+  time_minutes: z
+    .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
+    .int("소요 시간은 정수로 입력해 주세요.")
+    .min(0, "소요 시간은 0 이상이어야 합니다.")
+    .nullable()
+    .optional(),
+  servings: z
+    .number({ invalid_type_error: "인분은 숫자로 입력해 주세요." })
+    .int("인분은 정수로 입력해 주세요.")
+    .min(1, "인분은 1 이상이어야 합니다.")
+    .max(50, "인분은 50 이하로 입력해 주세요.")
+    .nullable()
+    .optional(),
 });
 
 export const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
@@ -108,6 +127,25 @@ export const recipeUpdateSchema = z
       .nullable()
       .optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+    difficulty: z
+      .string()
+      .trim()
+      .max(50, "난이도는 50자 이하만 가능합니다.")
+      .nullable()
+      .optional(),
+    time_minutes: z
+      .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
+      .int("소요 시간은 정수로 입력해 주세요.")
+      .min(0, "소요 시간은 0 이상이어야 합니다.")
+      .nullable()
+      .optional(),
+    servings: z
+      .number({ invalid_type_error: "인분은 숫자로 입력해 주세요." })
+      .int("인분은 정수로 입력해 주세요.")
+      .min(1, "인분은 1 이상이어야 합니다.")
+      .max(50, "인분은 50 이하로 입력해 주세요.")
+      .nullable()
+      .optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "수정할 필드를 한 가지 이상 입력해 주세요.",

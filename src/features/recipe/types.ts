@@ -14,6 +14,9 @@ export interface Recipe {
   image: string | null;
   category: string | null;
   tags: string[];
+  difficulty?: string | null;
+  timeMinutes?: number | null;
+  servings?: number | null;
   likeCount: number;
   viewCount: number;
   writerUid: string | null;
@@ -63,6 +66,9 @@ export type RecipeInsertDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  difficulty?: string | null;
+  time_minutes?: number | null;
+  servings?: number | null;
   writer_uid?: string | null;
   writer_name?: string | null;
   writer_email?: string | null;
@@ -76,6 +82,9 @@ export type RecipeUpdateDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  difficulty?: string | null;
+  time_minutes?: number | null;
+  servings?: number | null;
 };
 
 export type RecipeWriterInfo = {
