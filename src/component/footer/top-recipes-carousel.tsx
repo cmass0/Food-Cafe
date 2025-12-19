@@ -1,25 +1,26 @@
 "use client";
-import { Heart, Eye, MessageCircle } from "lucide-react";
+
+import Image from "next/image";
+import { Eye, Heart } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { TopRecipe } from "@/features/user_like/types";
 
 type TopRecipesCarouselProps = {
   label: string;
+  recipes: TopRecipe[];
 };
 
-const PLACEHOLDER_RECIPES = Array.from({ length: 10 }).map((_, index) => ({
-  id: index + 1,
-  title: `플레이스홀더 레시피 ${index + 1}`,
-  description: "나중에 실제 인기 레시피 데이터가 들어갑니다.",
-  likes: 120 - index * 5,
-  views: 980 - index * 13,
-  comments: 40 - index * 2,
-}));
-
-export default function TopRecipesCarousel({ label }: TopRecipesCarouselProps) {
+export default function TopRecipesCarousel({ label, recipes }: TopRecipesCarouselProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  function scroll(direction: "prev" | "next") {
+  const rankBadges = [
+    { bg: "bg-[#f7c948]", text: "text-[#6b4000]", label: "1위" }, // 금
+    { bg: "bg-[#e5e7eb]", text: "text-[#1f2937]", label: "2위" }, // 은
+    { bg: "bg-[#d97757]", text: "text-[#fff7ed]", label: "3위" }, // 동
+  ];
+
+  const scroll = (direction: "prev" | "next") => {
     if (!scrollRef.current) return;
     const container = scrollRef.current;
     const amount = container.clientWidth * 0.8;
@@ -27,7 +28,7 @@ export default function TopRecipesCarousel({ label }: TopRecipesCarouselProps) {
       left: direction === "next" ? amount : -amount,
       behavior: "smooth",
     });
-  }
+  };
 
   return (
     <div className="relative">
@@ -38,40 +39,50 @@ export default function TopRecipesCarousel({ label }: TopRecipesCarouselProps) {
           className="flex gap-4 overflow-x-auto scroll-smooth pb-2"
           style={{ scrollbarWidth: "none" }}
         >
-          {PLACEHOLDER_RECIPES.map((recipe, index) => (
+          {recipes.map((recipe, index) => (
             <article
-              key={recipe.id}
+              key={recipe.recipeId}
               className="relative flex min-w-[220px] max-w-[240px] flex-shrink-0 flex-col overflow-hidden rounded-xl bg-card shadow-sm"
             >
-              {index === 0 ? (
-                <div className="absolute left-2 top-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-emerald-50 shadow">
-                  1위
+              {rankBadges[index] ? (
+                <div
+                  className={`absolute left-2 top-2 z-10 rounded-full border border-white/80 px-2.5 py-1 text-[11px] font-semibold shadow-md ${rankBadges[index].bg} ${rankBadges[index].text}`}
+                >
+                  {rankBadges[index].label}
                 </div>
               ) : (
-                <div className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white">
+                <div className="absolute left-2 top-2 z-10 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white">
                   #{index + 1}
                 </div>
               )}
-              <div className="aspect-[4/3] w-full bg-gradient-to-br from-emerald-50 to-emerald-100" />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-gradient-to-br from-emerald-50 to-emerald-100">
+                {recipe.image ? (
+                  <Image
+                    fill
+                    className="z-0 object-cover"
+                    src={recipe.image}
+                    alt={recipe.summary || "레시피"}
+                    sizes="240px"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-emerald-700">
+                    이미지 없음
+                  </div>
+                )}
+              </div>
               <div className="space-y-1 px-3 py-3">
                 <h3 className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
                   {recipe.title}
                 </h3>
-                <p className="line-clamp-2 text-[11px] text-muted-foreground">
-                  {recipe.description}
-                </p>
+                <p className="line-clamp-2 text-[11px] text-muted-foreground">{recipe.summary}</p>
                 <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <Heart className="h-3 w-3 text-rose-500" />
-                    {recipe.likes}
+                    {recipe.likeCount}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Eye className="h-3 w-3" />
-                    {recipe.views}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MessageCircle className="h-3 w-3" />
-                    {recipe.comments}
+                    {recipe.viewCount}
                   </span>
                 </div>
               </div>
