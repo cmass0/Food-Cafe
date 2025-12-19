@@ -10,7 +10,8 @@
     "migrate:dry": "cross-env DRY_RUN=1 tsx tools/migrations/migrate.ts",
     "migrate": "tsx tools/migrations/migrate.ts",
     "supabase:list-users": "tsx tools/supabase/list-users.ts",
-    "supabase:list-users:pg": "tsx tools/supabase/list-users-pg.ts"
+    "supabase:list-users:pg": "tsx tools/supabase/list-users-pg.ts",
+    "supabase:types": "npx supabase gen types typescript --project-id vtkcngubofjqddqvcufp > src/types/supabase.ts"
   },
   "dependencies": {
     "@heroui/react": "^2.8.4",

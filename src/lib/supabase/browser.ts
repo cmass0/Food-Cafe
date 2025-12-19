@@ -1,6 +1,6 @@
+import { Database } from '@/types/supabase';
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/supabase";
 import { getRemember } from "../auth/login-maintain";
 
 type BrowserClient = SupabaseClient<Database>;

@@ -243,6 +243,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_top_recipes_by_recent_likes: {
+        Args: { limit_size?: number; term: string }
+        Returns: {
+          created_at: string
+          image: string
+          like_count: number
+          like_delta: number
+          recipe_id: string
+          summary: string
+          title: string
+          view_count: number
+          writer_name: string
+          writer_uid: string
+        }[]
+      }
       increment_post_view: { Args: { target: string }; Returns: undefined }
       increment_recipe_view: {
         Args: { p_recipe_id: string }
