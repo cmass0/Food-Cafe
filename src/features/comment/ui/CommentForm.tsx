@@ -13,7 +13,7 @@ type CommentFormProps = {
 
 export function CommentForm({ content, submitting, error, onChange, onSubmit }: CommentFormProps) {
   return (
-    <div className="space-y-2 border-t-1.5 pt-4">
+    <div className="space-y-2 ">
       <Textarea
         placeholder="댓글을 입력해주세요."
         rows={4}
