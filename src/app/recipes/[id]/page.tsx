@@ -6,10 +6,11 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { getRecipe } from "@/features/recipe/service";
 import RecipeDetail from "@/features/recipe/ui/RecipeDetail";
 import CommentThread from "@/features/comment/ui/CommentThread.client";
-
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { listComments } from "@/features/comment/service";
 import { CommentDisplayItem } from "@/features/comment/types";
+import RecipeIngredientsPanel from "@/features/recipe/ui/RecipeIngredientsPanel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -48,33 +49,53 @@ export default async function RecipeDetailPage({
     deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
   }));
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
-      <RecipeDetail recipe={recipe} />
+    <main className="pt-[100px] pb-[100px]">
+      <div className="mx-auto max-w-screen-2xl px-4">
+        {/* 모바일: 1열 / 데스크톱: 4열 */}
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-4">
+          {/* 왼쪽 사이드 */}
+          <aside className="order-3 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
+            {isAuthor ? (
+              <div className="flex justify-end">
+                <DeleteRecipeButton recipeId={recipe.id} />
+              </div>
+            ) : null}
+          </aside>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold"></h2>
-          <DeleteRecipeButton recipeId={recipe.id} />
+          {/* 중앙 본문 */}
+          <div className="order-1 min-w-0 space-y-8 lg:order-none lg:col-span-2">
+            <RecipeDetail recipe={recipe} />
+
+            <section className="space-y-4 border-t border-border/60 pt-8">
+              <CommentThread
+                parentType="recipe"
+                parentId={recipe.id}
+                pageSize={commentLimit}
+                items={displayItems}
+              />
+
+              <PaginationComponent
+                basePath={`/recipes/${params.id}`}
+                page={currentPage}
+                pageSize={commentLimit}
+                total={total}
+                pageParam="commentPage"
+              />
+            </section>
+          </div>
+
+          {/* 오른쪽 사이드 */}
+          <aside className="order-2 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
+            <RecipeIngredientsPanel ingredients={recipe.ingredients} />
+          </aside>
         </div>
-      </section>
-
-      <section className="h-px w-full bg-border">
-        <CommentThread
-          parentType="recipe"
-          parentId={recipe.id}
-          pageSize={commentLimit}
-          items={displayItems}
-        ></CommentThread>
-
-        <PaginationComponent
-          basePath={`/recipes/${params.id}`}
-          page={currentPage}
-          pageSize={commentLimit}
-          total={total}
-          pageParam="commentPage"
-        />
-      </section>
+      </div>
     </main>
   );
 }
