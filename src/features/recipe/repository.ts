@@ -1,12 +1,7 @@
-﻿import type { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
-import type {
-  FetchRecipesParams,
-  RecipeInsertDB,
-  RecipeRow,
-  RecipeSupabaseClient,
-  RecipeUpdateDB,
-} from "./types";
+import type { FetchRecipesParams, RecipeInsertDB, RecipeRow, RecipeUpdateDB } from "./types";
 
 function throwIfError(error: PostgrestError | null): void {
   if (error) throw error;
@@ -18,7 +13,7 @@ export type FetchRecipesResult = {
 };
 
 export async function fetchRecipes(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   params: FetchRecipesParams,
 ): Promise<FetchRecipesResult> {
   const safeLimit = Math.max(params.limit, 1);
@@ -52,7 +47,7 @@ export async function fetchRecipes(
 }
 
 export async function selectRecipeById(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<RecipeRow | null> {
   const { data, error } = await client
@@ -65,7 +60,7 @@ export async function selectRecipeById(
 }
 
 export async function insertRecipeRecord(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   payload: RecipeInsertDB
 ): Promise<RecipeRow> {
   const { data, error } = await client
@@ -81,7 +76,7 @@ export async function insertRecipeRecord(
 }
 
 export async function updateRecipeRecordByOwner(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   payload: RecipeUpdateDB
 ): Promise<RecipeRow> {
@@ -98,7 +93,7 @@ export async function updateRecipeRecordByOwner(
   return data as RecipeRow;
 }
 
-export async function deleteRecipeRecord(client: RecipeSupabaseClient, id: string): Promise<void> {
+export async function deleteRecipeRecord(client: SupabaseClient<Database>, id: string): Promise<void> {
   const { error } = await client.from("recipes").delete().eq("id", id);
   throwIfError(error);
 }

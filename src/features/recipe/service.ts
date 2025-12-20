@@ -1,4 +1,5 @@
-﻿import {
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
   recipeInsertSchema,
   recipeListOptionsSchema,
   recipeUpdateSchema,
@@ -12,17 +13,15 @@ import type {
   RecipeListOptions,
   RecipeListResult,
   RecipeRow,
-  RecipeSupabaseClient,
   RecipeUpdateDB,
   RecipeUpdateInput,
   RecipeWriterInfo,
 } from "./types";
 import { buildLikedSet } from "../user_like/service";
+import type { Database } from "@/types/supabase";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-
-
 
 function normaliseTextArray(value: string[] | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
@@ -31,7 +30,7 @@ function normaliseTextArray(value: string[] | null | undefined): string[] {
 
 function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): RecipeIngredient[] {
   if (!Array.isArray(value)) return [];
-  
+
   const result: RecipeIngredient[] = [];
   for (const item of value) {
     if (!item || typeof item !== "object") continue;
@@ -107,7 +106,7 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   const payload: RecipeUpdateDB = {};
-  // 바뀌는 필드만 if로 처리 
+  // 바뀌는 필드만 if로 처리
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
@@ -140,7 +139,7 @@ function resolveOffset(page: number | undefined, limit: number): number {
 }
 
 export async function listRecipes(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   options?: RecipeListOptions
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
@@ -158,8 +157,8 @@ export async function listRecipes(
   const total = Math.max(rawTotal, offset + items.length);
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
-  const {data : {user}} = await client.auth.getUser();
-  if(user){
+  const { data: { user } } = await client.auth.getUser();
+  if (user) {
     const ids = rows.map((row) => row.id);
     likedSet = await buildLikedSet(client, ids);
   }
@@ -167,7 +166,6 @@ export async function listRecipes(
     ...item,
     liked: likedSet.has(item.id),
   }));
-  
 
   return {
     items,
@@ -179,7 +177,7 @@ export async function listRecipes(
 }
 
 export async function getRecipe(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<Recipe | null> {
   const row = await repository.selectRecipeById(client, id);
@@ -187,7 +185,7 @@ export async function getRecipe(
 }
 
 export async function createRecipe(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   input: RecipeInsertInput,
   writer?: RecipeWriterInfo
 ): Promise<Recipe> {
@@ -198,7 +196,7 @@ export async function createRecipe(
 }
 
 export async function updateRecipe(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   patch: RecipeUpdateInput
 ): Promise<Recipe> {
@@ -210,7 +208,7 @@ export async function updateRecipe(
 }
 
 export async function removeRecipe(
-  client: RecipeSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<void> {
   await repository.deleteRecipeRecord(client, id);

@@ -1,10 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
+import type { Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
 
 export type UserRow = Tables<"users">;
 export type UserInsertDB = TablesInsert<"users">;
 export type UserUpdateDB = TablesUpdate<"users">;
-export type UserSupabaseClient = SupabaseClient<Database>;
 
 export type UserListResult = {
   items: UserRow[];

@@ -1,4 +1,6 @@
-import type { FetchUsersParams, UserRow, UserSupabaseClient, UserUpdateDB } from "./types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
+import type { FetchUsersParams, UserRow, UserUpdateDB } from "./types";
 
 
 
@@ -12,7 +14,7 @@ export type FetchUsersResult = {
 };
 
 export async function fetchUsers(
-  client: UserSupabaseClient,
+  client: SupabaseClient<Database>,
   params: FetchUsersParams,
 ): Promise<FetchUsersResult> {
   const safeLimit = Math.max(params.limit, 1);
@@ -39,7 +41,7 @@ export async function fetchUsers(
 }
 
 export async function selectUserById(
-  client: UserSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<UserRow | null> {
   const { data, error } = await client
@@ -52,7 +54,7 @@ export async function selectUserById(
 }
 
 export async function selectUserByDisplayName(
-  client: UserSupabaseClient,
+  client: SupabaseClient<Database>,
   name: string
 ): Promise<UserRow | null> {
   const { data, error } = await client
@@ -65,7 +67,7 @@ export async function selectUserByDisplayName(
 }
 
 export async function updateUserRecord(
-  client: UserSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   payload: UserUpdateDB
 ): Promise<UserRow> {
@@ -79,7 +81,7 @@ export async function updateUserRecord(
   return data as UserRow;
 }
 
-export async function deleteUserRecord(client: UserSupabaseClient, id: string): Promise<void> {
+export async function deleteUserRecord(client: SupabaseClient<Database>, id: string): Promise<void> {
   const { error } = await client.from("users").delete().eq("id", id);
   if (error) throw error;
 }

@@ -1,6 +1,5 @@
 import { z } from "zod";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables } from "@/types/supabase";
+import type { Tables } from "@/types/supabase";
 import { recipeFormSchema, recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 
 export type RecipeRow = Tables<"recipes">;
@@ -54,8 +53,6 @@ export type FetchRecipesParams = {
   writerUid?: string;
   search?: string;
 };
-
-export type RecipeSupabaseClient = SupabaseClient<Database>;
 
 export type RecipeInsertDB = {
   id?: string;

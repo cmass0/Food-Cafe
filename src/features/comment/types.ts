@@ -1,18 +1,9 @@
-﻿import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  Database,
-  Tables,
-  TablesInsert,
-  TablesUpdate,
-  Enums,
-} from "@/types/supabase";
+import type { Tables, TablesInsert, TablesUpdate, Enums } from "@/types/supabase";
 
 export type CommentRow = Tables<"comments">;
 export type CommentInsertDB = TablesInsert<"comments">;
 export type CommentUpdateDB = TablesUpdate<"comments">;
 export type CommentParentType = Enums<"comment_parent_type">;
-
-export type CommentSupabaseClient = SupabaseClient<Database>;
 
 export interface Comment {
   id: string;
