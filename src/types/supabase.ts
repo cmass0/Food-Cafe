@@ -102,14 +102,17 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          difficulty: string | null
           id: string
           image: string | null
           ingredients: Json
           last_liked_at: string | null
           like_count: number
           recipe: string
+          servings: number | null
           summary: string | null
           tags: string[]
+          time_minutes: number | null
           title: string
           tsv: unknown
           updated_at: string
@@ -121,14 +124,17 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          difficulty?: string | null
           id?: string
           image?: string | null
           ingredients?: Json
           last_liked_at?: string | null
           like_count?: number
           recipe?: string
+          servings?: number | null
           summary?: string | null
           tags?: string[]
+          time_minutes?: number | null
           title: string
           tsv?: unknown
           updated_at?: string
@@ -140,14 +146,17 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          difficulty?: string | null
           id?: string
           image?: string | null
           ingredients?: Json
           last_liked_at?: string | null
           like_count?: number
           recipe?: string
+          servings?: number | null
           summary?: string | null
           tags?: string[]
+          time_minutes?: number | null
           title?: string
           tsv?: unknown
           updated_at?: string
@@ -165,6 +174,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          parent_id: string
+          parent_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_id: string
+          parent_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_likes: {
         Row: {
@@ -264,14 +297,17 @@ export type Database = {
         Returns: {
           category: string | null
           created_at: string
+          difficulty: string | null
           id: string
           image: string | null
           ingredients: Json
           last_liked_at: string | null
           like_count: number
           recipe: string
+          servings: number | null
           summary: string | null
           tags: string[]
+          time_minutes: number | null
           title: string
           tsv: unknown
           updated_at: string
@@ -317,14 +353,17 @@ export type Database = {
         Returns: {
           category: string | null
           created_at: string
+          difficulty: string | null
           id: string
           image: string | null
           ingredients: Json
           last_liked_at: string | null
           like_count: number
           recipe: string
+          servings: number | null
           summary: string | null
           tags: string[]
+          time_minutes: number | null
           title: string
           tsv: unknown
           updated_at: string
