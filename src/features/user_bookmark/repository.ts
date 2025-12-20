@@ -33,10 +33,10 @@ export async function isBookmarked(
 ): Promise<boolean> {
   const { count, error } = await client
     .from("user_bookmarks")
-    .select("*", { count: "exact", head: true })
+    .select("id")
     .eq("user_id", userId)
     .eq("parent_id", recipeId)
-    .eq("parent_type", "recipe");
+    .limit(1)
   if (error) throw error;
   return (count ?? 0) > 0;
 }
