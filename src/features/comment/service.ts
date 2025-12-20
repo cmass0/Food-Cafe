@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import * as repository from "./repository";
 
 import { commentInsertSchema, commentListOptionsSchema, commentUpdateSchema } from "./schema";
@@ -8,9 +9,9 @@ import {
   CommentListOptions,
   CommentListResult,
   CommentRow,
-  CommentSupabaseClient,
   CommentUpdateDB,
 } from "./types";
+import type { Database } from "@/types/supabase";
 
 
 const DEFAULT_LIMIT = 30;
@@ -64,7 +65,7 @@ function buildUpdatePayload(parsed: ReturnType<typeof commentUpdateSchema.parse>
 }
 
 export async function listComments(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   options?: CommentListOptions
 ): Promise<CommentListResult> {
   const parsed = commentListOptionsSchema.parse(options);
@@ -89,13 +90,13 @@ export async function listComments(
   };
 }
 
-export async function getComment(client: CommentSupabaseClient, id: string): Promise<Comment | null> {
+export async function getComment(client: SupabaseClient<Database>, id: string): Promise<Comment | null> {
   const row = await repository.selectCommentById(client, id);
   return row ? mapRowToComment(row) : null;
 }
 
 export async function createComment(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   writerUid: string,
   input: CommentInsertInput,
 ): Promise<Comment> {
@@ -106,7 +107,7 @@ export async function createComment(
 }
 
 export async function updateComment(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   input: unknown
 ): Promise<Comment | null> {
@@ -118,6 +119,6 @@ export async function updateComment(
   return mapRowToComment(row);
 }
 
-export async function deleteComment(client: CommentSupabaseClient, id: string): Promise<void> {
+export async function deleteComment(client: SupabaseClient<Database>, id: string): Promise<void> {
   await repository.deleteComment(client, id);
 }

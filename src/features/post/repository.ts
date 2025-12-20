@@ -1,12 +1,7 @@
-import type { PostgrestError } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import type {
-  FetchPostsParams,
-  PostInsertDB,
-  PostRow,
-  PostSupabaseClient,
-  PostUpdateDB,
-} from "./types";
+import type { FetchPostsParams, PostInsertDB, PostRow, PostUpdateDB } from "./types";
+import type { Database } from "@/types/supabase";
 
 const POST_COLUMNS = [
   "id",
@@ -39,7 +34,7 @@ export type FetchPostsResult = {
 };
 
 export async function fetchPosts(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   params: FetchPostsParams
 ): Promise<FetchPostsResult> {
   const safeLimit = Math.max(params.limit, 1);
@@ -79,7 +74,7 @@ export async function fetchPosts(
 }
 
 export async function selectPostById(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<PostRow | null> {
   const { data, error } = await (client as any)
@@ -92,7 +87,7 @@ export async function selectPostById(
 }
 
 export async function insertPostRecord(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   payload: PostInsertDB
 ): Promise<PostRow> {
   const { data, error } = await (client as any)
@@ -107,7 +102,7 @@ export async function insertPostRecord(
 }
 
 export async function updatePostRecordByOwner(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   ownerUid: string,
   payload: PostUpdateDB
@@ -124,7 +119,7 @@ export async function updatePostRecordByOwner(
 }
 
 export async function deletePostRecord(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   ownerUid: string
 ): Promise<void> {

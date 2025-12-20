@@ -1,14 +1,15 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import * as repository from "./repository";
 import type {
   Post,
   PostInsertDB,
   PostRow,
-  PostSupabaseClient,
   PostUpdateDB,
   PostListOptions,
   PostListResult,
 } from "./types";
+import type { Database } from "@/types/supabase";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
@@ -68,7 +69,7 @@ function buildUpdatePayload(parsed: ReturnType<typeof postUpdateSchema.parse>): 
 }
 
 export async function listPosts(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   options?: PostListOptions
 ): Promise<PostListResult> {
   const parsed = postListOptionsSchema.parse(options ?? {});
@@ -97,7 +98,7 @@ export async function listPosts(
 }
 
 export async function getPost(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<Post | null> {
   const row = await repository.selectPostById(client, id);
@@ -105,7 +106,7 @@ export async function getPost(
 }
 
 export async function createPost(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   input: unknown
 ): Promise<Post> {
   const {
@@ -122,7 +123,7 @@ export async function createPost(
 }
 
 export async function updatePost(
-  client: PostSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   input: unknown
 ): Promise<Post | null> {
@@ -145,7 +146,7 @@ export async function updatePost(
   return row ? mapRowToPost(row) : null;
 }
 
-export async function removePost(client: PostSupabaseClient, id: string): Promise<void> {
+export async function removePost(client: SupabaseClient<Database>, id: string): Promise<void> {
   const {
     data: { user },
     error,

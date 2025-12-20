@@ -1,4 +1,6 @@
-import { CommentInsertDB, CommentRow, CommentSupabaseClient, CommentUpdateDB, FetchCommentsParams } from "./types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
+import { CommentInsertDB, CommentRow, CommentUpdateDB, FetchCommentsParams } from "./types";
 
 function mapRows(rows: CommentRow[]): CommentRow[] {
   return Array.isArray(rows) ? (rows as CommentRow[]) : [];
@@ -10,7 +12,7 @@ export type FetchCommentsResult = {
 };
 
 export async function fetchComments(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   params: FetchCommentsParams
 ): Promise<FetchCommentsResult> {
   const limit = Math.max(params.limit, 1);
@@ -35,7 +37,7 @@ export async function fetchComments(
 }
 
 export async function selectCommentById(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<CommentRow | null> {
   const { data, error } = await client
@@ -51,7 +53,7 @@ export async function selectCommentById(
 }
 
 export async function insertComment(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   payload: CommentInsertDB
 ): Promise<CommentRow> {
   const { data, error } = await client
@@ -67,7 +69,7 @@ export async function insertComment(
 }
 
 export async function updateComment(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string,
   payload: Partial<CommentUpdateDB>
 ): Promise<CommentRow | null> {
@@ -85,7 +87,7 @@ export async function updateComment(
 }
 
 export async function deleteComment(
-  client: CommentSupabaseClient,
+  client: SupabaseClient<Database>,
   id: string
 ): Promise<void> {
   const deletedAt = new Date().toISOString();
