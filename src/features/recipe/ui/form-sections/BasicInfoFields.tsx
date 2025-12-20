@@ -30,7 +30,12 @@ type BasicInfoFieldsProps = {
   normalizeTags: (text: string) => string[];
 };
 
-export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }: BasicInfoFieldsProps) {
+export function BasicInfoFields({
+  form,
+  tagsInput,
+  setTagsInput,
+  normalizeTags,
+}: BasicInfoFieldsProps) {
   const currentMinutes = form.watch("time_minutes");
   const initialUnit: "minutes" | "hours" =
     typeof currentMinutes === "number" && currentMinutes >= 60 ? "hours" : "minutes";
@@ -47,7 +52,9 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
     <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-muted-foreground">기본 정보</h3>
-        <span className="text-xs text-muted-foreground">제목 · 카테고리 · 태그 · 난이도/시간/인분</span>
+        <span className="text-xs text-muted-foreground">
+          제목 · 카테고리 · 태그 · 난이도/시간/인분
+        </span>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <FormField
@@ -83,9 +90,9 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
                         <Info className="h-4 w-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                    <TooltipContent className="max-w-xs text-xs leading-relaxed bg-[#d8d8d8] ">
                       <div className="font-semibold text-foreground">설명</div>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground text-black ">
                         {currentDifficulty?.description ?? "난이도를 선택하면 설명이 보여요."}
                       </p>
                     </TooltipContent>
@@ -93,7 +100,10 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
                 </TooltipProvider>
               </div>
               <FormControl>
-                <Select value={field.value ?? ""} onValueChange={(val) => field.onChange(val || null)}>
+                <Select
+                  value={field.value ?? ""}
+                  onValueChange={(val) => field.onChange(val || null)}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="난이도 선택" />
                   </SelectTrigger>
@@ -120,7 +130,10 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
             <FormItem>
               <FormLabel>소요 시간 (분 기준, 선택)</FormLabel>
               <FormControl>
-                <Tabs value={timeUnit} onValueChange={(val) => setTimeUnit(val as "minutes" | "hours")}>
+                <Tabs
+                  value={timeUnit}
+                  onValueChange={(val) => setTimeUnit(val as "minutes" | "hours")}
+                >
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="minutes">분 단위</TabsTrigger>
                     <TabsTrigger value="hours">시간 단위</TabsTrigger>
@@ -132,7 +145,9 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
                       step="1"
                       placeholder="예) 30"
                       value={timeUnit === "minutes" ? displayMinutes : ""}
-                      onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                      }
                     />
                   </TabsContent>
                   <TabsContent value="hours">
@@ -173,7 +188,9 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
                   step="1"
                   placeholder="예) 2"
                   value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                  onChange={(e) =>
+                    field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  }
                 />
               </FormControl>
               <FormMessage />
