@@ -1,6 +1,8 @@
 import Image from "next/image";
 import type { Recipe } from "../types";
 import ViewCount from "@/features/view/ui/ViewCount.client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { difficultyMetaMap, getDifficultyMeta } from "./difficultyMeta";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -10,7 +12,7 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const tags = recipe.tags?.filter((tag) => typeof tag === "string" && tag.length > 0) ?? [];
   const chips = recipe.category ? [recipe.category, ...tags] : tags;
 
-  // 단순 텍스트 분리로 스텝 리스트를 생성 (HTML 태그 제거 후 줄바꿈 기준)
+  // HTML을 단순 텍스트로 변환해 단계 리스트로 구성
   let steps: string[] = [];
   if (recipe.recipe) {
     const plain = recipe.recipe.replace(/<[^>]+>/g, "\n");
@@ -67,13 +69,38 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
             <h2 className="mb-4 text-lg font-semibold text-slate-900">조리 단계</h2>
             <div className="mb-4 flex flex-wrap gap-3 text-xs text-slate-600">
               {recipe.difficulty ? (
-                <span className="border border-border/70 bg-slate-50 px-3 py-1">
-                  난이도: {recipe.difficulty}
-                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help border border-border/70 bg-slate-50 px-3 py-1">
+                        난이도: {recipe.difficulty}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                      {(() => {
+                        const meta = getDifficultyMeta(recipe.difficulty);
+                        if (!meta) return recipe.difficulty;
+                        return (
+                          <div className="space-y-1">
+                            <div className="font-semibold">{meta.label}</div>
+                            <p className="text-muted-foreground">{meta.description}</p>
+                            <p className="text-amber-600">주의: {meta.warning}</p>
+                            <p className="text-emerald-700">추천 대상: {meta.recommend}</p>
+                          </div>
+                        );
+                      })()}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ) : null}
-              {recipe.timeMinutes ? (
+              {typeof recipe.timeMinutes === "number" && recipe.timeMinutes > 0 ? (
                 <span className="border border-border/70 bg-slate-50 px-3 py-1">
-                  소요시간: {recipe.timeMinutes}분
+                  소요시간:{" "}
+                  {recipe.timeMinutes >= 60
+                    ? `${Math.floor(recipe.timeMinutes / 60)}시간${
+                        recipe.timeMinutes % 60 ? ` ${recipe.timeMinutes % 60}분` : ""
+                      }`
+                    : `${recipe.timeMinutes}분`}
                 </span>
               ) : null}
               {recipe.servings ? (

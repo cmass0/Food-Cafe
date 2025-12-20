@@ -1,9 +1,27 @@
-import { type Dispatch, type SetStateAction } from "react";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type UseFormReturn } from "react-hook-form";
 import { type FormValues } from "../../types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
+import { difficultyLabels, getDifficultyMeta } from "../difficultyMeta";
 
 type BasicInfoFieldsProps = {
   form: UseFormReturn<FormValues>;
@@ -13,6 +31,18 @@ type BasicInfoFieldsProps = {
 };
 
 export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }: BasicInfoFieldsProps) {
+  const currentMinutes = form.watch("time_minutes");
+  const initialUnit: "minutes" | "hours" =
+    typeof currentMinutes === "number" && currentMinutes >= 60 ? "hours" : "minutes";
+  const [timeUnit, setTimeUnit] = useState<"minutes" | "hours">(initialUnit);
+  const currentDifficulty = getDifficultyMeta(form.watch("difficulty"));
+
+  const displayMinutes = useMemo(() => {
+    if (typeof currentMinutes !== "number") return "";
+    if (timeUnit === "minutes") return currentMinutes;
+    return Math.max(0, Math.round(currentMinutes / 60));
+  }, [currentMinutes, timeUnit]);
+
   return (
     <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
       <div className="flex items-center justify-between">
@@ -27,7 +57,7 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
             <FormItem className="md:col-span-2">
               <FormLabel>레시피 제목</FormLabel>
               <FormControl>
-                <Input placeholder="예) 10분 완성 새우 파스타" {...field} />
+                <Input placeholder="예) 10분 완성 새우 크림 파스타" {...field} />
               </FormControl>
               <FormDescription>검색이 잘 되도록 핵심 키워드를 넣어 주세요.</FormDescription>
               <FormMessage />
@@ -40,7 +70,28 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
           name="difficulty"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>난이도 (선택)</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormLabel className="mb-0">난이도 (선택)</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-muted-foreground transition hover:text-foreground"
+                        aria-label="난이도 안내"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
+                      <div className="font-semibold text-foreground">설명</div>
+                      <p className="text-muted-foreground">
+                        {currentDifficulty?.description ?? "난이도를 선택하면 설명이 보여요."}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <FormControl>
                 <Select value={field.value ?? ""} onValueChange={(val) => field.onChange(val || null)}>
                   <SelectTrigger className="w-[180px]">
@@ -48,9 +99,11 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="쉬움">쉬움</SelectItem>
-                      <SelectItem value="보통">보통</SelectItem>
-                      <SelectItem value="어려움">어려움</SelectItem>
+                      {difficultyLabels.map((label) => (
+                        <SelectItem key={label} value={label}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -65,17 +118,42 @@ export function BasicInfoFields({ form, tagsInput, setTagsInput, normalizeTags }
           name="time_minutes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>소요 시간 (분, 선택)</FormLabel>
+              <FormLabel>소요 시간 (분 기준, 선택)</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="예) 30"
-                  value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
-                />
+                <Tabs value={timeUnit} onValueChange={(val) => setTimeUnit(val as "minutes" | "hours")}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="minutes">분 단위</TabsTrigger>
+                    <TabsTrigger value="hours">시간 단위</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="minutes">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="예) 30"
+                      value={timeUnit === "minutes" ? displayMinutes : ""}
+                      onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                    />
+                  </TabsContent>
+                  <TabsContent value="hours">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="예) 1"
+                      value={timeUnit === "hours" ? displayMinutes : ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value === "" ? null : Number(e.target.value) * 60)
+                      }
+                    />
+                  </TabsContent>
+                </Tabs>
               </FormControl>
+              {typeof field.value === "number" && field.value > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  현재 설정: {field.value}분 (≈ {Math.round((field.value / 60) * 10) / 10}시간)
+                </p>
+              ) : null}
               <FormMessage />
             </FormItem>
           )}
