@@ -180,24 +180,29 @@ export type Database = {
           created_at: string
           id: string
           parent_id: string
-          parent_type: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           parent_id: string
-          parent_type: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           parent_id?: string
-          parent_type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_likes: {
         Row: {
