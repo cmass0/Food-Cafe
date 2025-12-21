@@ -4,6 +4,7 @@ import ViewCount from "@/features/view/ui/ViewCount.client";
 import Image from "next/image";
 import type { Recipe } from "../types";
 import { getDifficultyMeta } from "./difficultyMeta";
+import { CopyClipButton } from "./RecipeClip";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -24,6 +25,7 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim() ?? "";
+  const currentUrl = `${baseUrl}/recipes/${recipe.id}`;
   const shareUrl = baseUrl ? new URL(`/recipes/${recipe.id}`, baseUrl).toString() : "";
   const shareImageUrl = recipe.image
     ? recipe.image.startsWith("http")
@@ -109,7 +111,7 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
                   소요시간:{" "}
                   {recipe.timeMinutes >= 60
                     ? `${Math.floor(recipe.timeMinutes / 60)}시간${
-                          recipe.timeMinutes % 60 ? ` ${recipe.timeMinutes % 60}분` : ""
+                        recipe.timeMinutes % 60 ? ` ${recipe.timeMinutes % 60}분` : ""
                       }`
                     : `${recipe.timeMinutes}분`}
                 </span>
@@ -138,14 +140,23 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
             <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: recipe.recipe }} />
           </section>
         ) : null}
-        {/* SNS 공유버튼 구현 */}
-        <KakaoShareButton
-          recipeinfo={recipe}
-          imageUrl={shareImageUrl}
-          url={shareUrl}
-          label="카카오톡 공유하기"
-          className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
-        />
+        <div className="flex items-start gap-4">
+          {/* SNS 공유버튼 구현 */}
+          <div className="flex flex-col items-center gap-1">
+            <KakaoShareButton
+              recipeinfo={recipe}
+              imageUrl={shareImageUrl}
+              url={shareUrl}
+              label="카카오톡으로 공유"
+              className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            <span className="text-xs text-slate-600">카카오톡으로 공유</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <CopyClipButton currentUrl={currentUrl} />
+            <span className="text-xs text-slate-600">URL 공유</span>
+          </div>
+        </div>
       </div>
     </article>
   );
