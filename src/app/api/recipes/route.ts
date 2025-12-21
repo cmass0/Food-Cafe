@@ -1,25 +1,21 @@
-import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import * as recipeService from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { requestRecipeSchema } from "@/features/recipe/schema";
 
-
-
 const isPostgrestError = (error: unknown): error is PostgrestError =>
   typeof (error as PostgrestError)?.code === "string";
 
 const respondWithSupabaseError = (error: PostgrestError) => {
   const status = error.code === "42501" ? 403 : 400;
-  return NextResponse.json(
+  return Response.json(
     {
       error: error.code,
       message: error.message,
       details: error.details ?? error.hint,
     },
-    { status }
+    { status, headers: { "Cache-Control": "no-store" } }
   );
 };
 
@@ -57,9 +53,15 @@ export async function GET(req: Request) {
     const tagArray = tags.length ? tags : undefined;
     const search = url.searchParams.get("search") ?? undefined;
     const supabase = getServerSupabase();
-    const recipes = await recipeService.listRecipes(supabase, {limit, page, writerUid, tags: tagArray, search});
-  
-    return NextResponse.json({ data: recipes }, { headers: { "Cache-control": "no-store" } });
+    const recipes = await recipeService.listRecipes(supabase, {
+      limit,
+      page,
+      writerUid,
+      tags: tagArray,
+      search,
+    });
+
+    return Response.json({ data: recipes }, { headers: { "Cache-Control": "no-store" } });
 
   } catch (error) {
     if (isPostgrestError(error)) {
@@ -68,7 +70,10 @@ export async function GET(req: Request) {
     }
     const info = serializeUnknownError(error);
     console.error("Failed to get recipe", info, error);
-    return NextResponse.json({ error: "Failed to get recipe", details: info }, { status: 500 });
+    return Response.json(
+      { error: "Failed to get recipe", details: info },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
 
@@ -84,10 +89,16 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser();
     if (userError) {
       console.error("Failed to get auth user", userError);
-      return NextResponse.json({ error: "Failed to create recipe" }, { status: 500 });
+      return Response.json(
+        { error: "Failed to create recipe" },
+        { status: 500, headers: { "Cache-Control": "no-store" } }
+      );
     }
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401, headers: { "Cache-Control": "no-store" } }
+      );
     }
 
     const writerName =
@@ -102,7 +113,10 @@ export async function POST(req: Request) {
       name: writerName ?? writerEmail,
       email: writerEmail,
     });
-    return NextResponse.json({ data: recipe }, { status: 201 });
+    return Response.json(
+      { data: recipe },
+      { status: 201, headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("Failed to create recipe", error);
@@ -110,6 +124,9 @@ export async function POST(req: Request) {
     }
     const info = serializeUnknownError(error);
     console.error("Failed to create recipe", info, error);
-    return NextResponse.json({ error: "Failed to create recipe", details: info }, { status: 500 });
+    return Response.json(
+      { error: "Failed to create recipe", details: info },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
