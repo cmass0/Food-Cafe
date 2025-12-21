@@ -1,14 +1,26 @@
-// src/app/api/recipes/[id]/like/route.ts
-import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
-
-import * as userLikeService from "@/features/user_like/service";
+import { PostgrestError } from "@supabase/supabase-js";
 
 type RouteParams = {
   params: { id: string }; // recipeId
 };
 
-export async function POST(req: Request, { params }: RouteParams) {
+const isPostgrestError = (error: unknown): error is PostgrestError =>
+  Boolean(error) && typeof (error as PostgrestError)?.code === "string";
+
+const respondWithSupabaseError = (error: PostgrestError) => {
+  const status = error.code === "42501" ? 403 : 400;
+  return Response.json(
+    {
+      error: error.code,
+      message: error.message,
+      details: error.details ?? error.hint,
+    },
+    { status }
+  );
+};
+
+export async function POST(_req: Request, { params }: RouteParams) {
   try {
     const recipeId = params.id;
     const supabase = getServerSupabase();
@@ -19,42 +31,31 @@ export async function POST(req: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
+      return Response.json(
         { error: "UNAUTHENTICATED" },
-        { status: 401 }
+        { status: 401, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    const body = await req.json();
-    const currentlyLiked = body.currentlyLiked;
-
-    const result = await userLikeService.toggleRecipeLike(supabase, {
-      userId: user.id,
-      recipeId,
-      currentlyLiked,
-    });
-
-
-    const delta = result ? 1 : -1;
-    const { data: adjusted, error: adjustError } = await supabase.rpc("recipe_adjust_like", {
+    const { data: toggled, error: toggleError } = await supabase.rpc("recipe_toggle_like", {
       p_recipe_id: recipeId,
-      p_delta: delta,
     });
-    if (adjustError) {
-      console.error("[recipes.like] rpc error:", adjustError);
-      return NextResponse.json({ error: "LIKE_ADJUST_FAILED" }, { status: 500 });
+    if (toggleError) {
+      console.error("[recipes.like] rpc error:", toggleError);
+      return respondWithSupabaseError(toggleError);
     }
 
-    const likeCount = Array.isArray(adjusted)
-      ? (adjusted[0]?.like_count as number | undefined) ?? null
-      : (adjusted as any)?.like_count ?? null;
+    const row = Array.isArray(toggled) ? toggled[0] : (toggled as any);
+    const likeCount = (row?.like_count as number | undefined) ?? null;
+    const liked = (row?.liked as boolean | undefined) ?? false;
 
-    return NextResponse.json({ liked: result, likeCount });
+    return Response.json({ liked, likeCount }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error("[recipes.like] POST error:", error);
-    return NextResponse.json(
-      { error: "INTERNAL_ERROR" },
-      { status: 500 }
-    );
+    if (isPostgrestError(error)) {
+      console.error("Failed to toggle bookmark", error);
+      return respondWithSupabaseError(error);
+    }
+    console.error("Failed to toggle bookmark", error);
+    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

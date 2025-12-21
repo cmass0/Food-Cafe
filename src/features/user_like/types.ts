@@ -21,13 +21,6 @@ export function toUserLike(row: UserLikeRow): UserLike {
   };
 }
 
-export type ToggleRecipeLikeParams = {
-  userId: string;
-  recipeId: string;
-  currentlyLiked: boolean; 
-};
-
-
 export type TopRecipe = {
   recipeId: string;
   likeDelta: number;
@@ -39,17 +32,6 @@ export type TopRecipe = {
   writerUid: string | null;
   writerName: string | null;
 };
-
-//  created_at: string;
-//     image: string;
-//     like_count: number;
-//     like_delta: number;
-//     recipe_id: string;
-//     summary: string;
-//     title: string;
-//     view_count: number;
-//     writer_name: string;
-//     writer_uid: string;
 
 
 

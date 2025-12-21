@@ -48,32 +48,3 @@ export async function countLikes(recipeId: string): Promise<number> {
   return count ?? 0;
 }
 
-
-export async function setRecipeLike(
-  client: SupabaseClient<Database>,
-  params: { userId: string; recipeId: string; like: boolean }
-): Promise<void> {
-  const { userId, recipeId, like } = params;
-
-  if (like) {
-    // 좋아요 추가 중복은 무시
-    const { error } = await client
-      .from("user_likes")
-      .upsert(
-        { user_id: userId, recipe_id: recipeId },
-        { onConflict: "user_id,recipe_id", ignoreDuplicates: true }
-      );
-
-    if (error) throw error;
-  } else {
-    // 좋아요 취소
-    const { error } = await client
-      .from("user_likes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("recipe_id", recipeId);
-      console.log("success unlike");
-
-    if (error) throw error;
-  }
-}

@@ -5,7 +5,6 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import * as userLikeRepo from "./repository";
 import { Database } from "@/types/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ToggleRecipeLikeParams } from './types';
 
 
 
@@ -32,23 +31,6 @@ export async function getLikeMeta(recipeId: string) {
   assertRecipeId(recipeId);
   const [liked, count] = await Promise.all([userLikeRepo.isLiked(recipeId, data.user.id), userLikeRepo.countLikes(recipeId)]);
   return { liked, count };
-}
-
-export async function toggleRecipeLike(
-  client: SupabaseClient<Database>,
-  params: ToggleRecipeLikeParams
-): Promise<boolean> {
-  const { userId, recipeId, currentlyLiked } = params;
-
-  const nextLiked: boolean = !currentlyLiked;
-
-  await userLikeRepo.setRecipeLike(client, {
-    userId,
-    recipeId,
-    like: nextLiked,
-  });
-
-  return nextLiked;
 }
 
 

@@ -1,12 +1,10 @@
 
 export async function toggleRecipeLike(
-  recipeId: string,
-  currentlyLiked: boolean
+  recipeId: string
 ): Promise<{ liked: boolean; likeCount: number | null }> {
   const res = await fetch(`/api/recipes/${recipeId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ currentlyLiked }),
   });
 
   if (!res.ok) {

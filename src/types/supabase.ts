@@ -353,36 +353,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      recipe_adjust_like: {
-        Args: { p_delta: number; p_recipe_id: string }
+      recipe_toggle_like: {
+        Args: { p_recipe_id: string }
         Returns: {
-          category: string | null
-          created_at: string
-          difficulty: string | null
-          id: string
-          image: string | null
-          ingredients: Json
-          last_liked_at: string | null
           like_count: number
-          recipe: string
-          servings: number | null
-          summary: string | null
-          tags: string[]
-          time_minutes: number | null
-          title: string
-          tsv: unknown
-          updated_at: string
-          view_count: number
-          writer_email: string | null
-          writer_name: string | null
-          writer_uid: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "recipes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+          liked: boolean
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
