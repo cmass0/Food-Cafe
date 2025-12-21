@@ -5,6 +5,7 @@ import { Eye, Heart } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LikeButton from "@/features/user_like/ui/likebutton";
+import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
 import type { Recipe } from "../types";
 import { useState } from "react";
 
@@ -12,11 +13,18 @@ type RecipeCardProps = {
   recipe: Recipe;
   initialLiked: boolean;
   initialCount: number;
+  initialBookmarked: boolean;
 };
 
-export default function RecipeCard({ initialLiked, initialCount, recipe }: RecipeCardProps) {
+export default function RecipeCard({
+  initialLiked,
+  initialCount,
+  initialBookmarked,
+  recipe,
+}: RecipeCardProps) {
   const [liked, setLiked] = useState<boolean>(initialLiked);
   const [likeCount, setLikeCount] = useState<number>(initialCount ?? recipe.likeCount ?? 0);
+  const [bookmarked, setBookmarked] = useState<boolean>(initialBookmarked);
 
   const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -59,12 +67,15 @@ export default function RecipeCard({ initialLiked, initialCount, recipe }: Recip
               by {recipe.writerName || "무명 셰프"} · {createdLabel}
             </p>
           </div>
-          <LikeButton
-            recipeId={recipe.id}
-            liked={liked}
-            count={likeCount}
-            onChange={LikeButtonHD}
-          />
+          <div className="flex items-center gap-2">
+            <BookmarkBtn
+              recipeId={recipe.id}
+              marked={bookmarked}
+              count={0}
+              onChange={({ marked }) => setBookmarked(marked)}
+            />
+            <LikeButton recipeId={recipe.id} liked={liked} count={likeCount} onChange={LikeButtonHD} />
+          </div>
         </div>
       </div>
 

@@ -11,6 +11,8 @@ import { listComments } from "@/features/comment/service";
 import { CommentDisplayItem } from "@/features/comment/types";
 import RecipeIngredientsPanel from "@/features/recipe/ui/RecipeIngredientsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
+import { isBookmarked } from "@/features/user_bookmark/repository";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -53,6 +55,7 @@ export default async function RecipeDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
+  const initialBookmarked = user?.id ? await isBookmarked(supabase, user.id, recipe.id) : false;
 
   return (
     <main className="pt-[100px] pb-[100px]">
@@ -61,6 +64,9 @@ export default async function RecipeDetailPage({
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4">
           {/* 왼쪽 사이드 */}
           <aside className="order-3 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
+            <div className="flex justify-end">
+              <BookmarkBtn recipeId={recipe.id} marked={initialBookmarked} count={0} />
+            </div>
             {isAuthor ? (
               <div className="flex justify-end">
                 <DeleteRecipeButton recipeId={recipe.id} />

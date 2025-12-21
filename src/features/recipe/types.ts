@@ -25,6 +25,7 @@ export interface Recipe {
   createdAt: Date;
   updatedAt: Date;
   liked?: boolean;
+  bookmarked?: boolean;
 }
 
 export type RecipeIngredient = {

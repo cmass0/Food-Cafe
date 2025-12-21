@@ -18,6 +18,7 @@ import type {
   RecipeWriterInfo,
 } from "./types";
 import { buildLikedSet } from "../user_like/service";
+import { buildBookmarkedSet } from "../user_bookmark/service";
 import type { Database } from "@/types/supabase";
 
 const DEFAULT_LIMIT = 20;
@@ -157,14 +158,17 @@ export async function listRecipes(
   const total = Math.max(rawTotal, offset + items.length);
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
+  let bookmarkedSet = new Set<string>();
   const { data: { user } } = await client.auth.getUser();
   if (user) {
     const ids = rows.map((row) => row.id);
     likedSet = await buildLikedSet(client, ids);
+    bookmarkedSet = await buildBookmarkedSet(client, ids);
   }
   items = items.map((item) => ({
     ...item,
     liked: likedSet.has(item.id),
+    bookmarked: bookmarkedSet.has(item.id),
   }));
 
   return {

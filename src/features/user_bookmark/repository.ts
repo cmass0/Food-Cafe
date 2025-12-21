@@ -9,12 +9,13 @@ export async function setRecipeBookmark(
   const { userId, recipeId, bookmark } = params;
 
   if (bookmark) {
-    await client.from("user_bookmarks").delete().eq("user_id", userId).eq("parent_id", recipeId);
-    const { error } = await client.from("user_bookmarks").insert({
-      user_id: userId,
-      parent_id: recipeId,
-      parent_type: "recipe",
-    });
+    const { error } = await client.from("user_bookmarks").upsert(
+      {
+        user_id: userId,
+        parent_id: recipeId,
+      },
+      { onConflict: "user_id,parent_id" }
+    );
     if (error) throw error;
   } else {
     const { error } = await client
@@ -31,12 +32,27 @@ export async function isBookmarked(
   userId: string,
   recipeId: string
 ): Promise<boolean> {
-  const { count, error } = await client
+  const { data, error } = await client
     .from("user_bookmarks")
     .select("id")
     .eq("user_id", userId)
     .eq("parent_id", recipeId)
-    .limit(1)
+    .maybeSingle();
   if (error) throw error;
-  return (count ?? 0) > 0;
+  return Boolean(data);
+}
+
+export async function fetchBookmarkedRecipeIds(
+  client: SupabaseClient<Database>,
+  userId: string,
+  recipeIds: string[]
+): Promise<Set<string>> {
+  if (!userId || recipeIds.length === 0) return new Set();
+  const { data, error } = await client
+    .from("user_bookmarks")
+    .select("parent_id")
+    .eq("user_id", userId)
+    .in("parent_id", recipeIds);
+  if (error) throw error;
+  return new Set((data ?? []).map((d: { parent_id: string }) => d.parent_id));
 }
