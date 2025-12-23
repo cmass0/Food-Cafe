@@ -51,7 +51,6 @@ export default async function ProfilePage({
     );
   }
 
-  
   const tabParam = normalizeParam(searchParams?.tab);
   const activeTab = tabParam === "bookmark" || tabParam === "like" ? tabParam : "written";
   const pageParam = normalizeParam(searchParams?.page);

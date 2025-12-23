@@ -76,7 +76,7 @@ export async function selectRecipeByBookmarked(
 
   let query = client
     .from("user_bookmarks")
-    .select("created_at, recipes:parent_id(*)", { count: "exact" })
+    .select("created_at, recipes:parent_id!inner(*)", { count: "exact" })
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -115,7 +115,7 @@ export async function selectRecipeByLike(
 
   let query = client
     .from("user_likes")
-    .select("created_at, recipes:recipe_id(*)", { count: "exact" })
+    .select("created_at, recipes:recipe_id!inner(*)", { count: "exact" })
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 

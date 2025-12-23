@@ -61,6 +61,7 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
         limit: safeLimit,
         search: trimmedSearch,
       });
+
       return (
         <>
           <ProfileRecipeGrid recipes={result.items} emptyMessage={EMPTY_MESSAGES[type]} />
