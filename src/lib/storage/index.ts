@@ -1,5 +1,5 @@
-﻿import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/supabase";
+﻿import type { Database } from "@/types/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const BUCKET = "Food-Cafe";
 
@@ -28,6 +28,10 @@ export function recipeImagePath(recipeId: string, filename: string): string {
   return `recipes/${recipeId}/${sanitizeFilename(filename)}`;
 }
 
+export function userAvatarPath(userId: string, filename: string): string {
+  return `avatars/${userId}/${sanitizeFilename(filename)}`;
+}
+
 export type StorageClient = SupabaseClient<Database>;
 
 // post img
@@ -36,8 +40,7 @@ export async function uploadPostImage(
   postId: string,
   file: File | Blob,
   opts?: { filename?: string; upsert?: boolean; contentType?: string; sign?: number }
-): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }>
-{
+): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }> {
   const base = opts?.filename ?? `${randomKey("img")}${fileExtension((file as any)?.name)}`;
   const path = postImagePath(postId, base);
   const { error } = await client.storage.from(BUCKET).upload(path, file, {
@@ -61,8 +64,7 @@ export async function uploadRecipeImage(
   recipeId: string,
   file: File | Blob,
   opts?: { filename?: string; upsert?: boolean; contentType?: string; sign?: number }
-): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }>
-{
+): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }> {
   const base = opts?.filename ?? `${randomKey("img")}${fileExtension((file as any)?.name)}`;
   const path = recipeImagePath(recipeId, base);
   const { error } = await client.storage.from(BUCKET).upload(path, file, {
