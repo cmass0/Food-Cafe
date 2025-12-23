@@ -1,15 +1,14 @@
+import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  recipeInsertSchema,
-  recipeListOptionsSchema,
-  recipeUpdateSchema,
-} from "./schema";
+import { buildBookmarkedSet } from "../user_bookmark/service";
+import { buildLikedSet } from "../user_like/service";
 import * as repository from "./repository";
+import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 import type {
   Recipe,
+  RecipeIngredient,
   RecipeInsertDB,
   RecipeInsertInput,
-  RecipeIngredient,
   RecipeListOptions,
   RecipeListResult,
   RecipeRow,
@@ -17,19 +16,18 @@ import type {
   RecipeUpdateInput,
   RecipeWriterInfo,
 } from "./types";
-import { buildLikedSet } from "../user_like/service";
-import { buildBookmarkedSet } from "../user_bookmark/service";
-import type { Database } from "@/types/supabase";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-function normaliseTextArray(value: string[] | null | undefined): string[] {
+export function normaliseTextArray(value: string[] | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
-function normaliseIngredients(value: RecipeRow["ingredients"] | undefined): RecipeIngredient[] {
+export function normaliseIngredients(
+  value: RecipeRow["ingredients"] | undefined
+): RecipeIngredient[] {
   if (!Array.isArray(value)) return [];
 
   const result: RecipeIngredient[] = [];
@@ -115,7 +113,8 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   if (patch.image !== undefined) payload.image = patch.image;
   if (patch.category !== undefined) payload.category = patch.category;
   if (patch.tags !== undefined) payload.tags = patch.tags;
-  if ((patch as any).difficulty !== undefined) payload.difficulty = (patch as any).difficulty ?? null;
+  if ((patch as any).difficulty !== undefined)
+    payload.difficulty = (patch as any).difficulty ?? null;
   if ((patch as any).time_minutes !== undefined)
     payload.time_minutes = (patch as any).time_minutes ?? null;
   if ((patch as any).servings !== undefined) payload.servings = (patch as any).servings ?? null;
@@ -139,6 +138,74 @@ function resolveOffset(page: number | undefined, limit: number): number {
   return 0;
 }
 
+// 로그인 유저의 북마크 list
+export async function listBookmarkedRecipes(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: RecipeListOptions
+): Promise<RecipeListResult> {
+  const parsed = recipeListOptionsSchema.parse(options ?? {});
+  const limit = resolveLimit(parsed.limit);
+  const offset = resolveOffset(parsed.page, limit);
+  const { items: rows, total: rowtotal } = await repository.selectRecipeByBookmarked(
+    client,
+    userId,
+    {
+      limit,
+      offset,
+      tags: parsed.tags,
+      search: parsed.search,
+    }
+  );
+
+  const items = rows.map((row) => ({
+    ...mapRowToRecipe(row),
+    bookmarked: true,
+  }));
+  const total = Math.max(rowtotal, offset + items.length);
+  const hasMore = offset + items.length < total;
+
+  return {
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
+  };
+}
+
+// 로그인 유저의 좋아요 list
+export async function listLikedRecipes(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: RecipeListOptions
+): Promise<RecipeListResult> {
+  const parsed = recipeListOptionsSchema.parse(options ?? {});
+  const limit = resolveLimit(parsed.limit);
+  const offset = resolveOffset(parsed.page, limit);
+  const { items: rows, total: rowtotal } = await repository.selectRecipeByLike(client, userId, {
+    limit,
+    offset,
+    tags: parsed.tags,
+    search: parsed.search,
+  });
+
+  const items = rows.map((row) => ({
+    ...mapRowToRecipe(row),
+    liked: true,
+  }));
+  const total = Math.max(rowtotal, offset + items.length);
+  const hasMore = offset + items.length < total;
+
+  return {
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
+  };
+}
+
 export async function listRecipes(
   client: SupabaseClient<Database>,
   options?: RecipeListOptions
@@ -146,7 +213,7 @@ export async function listRecipes(
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit);
   const offset = resolveOffset(parsed.page, limit);
-  const { items: rows, total: rawTotal } = await repository.fetchRecipes(client, {
+  const { items: rows, total: rowtotal } = await repository.fetchRecipes(client, {
     limit,
     offset,
     tags: parsed.tags,
@@ -155,11 +222,13 @@ export async function listRecipes(
   });
 
   let items = rows.map(mapRowToRecipe);
-  const total = Math.max(rawTotal, offset + items.length);
+  const total = Math.max(rowtotal, offset + items.length);
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
   let bookmarkedSet = new Set<string>();
-  const { data: { user } } = await client.auth.getUser();
+  const {
+    data: { user },
+  } = await client.auth.getUser();
   if (user) {
     const ids = rows.map((row) => row.id);
     likedSet = await buildLikedSet(client, ids);
@@ -211,9 +280,6 @@ export async function updateRecipe(
   return mapRowToRecipe(row);
 }
 
-export async function removeRecipe(
-  client: SupabaseClient<Database>,
-  id: string
-): Promise<void> {
+export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
