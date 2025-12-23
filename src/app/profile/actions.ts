@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { UserUpdateSchema } from "@/features/user/schema";
 import * as userService from "@/features/user/service";
 
-export async function updateProfileAction(formData: FormData) {
+export async function updateProfileAction(formData: FormData): Promise<void> {
   await requireAuth();
 
   const payload = UserUpdateSchema.parse({
@@ -15,7 +15,6 @@ export async function updateProfileAction(formData: FormData) {
     email: formData.get("email")?.toString(),
   });
 
-  const updated = await userService.updateSelf(payload);
+  await userService.updateSelf(payload);
   revalidatePath("/profile");
-  return updated.id;
 }
