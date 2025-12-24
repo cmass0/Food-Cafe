@@ -4,11 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FollowButton from "@/features/follow/ui/FollowButton";
 import * as userService from "@/features/user/service";
 import { User } from "lucide-react";
 
-import EditSheet from "./edit/page";
-import ProfileRecipeTab from "./profiletab/ProfileRecipeTab";
+import { getServerSupabase } from "@/lib/supabase/server";
+import ProfileRecipeTab from "../profiletab/ProfileRecipeTab";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,11 @@ export default async function ProfilePage({
   params: { id: string };
   searchParams?: ProfileSearchParams;
 }) {
+  const supabase = getServerSupabase();
   const another_user = await userService.getUserById(params.id);
+  const {
+    data: { user: viewer },
+  } = await supabase.auth.getUser();
 
   if (!another_user) {
     return (
@@ -51,6 +56,22 @@ export default async function ProfilePage({
         </Link>
       </main>
     );
+  }
+
+  const isSelf = viewer?.id === another_user.id;
+  let isFollowing = false;
+  if (viewer && !isSelf) {
+    const { data: followRow, error: followError } = await supabase
+      .from("user_follows")
+      .select("follower_id")
+      .eq("follower_id", viewer.id)
+      .eq("following_id", another_user.id)
+      .maybeSingle();
+    if (followError) {
+      console.error("[profile] follow lookup error:", followError);
+    } else {
+      isFollowing = Boolean(followRow);
+    }
   }
 
   const tabParam = normalizeParam(searchParams?.tab);
@@ -85,7 +106,15 @@ export default async function ProfilePage({
                   <div className="text-gray-500">{another_user.email ?? "-"}</div>
                 </div>
               </div>
-              <EditSheet userProfile={another_user} />
+              {!isSelf ? (
+                <FollowButton
+                  targetUserId={another_user.id}
+                  initialIsFollowing={isFollowing}
+                  initialFollowerCount={another_user.follower_count ?? 0}
+                  followingCount={another_user.following_count ?? 0}
+                  canFollow={Boolean(viewer)}
+                />
+              ) : null}
             </div>
           </CardContent>
         </Card>
