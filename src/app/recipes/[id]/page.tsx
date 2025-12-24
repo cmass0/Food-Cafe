@@ -1,18 +1,17 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
-import DeleteRecipeButton from "../_components/DeleteRecipeButton";
-import { getServerSupabase } from "@/lib/supabase/server";
-import { getRecipe } from "@/features/recipe/service";
-import RecipeDetail from "@/features/recipe/ui/RecipeDetail";
-import CommentThread from "@/features/comment/ui/CommentThread.client";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { listComments } from "@/features/comment/service";
 import { CommentDisplayItem } from "@/features/comment/types";
+import CommentThread from "@/features/comment/ui/CommentThread.client";
+import { getRecipe } from "@/features/recipe/service";
+import RecipeDetail from "@/features/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/features/recipe/ui/RecipeIngredientsPanel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
 import { isBookmarked } from "@/features/user_bookmark/repository";
+import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
+import { getServerSupabase } from "@/lib/supabase/server";
+import DeleteRecipeButton from "../_components/DeleteRecipeButton";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
