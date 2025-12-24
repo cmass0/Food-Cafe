@@ -1,5 +1,6 @@
 import type { Post } from "../types";
 import ViewCount from "@/features/view/ui/ViewCount.client";
+import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -12,7 +13,9 @@ export default function PostDetail({ post }: { post: Post }) {
         <header className="space-y-1">
           <h1 className="text-3xl font-semibold">{post.title}</h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>작성자 {post.writerName}</span>
+            <span className="inline-flex items-center gap-1">
+              작성자 <AuthorProfileMenu name={post.writerName} userId={post.writerUid} />
+            </span>
             <span>|</span>
             <span>{post.createdAt.toLocaleString("ko-KR")}</span>
             <span>|</span>

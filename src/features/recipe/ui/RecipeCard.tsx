@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Eye, Heart } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import { Button } from "@/components/ui/button";
 import LikeButton from "@/features/user_like/ui/likebutton";
 import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
@@ -64,7 +65,12 @@ export default function RecipeCard({
               {recipe.title}
             </h3>
             <p className="line-clamp-1 text-[11px] text-emerald-100/80">
-              by {recipe.writerName || "무명 셰프"} · {createdLabel}
+              by{" "}
+              <AuthorProfileMenu
+                name={recipe.writerName ?? "무명 셰프"}
+                userId={recipe.writerUid}
+              />{" "}
+              · {createdLabel}
             </p>
           </div>
           <div className="flex items-center gap-2">

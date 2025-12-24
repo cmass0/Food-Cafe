@@ -11,6 +11,7 @@ type Props = {
   page?: number;
   limit?: number;
   search?: string;
+  id?: string;
 };
 
 const EMPTY_MESSAGES: Record<ProfileRecipeType, string> = {
@@ -19,7 +20,7 @@ const EMPTY_MESSAGES: Record<ProfileRecipeType, string> = {
   like: "좋아요한 레시피가 없습니다.",
 };
 
-export default async function ProfileRecipeTab({ type, page = 1, limit = 6, search }: Props) {
+export default async function ProfileRecipeTab({ type, page = 1, limit = 6, search, id }: Props) {
   const supabase = getServerSupabase();
   const {
     data: { user },
@@ -32,11 +33,12 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
   const currentPage = Math.max(1, Math.trunc(page));
   const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
   const trimmedSearch = search?.trim() || undefined;
+  const currentUid = id ? id : user.id;
 
   try {
     if (type === "written") {
       const result = await listRecipes(supabase, {
-        writerUid: user.id,
+        writerUid: currentUid,
         page: currentPage,
         limit: safeLimit,
         search: trimmedSearch,
@@ -56,7 +58,7 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
     }
 
     if (type === "bookmark") {
-      const result = await listBookmarkedRecipes(supabase, user.id, {
+      const result = await listBookmarkedRecipes(supabase, currentUid, {
         page: currentPage,
         limit: safeLimit,
         search: trimmedSearch,
@@ -77,7 +79,7 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
     }
 
     if (type === "like") {
-      const result = await listLikedRecipes(supabase, user.id, {
+      const result = await listLikedRecipes(supabase, currentUid, {
         page: currentPage,
         limit: safeLimit,
         search: trimmedSearch,

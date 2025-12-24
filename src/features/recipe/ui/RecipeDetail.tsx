@@ -1,4 +1,5 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import KakaoShareButton from "@/features/share/ui/KakaoShareButton";
 import ViewCount from "@/features/view/ui/ViewCount.client";
 import Image from "next/image";
@@ -50,7 +51,9 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{recipe.title}</h1>
 
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>작성자 {recipe.writerName ?? "익명"}</span>
+          <span className="inline-flex items-center gap-1">
+            작성자 <AuthorProfileMenu name={recipe.writerName} userId={recipe.writerUid} />
+          </span>
           <span aria-hidden="true">·</span>
           <span>{recipe.createdAt.toLocaleString("ko-KR")}</span>
           <span aria-hidden="true">·</span>

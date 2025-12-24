@@ -9,6 +9,7 @@ import type { Post } from "../types";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { Button } from "@/components/ui/button";
+import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import {
   Table,
   TableBody,
@@ -94,7 +95,9 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
                       {post.title}
                     </Link>
                   </TableCell>
-                  <TableCell className="truncate text-center">{post.writerName}</TableCell>
+                  <TableCell className="truncate text-center">
+                    <AuthorProfileMenu name={post.writerName} userId={post.writerUid} />
+                  </TableCell>
                   <TableCell className="text-center">{formatDate(post.createdAt)}</TableCell>
                   <TableCell className="w-[80px] text-center text-xs text-muted-foreground">
                     {post.check}
