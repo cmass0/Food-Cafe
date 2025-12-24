@@ -1,4 +1,5 @@
-import { getServerSupabase } from "@/lib/supabase/server";
+﻿import { getServerSupabase } from "@/lib/supabase/server";
+import { resolveLimit, resolveOffset } from "@/lib/pagination";
 
 import { UserUpdateSchema, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
@@ -21,24 +22,6 @@ const MESSAGE_DISPLAY_NAME_REQUIRED = "\uC774\uB984\uC744 \uC785\uB825\uD574 \uC
 function withCode<T extends Error>(error: T, code: string): T & { code: string } {
   (error as T & { code: string }).code = code;
   return error as T & { code: string };
-}
-
-function resolveLimit(limit?: number): number {
-  if (typeof limit !== "number" || Number.isNaN(limit)) {
-    return DEFAULT_LIMIT;
-  }
-  const truncated = Math.trunc(limit);
-  if (truncated < 1) return 1;
-  if (truncated > MAX_LIMIT) return MAX_LIMIT;
-  return truncated;
-}
-
-function resolveOffset(page: number | undefined, limit: number): number {
-  if (typeof page === "number" && Number.isFinite(page)) {
-    const safePage = Math.max(1, Math.trunc(page));
-    return (safePage - 1) * limit;
-  }
-  return 0;
 }
 
 function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
@@ -98,7 +81,7 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
 
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
   const supabase = getServerSupabase();
-  const limit = resolveLimit(options?.limit);
+  const limit = resolveLimit(options?.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(options?.page, limit);
   const { items: rows, total: rawTotal } = await repository.fetchUsers(supabase, {
     limit,
@@ -139,3 +122,4 @@ export async function deleteUserById(): Promise<void> {
   if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
   await repository.deleteUserRecord(supabase, user.id);
 }
+

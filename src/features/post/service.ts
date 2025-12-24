@@ -10,25 +10,10 @@ import type {
   PostListResult,
 } from "./types";
 import type { Database } from "@/types/supabase";
+import { resolveLimit, resolveOffset } from "@/lib/pagination";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
-
-function resolveLimit(limit?: number): number {
-  if (typeof limit !== "number" || Number.isNaN(limit)) return DEFAULT_LIMIT;
-  const truncated = Math.trunc(limit);
-  if (truncated < 1) return 1;
-  if (truncated > MAX_LIMIT) return MAX_LIMIT;
-  return truncated;
-}
-
-function resolveOffset(page: number | undefined, limit: number): number {
-  if (typeof page === "number" && Number.isFinite(page)) {
-    const safePage = Math.max(1, Math.trunc(page));
-    return (safePage - 1) * limit;
-  }
-  return 0;
-}
 
 function mapRowToPost(row: PostRow): Post {
   return {
@@ -73,7 +58,7 @@ export async function listPosts(
   options?: PostListOptions
 ): Promise<PostListResult> {
   const parsed = postListOptionsSchema.parse(options ?? {});
-  const limit = resolveLimit(parsed.limit);
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
 
   const { items: rows, total: rawTotal } = await repository.fetchPosts(client, {

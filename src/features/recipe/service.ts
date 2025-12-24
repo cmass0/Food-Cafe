@@ -1,5 +1,6 @@
-import type { Database } from "@/types/supabase";
+﻿import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { buildBookmarkedSet } from "../user_bookmark/service";
 import { buildLikedSet } from "../user_like/service";
 import * as repository from "./repository";
@@ -39,7 +40,7 @@ export function normaliseIngredients(
     const unitCustom =
       typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
 
-    // 모든 필드가 비어 있으면 스킵
+    // 紐⑤뱺 ?꾨뱶媛 鍮꾩뼱 ?덉쑝硫??ㅽ궢
     if (!name && !amount && !unit && !unitCustom) continue;
 
     result.push({ name, amount, unit, unitCustom });
@@ -77,13 +78,13 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
   const image = input.image?.trim();
   const recipe = input.recipe?.trim();
   if (!image) {
-    throw new Error("이미지 경로가 필요합니다.");
+    throw new Error("?대?吏 寃쎈줈媛 ?꾩슂?⑸땲??");
   }
   if (!recipe) {
-    throw new Error("레시피 본문이 필요합니다.");
+    throw new Error("?덉떆??蹂몃Ц???꾩슂?⑸땲??");
   }
   if (!input.ingredients || input.ingredients.length === 0) {
-    throw new Error("재료를 한 개 이상 입력해 주세요.");
+    throw new Error("?щ즺瑜???媛??댁긽 ?낅젰??二쇱꽭??");
   }
   return {
     ...(input.id ? { id: input.id } : {}),
@@ -105,7 +106,7 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   const payload: RecipeUpdateDB = {};
-  // 바뀌는 필드만 if로 처리
+  // 諛붾뚮뒗 ?꾨뱶留?if濡?泥섎━
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
@@ -122,30 +123,14 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   return payload;
 }
 
-function resolveLimit(limit?: number): number {
-  if (typeof limit !== "number" || Number.isNaN(limit)) return DEFAULT_LIMIT;
-  const truncated = Math.trunc(limit);
-  if (truncated < 1) return 1;
-  if (truncated > MAX_LIMIT) return MAX_LIMIT;
-  return truncated;
-}
-
-function resolveOffset(page: number | undefined, limit: number): number {
-  if (typeof page === "number" && Number.isFinite(page)) {
-    const safePage = Math.max(1, Math.trunc(page));
-    return (safePage - 1) * limit;
-  }
-  return 0;
-}
-
-// 로그인 유저의 북마크 list
+// 濡쒓렇???좎???遺곷쭏??list
 export async function listBookmarkedRecipes(
   client: SupabaseClient<Database>,
   userId: string,
   options?: RecipeListOptions
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
-  const limit = resolveLimit(parsed.limit);
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
   const { items: rows, total: rowtotal } = await repository.selectRecipeByBookmarked(
     client,
@@ -174,14 +159,14 @@ export async function listBookmarkedRecipes(
   };
 }
 
-// 로그인 유저의 좋아요 list
+// 濡쒓렇???좎???醫뗭븘??list
 export async function listLikedRecipes(
   client: SupabaseClient<Database>,
   userId: string,
   options?: RecipeListOptions
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
-  const limit = resolveLimit(parsed.limit);
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
   const { items: rows, total: rowtotal } = await repository.selectRecipeByLike(client, userId, {
     limit,
@@ -211,7 +196,7 @@ export async function listRecipes(
   options?: RecipeListOptions
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
-  const limit = resolveLimit(parsed.limit);
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
   const { items: rows, total: rowtotal } = await repository.fetchRecipes(client, {
     limit,
@@ -283,3 +268,4 @@ export async function updateRecipe(
 export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
+
