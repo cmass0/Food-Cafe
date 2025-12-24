@@ -242,6 +242,8 @@ export type Database = {
           created_at: string
           display_name: string
           email: string
+          follower_count: number
+          following_count: number
           id: string
           is_admin: boolean | null
           last_sign_in_at: string | null
@@ -254,6 +256,8 @@ export type Database = {
           created_at: string
           display_name: string
           email: string
+          follower_count?: number
+          following_count?: number
           id?: string
           is_admin?: boolean | null
           last_sign_in_at?: string | null
@@ -266,6 +270,8 @@ export type Database = {
           created_at?: string
           display_name?: string
           email?: string
+          follower_count?: number
+          following_count?: number
           id?: string
           is_admin?: boolean | null
           last_sign_in_at?: string | null
