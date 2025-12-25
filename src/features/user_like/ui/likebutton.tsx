@@ -14,7 +14,15 @@ type Props = {
   onChange(next: { liked: boolean; likeCount?: number | null }): void;
 };
 
-export default function LikeButton({ recipeId, liked, count, onChange }: Props) {
+export default function LikeButton(props: Props) {
+  return (
+    <React.Suspense fallback={null}>
+      <LikeButtonInner {...props} />
+    </React.Suspense>
+  );
+}
+
+function LikeButtonInner({ recipeId, liked, count, onChange }: Props) {
   const [pending, start] = React.useTransition();
   // const disabled = pending;
   const { user } = useAuth();

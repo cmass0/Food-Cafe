@@ -40,8 +40,11 @@ export function KeywordsPlugin(): JSX.Element | null {
       return null
     }
 
-    const hashtagLength = matchArr[2].length
-    const startOffset = matchArr.index + matchArr[1].length
+    const leadingWhitespace = matchArr[1] ?? ""
+    const matchingString = matchArr[2] ?? ""
+
+    const hashtagLength = matchingString.length
+    const startOffset = matchArr.index + leadingWhitespace.length
     const endOffset = startOffset + hashtagLength
     return {
       end: endOffset,

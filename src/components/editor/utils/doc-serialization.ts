@@ -50,9 +50,13 @@ export async function docFromHash(
   if (!m) {
     return null
   }
+  const payload = m[1]
+  if (!payload) {
+    return null
+  }
   const ds = new DecompressionStream("gzip")
   const writer = ds.writable.getWriter()
-  const b64 = atob(m[1].replace(/_/g, "/").replace(/-/g, "+"))
+  const b64 = atob(payload.replace(/_/g, "/").replace(/-/g, "+"))
   const array = new Uint8Array(b64.length)
   for (let i = 0; i < b64.length; i++) {
     array[i] = b64.charCodeAt(i)

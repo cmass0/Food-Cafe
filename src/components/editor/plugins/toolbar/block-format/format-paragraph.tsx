@@ -9,6 +9,7 @@ const BLOCK_FORMAT_VALUE = "paragraph"
 
 export function FormatParagraph() {
   const { activeEditor } = useToolbarContext()
+  const meta = blockTypeToBlockName[BLOCK_FORMAT_VALUE]
 
   const formatParagraph = () => {
     activeEditor.update(() => {
@@ -22,8 +23,8 @@ export function FormatParagraph() {
   return (
     <SelectItem value={BLOCK_FORMAT_VALUE} onPointerDown={formatParagraph}>
       <div className="flex items-center gap-1 font-normal">
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].icon}
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].label}
+        {meta?.icon}
+        {meta?.label ?? BLOCK_FORMAT_VALUE}
       </div>
     </SelectItem>
   )

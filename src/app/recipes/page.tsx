@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 
@@ -22,7 +22,7 @@ const SORT_OPTIONS = [
 
 const DEFAULT_LIMIT = 12;
 
-export default function RecipesPage() {
+function RecipesPageInner() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [sort, setSort] = useState<string>("recent");
   const [loading, setLoading] = useState(true);
@@ -147,5 +147,13 @@ export default function RecipesPage() {
         />
       </footer>
     </div>
+  );
+}
+
+export default function RecipesPage() {
+  return (
+    <Suspense fallback={null}>
+      <RecipesPageInner />
+    </Suspense>
   );
 }

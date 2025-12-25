@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase";
 
-export default function AuthFlowHandler() {
+function AuthFlowHandlerInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,3 +42,10 @@ export default function AuthFlowHandler() {
   return null;
 }
 
+export default function AuthFlowHandler() {
+  return (
+    <Suspense fallback={null}>
+      <AuthFlowHandlerInner />
+    </Suspense>
+  );
+}

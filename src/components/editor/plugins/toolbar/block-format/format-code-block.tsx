@@ -10,6 +10,7 @@ const BLOCK_FORMAT_VALUE = "code"
 
 export function FormatCodeBlock() {
   const { activeEditor, blockType } = useToolbarContext()
+  const meta = blockTypeToBlockName[BLOCK_FORMAT_VALUE]
 
   const formatCode = () => {
     if (blockType !== "code") {
@@ -36,8 +37,8 @@ export function FormatCodeBlock() {
   return (
     <SelectItem value="code" onPointerDown={formatCode}>
       <div className="flex items-center gap-1 font-normal">
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].icon}
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].label}
+        {meta?.icon}
+        {meta?.label ?? BLOCK_FORMAT_VALUE}
       </div>
     </SelectItem>
   )

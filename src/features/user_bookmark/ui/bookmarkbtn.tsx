@@ -15,6 +15,14 @@ type Props = {
 };
 
 export default function BookmarkBtn({ recipeId, marked, count, onChange }: Props) {
+  return (
+    <React.Suspense fallback={null}>
+      <BookmarkBtnInner recipeId={recipeId} marked={marked} count={count} onChange={onChange} />
+    </React.Suspense>
+  );
+}
+
+function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
   const [localMarked, setLocalMarked] = React.useState(marked);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();

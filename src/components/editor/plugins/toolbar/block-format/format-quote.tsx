@@ -10,6 +10,7 @@ const BLOCK_FORMAT_VALUE = "quote"
 
 export function FormatQuote() {
   const { activeEditor, blockType } = useToolbarContext()
+  const meta = blockTypeToBlockName[BLOCK_FORMAT_VALUE]
 
   const formatQuote = () => {
     if (blockType !== "quote") {
@@ -23,8 +24,8 @@ export function FormatQuote() {
   return (
     <SelectItem value="quote" onPointerDown={formatQuote}>
       <div className="flex items-center gap-1 font-normal">
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].icon}
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].label}
+        {meta?.icon}
+        {meta?.label ?? BLOCK_FORMAT_VALUE}
       </div>
     </SelectItem>
   )

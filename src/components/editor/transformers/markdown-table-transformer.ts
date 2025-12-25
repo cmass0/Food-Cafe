@@ -85,8 +85,13 @@ export const TABLE: ElementTransformer = {
   },
   regExp: TABLE_ROW_REG_EXP,
   replace: (parentNode, _1, match) => {
+    const rowText = match[0]
+    if (!rowText) {
+      return
+    }
+
     // Header row
-    if (TABLE_ROW_DIVIDER_REG_EXP.test(match[0])) {
+    if (TABLE_ROW_DIVIDER_REG_EXP.test(rowText)) {
       const table = parentNode.getPreviousSibling()
       if (!table || !$isTableNode(table)) {
         return
@@ -114,7 +119,7 @@ export const TABLE: ElementTransformer = {
       return
     }
 
-    const matchCells = mapToTableCells(match[0])
+    const matchCells = mapToTableCells(rowText)
 
     if (matchCells == null) {
       return
@@ -159,7 +164,7 @@ export const TABLE: ElementTransformer = {
       table.append(tableRow)
 
       for (let i = 0; i < maxCells; i++) {
-        tableRow.append(i < cells.length ? cells[i] : $createTableCell(""))
+        tableRow.append(cells[i] ?? $createTableCell(""))
       }
     }
 

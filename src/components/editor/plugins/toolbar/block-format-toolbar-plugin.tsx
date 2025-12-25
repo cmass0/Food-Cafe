@@ -19,8 +19,10 @@ export function BlockFormatDropDown({
   children,
 }: {
   children: React.ReactNode
-}) {
+  }) {
   const { activeEditor, blockType, setBlockType } = useToolbarContext()
+  const currentBlock =
+    blockTypeToBlockName[blockType] ?? blockTypeToBlockName.paragraph
 
   function $updateToolbar(selection: BaseSelection) {
     if ($isRangeSelection(selection)) {
@@ -73,8 +75,8 @@ export function BlockFormatDropDown({
       }}
     >
       <SelectTrigger className="!h-8 w-min gap-1">
-        {blockTypeToBlockName[blockType].icon}
-        <span>{blockTypeToBlockName[blockType].label}</span>
+        {currentBlock?.icon}
+        <span>{currentBlock?.label ?? blockType}</span>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>{children}</SelectGroup>

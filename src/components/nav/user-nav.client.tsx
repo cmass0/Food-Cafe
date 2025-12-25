@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
+import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,7 @@ import { useAuth } from "@/app/auth/auth-context";
 
 type Props = { session: Session | null };
 
-export default function ClientUserNav({ session }: Props) {
+function ClientUserNavInner({ session }: Props) {
   const user = session?.user ?? null;
   const name = useAuth().displayName;
   const pathname = usePathname();
@@ -65,5 +66,13 @@ export default function ClientUserNav({ session }: Props) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+export default function ClientUserNav(props: Props) {
+  return (
+    <Suspense fallback={null}>
+      <ClientUserNavInner {...props} />
+    </Suspense>
   );
 }

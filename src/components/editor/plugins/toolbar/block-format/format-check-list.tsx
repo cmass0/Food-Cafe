@@ -10,6 +10,7 @@ const BLOCK_FORMAT_VALUE = "check"
 
 export function FormatCheckList() {
   const { activeEditor, blockType } = useToolbarContext()
+  const meta = blockTypeToBlockName[BLOCK_FORMAT_VALUE]
 
   const formatParagraph = () => {
     activeEditor.update(() => {
@@ -21,7 +22,7 @@ export function FormatCheckList() {
   }
 
   const formatCheckList = () => {
-    if (blockType !== "number") {
+    if (blockType !== "check") {
       activeEditor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined)
     } else {
       formatParagraph()
@@ -31,8 +32,8 @@ export function FormatCheckList() {
   return (
     <SelectItem value={BLOCK_FORMAT_VALUE} onPointerDown={formatCheckList}>
       <div className="flex items-center gap-1 font-normal">
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].icon}
-        {blockTypeToBlockName[BLOCK_FORMAT_VALUE].label}
+        {meta?.icon}
+        {meta?.label ?? BLOCK_FORMAT_VALUE}
       </div>
     </SelectItem>
   )

@@ -65,7 +65,8 @@ export function InsertLayoutDialog({
   activeEditor: LexicalEditor
   onClose: () => void
 }): JSX.Element {
-  const [layout, setLayout] = useState(LAYOUTS[0].value)
+  const defaultLayout = LAYOUTS[0]?.value ?? "1fr 1fr"
+  const [layout, setLayout] = useState(defaultLayout)
   const buttonLabel = LAYOUTS.find((item) => item.value === layout)?.label
 
   const onClick = () => {

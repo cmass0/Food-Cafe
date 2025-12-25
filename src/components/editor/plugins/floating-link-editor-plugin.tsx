@@ -335,6 +335,10 @@ function useFloatingLinkEditorToolbar(
           return
         }
         const node = nodes[0]
+        if (!node) {
+          setIsLink(false)
+          return
+        }
         const parent = node.getParent()
         if ($isLinkNode(parent) || $isLinkNode(node)) {
           setIsLink(true)

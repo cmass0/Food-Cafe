@@ -30,6 +30,10 @@ export function DynamicTablePickerPlugin({
 
   if (tableMatch !== null) {
     const rows = tableMatch[1]
+    if (!rows) {
+      return options
+    }
+
     const colOptions = tableMatch[2]
       ? [tableMatch[2]]
       : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(String)
