@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
-import { useAuthState } from "react-firebase-hooks/auth";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import ThemeToggle from "@/component/theme-toggle";
 import { Input } from "@/components/ui/input";
@@ -47,6 +46,14 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
                   className="rounded-full px-3 py-2 transition hover:bg-white/10"
                 >
                   <Link href="/recipes">레시피</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  asChild
+                  className="rounded-full px-3 py-2 transition hover:bg-white/10"
+                >
+                  <Link href="/combo">레시피 조합</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
