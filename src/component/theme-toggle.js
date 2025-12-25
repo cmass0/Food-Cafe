@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Switch } from "@heroui/react";
+import { Moon, Sun } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -31,16 +33,17 @@ export default function ThemeToggle() {
   if (!mounted) return null;
 
   return (
-    <Switch
+    <Button
+      type="button"
+      variant="outline"
       size="sm"
-      color="primary"
-      isSelected={isDark}
-      onValueChange={setIsDark}
-      aria-label="Toggle dark mode"
-      className="ml-3"
+      aria-label="다크 모드 토글"
+      className="ml-3 gap-2"
+      onClick={() => setIsDark((prev) => !prev)}
     >
-      Dark
-    </Switch>
+      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      {isDark ? "Dark" : "Light"}
+    </Button>
   );
 }
 

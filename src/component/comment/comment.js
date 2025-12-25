@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
-import { Button as HeroButton, Card, CardBody, CardFooter, CardHeader } from "@heroui/react";
 import { AlertTriangle } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { createComment, deleteComment, listComments } from "@/features/comment/api";
 import { auth } from "@/lib/firebase/client";
 import { fetchUsernameByUid } from "@/features/user/client";
@@ -227,18 +228,17 @@ export default function CommentArea({ type }) {
                 <AlertTriangle className={style.modalIcon} size={20} />
                 <span className={style.modalTitle}>{pendingDeleteId ? "댓글 삭제" : "알림"}</span>
               </div>
-              <HeroButton
-                isIconOnly
-                variant="light"
-                radius="full"
-                size="sm"
-                onPress={closeModal}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={closeModal}
                 className={style.modalCloseButton}
               >
                 ×
-              </HeroButton>
+              </Button>
             </CardHeader>
-            <CardBody className={style.modalBody}>
+            <CardContent className={style.modalBody}>
               {pendingDeleteId && (
                 <div className={style.modalWarning}>
                   <AlertTriangle size={16} className={style.modalWarningIcon} />
@@ -246,25 +246,25 @@ export default function CommentArea({ type }) {
                 </div>
               )}
               <p className={style.modalText}>{modalMessage}</p>
-            </CardBody>
+            </CardContent>
             <CardFooter className={style.modalFooter}>
-              <HeroButton
-                variant="flat"
-                radius="sm"
-                onPress={closeModal}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
                 className={style.modalCancelButton}
               >
                 {pendingDeleteId ? "취소" : "확인"}
-              </HeroButton>
+              </Button>
               {pendingDeleteId && (
-                <HeroButton
-                  variant="solid"
-                  radius="sm"
-                  onPress={handleDeleteConfirm}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
                   className={style.modalDeleteButton}
                 >
                   삭제
-                </HeroButton>
+                </Button>
               )}
             </CardFooter>
           </Card>

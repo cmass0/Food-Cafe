@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { Card, CardBody, CardFooter, Image } from "@heroui/react";
+import Image from "next/image";
+
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { listRecipes } from "@/features/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import LikeButton from "@/features/user_like/ui/likebutton";
@@ -21,37 +23,35 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
     return keyword ? hay.includes(keyword) : true;
   });
 
-  if (results.length === 0) return <p>검색 결과가 없습니다.</p>;
-  const supabase = getServerSupabase();
-  const ids = results.map((r: any) => r.id);
-  // 검색 결과에서는 개별 카드에서만 좋아요 상태를 관리
+  if (results.length === 0) {
+    return <p className="text-sm text-muted-foreground">검색 결과가 없습니다.</p>;
+  }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: "16px",
-        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-      }}
-    >
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {results.map((r: any) => (
-        <Card as={Link} href={`/recipes/${r.id}`} isPressable key={r.id} shadow="sm">
-          {r.image && (
-            <Image
-              alt={r.title}
-              height={140}
-              src={r.image}
-              width="100%"
-              style={{ objectFit: "cover" }}
-              removeWrapper
-            />
-          )}
-          <CardBody>
-            <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 600 }}>{r.title}</h3>
-            {r.summary && <p style={{ margin: 0, fontSize: "14px", color: "#555" }}>{r.summary}</p>}
-          </CardBody>
-          <CardFooter>
-            <small style={{ color: "#666" }}>by {r.writerName ?? "user"}</small>
+        <Card key={r.id} className="overflow-hidden">
+          <Link href={`/recipes/${r.id}`} className="block">
+            {r.image ? (
+              <div className="relative h-36 w-full">
+                <Image
+                  alt={r.title ?? "recipe"}
+                  src={r.image}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 220px"
+                  className="object-cover"
+                />
+              </div>
+            ) : null}
+            <CardContent className="space-y-1">
+              <h3 className="text-base font-semibold">{r.title}</h3>
+              {r.summary ? (
+                <p className="line-clamp-2 text-sm text-muted-foreground">{r.summary}</p>
+              ) : null}
+            </CardContent>
+          </Link>
+          <CardFooter className="flex items-center justify-between gap-3">
+            <small className="text-xs text-muted-foreground">by {r.writerName ?? "user"}</small>
             <LikeButton
               recipeId={r.id}
               liked={false}

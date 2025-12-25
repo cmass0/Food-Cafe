@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Skeleton } from "@heroui/react";
+import Skeleton from "@/components/ui/skeleton";
 import style from "./display-racipe.module.css";
 import { Recipe } from "@/features/recipe/types";
 import RecipeDetail from "./recipe";

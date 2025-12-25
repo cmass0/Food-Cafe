@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardBody, CardFooter, CardHeader, Button, Chip } from "@heroui/react";
 import { Eye, Heart } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import style from "./recipe.module.css";
 import { Recipe } from "@/features/recipe/types";
 
@@ -14,7 +17,7 @@ export default function RecipeCard({ data }: { data: Recipe }) {
   const imageSrc = data.image ?? data.image ?? "";
 
   return (
-    <Card shadow="lg" radius="lg" className={style.card} isPressable>
+    <Card className={style.card}>
       <CardHeader className={style.header}>
         {imageSrc ? (
           <div className={style.imageWrapper}>
@@ -30,41 +33,24 @@ export default function RecipeCard({ data }: { data: Recipe }) {
           <div className={style.imageFallback}>이미지가 존재하지 않습니다.</div>
         )}
       </CardHeader>
-      <CardBody className={style.body}>
+      <CardContent className={style.body}>
         <span className={style.writer}>{writerName || "익명 셰프"}</span>
         <h3 className={style.title}>{data.title}</h3>
         <p className={style.summary}>{data.summary || "설명이 준비되지 않았습니다."}</p>
-      </CardBody>
+      </CardContent>
       <CardFooter className={style.footer}>
         <div className={style.metrics}>
-          <Chip
-            className={style.metricChip}
-            startContent={<Heart size={14} />}
-            variant="flat"
-            radius="full"
-            size="sm"
-          >
+          <Badge variant="secondary" className={style.metricChip}>
+            <Heart size={14} />
             {likeLabel}
-          </Chip>
-          <Chip
-            className={style.metricChip}
-            startContent={<Eye size={14} />}
-            variant="flat"
-            radius="full"
-            size="sm"
-          >
+          </Badge>
+          <Badge variant="secondary" className={style.metricChip}>
+            <Eye size={14} />
             {viewLabel}
-          </Chip>
+          </Badge>
         </div>
-        <Button
-          as={Link}
-          href={`/recipes/${data.id}`}
-          size="sm"
-          color="primary"
-          radius="full"
-          variant="flat"
-        >
-          자세히 보기
+        <Button asChild size="sm">
+          <Link href={`/recipes/${data.id}`}>자세히 보기</Link>
         </Button>
       </CardFooter>
     </Card>
