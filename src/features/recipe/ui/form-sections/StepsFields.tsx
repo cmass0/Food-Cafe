@@ -26,7 +26,7 @@ export function StepsFields({ form, stepsArray }: StepsFieldsProps) {
                   variant="outline"
                   size="sm"
                   disabled={stepsArray.fields.length >= 15}
-                  onClick={() => stepsArray.append({ text: "" })}
+                  onClick={() => stepsArray.append({ description: "" })}
                 >
                   단계 추가
                 </Button>
@@ -69,7 +69,7 @@ export function StepsFields({ form, stepsArray }: StepsFieldsProps) {
                   </div>
                   <FormField
                     control={form.control}
-                    name={`steps.${index}.text`}
+                    name={`steps.${index}.description`}
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
