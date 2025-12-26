@@ -88,10 +88,7 @@ export async function selectRecipeByBookmarked(
     query = query.textSearch("recipes.tsv", params.search, { type: "plain" });
   }
 
-  const { data, error, count } = await query.range(
-    safeOffset,
-    Math.max(rangeEnd, safeOffset)
-  );
+  const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (error) throw error;
 
@@ -127,10 +124,7 @@ export async function selectRecipeByLike(
     query = query.textSearch("recipes.tsv", params.search, { type: "plain" });
   }
 
-  const { data, error, count } = await query.range(
-    safeOffset,
-    Math.max(rangeEnd, safeOffset)
-  );
+  const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (error) throw error;
 
@@ -145,9 +139,9 @@ export async function selectRecipeByLike(
 
 export async function insertRecipeRecord(
   client: SupabaseClient<Database>,
-  payload: RecipeInsertDB
+  parse: RecipeInsertDB
 ): Promise<RecipeRow> {
-  const { data, error } = await client.from("recipes").insert(payload).select("*").single();
+  const { data, error } = await client.from("recipes").insert(parse).select("*").single();
   if (error) throw error;
   if (!data) {
     throw new Error("레시피를 생성하지 못했습니다.");
