@@ -18,7 +18,7 @@ function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
     tags: values.tags,
     category: values.category,
     difficulty: values.difficulty,
-    time_minutes: values.time_minutes,
+    timeMinutes: values.timeMinutes,
     servings: values.servings,
   };
 }
@@ -40,6 +40,9 @@ export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
         image: recipe.image ?? undefined,
         tags: recipe.tags,
         category: recipe.category ?? undefined,
+        difficulty: recipe.difficulty ?? undefined,
+        timeMinutes: recipe.timeMinutes ?? undefined,
+        servings: recipe.servings ?? undefined,
       }}
       submitLabel="수정하기"
       onSubmit={(values) => handleSubmit(values)}
