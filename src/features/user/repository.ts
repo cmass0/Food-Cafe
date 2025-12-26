@@ -61,7 +61,7 @@ export async function selectUserByDisplayName(
     .from("users")
     .select("*")
     .ilike("display_name", name)
-    .maybeSingle();
+    .maybeSingle(); // 데이터가 존재하지 않을 수 있음 
   if (error) throw error;
   return data ?? null;
 }

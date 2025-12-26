@@ -1,8 +1,6 @@
-export function resolveLimit(
-  limit?: number,
-  defaultLimit = 20,
-  maxLimit = 50
-): number {
+// offset 계산 및 limit 계산 유틸리티 함수
+
+export function resolveLimit(limit?: number, defaultLimit = 20, maxLimit = 50): number {
   if (typeof limit !== "number" || Number.isNaN(limit)) return defaultLimit;
   const truncated = Math.trunc(limit);
   if (truncated < 1) return 1;
