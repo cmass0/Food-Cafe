@@ -96,6 +96,9 @@ export async function updateComment(
   id: string,
   input: unknown
 ): Promise<Comment | null> {
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("로그인이 필요합니다");
 
   const parsed = commentUpdateSchema.parse(input);
   const payload = buildUpdatePayload(parsed);
@@ -105,5 +108,9 @@ export async function updateComment(
 }
 
 export async function deleteComment(client: SupabaseClient<Database>, id: string): Promise<void> {
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("로그인이 필요합니다");
+
   await repository.deleteComment(client, id);
 }
