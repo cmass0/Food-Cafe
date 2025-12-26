@@ -1,14 +1,19 @@
+import type { Database } from "@/types/supabase";
 import { z } from "zod";
-import type { Tables } from "@/types/supabase";
-import { recipeFormSchema, recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
+import {
+  recipeFormSchema,
+  recipeInsertSchema,
+  recipeListOptionsSchema,
+  recipeUpdateSchema,
+} from "./schema";
 
-export type RecipeRow = Tables<"recipes">;
+export type RecipeRow = Database["public"]["Tables"]["recipes"]["Row"];
 
 export interface Recipe {
   id: string;
   title: string;
   summary: string | null;
-  recipe: string | null;
+  steps: RecipeStep[];
   ingredients: RecipeIngredient[];
   image: string | null;
   category: string | null;
@@ -59,7 +64,7 @@ export type RecipeInsertDB = {
   id?: string;
   title: string;
   summary?: string | null;
-  recipe?: string;
+  steps: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
@@ -75,7 +80,7 @@ export type RecipeInsertDB = {
 export type RecipeUpdateDB = {
   title?: string;
   summary?: string | null;
-  recipe?: string;
+  steps?: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;
   category?: string | null;
@@ -91,6 +96,14 @@ export type RecipeWriterInfo = {
   email?: string | null;
 };
 
+export type StepInput = {
+  description: string;
+};
+
+export type RecipeStep = {
+  description: string;
+};
+
 export type IngredientUnit =
   | "g"
   | "kg"
@@ -102,22 +115,19 @@ export type IngredientUnit =
   | "큰술"
   | "작은술"
   | "꼬집"
-  | "__custom__";
+  | "custom";
 
-  export type IngredientInput = {
-    name: string;
-    amount: string;
-    unit: IngredientUnit;
-    unitCustom: string;
-  };
-  
-export type StepInput = { text: string };
+export type IngredientInput = {
+  name: string;
+  amount: string;
+  unit: IngredientUnit;
+  unitCustom: string;
+};
 
 export type FormValues = z.infer<typeof recipeFormSchema> & {
   ingredients: IngredientInput[];
   steps: StepInput[];
   summary: string;
-  recipe: string;
   category: string;
   tags: string[];
 };
