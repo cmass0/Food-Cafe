@@ -1,28 +1,12 @@
-﻿import { getServerSupabase } from "@/lib/supabase/server";
-import { resolveLimit, resolveOffset } from "@/lib/pagination";
+﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { getServerSupabase } from "@/lib/supabase/server";
 
-import { UserUpdateSchema, type UserUpdateInput } from "./schema";
 import * as repository from "./repository";
-import type {
-  UserListOptions,
-  UserListResult,
-  UserRow,
-  UserUpdateDB,
-} from "./types";
+import { UserUpdateSchema, type UserUpdateInput } from "./schema";
+import type { UserListOptions, UserListResult, UserRow, UserUpdateDB } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-
-const ERROR_UNAUTHORIZED = "UNAUTHORIZED";
-const ERROR_VALIDATION = "VALIDATION_ERROR";
-
-const MESSAGE_LOGIN_REQUIRED = "\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.";
-const MESSAGE_DISPLAY_NAME_REQUIRED = "\uC774\uB984\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694.";
-
-function withCode<T extends Error>(error: T, code: string): T & { code: string } {
-  (error as T & { code: string }).code = code;
-  return error as T & { code: string };
-}
 
 function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
   const payload: UserUpdateDB = {
@@ -52,10 +36,9 @@ export async function getSelf(): Promise<UserRow | null> {
     error,
   } = await supabase.auth.getUser();
   if (error) throw error;
-  if (!user) return null;
+  if (!user) throw new Error("로그인이 필요합니다");
   return repository.selectUserById(supabase, user.id);
 }
-
 
 export async function updateSelf(input: unknown): Promise<UserRow> {
   const supabase = getServerSupabase();
@@ -64,11 +47,11 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
     error,
   } = await supabase.auth.getUser();
   if (error) throw error;
-  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
+  if (!user) throw new Error("로그인이 필요합니다.");
 
   const parsed = UserUpdateSchema.parse(input);
   if (typeof parsed.display_name === "string" && !parsed.display_name.trim()) {
-    throw withCode(new Error(MESSAGE_DISPLAY_NAME_REQUIRED), ERROR_VALIDATION);
+    throw new Error("이름을 입력해 주세요.");
   }
 
   if (parsed.email && parsed.email !== user.email) {
@@ -105,6 +88,7 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
 export async function findUserByDisplayName(name: string): Promise<UserRow | null> {
   const supabase = getServerSupabase();
   return repository.selectUserByDisplayName(supabase, name);
+  
 }
 
 export async function getUserById(id: string): Promise<UserRow | null> {
@@ -119,7 +103,6 @@ export async function deleteUserById(): Promise<void> {
     error,
   } = await supabase.auth.getUser();
   if (error) throw error;
-  if (!user) throw withCode(new Error(MESSAGE_LOGIN_REQUIRED), ERROR_UNAUTHORIZED);
+  if (!user) throw new Error("로그인이 필요합니다.");
   await repository.deleteUserRecord(supabase, user.id);
 }
-
