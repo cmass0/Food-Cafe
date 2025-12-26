@@ -1,6 +1,6 @@
-﻿import type { Database } from "@/types/supabase";
+﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { buildBookmarkedSet } from "../user_bookmark/service";
 import { buildLikedSet } from "../user_like/service";
 import * as repository from "./repository";
@@ -40,7 +40,6 @@ export function normaliseIngredients(
     const unitCustom =
       typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
 
-    // 紐⑤뱺 ?꾨뱶媛 鍮꾩뼱 ?덉쑝硫??ㅽ궢
     if (!name && !amount && !unit && !unitCustom) continue;
 
     result.push({ name, amount, unit, unitCustom });
@@ -78,13 +77,13 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
   const image = input.image?.trim();
   const recipe = input.recipe?.trim();
   if (!image) {
-    throw new Error("?대?吏 寃쎈줈媛 ?꾩슂?⑸땲??");
+    throw new Error("이미지가 존재하지 않습니다 ");
   }
   if (!recipe) {
-    throw new Error("?덉떆??蹂몃Ц???꾩슂?⑸땲??");
+    throw new Error("레시피가 존재하지 않습니다");
   }
   if (!input.ingredients || input.ingredients.length === 0) {
-    throw new Error("?щ즺瑜???媛??댁긽 ?낅젰??二쇱꽭??");
+    throw new Error("재료가 존재하지 않습니다");
   }
   return {
     ...(input.id ? { id: input.id } : {}),
@@ -106,7 +105,7 @@ function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo)
 
 function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   const payload: RecipeUpdateDB = {};
-  // 諛붾뚮뒗 ?꾨뱶留?if濡?泥섎━
+
   if (patch.title !== undefined) payload.title = patch.title;
   if (patch.summary !== undefined) payload.summary = patch.summary;
   if (patch.recipe !== undefined) payload.recipe = patch.recipe;
@@ -123,7 +122,6 @@ function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
   return payload;
 }
 
-// 濡쒓렇???좎???遺곷쭏??list
 export async function listBookmarkedRecipes(
   client: SupabaseClient<Database>,
   userId: string,
@@ -159,7 +157,6 @@ export async function listBookmarkedRecipes(
   };
 }
 
-// 濡쒓렇???좎???醫뗭븘??list
 export async function listLikedRecipes(
   client: SupabaseClient<Database>,
   userId: string,
@@ -268,4 +265,3 @@ export async function updateRecipe(
 export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
   await repository.deleteRecipeRecord(client, id);
 }
-
