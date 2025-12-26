@@ -1,16 +1,16 @@
+import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import * as repository from "./repository";
+import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import type {
   Post,
   PostInsertDB,
-  PostRow,
-  PostUpdateDB,
   PostListOptions,
   PostListResult,
+  PostRow,
+  PostUpdateDB,
 } from "./types";
-import type { Database } from "@/types/supabase";
-import { resolveLimit, resolveOffset } from "@/lib/pagination";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
@@ -82,24 +82,18 @@ export async function listPosts(
   };
 }
 
-export async function getPost(
-  client: SupabaseClient<Database>,
-  id: string
-): Promise<Post | null> {
+export async function getPost(client: SupabaseClient<Database>, id: string): Promise<Post | null> {
   const row = await repository.selectPostById(client, id);
   return row ? mapRowToPost(row) : null;
 }
 
-export async function createPost(
-  client: SupabaseClient<Database>,
-  input: unknown
-): Promise<Post> {
+export async function createPost(client: SupabaseClient<Database>, input: unknown): Promise<Post> {
   const {
     data: { user },
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("로그인 상태가 아닙니다.");
+  if (!user) throw new Error("로그인이 필요합니다.");
 
   const parsed = postInsertSchema.parse(input);
   const payload = buildInsertPayload(parsed, user.id);
@@ -122,7 +116,7 @@ export async function updatePost(
       error,
     } = await client.auth.getUser();
     if (error) throw error;
-    if (!user) throw new Error("로그인 상태가 아닙니다.");
+    if (!user) throw new Error("로그인이 필요합니다.");
     row = await repository.updatePostRecordByOwner(client, id, user.id, updatePayload);
   } else {
     row = await repository.selectPostById(client, id);
@@ -137,7 +131,6 @@ export async function removePost(client: SupabaseClient<Database>, id: string): 
     error,
   } = await client.auth.getUser();
   if (error) throw error;
-  if (!user) throw new Error("로그인 상태가 아닙니다.");
+  if (!user) throw new Error("로그인이 필요합니다.");
   await repository.deletePostRecord(client, id, user.id);
 }
-
