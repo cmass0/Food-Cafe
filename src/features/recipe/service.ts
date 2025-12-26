@@ -8,12 +8,11 @@ import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from 
 import type {
   Recipe,
   RecipeIngredient,
-  RecipeInsertDB,
   RecipeInsertInput,
   RecipeListOptions,
   RecipeListResult,
   RecipeRow,
-  RecipeUpdateDB,
+  RecipeStep,
   RecipeUpdateInput,
   RecipeWriterInfo,
 } from "./types";
@@ -26,6 +25,12 @@ export function normaliseTextArray(value: string[] | null | undefined): string[]
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
+// 객체가 JSON 형태인지 검사
+function isJson(obj: unknown): obj is Record<string, unknown> {
+  return typeof obj === "object" && obj !== null;
+}
+
+// json 형태로 저장된 재료목록을 RecipeIngredient 배열로 변환
 export function normaliseIngredients(
   value: RecipeRow["ingredients"] | undefined
 ): RecipeIngredient[] {
@@ -33,12 +38,13 @@ export function normaliseIngredients(
 
   const result: RecipeIngredient[] = [];
   for (const item of value) {
+    if (!isJson(item)) continue;
+
     if (!item || typeof item !== "object") continue;
-    const name = typeof (item as any).name === "string" ? (item as any).name.trim() : "";
-    const amount = typeof (item as any).amount === "string" ? (item as any).amount.trim() : "";
-    const unit = typeof (item as any).unit === "string" ? (item as any).unit.trim() : "";
-    const unitCustom =
-      typeof (item as any).unitCustom === "string" ? (item as any).unitCustom.trim() : "";
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    const amount = typeof item.amount === "string" ? item.amount.trim() : "";
+    const unit = typeof item.unit === "string" ? item.unit.trim() : "";
+    const unitCustom = typeof item.unitCustom === "string" ? item.unitCustom.trim() : "";
 
     if (!name && !amount && !unit && !unitCustom) continue;
 
@@ -48,20 +54,37 @@ export function normaliseIngredients(
   return result;
 }
 
+// json 형태로 저장된 조리단계를 RecipeStep 배열로 변환
+export function normaliseSteps(value: RecipeRow["steps"] | undefined): RecipeStep[] {
+  if (!Array.isArray(value)) return [];
+
+  const result: RecipeStep[] = [];
+  for (const item of value) {
+    if (!isJson(item)) continue;
+    if (!item || typeof item !== "object") continue;
+    const step = typeof item.description === "string" ? item.description.trim() : "";
+
+    if (!step) continue;
+
+    result.push({ description: step });
+  }
+
+  return result;
+}
+
 function mapRowToRecipe(row: RecipeRow): Recipe {
-  const anyRow = row as any;
   return {
     id: row.id,
     title: row.title,
     summary: row.summary,
-    recipe: row.recipe,
-    ingredients: normaliseIngredients((row as any).ingredients),
+    steps: normaliseSteps(row.steps),
+    ingredients: normaliseIngredients(row.ingredients),
     image: row.image,
     category: row.category,
     tags: normaliseTextArray(row.tags),
-    difficulty: anyRow.difficulty ?? null,
-    timeMinutes: anyRow.time_minutes ?? null,
-    servings: anyRow.servings ?? null,
+    difficulty: row.difficulty ?? null,
+    timeMinutes: row.time_minutes ?? null,
+    servings: row.servings ?? null,
     likeCount: row.like_count ?? 0,
     viewCount: row.view_count ?? 0,
     lastLikedAt: row.last_liked_at,
@@ -71,55 +94,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     writerName: row.writer_name ?? null,
     writerEmail: row.writer_email ?? null,
   };
-}
-
-function buildInsertPayload(input: RecipeInsertInput, writer?: RecipeWriterInfo): RecipeInsertDB {
-  const image = input.image?.trim();
-  const recipe = input.recipe?.trim();
-  if (!image) {
-    throw new Error("이미지가 존재하지 않습니다 ");
-  }
-  if (!recipe) {
-    throw new Error("레시피가 존재하지 않습니다");
-  }
-  if (!input.ingredients || input.ingredients.length === 0) {
-    throw new Error("재료가 존재하지 않습니다");
-  }
-  return {
-    ...(input.id ? { id: input.id } : {}),
-    title: input.title,
-    summary: input.summary ?? null,
-    recipe,
-    ingredients: input.ingredients,
-    image,
-    category: input.category && input.category.trim().length > 0 ? input.category.trim() : null,
-    tags: input.tags ?? [],
-    difficulty: (input as any).difficulty ?? null,
-    time_minutes: (input as any).time_minutes ?? null,
-    servings: (input as any).servings ?? null,
-    ...(writer?.uid ? { writer_uid: writer.uid } : {}),
-    ...(writer?.name ? { writer_name: writer.name } : {}),
-    ...(writer?.email ? { writer_email: writer.email } : {}),
-  };
-}
-
-function buildUpdatePayload(patch: RecipeUpdateInput): RecipeUpdateDB {
-  const payload: RecipeUpdateDB = {};
-
-  if (patch.title !== undefined) payload.title = patch.title;
-  if (patch.summary !== undefined) payload.summary = patch.summary;
-  if (patch.recipe !== undefined) payload.recipe = patch.recipe;
-  if (patch.ingredients !== undefined) payload.ingredients = patch.ingredients;
-  if (patch.image !== undefined) payload.image = patch.image;
-  if (patch.category !== undefined) payload.category = patch.category;
-  if (patch.tags !== undefined) payload.tags = patch.tags;
-  if ((patch as any).difficulty !== undefined)
-    payload.difficulty = (patch as any).difficulty ?? null;
-  if ((patch as any).time_minutes !== undefined)
-    payload.time_minutes = (patch as any).time_minutes ?? null;
-  if ((patch as any).servings !== undefined) payload.servings = (patch as any).servings ?? null;
-
-  return payload;
 }
 
 export async function listBookmarkedRecipes(
@@ -245,8 +219,7 @@ export async function createRecipe(
   writer?: RecipeWriterInfo
 ): Promise<Recipe> {
   const parsed = recipeInsertSchema.parse(input);
-  const payload = buildInsertPayload(parsed, writer);
-  const row = await repository.insertRecipeRecord(client, payload);
+  const row = await repository.insertRecipeRecord(client, parsed);
   return mapRowToRecipe(row);
 }
 
@@ -256,9 +229,7 @@ export async function updateRecipe(
   patch: RecipeUpdateInput
 ): Promise<Recipe> {
   const parsed = recipeUpdateSchema.parse(patch);
-  const payload = buildUpdatePayload(parsed);
-
-  const row = await repository.updateRecipeRecordByOwner(client, id, payload);
+  const row = await repository.updateRecipeRecordByOwner(client, id, parsed);
   return mapRowToRecipe(row);
 }
 
