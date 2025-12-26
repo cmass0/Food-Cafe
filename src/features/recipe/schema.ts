@@ -1,18 +1,10 @@
 ﻿import { z } from "zod";
 
 // 대표 이미지는 서버에서 최종 URL을 받지만, 폼 단계에서는 빈 문자열을 허용하고 undefined로 정규화
-const imageFieldSchema = z.preprocess(
-  (value) => {
-    if (typeof value === "string" && value.trim() === "") return undefined;
-    return value;
-  },
-  z
-    .string()
-    .trim()
-    .min(1, "이미지 경로를 확인해 주세요.")
-    .max(2048, "이미지 경로는 2048자 이하만 가능합니다.")
-    .optional()
-);
+const imageFieldSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, z.string().trim().min(1, "이미지 경로를 확인해 주세요.").max(2048, "이미지 경로는 2048자 이하만 가능합니다.").optional());
 
 export const imageFileSchema = z
   .union([z.instanceof(File), z.null()], {
@@ -31,9 +23,6 @@ export const imageFileSchema = z
     }
   });
 
-
-
-
 const tagSchema = z
   .string()
   .trim()
@@ -47,6 +36,11 @@ const ingredientItemSchema = z.object({
   unitCustom: z.string().trim().max(100).optional().default(""),
 });
 
+const recipeStepSchema = z.object({
+  stepindex: z.number().int().min(1).optional(),
+  description: z.string().trim().min(1, "내용을 입력해 주세요."),
+});
+
 export const recipeInsertSchema = z.object({
   id: z.string().uuid().optional(),
   title: z
@@ -54,35 +48,18 @@ export const recipeInsertSchema = z.object({
     .trim()
     .min(1, "제목을 입력해 주세요.")
     .max(200, "제목은 200자 이하만 가능합니다."),
-  summary: z
-    .string()
-    .trim()
-    .max(500, "요약은 500자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
-  recipe: z
-    .string()
-    .trim()
-    .min(1, "레시피 내용을 입력해 주세요.")
-    .max(8000, "레시피는 8000자 이하로 입력해 주세요."),
+  summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+
+  steps: z.array(recipeStepSchema),
+
   ingredients: z
     .array(ingredientItemSchema)
     .min(1, "재료를 한 개 이상 입력해 주세요.")
     .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
   image: imageFieldSchema,
-  category: z
-    .string()
-    .trim()
-    .max(120, "카테고리는 120자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
+  category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다.").nullable().optional(),
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-  difficulty: z
-    .string()
-    .trim()
-    .max(50, "난이도는 50자 이하만 가능합니다.")
-    .nullable()
-    .optional(),
+  difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다.").nullable().optional(),
   time_minutes: z
     .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
     .int("소요 시간은 정수로 입력해 주세요.")
@@ -102,7 +79,6 @@ export const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true 
   imageFile: imageFileSchema,
 });
 
-
 export const recipeUpdateSchema = z
   .object({
     title: z
@@ -111,14 +87,12 @@ export const recipeUpdateSchema = z
       .min(1, "제목을 입력해 주세요.")
       .max(200, "제목은 200자 이하만 가능합니다.")
       .optional(),
-    summary: z
-      .string()
-      .trim()
-      .max(500, "요약은 500자 이하만 가능합니다.")
-      .nullable()
+    summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+    steps: z.array(recipeStepSchema),
+    ingredients: z
+      .array(ingredientItemSchema)
+      .min(1, "재료를 한 개 이상 입력해 주세요.")
       .optional(),
-    recipe: z.string().trim().min(1, "레시피 내용을 입력해 주세요."),
-    ingredients: z.array(ingredientItemSchema).min(1, "재료를 한 개 이상 입력해 주세요.").optional(),
     image: imageFieldSchema.optional(),
     category: z
       .string()
@@ -127,12 +101,7 @@ export const recipeUpdateSchema = z
       .nullable()
       .optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-    difficulty: z
-      .string()
-      .trim()
-      .max(50, "난이도는 50자 이하만 가능합니다.")
-      .nullable()
-      .optional(),
+    difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다.").nullable().optional(),
     time_minutes: z
       .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
       .int("소요 시간은 정수로 입력해 주세요.")
@@ -163,7 +132,7 @@ export const requestRecipeSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string(),
   summary: z.string().nullable().optional(),
-  recipe: z.string(),
+  steps: z.array(recipeStepSchema),
   ingredients: z.array(ingredientItemSchema),
   image: z.string().trim().min(1),
   category: z.string().nullable().optional(),
