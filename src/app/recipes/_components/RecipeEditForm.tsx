@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import RecipeForm from "@/features/recipe/ui/RecipeForm";
 import type { Recipe, RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
+import RecipeForm from "@/features/recipe/ui/RecipeForm";
+import { useRouter } from "next/navigation";
 import { updateRecipeAction } from "../actions";
 
 type RecipeEditFormProps = {
@@ -13,10 +13,13 @@ function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
   return {
     title: values.title,
     summary: values.summary,
-    recipe: values.recipe,
+    steps: values.steps,
     image: values.image,
     tags: values.tags,
     category: values.category,
+    difficulty: values.difficulty,
+    time_minutes: values.time_minutes,
+    servings: values.servings,
   };
 }
 
@@ -33,7 +36,7 @@ export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
       defaultValues={{
         title: recipe.title,
         summary: recipe.summary ?? undefined,
-        recipe: recipe.recipe ?? undefined,
+        steps: recipe.steps ?? undefined,
         image: recipe.image ?? undefined,
         tags: recipe.tags,
         category: recipe.category ?? undefined,
