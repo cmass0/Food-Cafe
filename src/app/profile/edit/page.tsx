@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { UserRow } from "@/features/user/types";
+import { UserRow } from "@/domain/user/types";
 
 import { User } from "lucide-react";
 import { ChangeEvent, useState } from "react";

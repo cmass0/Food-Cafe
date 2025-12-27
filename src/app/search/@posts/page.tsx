@@ -1,7 +1,7 @@
 ﻿import Link from "next/link";
 
+import { listPosts } from "@/domain/post/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { listPosts } from "@/features/post/service";
 
 export const revalidate = 0;
 
@@ -12,7 +12,7 @@ export default async function PostResults({ searchParams }: { searchParams: SP }
   const q: string = (Array.isArray(raw) ? raw[0] : raw) ?? "";
   const keyword = q.trim();
   const limit = 10;
-  
+
   const supabase = getServerSupabase();
   const { items } = await listPosts(supabase, {
     limit,

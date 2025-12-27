@@ -1,9 +1,9 @@
 "use client";
 
-import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/features/user_like/types";
+import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/domain/user_like/types";
 import { getBrowserSupabase } from "@/lib/supabase";
-import TopRecipesCarousel from "./top-recipes-carousel";
 import { useEffect, useState } from "react";
+import TopRecipesCarousel from "./top-recipes-carousel";
 
 export default function WeeklyTopRecipe() {
   const [topRecipes, setToprecipes] = useState<TopRecipe[]>([]);

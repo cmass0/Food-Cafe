@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { UserUpdateSchema } from "@/domain/user/schema";
+import * as userService from "@/domain/user/service";
 import { requireAuth } from "@/lib/auth/session";
-import { UserUpdateSchema } from "@/features/user/schema";
-import * as userService from "@/features/user/service";
 
 export async function updateProfileAction(formData: FormData): Promise<void> {
   await requireAuth();

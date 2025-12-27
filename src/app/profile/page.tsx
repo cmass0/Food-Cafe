@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import * as userService from "@/features/user/service";
+import * as userService from "@/domain/user/service";
 import { User } from "lucide-react";
 
 import EditSheet from "./edit/page";

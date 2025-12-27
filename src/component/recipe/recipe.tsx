@@ -1,14 +1,14 @@
 ﻿"use client";
 
+import { Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, Heart } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Recipe } from "@/domain/recipe/types";
 import style from "./recipe.module.css";
-import { Recipe } from "@/features/recipe/types";
 
 export default function RecipeCard({ data }: { data: Recipe }) {
   const likeLabel = data.likeCount ?? data.likeCount ?? 0;

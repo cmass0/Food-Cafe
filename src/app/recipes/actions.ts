@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ZodError } from "zod";
 
+import * as recipeService from "@/domain/recipe/service";
+import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
+import { getLikeMeta } from "@/domain/user_like/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import * as recipeService from "@/features/recipe/service";
-import type { RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
-import { getLikeMeta } from "@/features/user_like/service";
 
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
@@ -20,14 +20,14 @@ function handleError(error: unknown): never {
   throw new Error("알 수 없는 오류가 발생했습니다.");
 }
 
-export async function createRecipeAction(input: RecipeInsertInput) {
+export async function createRecipeAction(input: RecipeInsertDB) {
   try {
     const supabase = getServerSupabase();
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser();
-    if (error) {  
+    if (error) {
       throw new Error("알 수 없는 오류가 발생했습니다.");
     }
     if (!user) {
@@ -54,7 +54,7 @@ export async function createRecipeAction(input: RecipeInsertInput) {
   }
 }
 
-export async function updateRecipeAction(id: string, patch: RecipeUpdateInput) {
+export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
   try {
     const supabase = getServerSupabase();
     const recipe = await recipeService.updateRecipe(supabase, id, patch);
@@ -78,7 +78,6 @@ export async function deleteRecipeAction(id: string) {
     handleError(error);
   }
 }
-
 
 export async function likeMetaAction(recipeId: string) {
   return getLikeMeta(recipeId);

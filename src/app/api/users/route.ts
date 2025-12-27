@@ -1,5 +1,5 @@
 // src/app/api/users/route.ts
-import * as userService from "@/features/user/service";
+import * as userService from "@/domain/user/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

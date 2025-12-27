@@ -1,6 +1,6 @@
-import { ZodError } from "zod";
+import * as postService from "@/domain/post/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import * as postService from "@/features/post/service";
+import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

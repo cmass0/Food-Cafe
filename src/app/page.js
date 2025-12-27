@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import SlideShow from "@/component/main-slide";
 import FooterSlide from "@/component/footer/footer-slide";
+import SlideShow from "@/component/main-slide";
+import { Button } from "@/components/ui/button";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { useAuth } from "./auth/auth-context";
-import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 
 import style from "./page.module.css";
 

@@ -47,7 +47,7 @@ next-env.d.ts
 .codex/config.toml
 config.toml
 .mcp.json
-.claude
+/supabase/.temp/
 
 # Logs
 logs

@@ -1,7 +1,7 @@
-import { ZodError } from "zod";
-import * as commentService from "@/features/comment/service";
+import * as commentService from "@/domain/comment/service";
+import { CommentInsertInput } from "@/domain/comment/types";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { CommentInsertInput } from "@/features/comment/types";
+import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,14 +42,13 @@ export async function POST(req: Request) {
       data: { user },
       error,
     } = await supabase.auth.getUser();
-    const body : CommentInsertInput = await req.json();
+    const body: CommentInsertInput = await req.json();
 
     if (error) throw error;
     if (!user) {
       return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
     }
- 
- 
+
     const created = await commentService.createComment(supabase, user.id, body);
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {

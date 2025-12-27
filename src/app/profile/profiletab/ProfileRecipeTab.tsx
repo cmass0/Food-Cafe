@@ -1,4 +1,4 @@
-import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/features/recipe/service";
+import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/domain/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import ProfileRecipeGrid from "./ProfileRecipeGrid";

@@ -1,6 +1,6 @@
-import { ZodError } from "zod";
-import * as commentService from "@/features/comment/service";
+import * as commentService from "@/domain/comment/service";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

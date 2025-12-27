@@ -1,4 +1,4 @@
-﻿import PostForm from "@/features/post/ui/PostForm";
+﻿import PostForm from "@/domain/post/ui/PostForm";
 import { createPostAction } from "../actions";
 
 export default function NewPostPage() {

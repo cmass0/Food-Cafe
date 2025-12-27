@@ -1,9 +1,8 @@
 ﻿"use client";
 
 import Skeleton from "@/components/ui/skeleton";
+import { Recipe } from "@/domain/recipe/types";
 import style from "./display-racipe.module.css";
-import { Recipe } from "@/features/recipe/types";
-import RecipeDetail from "./recipe";
 import RecipeCard from "./recipe";
 
 type GridracipeProps = {

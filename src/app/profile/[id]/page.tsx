@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FollowButton from "@/features/follow/ui/FollowButton";
-import * as userService from "@/features/user/service";
+import FollowButton from "@/domain/follow/ui/FollowButton";
+import * as userService from "@/domain/user/service";
 import { User } from "lucide-react";
 
 import { getServerSupabase } from "@/lib/supabase/server";

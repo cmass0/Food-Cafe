@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
 import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 
 type Props = { session: Session | null };
 

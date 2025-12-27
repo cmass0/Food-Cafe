@@ -1,6 +1,6 @@
 // src/app/api/recipes/[id]/route.ts
-import { recipeUpdateSchema } from "@/features/recipe/schema";
-import * as service from "@/features/recipe/service";
+import { recipeUpdateSchema } from "@/domain/recipe/schema";
+import * as service from "@/domain/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";

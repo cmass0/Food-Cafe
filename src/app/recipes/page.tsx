@@ -1,18 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
-import RecipeList from "@/features/recipe/ui/RecipeList";
+import { useAuth } from "@/app/auth/auth-context";
+import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PaginationComponent } from "@/components/pagenation/pagenation";
-import { useAuth } from "@/app/auth/auth-context";
-import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
-import { listRecipes } from "@/features/recipe/api";
-import type { Recipe, RecipeListResult } from "@/features/recipe/types";
-
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { listRecipes } from "@/domain/recipe/api";
+import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
+import RecipeList from "@/domain/recipe/ui/RecipeList";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -77,7 +76,6 @@ function RecipesPageInner() {
       mounted = false;
     };
   }, [pageParam, limitParam, user?.id]);
-
 
   // 레시피 정렬
   const sortedRecipes = useMemo(() => {

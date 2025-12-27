@@ -1,7 +1,7 @@
 // src/app/api/posts/[id]/route.ts
+import { postUpdateSchema } from "@/domain/post/schema";
+import * as postService from "@/domain/post/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { postUpdateSchema } from "@/features/post/schema";
-import * as postService from "@/features/post/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,6 @@ const mapAuthError = (error: unknown) => {
   }
   return null;
 };
-
 
 export async function GET(_: Request, { params }: Ctx) {
   try {
@@ -88,7 +87,9 @@ export async function DELETE(_: Request, { params }: Ctx) {
   try {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     console.log("[posts][PUT] session user:", user?.id); //
     const existing = await postService.getPost(supabase, params.id);
     if (!existing) return err(404, "NOT_FOUND", "게시글을 찾을 수 없습니다.");

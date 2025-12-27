@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import { Eye, Heart } from "lucide-react";
-import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { TopRecipe } from "@/features/user_like/types";
+import { TopRecipe } from "@/domain/user_like/types";
+import { Eye, Heart } from "lucide-react";
+import Image from "next/image";
+import { useRef } from "react";
 
 type TopRecipesCarouselProps = {
   label: string;

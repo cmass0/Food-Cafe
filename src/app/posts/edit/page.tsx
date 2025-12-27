@@ -1,6 +1,6 @@
-﻿import PostForm from "@/features/post/ui/PostForm";
+﻿import * as postService from "@/domain/post/service";
+import PostForm from "@/domain/post/ui/PostForm";
 import { getServerSupabase } from "@/lib/supabase/server";
-import * as postService from "@/features/post/service";
 import { notFound } from "next/navigation";
 import { updatePostAction } from "../actions";
 

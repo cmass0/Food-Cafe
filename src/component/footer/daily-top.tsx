@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/features/user_like/types";
+import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/domain/user_like/types";
 import { getBrowserSupabase } from "@/lib/supabase";
 import TopRecipesCarousel from "./top-recipes-carousel";
 

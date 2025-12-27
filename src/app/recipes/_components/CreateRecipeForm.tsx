@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
-import { useAuthModal } from "@/features/auth/ui/AuthModalProvider";
-import RecipeForm from "@/features/recipe/ui/RecipeForm";
-import type { RecipeInsertInput } from "@/features/recipe/types";
-import { createRecipe } from "@/features/recipe/api";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { createRecipe } from "@/domain/recipe/api";
+import type { RecipeInsertDB } from "@/domain/recipe/types";
+import RecipeForm from "@/domain/recipe/ui/RecipeForm";
 import { uploadRecipeImage } from "@/lib/storage";
 import { getBrowserSupabase } from "@/lib/supabase";
 
@@ -18,7 +18,7 @@ export default function CreateRecipeForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (values: RecipeInsertInput, extras?: { imageFile: File | null }) => {
+  const handleSubmit = async (values: RecipeInsertDB, extras?: { imageFile: File | null }) => {
     if (!user) {
       openAuthModal({ next: "/recipes/new" });
       return;

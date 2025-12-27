@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { redirect } from "next/navigation";
 
+import { postInsertSchema, postUpdateSchema } from "@/domain/post/schema";
+import * as postService from "@/domain/post/service";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { postInsertSchema, postUpdateSchema } from "@/features/post/schema";
-import * as postService from "@/features/post/service";
-import { deriveDisplayName } from "@/features/user/lib/displayName";
 
 export type PostActionState = {
   ok: boolean;
@@ -139,4 +139,3 @@ export async function deletePostAction(
   revalidatePath(`/posts/${id}`);
   redirect("/posts");
 }
-

@@ -2,14 +2,14 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { PaginationComponent } from "@/components/pagenation/pagenation";
-import { listComments } from "@/features/comment/service";
-import { CommentDisplayItem } from "@/features/comment/types";
-import CommentThread from "@/features/comment/ui/CommentThread.client";
-import { getRecipe } from "@/features/recipe/service";
-import RecipeDetail from "@/features/recipe/ui/RecipeDetail";
-import RecipeIngredientsPanel from "@/features/recipe/ui/RecipeIngredientsPanel";
-import { isBookmarked } from "@/features/user_bookmark/repository";
-import BookmarkBtn from "@/features/user_bookmark/ui/bookmarkbtn";
+import { listComments } from "@/domain/comment/service";
+import { CommentDisplayItem } from "@/domain/comment/types";
+import CommentThread from "@/domain/comment/ui/CommentThread.client";
+import { getRecipeById } from "@/domain/recipe/service";
+import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
+import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
+import { isBookmarked } from "@/domain/user_bookmark/repository";
+import BookmarkBtn from "@/domain/user_bookmark/ui/bookmarkbtn";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DeleteRecipeButton from "../_components/DeleteRecipeButton";
 
@@ -26,7 +26,7 @@ export default async function RecipeDetailPage({
 }) {
   noStore();
   const supabase = getServerSupabase();
-  const recipe = await getRecipe(supabase, params.id);
+  const recipe = await getRecipeById(supabase, params.id);
   if (!recipe) notFound();
 
   const pageValue = searchParams?.commentPage ?? searchParams?.commentpage;

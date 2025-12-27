@@ -3,9 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { listRecipes } from "@/features/recipe/service";
+import { listRecipes } from "@/domain/recipe/service";
+import LikeButton from "@/domain/user_like/ui/likebutton";
 import { getServerSupabase } from "@/lib/supabase/server";
-import LikeButton from "@/features/user_like/ui/likebutton";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";

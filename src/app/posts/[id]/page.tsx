@@ -1,17 +1,17 @@
 ﻿import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
-import { getServerSupabase } from "@/lib/supabase/server";
-import * as postService from "@/features/post/service";
-import * as commentService from "@/features/comment/service";
-import PostDetail from "@/features/post/ui/PostDetail";
-import CommentThread from "@/features/comment/ui/CommentThread.client";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
+import * as commentService from "@/domain/comment/service";
+import CommentThread from "@/domain/comment/ui/CommentThread.client";
+import * as postService from "@/domain/post/service";
+import PostDetail from "@/domain/post/ui/PostDetail";
+import { getServerSupabase } from "@/lib/supabase/server";
 
-import DeleteButton from "./DeleteButton";
+import { CommentDisplayItem } from "@/domain/comment/types";
 import { deletePostAction } from "../actions";
+import DeleteButton from "./DeleteButton";
 import UpdateButton from "./UpdateButton";
-import { CommentDisplayItem } from "@/features/comment/types";
 
 type SearchParamValue = string | string[] | undefined;
 

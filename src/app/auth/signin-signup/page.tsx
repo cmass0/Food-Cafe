@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-import SignInSignUpView from "@/features/auth/ui/SignInSignUpView";
+import SignInSignUpView from "@/domain/auth/ui/SignInSignUpView";
 
 function SignInSignUpPageInner() {
   const searchParams = useSearchParams();

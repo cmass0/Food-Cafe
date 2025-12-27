@@ -1,1 +1,1 @@
-export { getSelf, updateSelf } from "@/features/user/service";
+export { getSelf, updateSelf } from "@/domain/user/service";

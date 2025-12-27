@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import { getRemember } from "@/lib/auth/login-maintain";
 import { getBrowserSupabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
-import { getRemember } from "@/lib/auth/login-maintain";
-import { deriveDisplayName } from "@/features/user/lib/displayName";
+import React, { useEffect, useMemo, useState } from "react";
 
 type AuthCtx = {
   user: User | null;
@@ -23,20 +23,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthCtx["status"]>("loading");
   useEffect(() => {
     let mounted = true;
-  
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       setSession(session);
       setStatus(session ? "authenticated" : "anonymous");
     });
-  
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange((_event, newSession) => {
-        if (!mounted) return;
-        setSession(newSession);
-        setStatus(newSession ? "authenticated" : "anonymous");
-      });
-  
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!mounted) return;
+      setSession(newSession);
+      setStatus(newSession ? "authenticated" : "anonymous");
+    });
+
     return () => {
       mounted = false;
       subscription.unsubscribe();

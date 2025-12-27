@@ -1,9 +1,9 @@
 import { unstable_noStore as noStore } from "next/cache";
 
-import { getServerSupabase } from "@/lib/supabase/server";
-import * as postService from "@/features/post/service";
-import PostList from "@/features/post/ui/PostList";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
+import * as postService from "@/domain/post/service";
+import PostList from "@/domain/post/ui/PostList";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";

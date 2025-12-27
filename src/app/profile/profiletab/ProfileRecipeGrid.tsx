@@ -1,11 +1,11 @@
+import { Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, Heart } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { normaliseTextArray } from "@/features/recipe/service";
-import type { Recipe } from "@/features/recipe/types";
+import { normaliseTextArray } from "@/domain/recipe/service";
+import type { Recipe } from "@/domain/recipe/types";
 
 type Props = {
   recipes: Recipe[];

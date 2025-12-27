@@ -1,8 +1,8 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
-import * as recipeService from "@/features/recipe/service";
+import { requestRecipeSchema } from "@/domain/recipe/schema";
+import * as recipeService from "@/domain/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { requestRecipeSchema } from "@/features/recipe/schema";
 
 const isPostgrestError = (error: unknown): error is PostgrestError =>
   typeof (error as PostgrestError)?.code === "string";
@@ -44,8 +44,8 @@ const serializeUnknownError = (error: unknown) => {
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limitParam = Number(url.searchParams.get("limit") ?? "");
-    const pageParam = Number(url.searchParams.get("page") ?? "");
+    const limitParam = Number(url.searchParams.get("limit") ?? undefined);
+    const pageParam = Number(url.searchParams.get("page") ?? undefined);
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
@@ -62,7 +62,6 @@ export async function GET(req: Request) {
     });
 
     return Response.json({ data: recipes }, { headers: { "Cache-Control": "no-store" } });
-
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("Failed to get recipe", error);
@@ -76,7 +75,6 @@ export async function GET(req: Request) {
     );
   }
 }
-
 
 export async function POST(req: Request) {
   try {
@@ -102,17 +100,13 @@ export async function POST(req: Request) {
     }
 
     const writerName =
-      (user.user_metadata)?.name ??
-      (user.user_metadata)?.full_name ??
-      (user.user_metadata)?.display_name ??
+      user.user_metadata?.name ??
+      user.user_metadata?.full_name ??
+      user.user_metadata?.display_name ??
       null;
     const writerEmail = user.email ?? null;
 
-    const recipe = await recipeService.createRecipe(supabase, parsed, {
-      uid: user.id,
-      name: writerName ?? writerEmail,
-      email: writerEmail,
-    });
+    const recipe = await recipeService.createRecipe(supabase, parsed);
     return Response.json(
       { data: recipe },
       { status: 201, headers: { "Cache-Control": "no-store" } }

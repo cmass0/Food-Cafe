@@ -1,7 +1,7 @@
 "use client";
 
-import type { Recipe, RecipeInsertInput, RecipeUpdateInput } from "@/features/recipe/types";
-import RecipeForm from "@/features/recipe/ui/RecipeForm";
+import type { Recipe, RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
+import RecipeForm from "@/domain/recipe/ui/RecipeForm";
 import { useRouter } from "next/navigation";
 import { updateRecipeAction } from "../actions";
 
@@ -9,7 +9,7 @@ type RecipeEditFormProps = {
   recipe: Recipe;
 };
 
-function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
+function toPatch(values: RecipeInsertDB): RecipeUpdateDB {
   return {
     title: values.title,
     summary: values.summary,
@@ -18,7 +18,7 @@ function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
     tags: values.tags,
     category: values.category,
     difficulty: values.difficulty,
-    timeMinutes: values.timeMinutes,
+    time_minutes: values.time_minutes,
     servings: values.servings,
   };
 }
@@ -26,7 +26,7 @@ function toPatch(values: RecipeInsertInput): RecipeUpdateInput {
 export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
   const router = useRouter();
 
-  const handleSubmit = async (values: RecipeInsertInput) => {
+  const handleSubmit = async (values: RecipeInsertDB) => {
     await updateRecipeAction(recipe.id, toPatch(values));
     router.refresh();
   };
@@ -41,7 +41,7 @@ export default function RecipeEditForm({ recipe }: RecipeEditFormProps) {
         tags: recipe.tags,
         category: recipe.category ?? undefined,
         difficulty: recipe.difficulty ?? undefined,
-        timeMinutes: recipe.timeMinutes ?? undefined,
+        time_minutes: recipe.timeMinutes ?? undefined,
         servings: recipe.servings ?? undefined,
       }}
       submitLabel="수정하기"

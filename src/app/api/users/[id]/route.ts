@@ -1,9 +1,9 @@
 // src/app/api/users/[id]/route.ts
 // Current implementation enforces a self-only policy. Extend with role checks when needed.
 
+import { UserUpdateSchema } from "@/domain/user/schema";
+import * as userService from "@/domain/user/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import * as userService from "@/features/user/service";
-import { UserUpdateSchema } from "@/features/user/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,7 +107,6 @@ export async function PUT(req: Request, { params }: Ctx) {
     return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
   }
 }
-
 
 export async function DELETE(_: Request, { params }: Ctx) {
   try {
