@@ -2,13 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ChangeEvent } from "react";
-import { useFieldArray, useForm, type Resolver } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { recipeFormSchema } from "../schema";
 import type {
   FormValues,
   IngredientInput,
   IngredientUnit,
-  RecipeInsertInput,
+  RecipeInsertDB,
   RecipeStep,
 } from "../types";
 
@@ -24,20 +24,19 @@ import {
 } from "./form-sections";
 
 type RecipeFormProps = {
-  defaultValues?: Partial<RecipeInsertInput>;
-  onSubmit: (
-    values: RecipeInsertInput,
-    extras?: { imageFile: File | null }
-  ) => Promise<void> | void;
+  defaultValues?: Partial<RecipeInsertDB>;
+  onSubmit: (values: RecipeInsertDB, extras?: { imageFile: File | null }) => Promise<void>;
   submitLabel?: string;
 };
 
+// 태그 문자열을 배열로 변환하고 공백 제거
 const normalizeTags = (text: string) =>
   text
     .split(",")
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
 
+// 재료목록 생성
 const buildIngredientListItem = (ingredients: IngredientInput[]) => {
   const safeIngredients = ingredients
     .map((item) => ({
@@ -51,6 +50,7 @@ const buildIngredientListItem = (ingredients: IngredientInput[]) => {
   return safeIngredients;
 };
 
+// 조리단계 목록 생성
 const buildRecipeListItem = (steps: RecipeStep[]) => {
   const stepList = steps
     .map((step) => ({
@@ -69,22 +69,24 @@ export default function RecipeForm({
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // 폼 초기값 설정
   const defaultValuesForForm: FormValues = {
     title: defaultValues?.title ?? "",
     summary: defaultValues?.summary ?? "",
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     difficulty: defaultValues?.difficulty ?? "",
-    time_minutes:
-      (defaultValues as any)?.time_minutes ?? (defaultValues as any)?.timeMinutes ?? null,
+    time_minutes: defaultValues?.time_minutes ?? 0,
     servings: (defaultValues as any)?.servings ?? null,
-    ingredients: defaultValues?.ingredients ?? [],
+    ingredients: defaultValues?.ingredients ?? [
+      { name: "", amount: "", unit: "g", unitCustom: "" },
+    ],
     steps: defaultValues?.steps ?? [{ description: "" }],
     imageFile: null,
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(recipeFormSchema) as unknown as Resolver<FormValues>,
+    resolver: zodResolver(recipeFormSchema),
     mode: "onChange",
     defaultValues: defaultValuesForForm,
   });
@@ -93,20 +95,12 @@ export default function RecipeForm({
   const ingredientsArray = useFieldArray({ control: form.control, name: "ingredients" });
   const summaryLength = (form.watch("summary") ?? "").length;
 
+  // 폼 제출 처리
   const handleSubmit = form.handleSubmit(async (values) => {
-    if (!values.imageFile) {
-      form.setError("imageFile", { type: "manual", message: "대표 이미지를 하나 선택해 주세요." });
-      return;
-    }
-
     const rawSteps = form.getValues("steps") ?? [];
     const normalizeSteps = rawSteps.map((step) => ({
       description: step.description.trim(),
     }));
-    if (normalizeSteps.length === 0) {
-      form.setError("steps", { type: "manual", message: "모든 단계에 내용을 입력해 주세요." });
-      return;
-    }
 
     form.clearErrors("steps");
 
@@ -115,39 +109,15 @@ export default function RecipeForm({
       name: item.name.trim(),
       amount: item.amount.trim(),
       unit: item.unit as IngredientUnit,
-      unitCustom: item.unitCustom.trim(),
+      unitCustom: item.unitCustom?.trim() ?? "",
     }));
 
     form.clearErrors("ingredients");
-    let hasIngredientError = false;
-    normalizedIngredients.forEach((item, index) => {
-      const hasAnyValue =
-        item.name.length > 0 ||
-        item.amount.length > 0 ||
-        (item.unit === "custom" ? item.unitCustom.length > 0 : item.unit.length > 0);
-
-      if (!hasAnyValue) return;
-      if (!item.name) {
-        hasIngredientError = true;
-        form.setError(`ingredients.${index}.name` as any, {
-          type: "manual",
-          message: "재료명을 입력해 주세요.",
-        });
-      }
-      if (item.unit === "custom" && !item.unitCustom) {
-        hasIngredientError = true;
-        form.setError(`ingredients.${index}.unitCustom` as any, {
-          type: "manual",
-          message: "단위를 직접 입력해 주세요.",
-        });
-      }
-    });
-    if (hasIngredientError) return;
 
     const recipeStep = buildRecipeListItem(normalizeSteps);
     const ingredientList = buildIngredientListItem(normalizedIngredients);
 
-    const payload: RecipeInsertInput = {
+    const payload: RecipeInsertDB = {
       title: values.title,
       summary: values.summary?.trim() ? values.summary.trim() : null,
       steps: recipeStep,
