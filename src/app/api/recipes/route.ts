@@ -99,12 +99,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const writerName =
-      user.user_metadata?.name ??
-      user.user_metadata?.full_name ??
-      user.user_metadata?.display_name ??
-      null;
-    const writerEmail = user.email ?? null;
 
     const recipe = await recipeService.createRecipe(supabase, parsed);
     return Response.json(
