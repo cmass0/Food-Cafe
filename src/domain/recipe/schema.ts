@@ -1,33 +1,5 @@
 ﻿import { z } from "zod";
-
-// 대표 이미지는 서버에서 최종 URL을 받지만, 폼 단계에서는 빈 문자열을 허용하고 undefined로 정규화
-const imageFieldSchema = z.preprocess((value) => {
-  if (typeof value === "string" && value.trim() === "") return undefined;
-  return value;
-}, z.string().trim().min(1, "대표 이미지를 선택해 주세요").max(2048, "이미지 경로는 2048자 이하만 가능합니다.").nullable().optional());
-
-export const imageFileSchema = z
-  .union([z.instanceof(File), z.null()], {
-    required_error: "대표 이미지를 파일로 선택해 주세요.",
-  })
-  .superRefine((file, ctx) => {
-    if (!file) {
-      ctx.addIssue({ code: "custom", message: "대표 이미지를 파일로 선택해 주세요." });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      ctx.addIssue({ code: "custom", message: "파일 크기는 5MB 이하만 가능합니다." });
-    }
-    if (!["image/jpeg", "image/png", "image/gif"].includes(file.type)) {
-      ctx.addIssue({ code: "custom", message: "지원하지 않는 파일 형식입니다." });
-    }
-  });
-
-export const tagSchema = z
-  .string()
-  .trim()
-  .min(1, "태그는 1자 이상이어야 합니다.")
-  .max(50, "태그는 50자 이하만 가능합니다.");
+import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
 
 const ingredientItemSchema = z
   .object({
@@ -97,6 +69,7 @@ export const recipeUpdateSchema = z
       .min(1, "재료를 한 개 이상 입력해 주세요.")
       .optional(),
     image: imageFieldSchema,
+
     category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
     difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
