@@ -3,13 +3,7 @@ import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 import * as userLikeRepo from "./repository";
 
-function assertRecipeId(id: string) {
-  if (typeof id !== "string" || id.length < 1) {
-    throw new Error("유효하지 않은 레시피 ID입니다.");
-  }
-}
-
-export async function buildLikedSet(
+export async function buildLikedSetRecipe(
   client: SupabaseClient<Database>,
   recipeIds: string[]
 ): Promise<Set<string>> {
@@ -28,10 +22,9 @@ export async function getLikeMeta(recipeId: string) {
   if (error) throw error;
   if (!data.user) throw new Error("로그인이 필요합니다.");
 
-  assertRecipeId(recipeId);
   const [liked, count] = await Promise.all([
-    userLikeRepo.isLiked(recipeId, data.user.id),
-    userLikeRepo.countLikes(recipeId),
+    userLikeRepo.isLikedRecipe(supabase, recipeId, data.user.id),
+    userLikeRepo.countLikesRecipe(supabase, recipeId),
   ]);
   return { liked, count };
 }

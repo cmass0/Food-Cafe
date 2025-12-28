@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { listRecipes } from "@/domain/recipe/service";
-import LikeButton from "@/domain/user_like/ui/likebutton";
+import LikeButton from "@/domain/user/user_like/ui/likebutton";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const revalidate = 0;

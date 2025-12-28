@@ -1,4 +1,4 @@
-import { toggleRecipeBookmark } from "@/domain/user_bookmark/service";
+import { toggleRecipeBookmark } from "@/domain/user/user_bookmark/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { PostgrestError } from "@supabase/supabase-js";
 

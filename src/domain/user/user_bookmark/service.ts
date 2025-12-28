@@ -4,7 +4,7 @@ import * as repo from "./repository";
 import { toggleBookmarkSchema } from "./schema";
 import { UserRecipeBookmarkOptions } from "./type";
 
-export async function buildBookmarkedSet(
+export async function buildBookmarkedSetRecipe(
   client: SupabaseClient<Database>,
   recipeIds: string[]
 ): Promise<Set<string>> {

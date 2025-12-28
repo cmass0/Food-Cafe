@@ -1,9 +1,9 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildBookmarkedSet } from "../user_bookmark/service";
-import { buildLikedSet } from "../user_like/service";
-import * as repository from "./repository";
+import { buildBookmarkedSetRecipe } from "../user/user_bookmark/service";
+import { buildLikedSetRecipe } from "../user/user_like/service";
+import * as repo from "./repository";
 import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 import type {
   Recipe,
@@ -14,7 +14,6 @@ import type {
   RecipeRow,
   RecipeStep,
   RecipeUpdateDB,
-  RecipeWriterInfo,
 } from "./types";
 
 const DEFAULT_LIMIT = 20;
@@ -26,12 +25,12 @@ export function normaliseTextArray(value: string[] | null | undefined): string[]
 }
 
 // 객체가 JSON 형태인지 검사
-function isJson(obj: unknown): obj is Record<string, unknown> {
+export function isJson(obj: unknown): obj is Record<string, unknown> {
   return typeof obj === "object" && obj !== null;
 }
 
 // json 형태로 저장된 재료목록을 RecipeIngredient 배열로 변환
-export function normaliseIngredients(value: unknown): RecipeIngredient[] {
+export function toArrayIngredient(value: unknown): RecipeIngredient[] {
   if (!Array.isArray(value)) return [];
 
   const result: RecipeIngredient[] = [];
@@ -53,7 +52,7 @@ export function normaliseIngredients(value: unknown): RecipeIngredient[] {
 }
 
 // json 형태로 저장된 조리단계를 RecipeStep 배열로 변환
-export function normaliseSteps(value: unknown): RecipeStep[] {
+export function toArraySteps(value: unknown): RecipeStep[] {
   if (!Array.isArray(value)) return [];
 
   const result: RecipeStep[] = [];
@@ -76,8 +75,8 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     id: row.id,
     title: row.title,
     summary: row.summary,
-    steps: normaliseSteps(row.steps),
-    ingredients: normaliseIngredients(row.ingredients),
+    steps: toArraySteps(row.steps),
+    ingredients: toArrayIngredient(row.ingredients),
     image: row.image,
     category: row.category,
     tags: normaliseTextArray(row.tags),
@@ -103,16 +102,12 @@ export async function listBookmarkedRecipes(
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
-  const { items: rows, total: rowtotal } = await repository.selectRecipeByBookmarked(
-    client,
-    userId,
-    {
-      limit,
-      offset,
-      tags: parsed.tags,
-      search: parsed.search,
-    }
-  );
+  const { items: rows, total: rowtotal } = await repo.selectRecipeByBookmarked(client, userId, {
+    limit,
+    offset,
+    tags: parsed.tags,
+    search: parsed.search,
+  });
 
   const items = rows.map((row) => ({
     ...mapRowToRecipe(row),
@@ -138,7 +133,7 @@ export async function listLikedRecipes(
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
-  const { items: rows, total: rowtotal } = await repository.selectRecipeByLike(client, userId, {
+  const { items: rows, total: rowtotal } = await repo.selectRecipeByLike(client, userId, {
     limit,
     offset,
     tags: parsed.tags,
@@ -168,7 +163,7 @@ export async function listRecipes(
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
-  const { items: rows, total: rowtotal } = await repository.fetchRecipes(client, {
+  const { items: rows, total: rowtotal } = await repo.fetchRecipes(client, {
     limit,
     offset,
     tags: parsed.tags,
@@ -187,8 +182,8 @@ export async function listRecipes(
 
   if (user) {
     const ids = rows.map((row) => row.id);
-    likedSet = await buildLikedSet(client, ids);
-    bookmarkedSet = await buildBookmarkedSet(client, ids);
+    likedSet = await buildLikedSetRecipe(client, ids);
+    bookmarkedSet = await buildBookmarkedSetRecipe(client, ids);
   }
   items = items.map((item) => ({
     ...item,
@@ -209,17 +204,16 @@ export async function getRecipeById(
   client: SupabaseClient<Database>,
   id: string
 ): Promise<Recipe | null> {
-  const row = await repository.selectRecipeById(client, id);
+  const row = await repo.selectRecipeById(client, id);
   return row ? mapRowToRecipe(row) : null;
 }
 
 export async function createRecipe(
   client: SupabaseClient<Database>,
-  input: RecipeInsertDB,
-  writer?: RecipeWriterInfo
+  input: RecipeInsertDB
 ): Promise<Recipe> {
   const parsed = recipeInsertSchema.parse(input);
-  const row = await repository.insertRecipe(client, parsed);
+  const row = await repo.insertRecipe(client, parsed);
   return mapRowToRecipe(row);
 }
 
@@ -229,10 +223,10 @@ export async function updateRecipe(
   patch: RecipeUpdateDB
 ): Promise<Recipe> {
   const parsed = recipeUpdateSchema.parse(patch);
-  const row = await repository.updateRecipe(client, id, parsed);
+  const row = await repo.updateRecipe(client, id, parsed);
   return mapRowToRecipe(row);
 }
 
 export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
-  await repository.deleteRecipe(client, id);
+  await repo.deleteRecipe(client, id);
 }

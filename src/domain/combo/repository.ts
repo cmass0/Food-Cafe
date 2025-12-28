@@ -2,7 +2,6 @@ import type { Database } from "@/types/supabase";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import {
   ComboInsertRow,
-  ComboListOptions,
   ComboRow,
   ComboUpdateRow,
   FetchCombosParams,

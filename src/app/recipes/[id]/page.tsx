@@ -8,8 +8,8 @@ import CommentThread from "@/domain/comment/ui/CommentThread.client";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
-import { isBookmarked } from "@/domain/user_bookmark/repository";
-import BookmarkBtn from "@/domain/user_bookmark/ui/bookmarkbtn";
+import { isBookmarkedRecipe } from "@/domain/user/user_bookmark/repository";
+import BookmarkBtn from "@/domain/user/user_bookmark/ui/bookmarkbtn";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DeleteRecipeButton from "../_components/DeleteRecipeButton";
 
@@ -54,7 +54,9 @@ export default async function RecipeDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
-  const initialBookmarked = user?.id ? await isBookmarked(supabase, user.id, recipe.id) : false;
+  const initialBookmarked = user?.id
+    ? await isBookmarkedRecipe(supabase, user.id, recipe.id)
+    : false;
 
   return (
     <main className="pt-[100px] pb-[100px]">

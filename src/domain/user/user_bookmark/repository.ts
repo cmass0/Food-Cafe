@@ -1,6 +1,5 @@
-// src/features/user_bookmark/repository.ts
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function setRecipeBookmark(
   client: SupabaseClient<Database>,
@@ -27,7 +26,7 @@ export async function setRecipeBookmark(
   }
 }
 
-export async function isBookmarked(
+export async function isBookmarkedRecipe(
   client: SupabaseClient<Database>,
   userId: string,
   recipeId: string
@@ -42,6 +41,7 @@ export async function isBookmarked(
   return Boolean(data);
 }
 
+// 포함 여부를 빠르게 처리하기 위해 set
 export async function fetchBookmarkedRecipeIds(
   client: SupabaseClient<Database>,
   userId: string,
@@ -54,5 +54,5 @@ export async function fetchBookmarkedRecipeIds(
     .eq("user_id", userId)
     .in("parent_id", recipeIds);
   if (error) throw error;
-  return new Set((data ?? []).map((d: { parent_id: string }) => d.parent_id));
+  return new Set((data ?? []).map((d) => d.parent_id));
 }

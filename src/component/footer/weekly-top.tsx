@@ -1,6 +1,6 @@
 "use client";
 
-import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/domain/user_like/types";
+import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/domain/user/user_like/types";
 import { getBrowserSupabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import TopRecipesCarousel from "./top-recipes-carousel";

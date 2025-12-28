@@ -45,17 +45,17 @@ export async function POST(_req: Request, { params }: RouteParams) {
       return respondWithSupabaseError(toggleError);
     }
 
-    const row = Array.isArray(toggled) ? toggled[0] : (toggled as any);
-    const likeCount = (row?.like_count as number | undefined) ?? null;
-    const liked = (row?.liked as boolean | undefined) ?? false;
+    const row = Array.isArray(toggled) ? toggled[0] : toggled;
+    const likeCount = row?.like_count ?? null;
+    const liked = row?.liked ?? false;
 
     return Response.json({ liked, likeCount }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("Failed to toggle bookmark", error);
+      console.error("Failed to toggle like", error);
       return respondWithSupabaseError(error);
     }
-    console.error("Failed to toggle bookmark", error);
+    console.error("Failed to toggle like", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
