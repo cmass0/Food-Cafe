@@ -1,7 +1,10 @@
+import { throwApiError } from "@/lib/domain/api/error";
+import { ToggleRecipeBookmark } from "./type";
+
 export async function toggleRecipeBookmark(
   recipeId: string,
   currentlyBookmarked: boolean
-): Promise<{ bookmarked: boolean }> {
+): Promise<ToggleRecipeBookmark> {
   const res = await fetch(`/api/recipes/bookmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -9,9 +12,10 @@ export async function toggleRecipeBookmark(
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to toggle bookmark: ${res.status}`);
+    await throwApiError(res);
   }
 
-  return (await res.json()) as { bookmarked: boolean };
-}
+  const data = await res.json();
 
+  return data;
+}
