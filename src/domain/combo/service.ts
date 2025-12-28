@@ -5,7 +5,7 @@ import { isJson } from "../recipe/service";
 import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
 import { buildLikedSetCombo } from "./combo_like/service";
 import * as repo from "./repository";
-import { comboListOptionsSchema } from "./schema";
+import { ComboInsertSchema, comboListOptionsSchema, ComboUpdateSchema } from "./schema";
 import {
   ComboInsertDb,
   ComboItems,
@@ -132,7 +132,6 @@ export async function createCombo(
   client: SupabaseClient<Database>,
   input: ComboInsertDb
 ): Promise<Combos> {
-  // 스키마 구현 ㅇ정
   const parsed = ComboInsertSchema.parse(input);
   const row = await repo.insertCombo(client, parsed);
   return mapRowToCombination(row);
@@ -142,7 +141,6 @@ export async function updateCombo(
   id: string,
   patch: ComboUpdateDb
 ): Promise<Combos> {
-  // ㅅㅋㅁ ㄱㅎ
   const parsed = ComboUpdateSchema.parse(patch);
   const row = await repo.updateCombo(client, id, parsed);
   return mapRowToCombination(row);
