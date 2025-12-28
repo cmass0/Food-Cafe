@@ -1,5 +1,6 @@
 import * as commentService from "@/domain/comment/service";
 import { CommentInsertInput } from "@/domain/comment/types";
+import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
@@ -29,6 +30,9 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
     const detail = (error as any)?.message ?? String(error);
     console.error("[comments] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR", detail }, { status: 500 });
@@ -57,6 +61,9 @@ export async function POST(req: Request) {
         { error: "VALIDATION_ERROR", details: error.flatten() },
         { status: 400 }
       );
+    }
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
     }
     const detail = (error as any)?.message ?? String(error);
     console.error("[comments] POST failed", error);

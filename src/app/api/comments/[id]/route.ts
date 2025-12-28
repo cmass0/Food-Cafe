@@ -1,4 +1,5 @@
 import * as commentService from "@/domain/comment/service";
+import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
@@ -20,6 +21,9 @@ export async function GET(_req: Request, { params }: RouteContext) {
     }
     return Response.json({ data: comment }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
     console.error("[comments/:id] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
@@ -51,6 +55,9 @@ export async function PUT(req: Request, { params }: RouteContext) {
         { status: 400 }
       );
     }
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
     console.error("[comments/:id] PUT failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
@@ -71,6 +78,9 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     await commentService.deleteComment(supabase, params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
     console.error("[comments/:id] DELETE failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
