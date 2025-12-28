@@ -1,6 +1,6 @@
 import { toggleRecipeBookmark } from "@/domain/user/user_bookmark/service";
+import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { PostgrestError } from "@supabase/supabase-js";
 
 const json = (body: unknown, init?: ResponseInit) =>
   Response.json(body, {
@@ -21,20 +21,6 @@ function parseToggleBookmarkBody(value: unknown): ToggleBookmarkBody | null {
   return { recipeId: anyValue.recipeId, currentlyBookmarked: anyValue.currentlyBookmarked };
 }
 
-const isPostgrestError = (error: unknown): error is PostgrestError =>
-  Boolean(error) && typeof (error as PostgrestError)?.code === "string";
-
-const respondWithSupabaseError = (error: PostgrestError) => {
-  const status = error.code === "42501" ? 403 : 400;
-  return json(
-    {
-      error: error.code,
-      message: error.message,
-      details: error.details ?? error.hint,
-    },
-    { status }
-  );
-};
 
 export async function POST(req: Request) {
   const supabase = getServerSupabase();
