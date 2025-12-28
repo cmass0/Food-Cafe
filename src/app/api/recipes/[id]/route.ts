@@ -40,7 +40,7 @@ export async function GET(_: Request, { params }: Ctx) {
   try {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
-    const item = await service.getRecipe(supabase, params.id);
+    const item = await service.getRecipeById(supabase, params.id);
     if (!item) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
     return json({ data: item }, 200, { "Cache-Control": "no-store" });
   } catch (error) {
@@ -86,7 +86,7 @@ export async function DELETE(_: Request, { params }: Ctx) {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
 
-    const existing = await service.getRecipe(supabase, params.id);
+    const existing = await service.getRecipeById(supabase, params.id);
     if (!existing) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
 
     await service.removeRecipe(supabase, params.id);
