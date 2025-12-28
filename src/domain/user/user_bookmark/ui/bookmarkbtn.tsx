@@ -6,12 +6,13 @@ import { Bookmark } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toggleRecipeBookmark } from "../api";
+import { ToggleRecipeBookmark } from "../type";
 
 type Props = {
   recipeId: string;
   marked: boolean;
   count: number;
-  onChange?(next: { marked: boolean }): void;
+  onChange?(next: ToggleRecipeBookmark): void;
 };
 
 export default function BookmarkBtn({ recipeId, marked, count, onChange }: Props) {
@@ -45,7 +46,7 @@ function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
     try {
       const { bookmarked: nextMarked } = await toggleRecipeBookmark(recipeId, currentMarked);
       if (onChange) {
-        onChange({ marked: nextMarked });
+        onChange({ bookmarked: nextMarked });
       } else {
         setLocalMarked(nextMarked);
       }

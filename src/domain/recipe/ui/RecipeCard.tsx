@@ -78,7 +78,7 @@ export default function RecipeCard({
               recipeId={recipe.id}
               marked={bookmarked}
               count={0}
-              onChange={({ marked }) => setBookmarked(marked)}
+              onChange={({ bookmarked }) => setBookmarked(bookmarked)}
             />
             <LikeButton
               recipeId={recipe.id}

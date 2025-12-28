@@ -2,6 +2,20 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 import * as userLikeRepo from "./repository";
+import { TopRecipe } from "./types";
+
+export function mapTopRecipe(row: TopRecipe): TopRecipe {
+  return {
+    recipeId: row.recipeId,
+    title: row.title,
+    summary: row.summary,
+    image: row.image,
+    likeCount: row.likeCount,
+    viewCount: row.viewCount,
+    writerUid: row.writerUid,
+    writerName: row.writerName,
+  };
+}
 
 export async function buildLikedSetRecipe(
   client: SupabaseClient<Database>,

@@ -4,9 +4,8 @@ export type UserBookmarkRow = Database["public"]["Tables"]["user_bookmarks"]["Ro
 export type UserBookmarkInsert = Database["public"]["Tables"]["user_bookmarks"]["Insert"];
 export type UserBookmarkUpdate = Database["public"]["Tables"]["user_bookmarks"]["Update"];
 
-export type UserBookmarkMeta = {
+export type ToggleRecipeBookmark = {
   bookmarked: boolean;
-  total: number;
 };
 
 export type UserRecipeBookmarkOptions = {
