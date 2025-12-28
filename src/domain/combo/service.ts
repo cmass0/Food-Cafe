@@ -1,24 +1,76 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
-import * as repository from "./repository";
+import { isJson } from "../recipe/service";
+import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
+import { buildLikedSetCombo } from "./combo_like/service";
+import * as repo from "./repository";
 import { comboListOptionsSchema } from "./schema";
-import { Combo, ComboListOptions, ComboListResult, ComboRow } from "./types";
+import {
+  ComboInsertDb,
+  ComboItems,
+  ComboListOptions,
+  ComboListResult,
+  ComboRow,
+  Combos,
+  ComboSteps,
+  ComboUpdateDb,
+} from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-function mapRowToCombination(row: ComboRow): Combo {
+// json 형태로 저장된 조리단계를 ComboSteps 배열로 변환
+export function toArraySteps(value: unknown): ComboSteps[] {
+  if (!Array.isArray(value)) return [];
+
+  const result: ComboSteps[] = [];
+  for (const item of value) {
+    if (!isJson(item)) continue;
+    if (!item || typeof item !== "object") continue;
+    const step = typeof item.description === "string" ? item.description.trim() : "";
+
+    if (!step) continue;
+
+    result.push({ description: step });
+  }
+
+  return result;
+}
+
+// json 형태로 저장된 아이템들을 ComboItems 배열로 변환
+export function toArrayItems(value: unknown): ComboItems[] {
+  if (!Array.isArray(value)) return [];
+  const result: ComboItems[] = [];
+  for (const item of value) {
+    if (!isJson(item)) continue;
+    if (!item || typeof item !== "object") continue;
+
+    if (item.type === "recipe") {
+      const recipeid = typeof item.recipeid === "string" ? item.recipeid.trim() : "";
+      const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
+      result.push({ type: "recipe", recipeid: recipeid, summary });
+    }
+    if (item.type === "product") {
+      const productName = typeof item.productName === "string" ? item.productName.trim() : "";
+      const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
+      result.push({ type: "product", productName: productName, summary });
+    }
+  }
+  return result;
+}
+
+function mapRowToCombination(row: ComboRow): Combos {
   return {
     id: row.id,
     title: row.title,
     summary: row.summary,
-    steps: row.steps,
-    items: row.items,
+    steps: toArraySteps(row.steps),
+    items: toArrayItems(row.items),
     tags: row.tags,
     difficulty: row.difficulty,
     timeMinutes: row.time_minutes,
-    toolRequired: row.tool_required,
+    toolRequired: row.tools_required,
     image: row.image,
     likeCount: row.like_count,
     viewCount: row.view_count,
@@ -28,31 +80,20 @@ function mapRowToCombination(row: ComboRow): Combo {
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
-  //  id: string;
-  // title: string;
-  // summary: string | null;
-  // steps: any[] | null;
-  // WriterUid: string | null;
-  // creatorName: string | null;
-  // creatorEmail: string | null;
-  // recipeIds: string[];
-  // likeCount: number;
-  // viewCount: number;
-  // createdAt: Date;
-  // updatedAt: Date;
-  // liked?: boolean;
-  // bookmarked?: boolean;
 }
 
 export async function listCombos(
   client: SupabaseClient<Database>,
   options?: ComboListOptions
 ): Promise<ComboListResult> {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
   const parsed = comboListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
 
-  const { items: rows, total: rowtotal } = await repository.fetchCombos(client, {
+  const { items: rows, total: rowtotal } = await repo.fetchCombos(client, {
     limit,
     offset,
     tags: parsed.tag,
@@ -60,5 +101,53 @@ export async function listCombos(
     writerUid: parsed.writerUid,
   });
 
-  return;
+  let items = rows.map(mapRowToCombination);
+  const hasMore = offset + items.length < rowtotal;
+  if (user) {
+    const ids = items.map((combo) => combo.id);
+    const bookmarkedSet = await buildBookmarkedSetCombo(client, ids);
+    const likedSet = await buildLikedSetCombo(client, ids);
+    items = items.map((combo) => ({
+      ...combo,
+      bookmarked: bookmarkedSet.has(combo.id),
+      liked: likedSet.has(combo.id),
+    }));
+  }
+
+  return { items, limit, offset, hasMore, total: rowtotal };
+}
+
+export async function getComboById(
+  client: SupabaseClient<Database>,
+  comboId: string
+): Promise<Combos | null> {
+  const row = await repo.fetchComboById(client, comboId);
+  if (!row) {
+    return null;
+  }
+  return mapRowToCombination(row);
+}
+
+export async function createCombo(
+  client: SupabaseClient<Database>,
+  input: ComboInsertDb
+): Promise<Combos> {
+  // 스키마 구현 ㅇ정
+  const parsed = ComboInsertSchema.parse(input);
+  const row = await repo.insertCombo(client, parsed);
+  return mapRowToCombination(row);
+}
+export async function updateCombo(
+  client: SupabaseClient<Database>,
+  id: string,
+  patch: ComboUpdateDb
+): Promise<Combos> {
+  // ㅅㅋㅁ ㄱㅎ
+  const parsed = ComboUpdateSchema.parse(patch);
+  const row = await repo.updateCombo(client, id, parsed);
+  return mapRowToCombination(row);
+}
+
+export async function removeCombo(client: SupabaseClient<Database>, id: string): Promise<void> {
+  await repo.deleteCombo(client, id);
 }
