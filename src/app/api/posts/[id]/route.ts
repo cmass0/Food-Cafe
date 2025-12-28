@@ -20,19 +20,23 @@ const json = (body: unknown, status = 200, headers?: HeadersInit) =>
 const err = (status: number, code: string, message?: string, details?: unknown) =>
   json({ error: code, message, details }, status);
 
-const badId = () => err(400, "BAD_REQUEST", "?좏슚?섏? ?딆? 寃뚯떆湲 ID?낅땲??");
+const badId = () => err(400, "BAD_REQUEST", "invalid post ID.");
 
 const mapAuthError = (error: unknown) => {
   const message = String((error as any)?.message ?? "").toLowerCase();
-  if (message.includes("濡쒓렇??) || message.includes("unauthorized") || message.includes("login")) {
-    return err(401, "UNAUTHORIZED", "濡쒓렇?몄씠 ?꾩슂?⑸땲??");
+  if (
+    message.includes("unauthorized") ||
+    message.includes("unauthorized") ||
+    message.includes("login")
+  ) {
+    return err(401, "UNAUTHORIZED", "Unauthorized access.");
   }
   if (
     message.includes("permission denied") ||
     message.includes("forbidden") ||
     message.includes("rls")
   ) {
-    return err(403, "FORBIDDEN", "沅뚰븳???놁뒿?덈떎.");
+    return err(403, "FORBIDDEN", "Forbidden access.");
   }
   return null;
 };
@@ -42,14 +46,14 @@ export async function GET(_: Request, { params }: Ctx) {
     if (!UUID_RE.test(params.id)) return badId();
     const supabase = getServerSupabase();
     const item = await postService.getPost(supabase, params.id);
-    if (!item) return err(404, "NOT_FOUND", "寃뚯떆湲??李얠쓣 ???놁뒿?덈떎.");
+    if (!item) return err(404, "NOT_FOUND", "Post not found.");
     return json({ data: item }, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
     console.error("[posts][GET] failed", error);
-    return err(500, "INTERNAL_ERROR", "?쒕쾭 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
+    return err(500, "INTERNAL_ERROR", "An unexpected error occurred.");
   }
 }
 
@@ -59,24 +63,24 @@ export async function PUT(req: Request, { params }: Ctx) {
 
     const contentType = req.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
-      return err(415, "UNSUPPORTED_MEDIA_TYPE", "application/json?쇰줈 ?꾩넚??二쇱꽭??");
+      return err(415, "UNSUPPORTED_MEDIA_TYPE", "application/json is required.");
     }
 
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return err(400, "BAD_JSON", "?붿껌 蹂몃Ц(JSON) ?뚯떛???ㅽ뙣?덉뒿?덈떎.");
+      return err(400, "BAD_JSON", "Invalid JSON body.");
     }
 
     const parsed = postUpdateSchema.safeParse(body);
     if (!parsed.success) {
-      return err(400, "VALIDATION_ERROR", "?낅젰媛믪쓣 ?뺤씤??二쇱꽭??", parsed.error.flatten());
+      return err(400, "VALIDATION_ERROR", "Validation failed.", parsed.error.flatten());
     }
 
     const supabase = getServerSupabase();
     const updated = await postService.updatePost(supabase, params.id, parsed.data);
-    if (!updated) return err(404, "NOT_FOUND", "寃뚯떆湲??李얠쓣 ???놁뒿?덈떎.");
+    if (!updated) return err(404, "NOT_FOUND", "Post not found.");
 
     return json({ data: updated });
   } catch (error) {
@@ -86,7 +90,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     const mapped = mapAuthError(error);
     if (mapped) return mapped;
     console.error("[posts][PUT] failed", error);
-    return err(500, "INTERNAL_ERROR", "?쒕쾭 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
+    return err(500, "INTERNAL_ERROR", "An unexpected error occurred.");
   }
 }
 
@@ -97,9 +101,9 @@ export async function DELETE(_: Request, { params }: Ctx) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    console.log("[posts][PUT] session user:", user?.id); //
+    console.log("[posts][PUT] session user:", user?.id);
     const existing = await postService.getPost(supabase, params.id);
-    if (!existing) return err(404, "NOT_FOUND", "寃뚯떆湲??李얠쓣 ???놁뒿?덈떎.");
+    if (!existing) return err(404, "NOT_FOUND", "Post not found.");
 
     await postService.removePost(supabase, params.id);
     return new Response(null, { status: 204 });
@@ -110,6 +114,6 @@ export async function DELETE(_: Request, { params }: Ctx) {
     const mapped = mapAuthError(error);
     if (mapped) return mapped;
     console.error("[posts][DELETE] failed", error);
-    return err(500, "INTERNAL_ERROR", "?쒕쾭 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
+    return err(500, "INTERNAL_ERROR", "An unexpected error occurred.");
   }
 }

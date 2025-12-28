@@ -1,15 +1,6 @@
 import { toggleRecipeBookmark } from "@/domain/user/user_bookmark/service";
-import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
+import { isPostgrestError, json, respondWithSupabaseError } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
-
-const json = (body: unknown, init?: ResponseInit) =>
-  Response.json(body, {
-    ...init,
-    headers: {
-      "Cache-Control": "no-store",
-      ...(init?.headers ?? {}),
-    },
-  });
 
 type ToggleBookmarkBody = { recipeId: string; currentlyBookmarked: boolean };
 
@@ -21,7 +12,6 @@ function parseToggleBookmarkBody(value: unknown): ToggleBookmarkBody | null {
   return { recipeId: anyValue.recipeId, currentlyBookmarked: anyValue.currentlyBookmarked };
 }
 
-
 export async function POST(req: Request) {
   const supabase = getServerSupabase();
   const {
@@ -31,23 +21,23 @@ export async function POST(req: Request) {
 
   if (userError) {
     console.error("Failed to get auth user", userError);
-    return json({ error: "AUTH_USER_FAILED" }, { status: 500 });
+    return json({ error: "AUTH_USER_FAILED" }, 500);
   }
   if (!user) {
-    return json({ error: "UNAUTHORIZED" }, { status: 401 });
+    return json({ error: "UNAUTHORIZED" }, 401);
   }
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return json({ error: "INVALID_JSON" }, { status: 400 });
+    return json({ error: "INVALID_JSON" }, 400);
   }
 
   const parsed = parseToggleBookmarkBody(body);
 
   if (!parsed) {
-    return json({ error: "INVALID_BODY" }, { status: 400 });
+    return json({ error: "INVALID_BODY" }, 400);
   }
 
   try {
@@ -63,6 +53,6 @@ export async function POST(req: Request) {
       return respondWithSupabaseError(error);
     }
     console.error("Failed to toggle bookmark", error);
-    return json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    return json({ error: "INTERNAL_ERROR" }, 500);
   }
 }

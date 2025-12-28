@@ -1,5 +1,6 @@
 // src/app/api/users/route.ts
 import * as userService from "@/domain/user/service";
+import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,9 @@ export async function GET(req: Request) {
     const data = await userService.listUsers({ limit, page });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
     console.error("[users] GET failed", error);
     return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }

@@ -5,7 +5,7 @@ export async function toggleRecipeBookmark(
   recipeId: string,
   currentlyBookmarked: boolean
 ): Promise<ToggleRecipeBookmark> {
-  const res = await fetch(`/api/recipes/bookmark`, {
+  const res = await fetch(`/api/recipes/${recipeId}/bookmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ recipeId, currentlyBookmarked }),

@@ -5,8 +5,6 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: { id: string } };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 const json = (body: unknown, status = 200, headers?: HeadersInit) =>
   new Response(JSON.stringify(body), {
     status,
@@ -18,10 +16,6 @@ const err = (status: number, code: string, message?: string, details?: unknown) 
 
 export async function POST(_: Request, { params }: Ctx) {
   try {
-    if (!UUID_RE.test(params.id)) {
-      return err(400, "BAD_REQUEST", "유효하지 않은 레시피 ID입니다.");
-    }
-
     const supabase = getServerSupabase();
     const { error } = await supabase.rpc("increment_recipe_view", { p_recipe_id: params.id });
     if (error) {

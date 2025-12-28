@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: { id: string } };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 
 const json = (body: unknown, status = 200, headers?: HeadersInit) =>
   new Response(JSON.stringify(body), {
@@ -38,7 +38,7 @@ const mapAuthError = (error: unknown) => {
 
 export async function GET(_: Request, { params }: Ctx) {
   try {
-    if (!UUID_RE.test(params.id)) return badId();
+  
     const supabase = getServerSupabase();
     const item = await service.getRecipeById(supabase, params.id);
     if (!item) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
@@ -51,7 +51,7 @@ export async function GET(_: Request, { params }: Ctx) {
 
 export async function PUT(req: Request, { params }: Ctx) {
   try {
-    if (!UUID_RE.test(params.id)) return badId();
+
 
     const contentType = req.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
@@ -83,7 +83,7 @@ export async function PUT(req: Request, { params }: Ctx) {
 
 export async function DELETE(_: Request, { params }: Ctx) {
   try {
-    if (!UUID_RE.test(params.id)) return badId();
+ 
     const supabase = getServerSupabase();
 
     const existing = await service.getRecipeById(supabase, params.id);
