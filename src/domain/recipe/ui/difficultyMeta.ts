@@ -42,7 +42,6 @@ export const difficultyMetaManual: Record<DifficultyLabel, DifficultyMeta> = {
 
 export const difficultyLabels = Object.keys(difficultyMetaManual) as DifficultyLabel[];
 
-export function getDifficultyMeta(label?: string | null): DifficultyMeta | undefined {
-  if (!label) return undefined;
+export function getDifficultyMeta(label: string): DifficultyMeta {
   return difficultyMetaManual[label as DifficultyLabel];
 }
