@@ -124,7 +124,7 @@ export async function selectByCombobyLiked(
 export async function insertCombo(
   client: SupabaseClient<Database>,
   comboData: ComboInsertRow
-): Promise<ComboInsertRow> {
+): Promise<ComboRow> {
   const { data, error } = await client.from("combos").insert(comboData).select("*").single();
   throwIfError(error);
   if (!data) {
@@ -137,7 +137,7 @@ export async function updateCombo(
   client: SupabaseClient<Database>,
   comboId: string,
   comboData: ComboUpdateRow
-): Promise<ComboUpdateRow> {
+): Promise<ComboRow> {
   const { data, error } = await client
     .from("combos")
     .update(comboData)
