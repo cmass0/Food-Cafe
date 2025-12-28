@@ -5,24 +5,24 @@ export type ComboRow = Database["public"]["Tables"]["combos"]["Row"];
 export type ComboInsertRow = Database["public"]["Tables"]["combos"]["Insert"];
 export type ComboUpdateRow = Database["public"]["Tables"]["combos"]["Update"];
 
-export interface Combo {
+export interface Combos {
   id: string;
   title: string;
   summary: string | null;
-  steps: JSON | null;
-  items: JSON | null;
-  WriterUid: string | null;
-  creatorName: string | null;
-  creatorEmail: string | null;
-  recipeIds: string[];
+  steps: ComboSteps[] | null;
+  items: ComboItems[] | null;
+  tags: string[];
+  difficulty: string | null;
   timeMinutes: number | null;
   toolRequired: boolean;
+  image: string | null;
   likeCount: number;
   viewCount: number;
+  commentCount: number;
+  writerUid: string | null;
+  writerName: string | null;
   createdAt: Date;
   updatedAt: Date;
-  liked?: boolean;
-  bookmarked?: boolean;
 }
 
 export type ComboListOptions = {
@@ -34,7 +34,7 @@ export type ComboListOptions = {
 };
 
 export type ComboListResult = {
-  items: Combo[];
+  items: Combos[];
   total: number;
   limit: number;
   offset: number;
@@ -47,6 +47,34 @@ export type FetchCombosParams = {
   tags?: string[];
   writerUid?: string;
   search?: string;
+};
+
+export type ComboInsertDb = {
+  id: string;
+  title: string;
+  summary?: string | null;
+  steps: string | null;
+  items?: string | null;
+  tags?: string[] | null;
+  difficulty: string | null;
+  time_minutes: number | null;
+  tools_required: boolean;
+  image?: string | null;
+  writer_uid?: string | null;
+  writer_name?: string | null;
+};
+
+export type ComboUpdateDb = {
+  title?: string;
+  summary?: string | null;
+  steps?: string | null;
+  items?: string | null;
+  tags?: string[] | null;
+  difficulty?: string | null;
+
+  time_minutes?: number | null;
+  tools_required?: boolean;
+  image?: string | null;
 };
 
 export type fetchCombosResult = {
@@ -69,3 +97,19 @@ export type InsertCombo = {
   creatorName?: string | null;
   creatorEmail?: string | null;
 };
+
+export type ComboSteps = {
+  description: string;
+};
+
+export type ComboItems =
+  | {
+      type: "recipe";
+      recipeid: string;
+      summary?: string;
+    }
+  | {
+      type: "product";
+      productName: string;
+      summary?: string;
+    };
