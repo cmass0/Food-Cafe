@@ -1,7 +1,6 @@
 ﻿import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
 
-
 export const comboListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
@@ -10,11 +9,9 @@ export const comboListOptionsSchema = z.object({
   search: z.string().trim().max(200).optional(),
 });
 
-export const ComboSetpsSchema = z.array(
-  z.object({
-    description: z.string().min(1, "조리 단계를 입력해주세요.").max(1000),
-  })
-);
+export const ComboSetpsSchema = z.object({
+  description: z.string().min(1, "조리 단계를 입력해주세요.").max(1000),
+});
 
 export const ComboItemsSchema = z.array(
   z.union([
