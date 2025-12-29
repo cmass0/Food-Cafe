@@ -1,100 +1,84 @@
 // src/app/api/recipes/[id]/route.ts
 import { recipeUpdateSchema } from "@/domain/recipe/schema";
 import * as service from "@/domain/recipe/service";
+import { contentParams } from "@/lib/api/prams-type";
+import {
+  AuthErrorHelper,
+  badRequest,
+  internalError,
+  isPostgrestError,
+  json,
+  notFound,
+  respondWithSupabaseError,
+  validationError,
+} from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Ctx = { params: { id: string } };
-
-
-
-const json = (body: unknown, status = 200, headers?: HeadersInit) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json", ...(headers || {}) },
-  });
-
-const err = (status: number, code: string, message?: string, details?: unknown) =>
-  json({ error: code, message, details }, status);
-
-const badId = () => err(400, "BAD_REQUEST", "유효하지 않은 레시피 ID입니다.");
-
-const mapAuthError = (error: unknown) => {
-  const message = String((error as any)?.message ?? "").toLowerCase();
-  if (message.includes("로그인") || message.includes("unauthorized") || message.includes("login")) {
-    return err(401, "UNAUTHORIZED", "로그인이 필요합니다.");
-  }
-  if (
-    message.includes("permission denied") ||
-    message.includes("forbidden") ||
-    message.includes("rls")
-  ) {
-    return err(403, "FORBIDDEN", "권한이 없습니다.");
-  }
-  return null;
-};
-
-export async function GET(_: Request, { params }: Ctx) {
+export async function GET(_: Request, { params }: contentParams) {
   try {
-  
     const supabase = getServerSupabase();
     const item = await service.getRecipeById(supabase, params.id);
-    if (!item) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
-    return json({ data: item }, 200, { "Cache-Control": "no-store" });
+    if (!item) return notFound("해당 레시피를 찾을 수 없습니다.");
+
+    return json({ data: item });
   } catch (error) {
-    console.error("[recipes][GET] failed", error);
-    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+    if (isPostgrestError(error)) {
+      console.error("레시피를 가져오지 못했습니다.", error);
+      return respondWithSupabaseError(error);
+    }
+    console.error("레시피를 가져오지 못했습니다.", error);
+    return internalError();
   }
 }
 
-export async function PUT(req: Request, { params }: Ctx) {
+export async function PUT(req: Request, { params }: contentParams) {
   try {
-
-
-    const contentType = req.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      return err(415, "UNSUPPORTED_MEDIA_TYPE", "application/json으로 전송해 주세요.");
-    }
-
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return err(400, "BAD_JSON", "요청 본문(JSON) 파싱에 실패했습니다.");
+      return badRequest("잘못된 JSON 형식입니다.");
     }
 
     const parsed = recipeUpdateSchema.safeParse(body);
     if (!parsed.success) {
-      return err(400, "VALIDATION_ERROR", "입력값을 확인해 주세요.", parsed.error.flatten());
+      return validationError(parsed.error);
     }
+
+    const { error } = await AuthErrorHelper();
+    if (error) return error;
 
     const supabase = getServerSupabase();
     const updated = await service.updateRecipe(supabase, params.id, parsed.data);
     return json({ data: updated });
   } catch (error) {
-    const mapped = mapAuthError(error);
-    if (mapped) return mapped;
-    console.error("[recipes][PUT] failed", error);
-    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+    if (isPostgrestError(error)) {
+      console.error("레시피 수정에 실패하였습니다.", error);
+      return respondWithSupabaseError(error);
+    }
+    console.error("레시피 수정에 실패하였습니다.", error);
+    return internalError();
   }
 }
 
-export async function DELETE(_: Request, { params }: Ctx) {
+export async function DELETE(_: Request, { params }: contentParams) {
+  const supabase = getServerSupabase();
   try {
- 
-    const supabase = getServerSupabase();
-
     const existing = await service.getRecipeById(supabase, params.id);
-    if (!existing) return err(404, "NOT_FOUND", "레시피를 찾을 수 없습니다.");
+    if (!existing) return notFound("레시피를 찾을 수 없습니다.");
 
     await service.removeRecipe(supabase, params.id);
-    return new Response(null, { status: 204 });
+
+    return json({ message: "레시피가 삭제되었습니다." }, 200);
   } catch (error) {
-    const mapped = mapAuthError(error);
-    if (mapped) return mapped;
-    console.error("[recipes][DELETE] failed", error);
-    return err(500, "INTERNAL_ERROR", "서버 처리 중 오류가 발생했습니다.");
+    if (isPostgrestError(error)) {
+      console.error("레시피 삭제에 실패하였습니다.", error);
+      return respondWithSupabaseError(error);
+    }
+    console.error("레시피 삭제에 실패하였습니다.", error);
+    return internalError();
   }
 }

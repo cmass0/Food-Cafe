@@ -1,58 +1,40 @@
-import { toggleRecipeBookmark } from "@/domain/user/user_bookmark/service";
-import { isPostgrestError, json, respondWithSupabaseError } from "@/lib/api/route-error";
+import { contentParams } from "@/lib/api/prams-type";
+import {
+  AuthErrorHelper,
+  internalError,
+  isPostgrestError,
+  json,
+  notFound,
+  respondWithSupabaseError,
+} from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-type ToggleBookmarkBody = { recipeId: string; currentlyBookmarked: boolean };
-
-function parseToggleBookmarkBody(value: unknown): ToggleBookmarkBody | null {
-  if (!value || typeof value !== "object") return null;
-  const anyValue = value as any;
-  if (typeof anyValue.recipeId !== "string" || anyValue.recipeId.length === 0) return null;
-  if (typeof anyValue.currentlyBookmarked !== "boolean") return null;
-  return { recipeId: anyValue.recipeId, currentlyBookmarked: anyValue.currentlyBookmarked };
-}
-
-export async function POST(req: Request) {
+export async function POST(req: Request, { params }: contentParams) {
   const supabase = getServerSupabase();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) {
-    console.error("Failed to get auth user", userError);
-    return json({ error: "AUTH_USER_FAILED" }, 500);
-  }
-  if (!user) {
-    return json({ error: "UNAUTHORIZED" }, 401);
-  }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "INVALID_JSON" }, 400);
-  }
-
-  const parsed = parseToggleBookmarkBody(body);
-
-  if (!parsed) {
-    return json({ error: "INVALID_BODY" }, 400);
-  }
 
   try {
-    const next = await toggleRecipeBookmark(supabase, {
-      userId: user.id,
-      recipeId: parsed.recipeId,
-      currentlyBookmarked: parsed.currentlyBookmarked,
+    const { error: autherror } = await AuthErrorHelper();
+    if (autherror) return autherror;
+
+    const { data: bookmarkdata, error } = await supabase.rpc("toggle_bookmark", {
+      p_type: "recipe",
+      p_id: params.id,
     });
-    return json({ bookmarked: next });
-  } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("Failed to toggle bookmark", error);
+
+    if (error) {
+      console.error("북마크 토글 실패", error);
       return respondWithSupabaseError(error);
     }
-    console.error("Failed to toggle bookmark", error);
-    return json({ error: "INTERNAL_ERROR" }, 500);
+
+    if (!bookmarkdata || bookmarkdata.length === 0) return notFound();
+
+    return json({ bookmarked: bookmarkdata[0]?.bookmarked });
+  } catch (error) {
+    if (isPostgrestError(error)) {
+      console.error("북마크 토글 실패", error);
+      return respondWithSupabaseError(error);
+    }
+    console.error("북마크 토글 실패", error);
+    return internalError();
   }
 }

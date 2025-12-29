@@ -1,86 +1,72 @@
 import { requestRecipeSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
 import {
+  AuthErrorHelper,
+  badRequest,
+  internalError,
   isPostgrestError,
+  json,
   respondWithSupabaseError,
-  serializeUnknownError,
+  validationError,
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { ZodError } from "zod";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limitParam = Number(url.searchParams.get("limit") ?? undefined);
-    const pageParam = Number(url.searchParams.get("page") ?? undefined);
+    const limitParam = Number(url.searchParams.get("limit"));
+    const pageParam = Number(url.searchParams.get("page"));
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
-    const writerUid = url.searchParams.get("writerUid") ?? undefined;
+    const writerUid = url.searchParams.get("writerUid") || undefined;
     const tags = url.searchParams.getAll("tag");
-    const tagArray = tags.length ? tags : undefined;
-    const search = url.searchParams.get("search") ?? undefined;
+    const search = url.searchParams.get("search") || undefined;
     const supabase = getServerSupabase();
     const recipes = await recipeService.listRecipes(supabase, {
       limit,
       page,
       writerUid,
-      tags: tagArray,
+      tags,
       search,
     });
 
-    return Response.json({ data: recipes }, { headers: { "Cache-Control": "no-store" } });
+    return json({ data: recipes });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("Failed to get recipe", error);
+      console.error("레시피 조회 실패", error);
       return respondWithSupabaseError(error);
     }
-    const info = serializeUnknownError(error);
-    console.error("Failed to get recipe", info, error);
-    return Response.json(
-      { error: "Failed to get recipe", details: info },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+    console.error("레시피 조회 실패", error);
+    return internalError();
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const parsed = requestRecipeSchema.parse(body);
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return badRequest("잘못된 JSON 형식입니다.");
+    }
     const supabase = getServerSupabase();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError) {
-      console.error("Failed to get auth user", userError);
-      return Response.json(
-        { error: "Failed to create recipe" },
-        { status: 500, headers: { "Cache-Control": "no-store" } }
-      );
-    }
-    if (!user) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401, headers: { "Cache-Control": "no-store" } }
-      );
-    }
+    const parsed = requestRecipeSchema.parse(body);
 
+    const { user, error: authError } = await AuthErrorHelper();
+    if (authError) return authError;
 
     const recipe = await recipeService.createRecipe(supabase, parsed);
-    return Response.json(
-      { data: recipe },
-      { status: 201, headers: { "Cache-Control": "no-store" } }
-    );
+    return json({ data: recipe, status: 201 });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("Failed to create recipe", error);
+      console.error("레시피 생성 실패", error);
       return respondWithSupabaseError(error);
     }
-    const info = serializeUnknownError(error);
-    console.error("Failed to create recipe", info, error);
-    return Response.json(
-      { error: "Failed to create recipe", details: info },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+    if (error instanceof ZodError) {
+      console.error("레시피 생성 실패 - zod검증 오류", error);
+      return validationError(error.errors);
+    }
+    return internalError();
   }
 }
