@@ -29,52 +29,39 @@ export const respondWithSupabaseError = (error: PostgrestError) => {
   );
 };
 
-export const serializeUnknownError = (error: unknown) => {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause ?? null,
-    };
-  }
-  if (typeof error === "string") {
-    return { message: error };
-  }
-  if (typeof error === "object" && error !== null) {
-    try {
-      return JSON.parse(JSON.stringify(error));
-    } catch {
-      return { message: error.toString() };
-    }
-  }
-  return { message: String(error) };
-};
-
 // 인증 에러 매핑 헬퍼
-export async function AuthErrorHelper(id?: string) {
+export async function AuthErrorHelper(userid?: string) {
   const {
     data: { user },
     error,
   } = await getServerSupabase().auth.getUser();
   if (error) throw error;
-  if (!user) return json({ error: "UNAUTHORIZED", status: 401 });
-  if (id && user.id !== id) return json({ error: "FORBIDDEN", status: 403 });
-  return null;
+
+  if (!user) {
+    return { user: null, error: json({ error: "UNAUTHORIZED" }, 401) };
+  }
+
+  if (userid && user.id !== userid) {
+    return { user: null, error: json({ error: "FORBIDDEN" }, 403) };
+  }
+
+  return { user, error: null };
 }
 
-// 400 Bad Request 에러처리
-export const badRequest = (message = "잘못된 요청입니다.") =>
-  json({ error: "BAD_REQUEST", message }, 400);
+// 400 에러처리
+export function badRequest(message = "잘못된 요청입니다.") {
+  return json({ error: "BAD_REQUEST", message }, 400);
+}
+// 400(zod) 에러처리
+export function validationError(details: unknown) {
+  return json({ error: "VALIDATION_ERROR", message: "입력값 검증 실패", details }, 400);
+}
 
-// 400 Validation Error(zod) 에러처리
-export const validationError = (details: unknown) =>
-  json({ error: "VALIDATION_ERROR", message: "입력값 검증 실패", details }, 400);
-
-// 404 Not Found  에러처리
-export const notFound = (resource = "리소스") =>
-  json({ error: "NOT_FOUND", message: `${resource}를 찾을 수 없습니다.` }, 404);
-
-// 500 Internal 에러처리
-export const internalError = (message = "서버 오류가 발생했습니다.") =>
-  json({ error: "INTERNAL_ERROR", message }, 500);
+// 404 에러처리
+export function notFound(resource = "리소스") {
+  return json({ error: "NOT_FOUND", message: `${resource}를 찾을 수 없습니다.` }, 404);
+}
+// 500 에러처리
+export function internalError(message = "서버 오류가 발생했습니다.") {
+  return json({ error: "INTERNAL_ERROR", message }, 500);
+}

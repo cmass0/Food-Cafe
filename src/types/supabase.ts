@@ -107,6 +107,7 @@ export type Database = {
       }
       combos: {
         Row: {
+          bookmark_count: number
           comment_count: number
           created_at: string
           difficulty: string | null
@@ -126,6 +127,7 @@ export type Database = {
           writer_uid: string | null
         }
         Insert: {
+          bookmark_count?: number
           comment_count?: number
           created_at?: string
           difficulty?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           writer_uid?: string | null
         }
         Update: {
+          bookmark_count?: number
           comment_count?: number
           created_at?: string
           difficulty?: string | null
@@ -249,8 +252,71 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          parent_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_likes: {
+        Row: {
+          created_at: string | null
+          recipe_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          recipe_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          recipe_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_likes_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
+          bookmark_count: number
           category: string | null
           created_at: string
           difficulty: string | null
@@ -273,6 +339,7 @@ export type Database = {
           writer_uid: string | null
         }
         Insert: {
+          bookmark_count?: number
           category?: string | null
           created_at?: string
           difficulty?: string | null
@@ -295,6 +362,7 @@ export type Database = {
           writer_uid?: string | null
         }
         Update: {
+          bookmark_count?: number
           category?: string | null
           created_at?: string
           difficulty?: string | null
@@ -326,35 +394,6 @@ export type Database = {
           },
         ]
       }
-      user_bookmarks: {
-        Row: {
-          created_at: string
-          id: string
-          parent_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          parent_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          parent_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_bookmarks_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_follows: {
         Row: {
           created_at: string
@@ -382,39 +421,6 @@ export type Database = {
           {
             foreignKeyName: "user_follows_following_id_fkey"
             columns: ["following_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_likes: {
-        Row: {
-          created_at: string | null
-          recipe_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          recipe_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          recipe_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_likes_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_likes_user_id_fkey"
-            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -498,6 +504,7 @@ export type Database = {
       increment_recipe_view: {
         Args: { p_recipe_id: string }
         Returns: {
+          bookmark_count: number
           category: string | null
           created_at: string
           difficulty: string | null
@@ -560,6 +567,13 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      toggle_bookmark: {
+        Args: { p_id: string; p_type: string }
+        Returns: {
+          bookmark_count: number
+          bookmarked: boolean
+        }[]
+      }
       toggle_follow: { Args: { p_target_id: string }; Returns: boolean }
       uuid_v7: { Args: never; Returns: string }
     }

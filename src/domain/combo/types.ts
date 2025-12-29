@@ -19,6 +19,7 @@ export interface Combos {
   likeCount: number;
   viewCount: number;
   commentCount: number;
+  bookmarkCount: number;
   writerUid: string | null;
   writerName: string | null;
   createdAt: Date;
@@ -67,8 +68,8 @@ export type ComboInsertDb = {
 export type ComboUpdateDb = {
   title?: string;
   summary?: string | null;
-  steps?: string | null;
-  items?: string | null;
+  steps?: ComboSteps[] | null;
+  items?: ComboItems[] | null;
   tags?: string[] | null;
   difficulty?: string | null;
 

@@ -7,7 +7,7 @@ export async function isBookmarked(
   recipeId: string
 ): Promise<boolean> {
   const { data, error } = await client
-    .from("user_bookmarks")
+    .from("recipe_bookmarks")
     .select("id")
     .eq("user_id", userId)
     .eq("parent_id", recipeId)

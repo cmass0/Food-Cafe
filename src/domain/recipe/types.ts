@@ -29,6 +29,7 @@ export interface Recipe {
   updatedAt: Date;
   liked?: boolean;
   bookmarked?: boolean;
+  bookmarkCount: number;
 }
 
 export type RecipeListOptions = {

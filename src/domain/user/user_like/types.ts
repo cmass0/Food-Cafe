@@ -1,8 +1,8 @@
 import type { Database } from "@/types/supabase";
 
-export type UserLikeRow = Database["public"]["Tables"]["user_likes"]["Row"];
-export type UserLikeInsert = Database["public"]["Tables"]["user_likes"]["Insert"];
-export type UserLikeUpdate = Database["public"]["Tables"]["user_likes"]["Update"];
+export type UserLikeRow = Database["public"]["Tables"]["recipe_likes"]["Row"];
+export type UserLikeInsert = Database["public"]["Tables"]["recipe_likes"]["Insert"];
+export type UserLikeUpdate = Database["public"]["Tables"]["recipe_likes"]["Update"];
 
 export interface UserLike {
   userId: string;

@@ -8,7 +8,7 @@ export async function setRecipeBookmark(
   const { userId, recipeId, bookmark } = params;
 
   if (bookmark) {
-    const { error } = await client.from("user_bookmarks").upsert(
+    const { error } = await client.from("recipe_bookmarks").upsert(
       {
         user_id: userId,
         parent_id: recipeId,
@@ -18,7 +18,7 @@ export async function setRecipeBookmark(
     if (error) throw error;
   } else {
     const { error } = await client
-      .from("user_bookmarks")
+      .from("recipe_bookmarks")
       .delete()
       .eq("user_id", userId)
       .eq("parent_id", recipeId);
@@ -32,7 +32,7 @@ export async function isBookmarkedRecipe(
   recipeId: string
 ): Promise<boolean> {
   const { data, error } = await client
-    .from("user_bookmarks")
+    .from("recipe_bookmarks")
     .select("id")
     .eq("user_id", userId)
     .eq("parent_id", recipeId)
@@ -49,7 +49,7 @@ export async function fetchBookmarkedRecipeIds(
 ): Promise<Set<string>> {
   if (!userId || recipeIds.length === 0) return new Set();
   const { data, error } = await client
-    .from("user_bookmarks")
+    .from("recipe_bookmarks")
     .select("parent_id")
     .eq("user_id", userId)
     .in("parent_id", recipeIds);

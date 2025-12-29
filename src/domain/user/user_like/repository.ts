@@ -8,7 +8,7 @@ export async function fetchLikedRecipeIds(
 ): Promise<Set<string>> {
   if (!userId || recipeIds.length === 0) return new Set();
   const { data, error } = await client
-    .from("user_likes")
+    .from("recipe_likes")
     .select("recipe_id")
     .eq("user_id", userId)
     .in("recipe_id", recipeIds);
@@ -24,7 +24,7 @@ export async function isLikedRecipe(
   if (!userId) return false;
 
   const { data, error } = await client
-    .from("user_likes")
+    .from("recipe_likes")
     .select("recipe_id")
     .eq("user_id", userId)
     .eq("recipe_id", recipeId)
@@ -39,7 +39,7 @@ export async function countLikesRecipe(
   recipeId: string
 ): Promise<number> {
   const { count, error } = await client
-    .from("user_likes")
+    .from("recipe_likes")
     .select("*", { count: "exact", head: true })
     .eq("recipe_id", recipeId);
 

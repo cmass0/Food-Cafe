@@ -73,6 +73,7 @@ function mapRowToCombination(row: ComboRow): Combos {
     toolRequired: row.tools_required,
     image: row.image,
     likeCount: row.like_count,
+    bookmarkCount: row.bookmark_count,
     viewCount: row.view_count,
     commentCount: row.comment_count,
     writerUid: row.writer_uid,

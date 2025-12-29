@@ -53,7 +53,7 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
                   asChild
                   className="rounded-full px-3 py-2 transition hover:bg-white/10"
                 >
-                  <Link href="/combo">레시피 조합</Link>
+                  <Link href="/combos">레시피 조합</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>

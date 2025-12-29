@@ -66,7 +66,7 @@ export async function selectRecipeByBookmarked(
   const rangeEnd = safeOffset + safeLimit - 1;
 
   let query = client
-    .from("user_bookmarks")
+    .from("recipe_bookmarks")
     .select("created_at, recipes:parent_id!inner(*)", { count: "exact" })
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -100,7 +100,7 @@ export async function selectRecipeByLike(
   const rangeEnd = safeOffset + safeLimit - 1;
 
   let query = client
-    .from("user_likes")
+    .from("recipe_likes")
     .select("created_at, recipes:recipe_id!inner(*)", { count: "exact" })
     .eq("user_id", id)
     .order("created_at", { ascending: false });

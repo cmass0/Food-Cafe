@@ -1,8 +1,8 @@
 import { Database } from "@/types/supabase";
 
-export type UserBookmarkRow = Database["public"]["Tables"]["user_bookmarks"]["Row"];
-export type UserBookmarkInsert = Database["public"]["Tables"]["user_bookmarks"]["Insert"];
-export type UserBookmarkUpdate = Database["public"]["Tables"]["user_bookmarks"]["Update"];
+export type UserBookmarkRow = Database["public"]["Tables"]["recipe_bookmarks"]["Row"];
+export type UserBookmarkInsert = Database["public"]["Tables"]["recipe_bookmarks"]["Insert"];
+export type UserBookmarkUpdate = Database["public"]["Tables"]["recipe_bookmarks"]["Update"];
 
 export type ToggleRecipeBookmark = {
   bookmarked: boolean;
