@@ -1,4 +1,3 @@
-import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import {
   FormControl,
   FormDescription,
@@ -17,10 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type UseFormReturn } from "react-hook-form";
-import { type FormValues } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
+import { type Dispatch, type SetStateAction, useState } from "react";
+import { type UseFormReturn } from "react-hook-form";
+import { type FormValues } from "../../types";
 import { difficultyLabels, getDifficultyMeta } from "../difficultyMeta";
 
 type BasicInfoFieldsProps = {
@@ -28,6 +28,9 @@ type BasicInfoFieldsProps = {
   tagsInput: string;
   setTagsInput: Dispatch<SetStateAction<string>>;
   normalizeTags: (text: string) => string[];
+  toolsInput: string;
+  setToolsInput: Dispatch<SetStateAction<string>>;
+  normalizeTools: (text: string) => string[];
 };
 
 export function BasicInfoFields({
@@ -35,18 +38,23 @@ export function BasicInfoFields({
   tagsInput,
   setTagsInput,
   normalizeTags,
+  toolsInput,
+  setToolsInput,
+  normalizeTools,
 }: BasicInfoFieldsProps) {
   const currentMinutes = form.watch("time_minutes");
   const initialUnit: "minutes" | "hours" =
     typeof currentMinutes === "number" && currentMinutes >= 60 ? "hours" : "minutes";
   const [timeUnit, setTimeUnit] = useState<"minutes" | "hours">(initialUnit);
   const currentDifficulty = getDifficultyMeta(form.watch("difficulty"));
-
-  const displayMinutes = useMemo(() => {
+  
+  const getDisplayValue = () => {
     if (typeof currentMinutes !== "number") return "";
     if (timeUnit === "minutes") return currentMinutes;
     return Math.max(0, Math.round(currentMinutes / 60));
-  }, [currentMinutes, timeUnit]);
+  };
+
+  const displayMinutes = getDisplayValue();
 
   return (
     <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
@@ -84,7 +92,7 @@ export function BasicInfoFields({
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        className="text-muted-foreground transition hover:text-foreground"
+                        className="text-black transition hover:text-foreground"
                         aria-label="난이도 안내"
                       >
                         <Info className="h-4 w-4" />
@@ -92,7 +100,7 @@ export function BasicInfoFields({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs text-xs leading-relaxed bg-[#d8d8d8] ">
                       <div className="font-semibold text-foreground">설명</div>
-                      <p className="text-muted-foreground text-black ">
+                      <p className=" text-black ">
                         {currentDifficulty?.description ?? "난이도를 선택하면 설명이 보여요."}
                       </p>
                     </TooltipContent>
@@ -232,7 +240,7 @@ export function BasicInfoFields({
           name="tags"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>태그 (콤마 구분)</FormLabel>
+              <FormLabel>태그 (콤마(,)로 구분 해주세요)</FormLabel>
               <FormControl>
                 <Input
                   placeholder="예) 10분, 칼칼한, 술안주"
@@ -245,6 +253,29 @@ export function BasicInfoFields({
                 />
               </FormControl>
               <FormDescription>최대 20개까지 입력할 수 있어요.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="tools"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>조리도구 (콤마(,)로 구분 해주세요)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="팬, 냄비, 에어프라이어"
+                  value={toolsInput}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setToolsInput(next);
+                    field.onChange(normalizeTools(next));
+                  }}
+                />
+              </FormControl>
+              <FormDescription>조리도구가 필요하지 않으면 비워두세요.</FormDescription>
               <FormMessage />
             </FormItem>
           )}

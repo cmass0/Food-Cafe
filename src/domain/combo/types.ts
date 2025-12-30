@@ -12,6 +12,7 @@ export interface Combos {
   steps: ComboSteps[] | null;
   items: ComboItems[] | null;
   tags: string[];
+  tools: string[] | null;
   difficulty: string | null;
   timeMinutes: number | null;
   toolRequired: boolean;
@@ -54,12 +55,13 @@ export type ComboInsertDb = {
   id: string;
   title: string;
   summary?: string | null;
-  steps: string | null;
-  items?: string | null;
+  steps: ComboSteps[] | null;
+  items?: ComboItems[] | null;
   tags?: string[] | null;
+  tools?: string[] | null;
   difficulty: string | null;
   time_minutes: number | null;
-  tools_required: boolean;
+  tools_required?: boolean;
   image?: string | null;
   writer_uid?: string | null;
   writer_name?: string | null;
@@ -71,6 +73,7 @@ export type ComboUpdateDb = {
   steps?: ComboSteps[] | null;
   items?: ComboItems[] | null;
   tags?: string[] | null;
+  tools?: string[] | null;
   difficulty?: string | null;
 
   time_minutes?: number | null;

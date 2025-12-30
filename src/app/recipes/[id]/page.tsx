@@ -11,7 +11,7 @@ import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
 import { getServerSupabase } from "@/lib/supabase/server";
-import DeleteRecipeButton from "../_components/DeleteRecipeButton";
+import DeleteRecipeButton from "../components/DeleteRecipeButton";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";

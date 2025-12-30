@@ -68,6 +68,7 @@ function mapRowToCombination(row: ComboRow): Combos {
     steps: toArraySteps(row.steps),
     items: toArrayItems(row.items),
     tags: row.tags,
+    tools: row.tools ?? null,
     difficulty: row.difficulty,
     timeMinutes: row.time_minutes,
     toolRequired: row.tools_required,

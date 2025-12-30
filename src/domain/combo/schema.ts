@@ -35,6 +35,7 @@ export const ComboInsertSchema = z.object({
   steps: z.array(ComboSetpsSchema).min(1, "조리 단계를 한 개 이상 입력해주세요."),
   items: ComboItemsSchema,
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+  tools: z.array(tagSchema).max(20).nullable().optional(),
   difficulty: z
     .string()
     .min(1, "난이도를 입력해주세요.")
@@ -44,7 +45,7 @@ export const ComboInsertSchema = z.object({
     .int()
     .min(1, "조리 시간을 입력해주세요.")
     .optional(),
-  tools_required: z.boolean(),
+  tools_required: z.boolean().optional(),
   image: imageFieldSchema,
 });
 
@@ -63,6 +64,7 @@ export const ComboUpdateSchema = z
     steps: z.array(ComboSetpsSchema).min(1, "조리 단계를 한 개 이상 입력해주세요.").optional(),
     items: ComboItemsSchema.optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+    tools: z.array(tagSchema).max(20).nullable().optional(),
     difficulty: z
       .string()
       .min(1, "난이도를 입력해주세요.")

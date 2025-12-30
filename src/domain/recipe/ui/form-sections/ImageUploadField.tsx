@@ -1,6 +1,6 @@
-import { type ChangeEvent } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { type ChangeEvent } from "react";
 import { type UseFormReturn } from "react-hook-form";
 import { type FormValues } from "../../types";
 
@@ -27,7 +27,11 @@ export function ImageUploadField({ form, imagePreview, handleFileChange }: Image
                 <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                   {imagePreview ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imagePreview} alt="대표 이미지 미리보기" className="h-full w-full object-cover" />
+                    <img
+                      src={imagePreview}
+                      alt="대표 이미지 미리보기"
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
                       대표 이미지 미리보기
@@ -39,10 +43,10 @@ export function ImageUploadField({ form, imagePreview, handleFileChange }: Image
                     type="file"
                     accept="image/*"
                     onChange={(event) => {
-                    handleFileChange(event);
-                    const nextFile = event.target.files?.[0] ?? null;
-                    field.onChange(nextFile);
-                  }}
+                      handleFileChange(event);
+                      const nextFile = event.target.files?.[0] ?? null;
+                      field.onChange(nextFile);
+                    }}
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}

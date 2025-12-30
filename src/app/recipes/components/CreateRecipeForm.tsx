@@ -8,7 +8,8 @@ import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { createRecipe } from "@/domain/recipe/api";
 import type { RecipeInsertDB } from "@/domain/recipe/types";
 import RecipeForm from "@/domain/recipe/ui/RecipeForm";
-import { uploadRecipeImage } from "@/lib/storage";
+
+import { uploadBucketImage } from "@/lib/storage";
 import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function CreateRecipeForm() {
@@ -36,10 +37,16 @@ export default function CreateRecipeForm() {
 
     try {
       const recipeId = crypto.randomUUID();
-      const { publicUrl, signedUrl } = await uploadRecipeImage(supabase, recipeId, imageFile, {
-        contentType: imageFile.type,
-        upsert: false,
-      });
+      const { publicUrl, signedUrl } = await uploadBucketImage(
+        supabase,
+        "recipes",
+        recipeId,
+        imageFile,
+        {
+          contentType: imageFile.type,
+          upsert: false,
+        }
+      );
       const finalUrl = publicUrl ?? signedUrl ?? null;
       if (!finalUrl) {
         throw new Error("이미지 URL 생성에 실패했습니다.");

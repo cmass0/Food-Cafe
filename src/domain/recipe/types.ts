@@ -16,6 +16,8 @@ export interface Recipe {
   image: string | null;
   category: string | null;
   tags: string[];
+  tools: string[] | null;
+  toolsRequired: boolean;
   difficulty: string | null;
   timeMinutes: number | null;
   servings?: number | null;
@@ -73,6 +75,8 @@ export type RecipeInsertDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  tools?: string[] | null;
+  tools_required?: boolean;
   difficulty?: string | null;
   time_minutes?: number | null;
   servings?: number | null;
@@ -90,6 +94,8 @@ export type RecipeUpdateDB = {
   image?: string | null;
   category?: string | null;
   tags?: string[];
+  tools?: string[] | null;
+  tools_required?: boolean;
   difficulty?: string | null;
   time_minutes?: number | null;
   servings?: number | null;

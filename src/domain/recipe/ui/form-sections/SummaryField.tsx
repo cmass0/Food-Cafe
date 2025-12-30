@@ -26,6 +26,7 @@ export function SummaryField({ form, summaryLength }: SummaryFieldProps) {
                 maxLength={500}
                 className="bg-background"
                 {...field}
+                value={field.value ?? ""}
               />
             </FormControl>
             <FormMessage />

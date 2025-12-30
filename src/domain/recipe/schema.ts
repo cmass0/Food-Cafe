@@ -1,5 +1,5 @@
-﻿import { z } from "zod";
-import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
+﻿import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
+import { z } from "zod";
 
 const ingredientItemSchema = z
   .object({
@@ -38,7 +38,13 @@ export const recipeInsertSchema = z.object({
     .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
   image: imageFieldSchema,
   category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
-  tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+  tags: z.array(tagSchema).max(10, "태그는 최대 10개까지 추가할 수 있습니다.").optional(),
+  tools: z
+    .array(tagSchema)
+    .max(10, "조리도구는 최대 10개까지 추가할 수 있습니다.")
+    .nullable()
+    .optional(),
+  tools_required: z.boolean().optional(),
   difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
   time_minutes: z
     .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
@@ -72,6 +78,12 @@ export const recipeUpdateSchema = z
 
     category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
+    tools: z
+      .array(tagSchema)
+      .max(20, "조리도구는 최대 20개까지 추가할 수 있습니다.")
+      .nullable()
+      .optional(),
+    tools_required: z.boolean().optional(),
     difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
     time_minutes: z
       .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
@@ -104,4 +116,6 @@ export const requestRecipeSchema = z.object({
   image: z.string().trim().min(1),
   category: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
+  tools: z.array(z.string()).nullable().optional(),
+  tools_required: z.boolean().optional(),
 });

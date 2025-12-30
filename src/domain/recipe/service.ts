@@ -80,6 +80,8 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     image: row.image,
     category: row.category,
     tags: normaliseTextArray(row.tags),
+    tools: row.tools ?? null,
+    toolsRequired: row.tools_required ?? false,
     difficulty: row.difficulty ?? null,
     timeMinutes: row.time_minutes ?? null,
     servings: row.servings ?? null,
