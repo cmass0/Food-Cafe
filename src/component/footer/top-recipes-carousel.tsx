@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { TopRecipe } from "@/domain/user/user_like/types";
+import { TopRecipe } from "@/domain/recipe/recipe_like/types";
 import { Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import { useRef } from "react";

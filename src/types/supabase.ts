@@ -499,8 +499,8 @@ export type Database = {
           writer_uid: string
         }[]
       }
-      increment_combo_view: { Args: { p_combo_id: string }; Returns: undefined }
-      increment_post_view: { Args: { target: string }; Returns: undefined }
+      increment_combo_view: { Args: { p_combo_id: string }; Returns: number }
+      increment_post_view: { Args: { p_post_id: string }; Returns: number }
       increment_recipe_view: {
         Args: { p_recipe_id: string }
         Returns: {

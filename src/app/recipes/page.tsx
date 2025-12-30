@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
+import * as recipeService from "@/domain/recipe/service";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
+import { getBrowserSupabase } from "@/lib/supabase";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -37,9 +39,13 @@ function RecipesPageInner() {
 
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
+  const supabase = getBrowserSupabase();
 
   // 현재 page에 대한 recipe 목록
   useEffect(() => {
+    async function fetchdata() {
+      const data = await recipeService.getRecipeById(supabase, "test");
+    }
     let mounted = true;
 
     async function fetchRecipes() {

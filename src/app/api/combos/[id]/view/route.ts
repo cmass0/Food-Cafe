@@ -3,6 +3,7 @@ import {
   internalError,
   isPostgrestError,
   json,
+  notFound,
   respondWithSupabaseError,
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -14,6 +15,8 @@ export async function POST(_: Request, { params }: contentParams) {
     const { data: view_count, error } = await supabase.rpc("increment_combo_view", {
       p_combo_id: params.id,
     });
+
+    if (!view_count) return notFound();
 
     if (error) return respondWithSupabaseError(error);
 

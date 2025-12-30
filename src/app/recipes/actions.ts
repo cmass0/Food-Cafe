@@ -6,7 +6,6 @@ import { ZodError } from "zod";
 
 import * as recipeService from "@/domain/recipe/service";
 import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
-import { getLikeMeta } from "@/domain/user/user_like/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 function handleError(error: unknown): never {
@@ -33,13 +32,6 @@ export async function createRecipeAction(input: RecipeInsertDB) {
     if (!user) {
       throw new Error("로그인이 필요합니다.");
     }
-
-    // const writerName =
-    //   user.user_metadata?.name ??
-    //   user.user_metadata?.full_name ??
-    //   user.user_metadata?.display_name ??
-    //   null;
-    // const writerEmail = user.email ?? null;
 
     const recipe = await recipeService.createRecipe(supabase, input);
     revalidatePath("/recipes");
@@ -73,8 +65,4 @@ export async function deleteRecipeAction(id: string) {
   } catch (error) {
     handleError(error);
   }
-}
-
-export async function likeMetaAction(recipeId: string) {
-  return getLikeMeta(recipeId);
 }

@@ -1,8 +1,8 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildBookmarkedSetRecipe } from "../user/user_bookmark/service";
-import { buildLikedSetRecipe } from "../user/user_like/service";
+import { buildBookmarkedSetRecipe } from "./recipe_bookmark/service";
+import { buildLikedSetRecipe } from "./recipe_like/service";
 import * as repo from "./repository";
 import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 import type {

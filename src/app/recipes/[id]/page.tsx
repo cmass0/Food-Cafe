@@ -5,11 +5,11 @@ import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { listComments } from "@/domain/comment/service";
 import { CommentDisplayItem } from "@/domain/comment/types";
 import CommentThread from "@/domain/comment/ui/CommentThread.client";
+import { isBookmarkedRecipe } from "@/domain/recipe/recipe_bookmark/repository";
+import BookmarkBtn from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
-import { isBookmarkedRecipe } from "@/domain/user/user_bookmark/repository";
-import BookmarkBtn from "@/domain/user/user_bookmark/ui/bookmarkbtn";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DeleteRecipeButton from "../_components/DeleteRecipeButton";
 

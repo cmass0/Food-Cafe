@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
-import BookmarkBtn from "@/domain/user/user_bookmark/ui/bookmarkbtn";
-import LikeButton from "@/domain/user/user_like/ui/likebutton";
+import BookmarkBtn from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
+import LikeButton from "@/domain/recipe/recipe_like/ui/likebutton";
 import { useState } from "react";
 import type { Recipe } from "../types";
 

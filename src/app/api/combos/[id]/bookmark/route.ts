@@ -20,11 +20,11 @@ export async function POST(req: Request, { params }: contentParams) {
       p_id: params.id,
     });
 
-    if (!bookmarkdata || bookmarkdata.length === 0) return notFound();
+    if (!bookmarkdata || bookmarkdata.length === 0 || !bookmarkdata[0]) return notFound();
 
     if (error) return respondWithSupabaseError(error);
     return json(
-      { bookmarked: bookmarkdata[0]?.bookmarked, bookmarkcount: bookmarkdata[0]?.bookmark_count },
+      { bookmarked: bookmarkdata[0].bookmarked, bookmarkcount: bookmarkdata[0].bookmark_count },
       200
     );
   } catch (error) {
