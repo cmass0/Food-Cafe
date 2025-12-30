@@ -4,24 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ChangeEvent } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { recipeFormSchema } from "../schema";
-import type {
-  FormValues,
-  IngredientInput,
-  IngredientUnit,
-  RecipeInsertDB,
-  RecipeStep,
-} from "../types";
+import type { FormValues, IngredientUnit, RecipeInsertDB, RecipeStep } from "../types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import {
-  BasicInfoFields,
-  ImageUploadField,
-  IngredientsFields,
-  StepsFields,
-  SummaryField,
-} from "./form-sections";
+import { BasicInfoFields } from "./form-sections/BasicInfoFields";
+import { ImageUploadField } from "./form-sections/ImageUploadField";
+import { IngredientsFields } from "./form-sections/IngredientsFields";
+import { StepsFields } from "./form-sections/StepsFields";
+import { SummaryField } from "./form-sections/SummaryField";
 
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertDB>;
@@ -30,26 +22,22 @@ type RecipeFormProps = {
 };
 
 // 태그 문자열을 배열로 변환하고 공백 제거
-const normalizeTags = (text: string) =>
-  text
+const normalizeTags = (text: string) => {
+  const tags = text
     .split(",")
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0);
-
-// 재료목록 생성
-const buildIngredientListItem = (ingredients: IngredientInput[]) => {
-  const safeIngredients = ingredients
-    .map((item) => ({
-      name: item.name.trim(),
-      amount: item.amount.trim(),
-      unit: item.unit,
-      unitCustom: item.unitCustom.trim(),
-    }))
-    .filter((item) => item.name.length > 0);
-
-  return safeIngredients;
+  return tags;
 };
 
+// 조리 도구 문자열을 배열로 변환하고 공백 제거
+const normalizeTools = (text: string) => {
+  const tools = text
+    .split(",")
+    .map((tool) => tool.trim())
+    .filter((tool) => tool.length > 0);
+  return tools;
+};
 // 조리단계 목록 생성
 const buildRecipeListItem = (steps: RecipeStep[]) => {
   const stepList = steps
@@ -61,12 +49,14 @@ const buildRecipeListItem = (steps: RecipeStep[]) => {
   return stepList;
 };
 
+// 레시피 폼 컴포넌트
 export default function RecipeForm({
   defaultValues,
   onSubmit,
   submitLabel = "레시피 등록",
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
+  const [toolsInput, setToolsInput] = useState((defaultValues?.tools ?? []).join(", "));
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // 폼 초기값 설정
@@ -75,6 +65,7 @@ export default function RecipeForm({
     summary: defaultValues?.summary ?? "",
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
+    tools: defaultValues?.tools ?? [],
     difficulty: defaultValues?.difficulty ?? "",
     time_minutes: defaultValues?.time_minutes ?? 0,
     servings: (defaultValues as any)?.servings ?? null,
@@ -87,7 +78,7 @@ export default function RecipeForm({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(recipeFormSchema),
-    mode: "onChange",
+    mode: "onSubmit",
     defaultValues: defaultValuesForForm,
   });
 
@@ -97,36 +88,32 @@ export default function RecipeForm({
 
   // 폼 제출 처리
   const handleSubmit = form.handleSubmit(async (values) => {
-    const rawSteps = form.getValues("steps") ?? [];
-    const normalizeSteps = rawSteps.map((step) => ({
-      description: step.description.trim(),
-    }));
+    // 커스팀 타입 보정
+    const normalizedIngredients = values.ingredients
+      .map((item) => ({
+        name: item.name.trim(),
+        amount: item.amount.trim(),
+        unit: item.unit as IngredientUnit,
+        unitCustom: item.unitCustom?.trim() ?? "",
+      }))
+      .filter((item) => item.name.length > 0);
 
-    form.clearErrors("steps");
+    const tools = normalizeTools(toolsInput);
+    const tags = normalizeTags(tagsInput);
 
-    const rawIngredients = form.getValues("ingredients") ?? [];
-    const normalizedIngredients = rawIngredients.map((item) => ({
-      name: item.name.trim(),
-      amount: item.amount.trim(),
-      unit: item.unit as IngredientUnit,
-      unitCustom: item.unitCustom?.trim() ?? "",
-    }));
-
-    form.clearErrors("ingredients");
-
-    const recipeStep = buildRecipeListItem(normalizeSteps);
-    const ingredientList = buildIngredientListItem(normalizedIngredients);
-
+    // onSubmit 제출 payload
     const payload: RecipeInsertDB = {
       title: values.title,
       summary: values.summary?.trim() ? values.summary.trim() : null,
-      steps: recipeStep,
+      steps: buildRecipeListItem(values.steps),
       category: values.category?.trim() ? values.category.trim() : "",
-      tags: normalizeTags(tagsInput),
-      ingredients: ingredientList,
-      difficulty: values.difficulty ?? null,
-      time_minutes: values.time_minutes ?? null,
-      servings: values.servings ?? null,
+      tags: tags,
+      tools: tools,
+      tools_required: tools.length > 0,
+      ingredients: normalizedIngredients,
+      difficulty: values.difficulty,
+      time_minutes: values.time_minutes,
+      servings: values.servings,
     };
     await onSubmit(payload, { imageFile: values.imageFile });
   });
@@ -162,6 +149,9 @@ export default function RecipeForm({
               tagsInput={tagsInput}
               setTagsInput={setTagsInput}
               normalizeTags={normalizeTags}
+              toolsInput={toolsInput}
+              setToolsInput={setToolsInput}
+              normalizeTools={normalizeTools}
             />
             <ImageUploadField
               form={form}
