@@ -9,6 +9,8 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+const DEFAULT_LIMIT = 10;
+
 type SearchParamValue = string | string[] | undefined;
 
 type PostsPageProps = {
@@ -31,17 +33,20 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const supabase = getServerSupabase();
 
   const pageValue = firstValue(searchParams?.page);
+  const limitValue = firstValue(searchParams?.limit);
   const pageNumber = Number(pageValue);
+  const limitNumber = Number(limitValue);
 
   const writerUid = firstValue(searchParams?.writerUid);
   const type = firstValue(searchParams?.type);
   const searchValue = firstValue(searchParams?.search);
 
   const keyword = searchValue?.trim() ?? undefined;
-  const limit = 10;
+  const limit = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
+  const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
 
-  const { items, total, offset } = await postService.listPosts(supabase, {
-    page: Number.isFinite(pageNumber) ? pageNumber : undefined,
+  const { items, total } = await postService.listPosts(supabase, {
+    page: currentPage,
     limit: limit,
     writerUid: writerUid ?? undefined,
     type: type ?? undefined,
@@ -49,7 +54,6 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   });
 
   const pageSize = limit > 0 ? limit : 1;
-  const currentPage = Math.floor(offset / pageSize) + 1;
 
   const paginationQuery: Record<string, string> = {};
   if (writerUid) paginationQuery.writerUid = writerUid;
@@ -67,7 +71,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <PaginationComponent
           basePath="/posts"
           page={currentPage}
-          pageSize={pageSize}
+          pageItemSize={pageSize}
           total={total}
           query={paginationQuery}
         />

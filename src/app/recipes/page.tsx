@@ -10,10 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
-import * as recipeService from "@/domain/recipe/service";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
-import { getBrowserSupabase } from "@/lib/supabase";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -39,24 +37,18 @@ function RecipesPageInner() {
 
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
-  const supabase = getBrowserSupabase();
-
+  const parsedPage = Number(pageParam);
+  const parsedLimit = Number(limitParam);
+  const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
   // 현재 page에 대한 recipe 목록
   useEffect(() => {
-    async function fetchdata() {
-      const data = await recipeService.getRecipeById(supabase, "test");
-    }
     let mounted = true;
 
     async function fetchRecipes() {
-      const parsedPage = Number(pageParam);
-      const parsedLimit = Number(limitParam);
-      const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
-      const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-
       setLoading(true);
       try {
-        const data = await listRecipes({ limit, page });
+        const data = await listRecipes({ limit: safeLimit, page: safePage });
         const items = (data?.items ?? []).map((item: any) => ({
           ...item,
           createdAt: item?.createdAt ? new Date(item.createdAt) : null,
@@ -81,7 +73,7 @@ function RecipesPageInner() {
     return () => {
       mounted = false;
     };
-  }, [pageParam, limitParam, user?.id]);
+  }, [safeLimit, safePage, user?.id]);
 
   // 레시피 정렬
   const sortedRecipes = useMemo(() => {
@@ -108,8 +100,8 @@ function RecipesPageInner() {
     router.push("/recipes/new");
   }
 
-  const pageSize = pageMeta.limit > 0 ? pageMeta.limit : DEFAULT_LIMIT;
-  const currentPage = pageSize > 0 ? Math.floor(pageMeta.offset / pageSize) + 1 : 1;
+  const currentPage = safePage;
+  const pageSize = pageMeta.limit > 0 ? pageMeta.limit : safeLimit;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
@@ -146,7 +138,7 @@ function RecipesPageInner() {
         <PaginationComponent
           basePath="/recipes"
           page={currentPage}
-          pageSize={pageSize}
+          pageItemSize={pageSize}
           total={pageMeta.total}
         />
       </footer>

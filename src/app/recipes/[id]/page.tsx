@@ -90,7 +90,7 @@ export default async function RecipeDetailPage({
               <PaginationComponent
                 basePath={`/recipes/${params.id}`}
                 page={currentPage}
-                pageSize={commentLimit}
+                pageItemSize={commentLimit}
                 total={total}
                 pageParam="commentPage"
               />

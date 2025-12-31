@@ -40,21 +40,21 @@ export default async function PostDetailPage({
 
   const commentPageValue = firstValue(searchParams?.commentPage);
   const commentPageNumber = Number(commentPageValue);
+  const commentPage = Number.isFinite(commentPageNumber) && commentPageNumber > 0 ? commentPageNumber : 1;
   const commentLimit = 10;
 
   const {
     items: commentRecords,
     total: commentTotal,
-    offset: commentOffset,
   } = await commentService.listComments(supabase, {
     parentType: "post",
     parentId: params.id,
-    page: Number.isFinite(commentPageNumber) ? commentPageNumber : undefined,
+    page: commentPage,
     limit: commentLimit,
   });
 
   const commentPageSize = commentLimit;
-  const commentPageCurrent = Math.floor(commentOffset / commentPageSize) + 1;
+  const commentPageCurrent = commentPage;
 
   const comments: CommentDisplayItem[] = commentRecords.map((item) => ({
     id: item.id,
@@ -94,7 +94,7 @@ export default async function PostDetailPage({
         <PaginationComponent
           basePath={`/posts/${params.id}`}
           page={commentPageCurrent}
-          pageSize={commentPageSize}
+          pageItemSize={commentPageSize}
           total={commentTotal}
           pageParam="commentPage"
           limitParam="commentLimit"
