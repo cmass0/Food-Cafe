@@ -26,9 +26,7 @@ export async function listCombos(params?: {
 export async function fetchComboById(comboId: string): Promise<ComboRow> {
   const res = await fetch(`/api/combos/${comboId}`, { cache: "no-store" });
   if (!res.ok) await throwApiError(res);
-
   const json = await res.json();
-
   return json.data;
 }
 

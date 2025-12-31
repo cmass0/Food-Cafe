@@ -1,5 +1,7 @@
 import { PaginationComponent } from "@/components/pagenation/pagenation";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 const DEFAULT_LIMIT = 10;
 
@@ -26,6 +28,9 @@ export default function CombosPage({
     <div className="mx-auto w-full max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <header className=" ">
         <h1>레시피 조합</h1>
+        <Link href="/combos/new">
+          <Button>새 조합 만들기</Button>
+        </Link>
         <p>여러 레시피를 조합해서 새로운 나만의 요리를 만들어보세요.</p>
         <Card className="mt-4  flex p-3 gap-2">
           <div>태그</div>

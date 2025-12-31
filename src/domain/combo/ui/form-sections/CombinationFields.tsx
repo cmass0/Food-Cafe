@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { TabsList } from "@/components/ui/tabs";
+import { getRecipe } from "@/domain/recipe/api";
 import { Tabs, TabsTrigger } from "@radix-ui/react-tabs";
 import Image from "next/image";
 import React from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
+import { ComboRow } from "../../types";
 
 type CombinationFieldsProps = {
   itemsArray: UseFieldArrayReturn<z.infer<typeof ComboFormSchema>, "items">;
@@ -18,6 +20,21 @@ type CombinationFieldsProps = {
 export default function CombinationFields({ itemsArray, form }: CombinationFieldsProps) {
   const [tabValue, setTabValue] = React.useState<"product" | "recipe">("product");
   const [imgPreview, setImagePreview] = React.useState<Record<string, string>>({});
+  const [ComboRef, setComboRef] = React.useState<Record<string, ComboRow>>({});
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImagePreview((prev) => ({ ...prev, [id]: url }));
+    }
+  };
+
+  const fetchRecipeByid = async (recipeid: string) => {
+    console.log("fetching recipe for id:", recipeid);
+    const req = await getRecipe(recipeid);
+    setComboRef((prev) => ({ ...prev, [recipeid]: req }));
+  };
 
   return (
     <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
@@ -73,9 +90,14 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                         <FormItem>
                           <Input placeholder="제품명" {...field} />
 
-                          <Input type="file"></Input>
+                          <Input type="file" onChange={(e) => handleFileChange(e, item.id)}></Input>
                           {imgPreview[item.id] && (
-                            <Image src={imgPreview[item.id] || ""} alt="previewimg"></Image>
+                            <Image
+                              src={imgPreview[item.id] || ""}
+                              alt="previewimg"
+                              width={100}
+                              height={100}
+                            ></Image>
                           )}
                           <Input placeholder="요약" {...form.register(`items.${index}.summary`)} />
                         </FormItem>
@@ -88,7 +110,21 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                       render={({ field }) => (
                         <FormItem>
                           <Input placeholder="레시피 ID" {...field} />
-                          <Button>레시피 가져오기</Button>
+                          <Button type="button" onClick={() => fetchRecipeByid(field.value)}>
+                            레시피 가져오기
+                          </Button>
+                          {ComboRef[field.value] && (
+                            <div className="mt-2">
+                              <Image
+                                src={ComboRef[field.value]?.image || ""}
+                                alt={ComboRef[field.value]?.title || "recipe image"}
+                                width={100}
+                                height={100}
+                              />
+                              <div>레시피명: {ComboRef[field.value]?.title}</div>
+                              <div>설명: {ComboRef[field.value]?.summary}</div>
+                            </div>
+                          )}
                         </FormItem>
                       )}
                     />
@@ -98,6 +134,11 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                     variant="ghost"
                     onClick={() => {
                       itemsArray.remove(index);
+                      setImagePreview((prev) => {
+                        const newPreview = { ...prev };
+                        delete newPreview[item.id];
+                        return newPreview;
+                      });
                     }}
                   >
                     삭제
