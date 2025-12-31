@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -73,6 +73,8 @@ export default function ComboForm({
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });
   // 요약글 길이
   const summaryLength = (form.watch("summary") ?? "").length;
+  //
+  const itemsArray = useFieldArray({ control: form.control, name: "items" });
 
   // 폼 제출 처리
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -137,7 +139,11 @@ export default function ComboForm({
               imagePreview={imagePreview}
               handleFileChange={handleFileChange}
             />
-            <CombinationFields />
+            <CombinationFields
+              form={form}
+              itemsArray={itemsArray}
+              handleFileChange={handleFileChange}
+            />
             <ComboStepsFields form={form} stepsArray={stepsArray} />
             <ComboSummaryField form={form} summaryLength={summaryLength} />
           </CardContent>

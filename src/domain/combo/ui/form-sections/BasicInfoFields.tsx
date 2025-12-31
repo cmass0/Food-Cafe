@@ -20,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@radix
 import { Info } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import z from "zod";
+import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 import { difficultyLabels, getComboDifficultyMeta } from "../CombodifficultyMeta";
 

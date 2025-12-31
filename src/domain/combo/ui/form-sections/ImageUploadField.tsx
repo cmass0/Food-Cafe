@@ -2,7 +2,7 @@ import { FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type ChangeEvent } from "react";
 import { type UseFormReturn } from "react-hook-form";
-import z from "zod";
+import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 
 type ImageUploadFieldProps = {

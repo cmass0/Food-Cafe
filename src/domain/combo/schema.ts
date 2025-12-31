@@ -24,6 +24,7 @@ export const ComboItemsSchema = z.array(
       type: z.literal("product"),
       productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
       summary: z.string().max(500).optional(),
+      image: imageFieldSchema,
     }),
   ])
 );

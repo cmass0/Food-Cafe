@@ -54,7 +54,8 @@ export function toArrayItems(value: unknown): ComboItems[] {
     if (item.type === "product") {
       const productName = typeof item.productName === "string" ? item.productName.trim() : "";
       const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      result.push({ type: "product", productName: productName, summary });
+      const image = typeof item.image === "string" ? item.image.trim() : null;
+      result.push({ type: "product", productName: productName, summary, image });
     }
   }
   return result;

@@ -116,4 +116,5 @@ export type ComboItems =
       type: "product";
       productName: string;
       summary?: string;
+      image?: string | null;
     };

@@ -1,3 +1,5 @@
+import CreateComboForm from "../components/CreateRecipeForm";
+
 export default function NewComboPage() {
-  return null;
+  return <CreateComboForm />;
 }

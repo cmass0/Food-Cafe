@@ -30,7 +30,7 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
   }
 
   return (
-    <header className="min-w-[1500px] sticky top-0 z-40 border-b border-emerald-700 bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 text-white shadow-lg ">
+    <header className="sticky top-0 z-40 w-full border-b border-emerald-700 bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 text-white shadow-lg ">
       {/* Top bar: 브랜드 / 메뉴 / 액션 */}
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {/* Left: 로고 + 메인 메뉴 */}

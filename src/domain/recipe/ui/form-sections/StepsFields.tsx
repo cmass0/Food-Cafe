@@ -42,24 +42,6 @@ export function StepsFields({ form, stepsArray }: StepsFieldsProps) {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        disabled={index === 0}
-                        onClick={() => stepsArray.move(index, index - 1)}
-                      >
-                        위로
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={index === stepsArray.fields.length - 1}
-                        onClick={() => stepsArray.move(index, index + 1)}
-                      >
-                        아래로
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
                         disabled={stepsArray.fields.length <= 1}
                         onClick={() => stepsArray.remove(index)}
                       >

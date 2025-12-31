@@ -11,7 +11,7 @@ import ComboForm from "@/domain/combo/ui/ComboForm";
 import { uploadBucketImage } from "@/lib/storage";
 import { getBrowserSupabase } from "@/lib/supabase";
 
-export default function CreateRecipeForm() {
+export default function CreateComboForm() {
   const router = useRouter();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
