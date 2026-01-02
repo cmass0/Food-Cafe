@@ -67,6 +67,21 @@ export type ComboInsertDb = {
   writer_name?: string | null;
 };
 
+export type ComboFormType = {
+  title: string;
+  summary?: string | null;
+  steps: ComboSteps[] | null;
+  items?: ComboItemsForm[] | null;
+  tags?: string[] | null;
+  tools?: string[] | null;
+  difficulty: string | null;
+  time_minutes: number | null;
+  tools_required?: boolean;
+  image?: File | null;
+  writer_uid?: string | null;
+  writer_name?: string | null;
+};
+
 export type ComboUpdateDb = {
   title?: string;
   summary?: string | null;
@@ -105,6 +120,19 @@ export type InsertCombo = {
 export type ComboSteps = {
   description: string;
 };
+
+export type ComboItemsForm =
+  | {
+      type: "recipe";
+      recipeid: string;
+      summary?: string;
+    }
+  | {
+      type: "product";
+      productName: string;
+      summary?: string;
+      image?: File | null;
+    };
 
 export type ComboItems =
   | {
