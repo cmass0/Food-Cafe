@@ -1,7 +1,6 @@
 "use client";
 import { Heart } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import * as React from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
@@ -16,11 +15,7 @@ type Props = {
 };
 
 export default function LikeButton(props: Props) {
-  return (
-    <React.Suspense fallback={null}>
-      <LikeButtonInner {...props} />
-    </React.Suspense>
-  );
+  return <LikeButtonInner {...props} />;
 }
 
 function LikeButtonInner({ recipeId, liked, count, onChange }: Props) {
@@ -38,10 +33,11 @@ function LikeButtonInner({ recipeId, liked, count, onChange }: Props) {
     }
 
     try {
-      const { liked: nextLiked, likeCount } = await toggleRecipeLike(recipeId);
-      onChange({ liked: nextLiked, likeCount });
+      const { liked, likeCount } = await toggleRecipeLike(recipeId);
+
+      onChange({ liked: liked, likeCount: likeCount });
     } catch (error) {
-      console.error("Failed to toggle like:", error);
+      console.error("좋아요 토글 실패: ", error);
     }
   }
 
