@@ -10,6 +10,7 @@ export async function toggleRecipeLike(recipeId: string): Promise<ToggleLikeReci
   if (!res.ok) {
     await throwApiError(res);
   }
+  const data = await res.json();
 
-  return res.json();
+  return data;
 }

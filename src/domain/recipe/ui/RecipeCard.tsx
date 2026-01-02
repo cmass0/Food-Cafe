@@ -35,6 +35,7 @@ export default function RecipeCard({
 
   async function LikeButtonHD(likedState: { liked: boolean; likeCount?: number | null }) {
     setLiked(likedState.liked);
+
     if (typeof likedState.likeCount === "number") {
       setLikeCount(likedState.likeCount);
     }
