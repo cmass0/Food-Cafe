@@ -5,42 +5,53 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getRecipe } from "@/domain/recipe/api";
 
+import { Recipe } from "@/domain/recipe/types";
 import Image from "next/image";
 import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { ComboFormSchema } from "../../schema";
-import { ComboFormValues, ComboRow } from "../../types";
+import { ComboFormValues } from "../../types";
 
 type CombinationFieldsProps = {
   itemsArray: UseFieldArrayReturn<ComboFormValues, "items">;
   form: UseFormReturn<ComboFormValues>;
-  handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
 export default function CombinationFields({ itemsArray, form }: CombinationFieldsProps) {
   const [tabValue, setTabValue] = React.useState<"product" | "recipe">("product");
   const [imgPreview, setImagePreview] = React.useState<Record<string, string>>({});
-  const [ComboRef, setComboRef] = React.useState<Record<string, ComboRow>>({});
+  const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
 
-  const fetchRecipeByid = async (url: string) => {
-    const id = parseComboId(url);
+  const fetchRecipeByid = async (input: string, index: number) => {
+    const id = parseComboId(input);
     if (!id) return null;
+    form.setValue(`items.${index}.recipeid`, id, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     const req = await getRecipe(id);
-    setComboRef((prev) => ({ ...prev, [url]: req }));
+    form.setValue(`items.${index}.image`, req.image ?? null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setRecipeRef((prev) => ({ ...prev, [id]: req }));
   };
 
-  const parseComboId = (url: string) => {
-    const parts = url.split("/");
+  const parseComboId = (input: string) => {
+    const parts = input.split("/").filter(Boolean);
     const id = parts[parts.length - 1];
     if (!id) return null;
     return id;
   };
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, itemId: string) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, itemId: string, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setImagePreview((prev) => ({ ...prev, [itemId]: url }));
+      form.setValue(`items.${index}.image`, file, { shouldDirty: true, shouldValidate: true });
     }
   };
 
@@ -93,8 +104,8 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
               단계 추가
             </Button>
             {itemsArray.fields.map((item, index) => (
-              <div key={item.id} className="mb-2 rounded border p-2">
-                <div className="flex justify-between">
+              <div key={item.id} className="mb-2 rounded border  p-2">
+                <div>
                   {/* 외부 제품 및 브랜드  */}
                   {item.type === "product" ? (
                     <FormField
@@ -105,11 +116,11 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                         const productName = form.getValues(`items.${index}.productName`);
                         const summary = form.getValues(`items.${index}.summary`);
                         return (
-                          <FormItem className="flex justify-between w-full pt-4 pb-4 ">
+                          <FormItem className="flex flex-col md:flex-row justify-between w-full pt-4 pb-4 ">
                             <div className="space-y-5">
                               <Input
                                 type="file"
-                                onChange={(e) => handleFileChange(e, item.id)}
+                                onChange={(e) => handleFileChange(e, item.id, index)}
                               ></Input>
                               <Input placeholder="제품명" {...field} />
                               <Input
@@ -153,28 +164,31 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                       control={form.control}
                       name={`items.${index}.recipeid`}
                       render={({ field }) => (
-                        <FormItem className="flex justify-between w-full py-5">
+                        <FormItem className="flex flex-col md:flex-row justify-between w-full py-5">
                           <div className="space-y-5">
                             <Input placeholder="레시피 ID" {...field} />
-                            <Button type="button" onClick={() => fetchRecipeByid(field.value)}>
+                            <Button
+                              type="button"
+                              onClick={() => fetchRecipeByid(field.value, index)}
+                            >
                               레시피 가져오기
                             </Button>
                           </div>
                           <div className="space-y-5 rounded-md border border-muted-foreground/30 bg-background p-4 shadow-lg w-[300px] h-[250px]">
-                            {ComboRef[field.value] ? (
+                            {recipeRef[field.value] ? (
                               <div className="mt-2 space-y-5 ">
                                 <Image
                                   className="rounded-lg"
-                                  src={ComboRef[field.value]?.image || ""}
-                                  alt={ComboRef[field.value]?.title || "recipe image"}
+                                  src={recipeRef[field.value]?.image || ""}
+                                  alt={recipeRef[field.value]?.title || "recipe image"}
                                   width={170}
                                   height={200}
                                 />
                                 <div className="text-sm text-muted-foreground font-sans-serif font-sans w-[260px] h-[20px] overflow-hidden truncate">
-                                  레시피명: {ComboRef[field.value]?.title}
+                                  레시피명: {recipeRef[field.value]?.title}
                                 </div>
                                 <div className="text-sm text-muted-foreground font-sans-serif font-sans w-[260px] h-[20px] overflow-hidden truncate">
-                                  설명: {ComboRef[field.value]?.summary}
+                                  설명: {recipeRef[field.value]?.summary}
                                 </div>
                               </div>
                             ) : (
@@ -188,6 +202,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                     />
                   )}
                   <Button
+                    className="rounded-3xl bg-gray-200 hover:bg-[#ff3434] hover:text-stone-100 text-gray-500 border-1"
                     type="button"
                     variant="ghost"
                     onClick={() => {
