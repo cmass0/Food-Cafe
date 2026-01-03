@@ -14,13 +14,14 @@ export const ComboSetpsSchema = z.object({
   description: z.string().min(1, "조리 단계를 입력해주세요.").max(1000),
 });
 
-// comboitem의 image는 form에서만 파일 업로드를 위해 사용
+// comboitem의 image는 product에서만 파일 업로드를 위해 사용
 export const ComboItemsSchema = z.array(
   z.union([
     z.object({
       type: z.literal("recipe"),
       recipeid: z.string().uuid(),
       summary: z.string().max(500).optional(),
+      image: imageFieldSchema,
     }),
     z.object({
       type: z.literal("product"),
@@ -43,6 +44,7 @@ export const ComboItemsSchemaAtForm = z.array(
       type: z.literal("recipe"),
       recipeid: z.string().uuid(),
       summary: z.string().max(500).optional(),
+      image: imageFieldSchema,
     }),
     z.object({
       type: z.literal("product"),
