@@ -1,31 +1,94 @@
+"use client";
+
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { listCombos } from "@/domain/combo/api";
+import type { ComboListResult, Combos } from "@/domain/combo/types";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
-const DEFAULT_LIMIT = 10;
+const DEFAULT_LIMIT = 6;
 
-type SearchParamValue = string | string[] | undefined;
+type ComboSort = "recent" | "like" | "view";
 
-function firstValue(value: SearchParamValue): string | undefined {
-  if (Array.isArray(value)) return value[0];
-  return value;
+function parseSort(value: string | null): ComboSort {
+  if (value === "like" || value === "view" || value === "recent") return value;
+  return "recent";
 }
 
-export default function CombosPage({
-  searchParams,
-}: {
-  searchParams?: { page?: SearchParamValue; limit?: SearchParamValue };
-}) {
-  const pageValue = firstValue(searchParams?.page);
-  const limitValue = firstValue(searchParams?.limit);
-  const pageNumber = Number(pageValue);
-  const limitNumber = Number(limitValue);
+export default function CombosPage() {
+  const searchParams = useSearchParams();
+  const pageParam = searchParams.get("page");
+  const limitParam = searchParams.get("limit");
+  const sortParam = searchParams.get("sort");
+  const pageNumber = Number(pageParam);
+  const limitNumber = Number(limitParam);
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
-  const pageSize = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
+  const requestedPageSize =
+    Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
+  const [sort, setSort] = useState<ComboSort>("recent");
+  const [combos, setCombos] = useState<Combos[]>([]);
+  const [pageMeta, setPageMeta] = useState<Pick<ComboListResult, "limit" | "offset" | "total">>({
+    limit: requestedPageSize,
+    offset: 0,
+    total: 0,
+  });
+
+  useEffect(() => {
+    setSort(parseSort(sortParam));
+  }, [sortParam]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchCombos() {
+      try {
+        const data = await listCombos({ limit: requestedPageSize, page: currentPage });
+        const items = (data?.items ?? []).map((item: any) => ({
+          ...item,
+          createdAt: item?.createdAt ? new Date(item.createdAt) : new Date(0),
+          updatedAt: item?.updatedAt ? new Date(item.updatedAt) : new Date(0),
+        }));
+        if (mounted) {
+          setCombos(items);
+          setPageMeta({
+            limit: data.limit,
+            offset: data.offset,
+            total: data.total,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch combos.", error);
+      }
+    }
+
+    fetchCombos();
+    return () => {
+      mounted = false;
+    };
+  }, [requestedPageSize, currentPage]);
+
+  const sortedCombos = useMemo(() => {
+    const base = [...combos];
+    if (sort === "like") {
+      return base.sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
+    }
+    if (sort === "view") {
+      return base.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
+    }
+    return base.sort((a, b) => {
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [combos, sort]);
+
+  const pageSize = pageMeta.limit > 0 ? pageMeta.limit : requestedPageSize;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+    <div className="flex flex-col m-auto w-full max-w-7xl px-4 my-10 h-[80vh] border-2">
       <header className=" ">
         <h1>레시피 조합</h1>
         <Link href="/combos/new">
@@ -40,104 +103,22 @@ export default function CombosPage({
           <div>정렬</div>
         </Card>
       </header>
-      <main className="flex flex-col gap-6 lg:flex-row lg:justify-between">
+      <main className="flex gap-6 flex-row justify-between border-2 flex-1 items-stretch">
+        {/* 레시피 grid */}
         <section className="w-full pt-10 flex flex-col justify-between gap-5 lg:w-2/3">
-          <Card className="grid grid-rows-3 grid-cols-3">
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-          </Card>
-          <footer>
+          <div className="grid grid-rows-3 grid-cols-2 border-2 flex-1">d</div>
+          <footer className="border-2">
             <PaginationComponent
               basePath="/combos"
               page={currentPage}
               pageItemSize={pageSize}
-              total={101}
+              total={pageMeta.total}
             ></PaginationComponent>
           </footer>
         </section>
-        <section className="w-full pt-10 lg:w-1/4">
-          <Card className="grid grid-rows-3 grid-cols-3">
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-            <div>레시피 조합 리스트</div>
-          </Card>
+        {/* 레시피 미리보기  */}
+        <section className=" pt-10 w-1/4 self-stretch flex min-h-0 border-2 ">
+          <Card className="grid grid-rows-3 grid-cols-3  h-full w-full">dd</Card>
         </section>
       </main>
     </div>
