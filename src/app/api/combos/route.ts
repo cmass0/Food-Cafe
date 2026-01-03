@@ -52,7 +52,10 @@ export async function POST(req: Request) {
   if (error) return error;
 
   try {
-    const combo = await comboService.createCombo(supabase, body);
+    const combo = await comboService.createCombo(supabase, {
+      ...body,
+      writer_uid: user.id,
+    });
     return json({ data: combo }, 201);
   } catch (error) {}
 }
