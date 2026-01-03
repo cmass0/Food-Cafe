@@ -10,7 +10,6 @@ import type { RecipeInsertDB } from "@/domain/recipe/types";
 import RecipeForm from "@/domain/recipe/ui/RecipeForm";
 
 import { uploadBucketImage } from "@/lib/storage";
-import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function CreateRecipeForm() {
   const router = useRouter();
@@ -27,26 +26,19 @@ export default function CreateRecipeForm() {
 
     const imageFile = extras?.imageFile ?? null;
     if (!imageFile) {
-      setError("대표 이미지를 파일로 올려주세요.");
+      setError("대표 이미지 파일을 선택해주세요.");
       return;
     }
 
     setSubmitting(true);
     setError(null);
-    const supabase = getBrowserSupabase();
 
     try {
       const recipeId = crypto.randomUUID();
-      const { publicUrl, signedUrl } = await uploadBucketImage(
-        supabase,
-        "recipes",
-        recipeId,
-        imageFile,
-        {
-          contentType: imageFile.type,
-          upsert: false,
-        }
-      );
+      const { publicUrl, signedUrl } = await uploadBucketImage("recipes", user.id, recipeId, imageFile, {
+        contentType: imageFile.type,
+        upsert: false,
+      });
       const finalUrl = publicUrl ?? signedUrl ?? null;
       if (!finalUrl) {
         throw new Error("이미지 URL 생성에 실패했습니다.");
@@ -60,8 +52,8 @@ export default function CreateRecipeForm() {
 
       router.push(`/recipes/${created.id}`);
     } catch (err) {
-      console.error("레시피 등록/업로드 과정에서 오류가 발생했습니다.", err);
-      setError("등록에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      console.error("레시피 등록 과정에서 오류가 발생했습니다.", err);
+      setError("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setSubmitting(false);
     }
