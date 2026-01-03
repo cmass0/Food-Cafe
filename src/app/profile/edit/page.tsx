@@ -111,20 +111,23 @@ export default function EditSheet({ userProfile }: Prps) {
                 defaultValue={userProfile.email ?? ""}
                 placeholder="변경할 이메일을 입력하세요"
               />
+              <Button>인증 메일 보내기</Button>
               <p className="text-xs text-muted-foreground">
                 이메일 변경 시 인증 메일이 발송됩니다.
               </p>
               {/* <Button type="submit">인증 메일받기</Button> */}
             </div>
           </div>
-          <SheetFooter className="mt-2">
-            <Button type="submit">변경사항 저장</Button>
-            <SheetClose asChild>
-              <Button type="button" variant="outline">
-                닫기
-              </Button>
-            </SheetClose>
-          </SheetFooter>
+          <div>
+            <SheetFooter className="mt-2">
+              <Button type="submit">변경사항 저장</Button>
+              <SheetClose asChild>
+                <Button type="button" variant="outline">
+                  닫기
+                </Button>
+              </SheetClose>
+            </SheetFooter>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
