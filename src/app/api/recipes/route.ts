@@ -1,4 +1,4 @@
-import { requestRecipeSchema } from "@/domain/recipe/schema";
+import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
 import {
   AuthErrorHelper,
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       return badRequest("잘못된 JSON 형식입니다.");
     }
     const supabase = getServerSupabase();
-    const parsed = requestRecipeSchema.parse(body);
+    const parsed = recipeInsertSchema.parse(body);
 
     const { user, error: authError } = await AuthErrorHelper();
     if (authError) return authError;

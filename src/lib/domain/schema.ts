@@ -1,18 +1,9 @@
 import { z } from "zod";
 
-export const imageFieldSchema = z.preprocess(
-  (value) => {
-    if (typeof value === "string" && value.trim() === "") return undefined;
-    return value;
-  },
-  z
-    .string()
-    .trim()
-    .min(1, "대표 이미지를 선택해 주세요")
-    .max(2048, "이미지 경로는 2048자 이하만 가능합니다.")
-    .nullable()
-    .optional()
-);
+export const imageFieldSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, z.string().trim().min(1, "대표 이미지를 선택해 주세요").max(2048, "이미지 경로는 2048자 이하만 가능합니다.").nullable().optional());
 
 export const imageFileSchema = z
   .union([z.instanceof(File), z.null()], {

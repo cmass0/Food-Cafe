@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import LikeButton from "@/domain/recipe/recipe_like/ui/likebutton";
 import { listRecipes } from "@/domain/recipe/service";
+import { Recipe } from "@/domain/recipe/types";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const revalidate = 0;
@@ -29,7 +30,7 @@ export default async function MealsResults({ searchParams }: { searchParams: SP 
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {results.map((r: any) => (
+      {results.map((r: Recipe) => (
         <Card key={r.id} className="overflow-hidden">
           <Link href={`/recipes/${r.id}`} className="block">
             {r.image ? (

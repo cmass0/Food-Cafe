@@ -1,5 +1,4 @@
-﻿import type { Database } from "@/types/supabase";
-import type { SupabaseClient } from "@supabase/supabase-js";
+﻿import { getBrowserSupabase } from "../supabase";
 
 const BUCKET = "Food-Cafe";
 
@@ -20,26 +19,30 @@ export function randomKey(prefix?: string): string {
   return prefix ? `${prefix}-${ts}-${rnd}` : `${ts}-${rnd}`;
 }
 
-export function ContentImagePath(type: string, contentid: string, filename: string): string {
-  return `${type}/${contentid}/${sanitizeFilename(filename)}`;
+export function ContentImagePath(
+  type: string,
+  userId: string,
+  contentid: string,
+  filename: string
+): string {
+  return `${type}/${userId}/${contentid}/${sanitizeFilename(filename)}`;
 }
 
 export function userAvatarPath(userId: string, filename: string): string {
   return `avatars/${userId}/${sanitizeFilename(filename)}`;
 }
 
-export type StorageClient = SupabaseClient<Database>;
-
-// 이미지 업로드 통합
+// 이미지 업로드 공용 함수
 export async function uploadBucketImage(
-  client: StorageClient,
   type: string,
+  userId: string,
   contentid: string,
   file: File | Blob,
   opts?: { filename?: string; upsert?: boolean; contentType?: string; sign?: number }
 ): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }> {
   const base = opts?.filename ?? `${randomKey("img")}${fileExtension((file as any)?.name)}`;
-  const path = ContentImagePath(type, contentid, base);
+  const path = ContentImagePath(type, userId, contentid, base);
+  const client = getBrowserSupabase();
   const { error } = await client.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
     upsert: Boolean(opts?.upsert),

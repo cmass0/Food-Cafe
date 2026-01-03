@@ -91,8 +91,8 @@ function RecipesPageInner() {
     });
   }, [recipes, sort]);
 
-  function handleShare(event?: React.MouseEvent<HTMLButtonElement>) {
-    event?.preventDefault();
+  function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
     if (!user) {
       openAuthModal({ next: "/recipes/new" });
       return;

@@ -59,7 +59,7 @@ function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
     <button
       type="button"
       aria-label={`북마크 ${(onChange ? marked : localMarked) ? "해제" : "추가"} (현재 ${count})`}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/60 bg-black/20 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/60 bg-black/20 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
       onClick={handleClick}
     >
       <Bookmark

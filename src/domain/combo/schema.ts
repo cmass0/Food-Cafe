@@ -1,5 +1,6 @@
-﻿import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
+﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
+import { imageFileSchema } from "./../../lib/domain/schema";
 
 export const comboListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
@@ -13,6 +14,7 @@ export const ComboSetpsSchema = z.object({
   description: z.string().min(1, "조리 단계를 입력해주세요.").max(1000),
 });
 
+// comboitem의 image는 form에서만 파일 업로드를 위해 사용
 export const ComboItemsSchema = z.array(
   z.union([
     z.object({
@@ -25,6 +27,28 @@ export const ComboItemsSchema = z.array(
       productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
       summary: z.string().max(500).optional(),
       image: imageFieldSchema,
+    }),
+  ])
+);
+// ComboItems의 image 필드는 form에서 File 형태로 입력받기 때문에 별도 스키마 정의
+const comboItemImageFileSchema = z.preprocess(
+  (value) => (value == null ? undefined : value),
+  imageFileSchema.optional()
+);
+
+// ComboItems의 image 필드는 form에서 File 형태로 입력받음
+export const ComboItemsSchemaAtForm = z.array(
+  z.union([
+    z.object({
+      type: z.literal("recipe"),
+      recipeid: z.string().uuid(),
+      summary: z.string().max(500).optional(),
+    }),
+    z.object({
+      type: z.literal("product"),
+      productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
+      summary: z.string().max(500).optional(),
+      image: comboItemImageFileSchema,
     }),
   ])
 );
@@ -48,10 +72,19 @@ export const ComboInsertSchema = z.object({
     .optional(),
   tools_required: z.boolean().optional(),
   image: imageFieldSchema,
+  writer_uid: z.string().uuid().optional(),
+  writer_name: z.string().max(200).optional(),
 });
 
-export const ComboFormSchema = ComboInsertSchema.omit({ id: true, image: true }).extend({
-  imageFile: imageFileSchema,
+export const ComboFormSchema = ComboInsertSchema.omit({
+  id: true,
+  image: true,
+  items: true,
+  writer_uid: true,
+  writer_name: true,
+}).extend({
+  image: imageFileSchema,
+  items: ComboItemsSchemaAtForm,
 });
 
 export const ComboUpdateSchema = z

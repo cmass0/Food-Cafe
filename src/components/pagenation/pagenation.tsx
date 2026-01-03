@@ -64,7 +64,7 @@ export function PaginationComponent({
         <PaginationItem>
           {start == 1 ? null : (
             <PaginationLink href={buildHref(1)} aria-label="맨앞" prefetch={false}>
-              ≪
+              {/* ≪ */}
             </PaginationLink>
           )}
         </PaginationItem>
@@ -94,7 +94,7 @@ export function PaginationComponent({
         <PaginationItem>
           {end === totalPages ? null : (
             <PaginationLink href={buildHref(totalPages)} aria-label="맨뒤" prefetch={false}>
-              ≫
+              {/* ≫ */}
             </PaginationLink>
           )}
         </PaginationItem>

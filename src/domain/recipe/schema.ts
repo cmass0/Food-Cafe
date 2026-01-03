@@ -107,15 +107,15 @@ export const recipeListOptionsSchema = z.object({
   search: z.string().trim().max(200).optional(),
 });
 
-export const requestRecipeSchema = z.object({
-  id: z.string().uuid().optional(),
-  title: z.string(),
-  summary: z.string().nullable().optional(),
-  steps: z.array(recipeStepSchema),
-  ingredients: z.array(ingredientItemSchema),
-  image: z.string().trim().min(1),
-  category: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
-  tools: z.array(z.string()).nullable().optional(),
-  tools_required: z.boolean().optional(),
-});
+// export const requestRecipeSchema = z.object({
+//   id: z.string().uuid(),
+//   title: z.string(),
+//   summary: z.string().nullable().optional(),
+//   steps: z.array(recipeStepSchema),
+//   ingredients: z.array(ingredientItemSchema),
+//   image: z.string().trim().min(1),
+//   category: z.string().nullable(),
+//   tags: z.array(z.string()).optional(),
+//   tools: z.array(z.string()).nullable().optional(),
+//   tools_required: z.boolean().optional(),
+// });

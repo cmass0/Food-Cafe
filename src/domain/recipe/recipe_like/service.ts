@@ -1,18 +1,18 @@
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 import * as userLikeRepo from "./repository";
-import { TopRecipe } from "./types";
+import { TopRecipe, TopRecipeRow } from "./types";
 
-export function mapTopRecipe(row: TopRecipe): TopRecipe {
+export function mapTopRecipe(row: TopRecipeRow): TopRecipe {
   return {
-    recipeId: row.recipeId,
+    recipeId: row.recipe_id,
     title: row.title,
     summary: row.summary,
     image: row.image,
-    likeCount: row.likeCount,
-    viewCount: row.viewCount,
-    writerUid: row.writerUid,
-    writerName: row.writerName,
+    likeCount: row.like_count,
+    viewCount: row.view_count,
+    writerUid: row.writer_uid,
+    writerName: row.writer_name,
   };
 }
 
