@@ -2,19 +2,20 @@
 import { Button } from "@/components/ui/button";
 import { FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { TabsList } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getRecipe } from "@/domain/recipe/api";
-import { Tabs, TabsTrigger } from "@radix-ui/react-tabs";
+
 import Image from "next/image";
-import React from "react";
+import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 import { ComboRow } from "../../types";
 
 type CombinationFieldsProps = {
-  itemsArray: UseFieldArrayReturn<z.infer<typeof ComboFormSchema>, "items">;
-  form: UseFormReturn<z.infer<typeof ComboFormSchema>>;
+  itemsArray: UseFieldArrayReturn<z.input<typeof ComboFormSchema>, "items">;
+  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
 export default function CombinationFields({ itemsArray, form }: CombinationFieldsProps) {
@@ -22,57 +23,69 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
   const [imgPreview, setImagePreview] = React.useState<Record<string, string>>({});
   const [ComboRef, setComboRef] = React.useState<Record<string, ComboRow>>({});
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+  const fetchRecipeByid = async (url: string) => {
+    const id = parseComboId(url);
+    if (!id) return null;
+    const req = await getRecipe(id);
+    setComboRef((prev) => ({ ...prev, [url]: req }));
+  };
+
+  const parseComboId = (url: string) => {
+    const parts = url.split("/");
+    const id = parts[parts.length - 1];
+    if (!id) return null;
+    return id;
+  };
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, itemId: string) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setImagePreview((prev) => ({ ...prev, [id]: url }));
+      setImagePreview((prev) => ({ ...prev, [itemId]: url }));
     }
   };
 
-  const fetchRecipeByid = async (recipeid: string) => {
-    console.log("fetching recipe for id:", recipeid);
-    const req = await getRecipe(recipeid);
-    setComboRef((prev) => ({ ...prev, [recipeid]: req }));
-  };
-
   return (
-    <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
+    <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4 ">
       <FormField
         control={form.control}
         name="items"
         render={({ field }) => (
           <FormItem>
-            <Tabs defaultValue={tabValue}>
-              <TabsList className="gap-5">
-                <TabsTrigger
-                  value="product"
-                  onClick={() => {
-                    setTabValue("product");
-                  }}
-                >
-                  Product
-                </TabsTrigger>
-                |
-                <TabsTrigger
-                  value="recipe"
-                  onClick={() => {
-                    setTabValue("recipe");
-                  }}
-                >
-                  Recipe
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center space-x-4">
+              <Tabs defaultValue={tabValue}>
+                <TabsList className="gap-5">
+                  <TabsTrigger
+                    className="cursor-pointer rounded-md"
+                    value="product"
+                    onClick={() => {
+                      setTabValue("product");
+                    }}
+                  >
+                    Product
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    className="cursor-pointer rounded-md"
+                    value="recipe"
+                    onClick={() => {
+                      setTabValue("recipe");
+                    }}
+                  >
+                    Recipe
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div> 유형을 선택해주세요</div>
+            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              disabled={itemsArray.fields.length >= 15}
+              disabled={itemsArray.fields.length >= 10}
               onClick={() =>
                 itemsArray.append(
                   tabValue === "product"
-                    ? { type: "product", productName: "", summary: "", image: "" }
+                    ? { type: "product", productName: "", summary: "", image: null }
                     : { type: "recipe", recipeid: "", summary: "" }
                 )
               }
@@ -82,49 +95,94 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
             {itemsArray.fields.map((item, index) => (
               <div key={item.id} className="mb-2 rounded border p-2">
                 <div className="flex justify-between">
+                  {/* 외부 제품 및 브랜드  */}
                   {item.type === "product" ? (
                     <FormField
                       control={form.control}
                       name={`items.${index}.productName`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Input placeholder="제품명" {...field} />
+                      render={({ field }) => {
+                        // 필드 값 가져오기
+                        const productName = form.getValues(`items.${index}.productName`);
+                        const summary = form.getValues(`items.${index}.summary`);
+                        return (
+                          <FormItem className="flex justify-between w-full pt-4 pb-4 ">
+                            <div className="space-y-5">
+                              <Input
+                                type="file"
+                                onChange={(e) => handleFileChange(e, item.id)}
+                              ></Input>
+                              <Input placeholder="제품명" {...field} />
+                              <Input
+                                placeholder="요약"
+                                {...form.register(`items.${index}.summary`)}
+                              />
+                            </div>
+                            {/* 미리보기 field */}
+                            <div className="space-y-5 rounded-md border border-muted-foreground/30 bg-background p-4 shadow-lg  w-[300px] h-[270px] ">
+                              <div className="relative h-[150px] w-[200px] border-[2px] ">
+                                {imgPreview[item.id] ? (
+                                  <Image
+                                    className="rounded-md "
+                                    src={imgPreview[item.id] || ""}
+                                    alt="previewimg"
+                                    fill
+                                  ></Image>
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                                    이미지가 존재하지 않습니다
+                                  </div>
+                                )}
+                              </div>
 
-                          <Input type="file" onChange={(e) => handleFileChange(e, item.id)}></Input>
-                          {imgPreview[item.id] && (
-                            <Image
-                              src={imgPreview[item.id] || ""}
-                              alt="previewimg"
-                              width={100}
-                              height={100}
-                            ></Image>
-                          )}
-                          <Input placeholder="요약" {...form.register(`items.${index}.summary`)} />
-                        </FormItem>
-                      )}
+                              <div className="text-sm text-muted-foreground font-sans-serif w-[260px] h-[20px] overflow-hidden truncate">
+                                {productName
+                                  ? `${productName}`
+                                  : "제품명을 입력하면 미리보기가 나옵니다."}
+                              </div>
+                              <div className="text-sm text-muted-foreground font-sans-serif font-sans  w-[260px] h-[20px] overflow-hidden truncate">
+                                {summary ? `${summary}` : "요약을 입력하면 미리보기가 나옵니다."}
+                              </div>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
                     />
                   ) : (
+                    // 사이트 레시피 참조
                     <FormField
                       control={form.control}
                       name={`items.${index}.recipeid`}
                       render={({ field }) => (
-                        <FormItem>
-                          <Input placeholder="레시피 ID" {...field} />
-                          <Button type="button" onClick={() => fetchRecipeByid(field.value)}>
-                            레시피 가져오기
-                          </Button>
-                          {ComboRef[field.value] && (
-                            <div className="mt-2">
-                              <Image
-                                src={ComboRef[field.value]?.image || ""}
-                                alt={ComboRef[field.value]?.title || "recipe image"}
-                                width={100}
-                                height={100}
-                              />
-                              <div>레시피명: {ComboRef[field.value]?.title}</div>
-                              <div>설명: {ComboRef[field.value]?.summary}</div>
-                            </div>
-                          )}
+                        <FormItem className="flex justify-between w-full py-5">
+                          <div className="space-y-5">
+                            <Input placeholder="레시피 ID" {...field} />
+                            <Button type="button" onClick={() => fetchRecipeByid(field.value)}>
+                              레시피 가져오기
+                            </Button>
+                          </div>
+                          <div className="space-y-5 rounded-md border border-muted-foreground/30 bg-background p-4 shadow-lg w-[300px] h-[250px]">
+                            {ComboRef[field.value] ? (
+                              <div className="mt-2 space-y-5 ">
+                                <Image
+                                  className="rounded-lg"
+                                  src={ComboRef[field.value]?.image || ""}
+                                  alt={ComboRef[field.value]?.title || "recipe image"}
+                                  width={170}
+                                  height={200}
+                                />
+                                <div className="text-sm text-muted-foreground font-sans-serif font-sans w-[260px] h-[20px] overflow-hidden truncate">
+                                  레시피명: {ComboRef[field.value]?.title}
+                                </div>
+                                <div className="text-sm text-muted-foreground font-sans-serif font-sans w-[260px] h-[20px] overflow-hidden truncate">
+                                  설명: {ComboRef[field.value]?.summary}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                                레시피 정보를 불러와주세요
+                              </div>
+                            )}
+                          </div>
                         </FormItem>
                       )}
                     />

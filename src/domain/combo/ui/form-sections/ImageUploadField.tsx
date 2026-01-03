@@ -6,7 +6,7 @@ import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 
 type ImageUploadFieldProps = {
-  form: UseFormReturn<z.infer<typeof ComboFormSchema>>;
+  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
   imagePreview: string | null;
   handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
@@ -24,7 +24,7 @@ export function ComboImageUploadField({
       </div>
       <FormField
         control={form.control}
-        name="imageFile"
+        name="image"
         render={({ field }) => (
           <div className="space-y-4">
             <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">

@@ -13,8 +13,8 @@ import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 
 type StepsFieldsProps = {
-  form: UseFormReturn<z.infer<typeof ComboFormSchema>>;
-  stepsArray: UseFieldArrayReturn<z.infer<typeof ComboFormSchema>, "steps">;
+  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  stepsArray: UseFieldArrayReturn<z.input<typeof ComboFormSchema>, "steps">;
 };
 
 export function ComboStepsFields({ form, stepsArray }: StepsFieldsProps) {

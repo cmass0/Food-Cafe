@@ -6,7 +6,7 @@ import { ChangeEvent, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../schema";
-import { ComboInsertDb, ComboSteps } from "../types";
+import { ComboSteps } from "../types";
 import { ComboBasicInfoFields } from "./form-sections/BasicInfoFields";
 import CombinationFields from "./form-sections/CombinationFields";
 
@@ -14,9 +14,11 @@ import { ComboImageUploadField } from "./form-sections/ImageUploadField";
 import { ComboStepsFields } from "./form-sections/StepsFields";
 import { ComboSummaryField } from "./form-sections/SummaryFiled";
 
+type ComboFormValues = z.input<typeof ComboFormSchema>;
+
 type ComboFormProps = {
-  defaultValues?: Partial<ComboInsertDb>;
-  onSubmit: (values: ComboInsertDb, extras?: { imageFile: File | null }) => Promise<void>;
+  defaultValues?: Partial<ComboFormValues>;
+  onSubmit: (values: ComboFormValues, extras?: { imageFile: File | null }) => Promise<void>;
   submitLabel?: string;
 };
 
@@ -62,9 +64,9 @@ export default function ComboForm({
     tools: defaultValues?.tools ?? [],
     items: defaultValues?.items ?? [],
     steps: defaultValues?.steps ?? [{ description: "" }],
-    imageFile: null,
+    image: null,
   };
-  const form = useForm<z.infer<typeof ComboFormSchema>>({
+  const form = useForm<ComboFormValues>({
     resolver: zodResolver(ComboFormSchema),
     mode: "onBlur",
     defaultValues: defaultValuesForForm,
@@ -81,32 +83,31 @@ export default function ComboForm({
     const tags = normalizeTags(tagsInput);
     const tools = normalizeTools(toolsInput);
 
-    const payload: ComboInsertDb = {
-      id: defaultValues?.id ?? "",
-      title: values.title,
-      summary: values.summary ?? null,
-      difficulty: values.difficulty ?? null,
-      time_minutes: values.time_minutes ?? null,
-      tags: tags,
-      tools: tools,
+    const payload: ComboFormValues = {
+      ...values,
+      summary: values.summary ?? undefined,
+      difficulty: values.difficulty ?? undefined,
+      time_minutes: values.time_minutes ?? undefined,
+      tags,
+      tools,
       tools_required: tools.length > 0 ? true : false,
       items: values.items,
       steps: buildRecipeListItem(values.steps),
     };
 
-    await onSubmit(payload, { imageFile: values.imageFile });
+    await onSubmit(payload, { imageFile: values.image });
   });
 
   // 이미지 파일 변경 처리
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      form.setValue("imageFile", null, { shouldValidate: true });
+      form.setValue("image", null, { shouldValidate: true });
       setImagePreview(null);
       return;
     }
 
-    form.setValue("imageFile", file, { shouldValidate: true });
+    form.setValue("image", file, { shouldValidate: true });
     const reader = new FileReader();
     reader.onload = () => setImagePreview(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
@@ -115,7 +116,6 @@ export default function ComboForm({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 여기에 폼 필드 추가 */}
         <Card className="border border-muted-foreground/10 shadow-sm">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-semibold">레시피 작성</CardTitle>

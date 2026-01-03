@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 
 type SummaryFieldProps = {
-  form: UseFormReturn<z.infer<typeof ComboFormSchema>>;
+  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
   summaryLength: number;
 };
 
