@@ -10,11 +10,11 @@ import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
-import { ComboRow } from "../../types";
+import { ComboFormValues, ComboRow } from "../../types";
 
 type CombinationFieldsProps = {
-  itemsArray: UseFieldArrayReturn<z.input<typeof ComboFormSchema>, "items">;
-  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  itemsArray: UseFieldArrayReturn<ComboFormValues, "items">;
+  form: UseFormReturn<ComboFormValues>;
   handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 

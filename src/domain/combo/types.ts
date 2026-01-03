@@ -1,4 +1,6 @@
 import { Database } from "@/types/supabase";
+import { z } from "zod";
+import { ComboFormSchema } from "./schema";
 import {} from "./types";
 
 export type ComboRow = Database["public"]["Tables"]["combos"]["Row"];
@@ -146,3 +148,5 @@ export type ComboItems =
       summary?: string;
       image?: string | null;
     };
+
+export type ComboFormValues = z.input<typeof ComboFormSchema>;

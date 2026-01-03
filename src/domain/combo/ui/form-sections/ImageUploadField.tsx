@@ -4,9 +4,10 @@ import { type ChangeEvent } from "react";
 import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
+import { ComboFormValues } from "../../types";
 
 type ImageUploadFieldProps = {
-  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  form: UseFormReturn<ComboFormValues>;
   imagePreview: string | null;
   handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };

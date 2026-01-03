@@ -24,9 +24,10 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../../schema";
 import { difficultyLabels, getComboDifficultyMeta } from "../CombodifficultyMeta";
+import { ComboFormValues } from "../../types";
 
 type BasicInfoFieldsProps = {
-  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  form: UseFormReturn<ComboFormValues>;
   tagsInput: string;
   setTagsInput: Dispatch<SetStateAction<string>>;
   normalizeTags: (text: string) => string[];

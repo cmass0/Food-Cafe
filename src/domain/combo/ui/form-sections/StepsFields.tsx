@@ -9,12 +9,11 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { ComboFormSchema } from "../../schema";
+import { ComboFormValues } from "../../types";
 
 type StepsFieldsProps = {
-  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
-  stepsArray: UseFieldArrayReturn<z.input<typeof ComboFormSchema>, "steps">;
+  form: UseFormReturn<ComboFormValues>;
+  stepsArray: UseFieldArrayReturn<ComboFormValues, "steps">;
 };
 
 export function ComboStepsFields({ form, stepsArray }: StepsFieldsProps) {

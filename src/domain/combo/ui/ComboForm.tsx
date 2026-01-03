@@ -6,7 +6,7 @@ import { ChangeEvent, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ComboFormSchema } from "../schema";
-import { ComboSteps } from "../types";
+import { ComboFormValues, ComboSteps } from "../types";
 import { ComboBasicInfoFields } from "./form-sections/BasicInfoFields";
 import CombinationFields from "./form-sections/CombinationFields";
 
@@ -14,7 +14,7 @@ import { ComboImageUploadField } from "./form-sections/ImageUploadField";
 import { ComboStepsFields } from "./form-sections/StepsFields";
 import { ComboSummaryField } from "./form-sections/SummaryFiled";
 
-type ComboFormValues = z.input<typeof ComboFormSchema>;
+
 
 type ComboFormProps = {
   defaultValues?: Partial<ComboFormValues>;

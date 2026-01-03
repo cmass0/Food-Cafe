@@ -1,11 +1,10 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { ComboFormSchema } from "../../schema";
+import { ComboFormValues } from "../../types";
 
 type SummaryFieldProps = {
-  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
+  form: UseFormReturn<ComboFormValues>;
   summaryLength: number;
 };
 
