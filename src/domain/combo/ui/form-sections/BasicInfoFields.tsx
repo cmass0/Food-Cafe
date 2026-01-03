@@ -7,6 +7,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+
 import {
   Select,
   SelectContent,
@@ -14,9 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@radix-ui/react-select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@radix-ui/react-tooltip";
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -25,7 +26,7 @@ import { ComboFormSchema } from "../../schema";
 import { difficultyLabels, getComboDifficultyMeta } from "../CombodifficultyMeta";
 
 type BasicInfoFieldsProps = {
-  form: UseFormReturn<z.infer<typeof ComboFormSchema>>;
+  form: UseFormReturn<z.input<typeof ComboFormSchema>>;
   tagsInput: string;
   setTagsInput: Dispatch<SetStateAction<string>>;
   normalizeTags: (text: string) => string[];
