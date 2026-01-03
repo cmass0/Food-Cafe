@@ -1,6 +1,7 @@
 "use client";
 
-import { mapTopRecipe, TopRecipe, TopRecipeRow } from "@/domain/recipe/recipe_like/types";
+import { mapTopRecipe } from "@/domain/recipe/recipe_like/service";
+import { TopRecipe } from "@/domain/recipe/recipe_like/types";
 import { getBrowserSupabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import TopRecipesCarousel from "./top-recipes-carousel";
@@ -19,7 +20,7 @@ export default function WeeklyTopRecipe() {
         if (error) {
           throw new Error(`Failed to fetch weekly top recipes: ${error.message}`);
         }
-        const recipes = (data ?? []).map((row) => mapTopRecipe(row as TopRecipeRow));
+        const recipes = (data ?? []).map((row) => mapTopRecipe(row));
         setToprecipes(recipes);
       } catch (error) {
         console.error("Error fetching weekly top recipes:", error);
