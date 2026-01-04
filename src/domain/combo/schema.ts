@@ -20,6 +20,7 @@ export const ComboItemsSchema = z.array(
     z.object({
       type: z.literal("recipe"),
       recipeid: z.string().uuid(),
+      title: z.string().max(200).optional(),
       summary: z.string().max(500).optional(),
       image: imageFieldSchema,
     }),
@@ -43,6 +44,7 @@ export const ComboItemsSchemaAtForm = z.array(
     z.object({
       type: z.literal("recipe"),
       recipeid: z.string().uuid(),
+      title: z.string().max(200).optional(),
       summary: z.string().max(500).optional(),
       image: imageFieldSchema,
     }),

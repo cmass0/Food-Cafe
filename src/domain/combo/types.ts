@@ -127,6 +127,7 @@ export type ComboItemsForm =
   | {
       type: "recipe";
       recipeid: string;
+      title?: string;
       summary?: string;
       image?: string | null;
     }
@@ -141,6 +142,7 @@ export type ComboItems =
   | {
       type: "recipe";
       recipeid: string;
+      title?: string;
       summary?: string;
       image?: string | null;
     }

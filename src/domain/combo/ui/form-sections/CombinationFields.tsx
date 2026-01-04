@@ -29,7 +29,13 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       shouldValidate: true,
     });
     const req = await getRecipe(id);
+    if (!req) return null;
+
     form.setValue(`items.${index}.image`, req.image ?? null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue(`items.${index}.title`, req.title ?? undefined, {
       shouldDirty: true,
       shouldValidate: true,
     });

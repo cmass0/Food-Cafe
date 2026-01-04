@@ -49,7 +49,9 @@ export function toArrayItems(value: unknown): ComboItems[] {
     if (item.type === "recipe") {
       const recipeid = typeof item.recipeid === "string" ? item.recipeid.trim() : "";
       const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      result.push({ type: "recipe", recipeid: recipeid, summary });
+      const image = typeof item.image === "string" ? item.image.trim() : null;
+      const title = typeof item.title === "string" ? item.title.trim() : undefined;
+      result.push({ type: "recipe", recipeid, summary, image, title });
     }
     if (item.type === "product") {
       const productName = typeof item.productName === "string" ? item.productName.trim() : "";
@@ -136,6 +138,7 @@ export async function createCombo(
   input: ComboInsertDb
 ): Promise<Combos> {
   const parsed = ComboInsertSchema.parse(input);
+
   const row = await repo.insertCombo(client, parsed);
   return mapRowToCombination(row);
 }
@@ -145,6 +148,7 @@ export async function updateCombo(
   patch: ComboUpdateDb
 ): Promise<Combos> {
   const parsed = ComboUpdateSchema.parse(patch);
+
   const row = await repo.updateCombo(client, id, parsed);
   return mapRowToCombination(row);
 }
