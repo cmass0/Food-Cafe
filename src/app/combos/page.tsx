@@ -4,6 +4,13 @@ import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listCombos } from "@/domain/combo/api";
 import type { ComboListResult, Combos } from "@/domain/combo/types";
@@ -113,9 +120,11 @@ export default function CombosPage() {
   }, [sortedCombos, activeComboId]);
 
   const pageSize = pageMeta.limit > 0 ? pageMeta.limit : requestedPageSize;
+  const activeItems = activeCombo?.items ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-16 pt-10">
+      {/* 헤더  */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">레시피 조합</h1>
@@ -127,6 +136,7 @@ export default function CombosPage() {
           <Link href="/combos/new">조합 만들기</Link>
         </Button>
       </header>
+      {/* 정렬 탭 */}
       <Card>
         <Tabs value={sort} onValueChange={handleSortChange}>
           <TabsList className="bg-background/60">
@@ -139,6 +149,7 @@ export default function CombosPage() {
         </Tabs>
       </Card>
 
+      {/* 메인 시작 */}
       <main className="flex flex-col gap-6 lg:flex-row">
         <section className="flex w-full flex-col gap-6 lg:w-2/3">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-2">
@@ -149,10 +160,6 @@ export default function CombosPage() {
               </Card>
             ) : (
               sortedCombos.map((combo) => {
-                const createdLabel = combo.createdAt.toLocaleDateString("ko-KR", {
-                  month: "short",
-                  day: "numeric",
-                });
                 const isActive = combo.id === activeCombo?.id;
 
                 return (
@@ -171,6 +178,7 @@ export default function CombosPage() {
                       isActive ? "ring-2 ring-emerald-400/60" : ""
                     }`}
                   >
+                    {/* 이미지 */}
                     <div className="flex h-full">
                       <div className="relative h-full w-32 shrink-0 overflow-hidden bg-muted/30 sm:w-36">
                         {combo.image ? (
@@ -187,7 +195,7 @@ export default function CombosPage() {
                           </div>
                         )}
                       </div>
-
+                      {/* 제목 / 난이도 / 소요시간 / 요약 */}
                       <div className="flex flex-1 flex-col  justify-between gap-2 p-3">
                         <div className="space-y-1">
                           <div className="flex flex-col flex-wrap items-start gap-2">
@@ -205,11 +213,14 @@ export default function CombosPage() {
                               ) : null}
                             </div>
                           </div>
-                          <p className="line-clamp-2 text-xs text-muted-foreground ">
-                            {combo.summary || "설명이 없습니다."}
-                          </p>
+                          <div>
+                            <p className="line-clamp-2 text-xs text-muted-foreground ">
+                              {combo.summary || "설명이 없습니다."}
+                            </p>
+                          </div>
                         </div>
 
+                        {/* 좋아요 / 조회수 / 북마크 */}
                         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1.5">
                             <Heart className="h-3 w-3 text-red-500 fill-pink-400" />
@@ -224,10 +235,9 @@ export default function CombosPage() {
                           </span>
                         </div>
 
+                        {/* 조합의 구성 아이템 수 / 상세보기 버튼 */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            구성 {combo.items?.length ?? 0}개 · {createdLabel}
-                          </span>
+                          <span>구성 {combo.items?.length ?? 0}개</span>
                           <Button
                             asChild
                             size="sm"
@@ -244,7 +254,9 @@ export default function CombosPage() {
               })
             )}
           </div>
+          {/* 레시피 조합 grid 영역 끝 */}
 
+          {/* 레시피 조합 페이징  */}
           <footer>
             <PaginationComponent
               basePath="/combos"
@@ -255,10 +267,11 @@ export default function CombosPage() {
           </footer>
         </section>
 
+        {/* 조합 미리보기 카드 영역 시작 */}
         <section className="w-full lg:w-1/3">
           <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-muted-foreground/20 bg-background shadow-sm">
             <div className="border-b border-muted-foreground/20 p-4">
-              <h2 className="text-lg font-semibold">
+              <h2 className="line-clamp-1 text-lg font-semibold">
                 {activeCombo?.title ?? "조합을 선택해 주세요"}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -270,7 +283,7 @@ export default function CombosPage() {
                   : "왼쪽 카드에서 조합을 선택하면 상세 정보가 보여요."}
               </p>
             </div>
-
+            {/* 이미지 */}
             <div className="relative h-52 w-full overflow-hidden bg-muted/30">
               {activeCombo?.image ? (
                 <Image
@@ -287,11 +300,13 @@ export default function CombosPage() {
               )}
             </div>
 
+            {/* 요약 */}
             <div className="flex flex-1 flex-col gap-4 p-4">
               <p className="line-clamp-4 text-sm text-muted-foreground ">
                 {activeCombo?.summary || "요약 정보가 없습니다."}
               </p>
 
+              {/* 난이도 / 시간 / 좋아요 / 조회수 / 북마크 */}
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <span>난이도 {activeCombo?.difficulty ?? "미정"}</span>
                 <span>
@@ -305,19 +320,21 @@ export default function CombosPage() {
                   <Eye className="h-3 w-3 text-black" /> {activeCombo?.viewCount ?? 0}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Bookmark className="h-3 w-3 text-black bfg fill-emerald-400" />
+                  <Bookmark className="h-3 w-3 text-black fill-emerald-400" />
                   {activeCombo?.bookmarkCount ?? 0}
                 </span>
               </div>
 
+              {/* 태그  */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">태그</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex max-h-16 flex-wrap gap-2 overflow-y-auto">
                   {activeCombo?.tags?.length ? (
                     activeCombo.tags.slice(0, 6).map((tag) => (
                       <Badge
                         key={tag}
-                        className="border text-black border-emerald-400/30 bg-emerald-500/10 hover:text-white"
+                        title={tag}
+                        className="max-w-full truncate border text-black border-emerald-400/30 bg-emerald-500/10 hover:text-white"
                       >
                         {tag}
                       </Badge>
@@ -328,26 +345,52 @@ export default function CombosPage() {
                 </div>
               </div>
 
+              {/* 구성아이템 */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">구성 아이템</p>
-                <ul className="space-y-1 text-xs text-muted-foreground">
-                  {activeCombo?.items?.length ? (
-                    activeCombo.items.slice(0, 5).map((item, index) => {
-                      const label =
-                        item.type === "product"
-                          ? item.productName || `상품 ${index + 1}`
-                          : item.summary || `레시피 ${index + 1}`;
-                      return (
-                        <li key={`${item.type}-${index}`} className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
-                          <span className="line-clamp-1">{label}</span>
-                        </li>
-                      );
-                    })
-                  ) : (
-                    <li className="text-xs text-muted-foreground">구성 아이템이 없습니다.</li>
-                  )}
-                </ul>
+                <div className="text-xs text-muted-foreground">
+                  <Carousel
+                    className="w-full"
+                    opts={{ align: "start", containScroll: "trimSnaps" }}
+                  >
+                    <CarouselContent className="-ml-2">
+                      {activeItems.length ? (
+                        activeItems.map((item, index) => {
+                          const title =
+                            item.type === "recipe"
+                              ? item.title || "레시피명 없음"
+                              : item.productName || "제품명 없음";
+                          const image = item.image ?? null;
+                          return (
+                            <CarouselItem
+                              key={`${item.type}-${index}`}
+                              className="pl-2 basis-[110px] sm:basis-[120px]"
+                            >
+                              <Card className="overflow-hidden border border-muted-foreground/20">
+                                <div className="relative h-16 w-full">
+                                  {image ? (
+                                    <Image src={image} fill alt={title} className="object-cover" />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground border-b-1">
+                                      이미지 없음
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex justify-center items-center px-2 py-1 text-[11px] text-muted-foreground line-clamp-1">
+                                  {title}
+                                </div>
+                              </Card>
+                            </CarouselItem>
+                          );
+                        })
+                      ) : (
+                        <div className="text-xs text-muted-foreground">구성 아이템이 없습니다.</div>
+                      )}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-2 h-7 w-7 disabled:pointer-events-none disabled:opacity-0" />
+                    <CarouselNext className="right-2 h-7 w-7 disabled:pointer-events-none disabled:opacity-0" />
+                  </Carousel>
+                </div>
               </div>
 
               {activeCombo ? (
@@ -358,7 +401,9 @@ export default function CombosPage() {
             </div>
           </Card>
         </section>
+        {/* 조합 미리보기 카드 영역 끝 */}
       </main>
+      {/* 메인 끝 */}
     </div>
   );
 }
