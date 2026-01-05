@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as userFollowService from "@/domain/follow/service";
 import FollowButton from "@/domain/follow/ui/FollowButton";
 import * as userService from "@/domain/user/service";
 import { User } from "lucide-react";
@@ -17,6 +19,7 @@ type ProfileSearchParams = {
   tab?: string | string[];
   page?: string | string[];
   search?: string | string[];
+  email?: string | string[];
 };
 
 function normalizeParam(value: string | string[] | undefined): string | undefined {
@@ -42,36 +45,31 @@ export default async function ProfilePage({
   searchParams?: ProfileSearchParams;
 }) {
   const supabase = getServerSupabase();
+
+  // 다른 사용자 정보 가져오기
   const another_user = await userService.getUserById(params.id);
+  if (!another_user) {
+    return notFound();
+  }
+
+  // 내 정보 가져오기
   const {
     data: { user: viewer },
   } = await supabase.auth.getUser();
 
-  if (!another_user) {
-    return (
-      <main className="grid gap-4 p-6">
-        <p>로그인이 필요합니다.</p>
-        <Link href="/auth/signin-signup" className="text-primary underline">
-          로그인하러 가기
-        </Link>
-      </main>
-    );
+  if (searchParams?.email === "changed") {
+    alert("이메일이 변경되었습니다. 변경된 이메일로 로그인 해주세요.");
   }
 
   const isSelf = viewer?.id === another_user.id;
   let isFollowing = false;
+
   if (viewer && !isSelf) {
-    const { data: followRow, error: followError } = await supabase
-      .from("user_follows")
-      .select("follower_id")
-      .eq("follower_id", viewer.id)
-      .eq("following_id", another_user.id)
-      .maybeSingle();
-    if (followError) {
-      console.error("[profile] follow lookup error:", followError);
-    } else {
-      isFollowing = Boolean(followRow);
-    }
+    isFollowing = await userFollowService.checkIsFollowing(
+      supabase,
+      viewer.id,
+      another_user.id
+    );
   }
 
   const tabParam = normalizeParam(searchParams?.tab);
@@ -102,7 +100,9 @@ export default async function ProfilePage({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="text-2xl font-semibold">{another_user.display_name ?? "-"}</div>
+                  <div className="text-2xl font-semibold">
+                    {another_user.display_name ?? "-"}
+                  </div>
                   <div className="text-gray-500">{another_user.email ?? "-"}</div>
                 </div>
               </div>
@@ -110,8 +110,8 @@ export default async function ProfilePage({
                 <FollowButton
                   targetUserId={another_user.id}
                   initialIsFollowing={isFollowing}
-                  initialFollowerCount={another_user.follower_count ?? 0}
-                  followingCount={another_user.following_count ?? 0}
+                  initialFollowerCount={another_user?.follower_count ?? 0}
+                  followingCount={another_user?.following_count ?? 0}
                   canFollow={Boolean(viewer)}
                 />
               ) : null}
@@ -152,14 +152,14 @@ export default async function ProfilePage({
               </TabsTrigger>
             </TabsList>
             <TabsContent value="written">
-              <ProfileRecipeTab
-                type="written"
-                page={activeTab === "written" ? currentPage : 1}
-                limit={pageSize}
-                search={search}
-                id={another_user.id}
-              />
-            </TabsContent>
+                <ProfileRecipeTab
+                  type="written"
+                  page={activeTab === "written" ? currentPage : 1}
+                  limit={pageSize}
+                  search={search}
+                  id={another_user.id}
+                />
+              </TabsContent>
             <TabsContent value="bookmark">
               <ProfileRecipeTab
                 type="bookmark"

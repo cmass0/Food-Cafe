@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as userService from "@/domain/user/service";
 import { User } from "lucide-react";
+import { notFound } from "next/navigation";
 
 import EditSheet from "./edit/page";
 import ProfileRecipeTab from "./profiletab/ProfileRecipeTab";
@@ -39,16 +40,8 @@ export default async function ProfilePage({
   searchParams?: ProfileSearchParams;
 }) {
   const me = await userService.getSelf();
-
   if (!me) {
-    return (
-      <main className="grid gap-4 p-6">
-        <p>로그인이 필요합니다.</p>
-        <Link href="/auth/signin-signup" className="text-primary underline">
-          로그인하러 가기
-        </Link>
-      </main>
-    );
+    return notFound();
   }
 
   const tabParam = normalizeParam(searchParams?.tab);
@@ -69,7 +62,11 @@ export default async function ProfilePage({
             <div className="-mt-9 flex items-end justify-between">
               <div className="flex items-end gap-4">
                 <Avatar className="h-20 w-20 border bg-background md:h-24 md:w-24">
-                  {me.photo_url ? <AvatarImage src={me.photo_url} alt="프로필 이미지" /> : <User />}
+                  {me.photo_url ? (
+                    <AvatarImage src={me.photo_url} alt="프로필 이미지" />
+                  ) : (
+                    <User />
+                  )}
                   <AvatarFallback>
                     <User />
                   </AvatarFallback>
@@ -122,6 +119,7 @@ export default async function ProfilePage({
                 page={activeTab === "written" ? currentPage : 1}
                 limit={pageSize}
                 search={search}
+                id={me.id}
               />
             </TabsContent>
             <TabsContent value="bookmark">
@@ -130,6 +128,7 @@ export default async function ProfilePage({
                 page={activeTab === "bookmark" ? currentPage : 1}
                 limit={pageSize}
                 search={search}
+                id={me.id}
               />
             </TabsContent>
             <TabsContent value="like">
@@ -138,6 +137,7 @@ export default async function ProfilePage({
                 page={activeTab === "like" ? currentPage : 1}
                 limit={pageSize}
                 search={search}
+                id={me.id}
               />
             </TabsContent>
           </Tabs>
