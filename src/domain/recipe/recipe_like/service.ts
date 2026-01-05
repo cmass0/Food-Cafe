@@ -5,7 +5,7 @@ import { TopRecipe, TopRecipeRow } from "./types";
 
 export function mapTopRecipe(row: TopRecipeRow): TopRecipe {
   return {
-    recipeId: row.recipe_id,
+    id: row.recipe_id,
     title: row.title,
     summary: row.summary,
     image: row.image,

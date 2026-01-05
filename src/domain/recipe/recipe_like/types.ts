@@ -24,7 +24,7 @@ export type ToggleLikeRecipe = {
 };
 
 export type TopRecipe = {
-  recipeId: string;
+  id: string;
   title: string;
   summary: string;
   image: string | null;

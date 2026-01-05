@@ -1,7 +1,5 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import type { RecipeListResult } from "./types";
-
-
+import type { Recipe, RecipeListResult } from "./types";
 
 export async function listRecipes(params?: {
   limit?: number;
@@ -26,7 +24,7 @@ export async function listRecipes(params?: {
   return json.data as RecipeListResult;
 }
 
-export async function createRecipe(body: unknown) {
+export async function createRecipe(body: unknown): Promise<Recipe> {
   const res = await fetch(`/api/recipes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -37,14 +35,14 @@ export async function createRecipe(body: unknown) {
   return json.data;
 }
 
-export async function getRecipe(id: string) {
+export async function getRecipe(id: string): Promise<Recipe> {
   const res = await fetch(`/api/recipes/${id}`, { cache: "no-store" });
   if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
 }
 
-export async function updateRecipe(id: string, body: unknown) {
+export async function updateRecipe(id: string, body: unknown): Promise<Recipe> {
   const res = await fetch(`/api/recipes/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -55,7 +53,7 @@ export async function updateRecipe(id: string, body: unknown) {
   return json.data;
 }
 
-export async function deleteRecipe(id: string) {
+export async function deleteRecipe(id: string){
   const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
   if (!res.ok && res.status !== 204) await throwApiError(res);
 }

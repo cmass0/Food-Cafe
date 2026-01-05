@@ -1,6 +1,20 @@
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 import * as combolikeRepo from "./repository";
+import { TopCombo, TopComboRow } from "./types";
+
+export function mapTopCombo(row: TopComboRow): TopCombo {
+  return {
+    id: row.combo_id,
+    title: row.title,
+    summary: row.summary,
+    image: row.image,
+    likeCount: row.like_count,
+    viewCount: row.view_count,
+    writerUid: row.writer_uid,
+    writerName: row.writer_name,
+  };
+}
 
 export async function buildLikedSetCombo(
   client: SupabaseClient<Database>,
