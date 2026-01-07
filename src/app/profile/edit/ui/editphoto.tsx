@@ -1,7 +1,7 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
 import { User } from "lucide-react";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -142,8 +142,10 @@ export default function EditPhoto({ userProfile }: Props) {
           {imageError ? (
             <p className="text-sm text-red-500">{imageError}</p>
           ) : imageSuccess ? (
-            <p className="text-sm">{imageSuccess}</p>
-          ) : null}
+            <p className="text-sm font-bold">{imageSuccess}</p>
+          ) : (
+            <div />
+          )}
           <Button className="justify-end" type="submit" disabled={imageSaving}>
             {imageSaving ? "이미지 변경 중..." : "이미지 변경"}
           </Button>

@@ -47,16 +47,17 @@ export default function EditEmail({ userProfile }: Props) {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="변경할 이메일을 입력하세요"
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" onClick={sendmailHandler}>
-          인증 메일 보내기
-        </Button>
+      <div className="flex flex-wrap items-center">
         {errorMessage ? (
           <p className="text-sm text-red-500">{errorMessage}</p>
         ) : successMessage ? (
-          <p className="text-sm">{successMessage}</p>
+          <p className="text-sm font-bold">{successMessage}</p>
         ) : null}
       </div>
+      <Button type="button" onClick={sendmailHandler}>
+        인증 메일 보내기
+      </Button>
+
       {!errorMessage && !successMessage ? (
         <p className="text-xs text-muted-foreground">이메일 변경 시 인증 메일이 발송됩니다.</p>
       ) : null}

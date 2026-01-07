@@ -67,8 +67,10 @@ export default function EditName({ userProfile }: Props) {
         {nameError ? (
           <p className="text-sm text-red-500">{nameError}</p>
         ) : nameSuccess ? (
-          <p className="text-sm">{nameSuccess}</p>
-        ) : null}
+          <p className="text-sm font-bold">{nameSuccess}</p>
+        ) : (
+          <div />
+        )}
         <Button type="submit" disabled={nameSaving}>
           {nameSaving ? "이름 변경 중..." : "이름 변경"}
         </Button>
