@@ -65,6 +65,7 @@ export default function SignInSignUpView({
       }
       onAuthSuccess?.(next);
       router.replace(next);
+      router.refresh();
     });
   };
 
@@ -96,7 +97,11 @@ export default function SignInSignUpView({
         password: signUpPassword,
         options: {
           emailRedirectTo: url.toString(),
-          data: { display_name: displayName.trim() },
+          data: {
+            display_name: displayName.trim(),
+            name: displayName.trim(),
+            full_name: displayName.trim(),
+          },
         },
       });
 

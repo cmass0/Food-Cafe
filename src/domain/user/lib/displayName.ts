@@ -4,8 +4,15 @@ import type { User } from "@supabase/supabase-js";
 export function deriveDisplayName(user: User | null): string | null {
   if (!user) return null;
 
-  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const nameCommon = metadata.full_name ?? metadata.name ?? metadata.nickname ?? metadata.user_name;
+  const metadata = user.user_metadata ?? {};
+  // 공통 이름 필드 우선 사용
+  // full_name = 구글, name = 구글/깃허브, nickname = 카카오, user_name = 기타
+  const nameCommon =
+    metadata.display_name ??
+    metadata.full_name ??
+    metadata.name ??
+    metadata.nickname ??
+    metadata.user_name;
   if (typeof nameCommon === "string" && nameCommon.trim().length > 0) {
     return nameCommon;
   }
