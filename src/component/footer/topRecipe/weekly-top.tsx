@@ -4,7 +4,7 @@ import { mapTopRecipe } from "@/domain/recipe/recipe_like/service";
 import { TopRecipe } from "@/domain/recipe/recipe_like/types";
 import { getBrowserSupabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import TopRecipesCarousel from "./top-recipes-carousel";
+import TopCarousel from "../top-recipes-carousel";
 
 export default function WeeklyTopRecipe() {
   const [topRecipes, setToprecipes] = useState<TopRecipe[]>([]);
@@ -18,16 +18,16 @@ export default function WeeklyTopRecipe() {
           limit_size: 10,
         });
         if (error) {
-          throw new Error(`Failed to fetch weekly top recipes: ${error.message}`);
+          throw new Error(`레시피 조회 실패: ${error.message}`);
         }
         const recipes = (data ?? []).map((row) => mapTopRecipe(row));
         setToprecipes(recipes);
       } catch (error) {
-        console.error("Error fetching weekly top recipes:", error);
+        console.error("주간 인기 레시피 조회 실패:", error);
       }
     }
     fetchTopRecipes();
   }, []);
 
-  return <TopRecipesCarousel label="주간 인기 레시피" recipes={topRecipes} />;
+  return <TopCarousel label="주간 인기 레시피" contents={topRecipes} />;
 }
