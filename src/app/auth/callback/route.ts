@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const next = rawNext.startsWith("/") ? rawNext : "/";
   const redirectUrl = new URL(next, req.url);
   const response = NextResponse.redirect(redirectUrl);
+  
 
   const supabase = createServerClient<Database>(url, anon, {
     cookies: {

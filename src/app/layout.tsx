@@ -1,4 +1,4 @@
-import NavBarServer from "@/components/nav/user-nav.server";
+import Navbar from "@/component/nav-bar";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import "react-quill/dist/quill.snow.css";
@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="bg-background text-foreground min-h-screen antialiased">
         <Providers>
-          <NavBarServer />
+          <Navbar />
           {children}
         </Providers>
       </body>
