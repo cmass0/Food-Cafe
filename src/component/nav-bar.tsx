@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import ThemeToggle from "@/component/theme-toggle";
 import { Input } from "@/components/ui/input";
 import {
   NavigationMenu,
@@ -15,8 +14,9 @@ import {
 } from "@/components/ui/navigation-menu";
 
 import { useAuth } from "@/app/auth/auth-context";
+import ProfileButton from "@/components/nav/user-nav.client";
 
-export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
+export default function Navbar() {
   const [searchText, setSearchText] = useState("");
   const router = useRouter();
 
@@ -70,8 +70,8 @@ export default function Navbar({ rightSlot }: { rightSlot: React.ReactNode }) {
 
         {/* 다크모드 & 유저 슬롯*/}
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-          {rightSlot}
+          {/* <ThemeToggle /> */}
+          <ProfileButton />
         </div>
       </div>
 

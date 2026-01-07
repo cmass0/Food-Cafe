@@ -106,7 +106,7 @@ export default function ComboForm({
 
     form.setValue("image", file, { shouldValidate: true });
     const reader = new FileReader();
-    reader.onload = () => setImagePreview(typeof reader.result === "string" ? reader.result : null);
+    reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
   };
 
