@@ -1,8 +1,6 @@
 "use client";
 
-import type { Session } from "@supabase/supabase-js";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +12,12 @@ import {
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import Link from "next/link";
 
-type Props = { session: Session | null };
-
-function ClientUserNavInner({ session }: Props) {
-  const user = session?.user ?? null;
-  const name = useAuth().displayName;
+export default function ProfileButton() {
+  const { user, status, displayName } = useAuth();
+  const name = displayName || deriveDisplayName(user) || "";
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { openAuthModal } = useAuthModal();
@@ -29,6 +27,13 @@ function ClientUserNavInner({ session }: Props) {
     const next = pathname ? (params ? `${pathname}?${params}` : pathname) : "/";
     openAuthModal({ next });
   };
+
+  // 로딩중 빈공간 스켈레톤
+  if (status === "loading") {
+    return (
+      <div className="h-9 w-24 rounded-full bg-emerald-50/70 animate-pulse" aria-hidden="true" />
+    );
+  }
 
   if (!user) {
     return (
@@ -54,10 +59,10 @@ function ClientUserNavInner({ session }: Props) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <a href="/profile">내 프로필</a>
+          <Link href="/profile">내 프로필</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="/settings">설정</a>
+          <Link href="/settings">설정</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <form action="/auth/signout" method="post">
@@ -66,13 +71,5 @@ function ClientUserNavInner({ session }: Props) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export default function ClientUserNav(props: Props) {
-  return (
-    <Suspense fallback={null}>
-      <ClientUserNavInner {...props} />
-    </Suspense>
   );
 }
