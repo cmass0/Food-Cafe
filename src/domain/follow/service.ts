@@ -1,9 +1,8 @@
-// src/features/follow/service.ts
 "use server";
 
+import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import * as repository from "./repository";
 import type { FollowListOptions, FollowListResult, FollowUserRow, FollowingUserRow } from "./type";
 
@@ -62,4 +61,13 @@ export async function listFollowings(
     offset,
     hasMore,
   };
+}
+
+export async function checkIsFollowing(
+  client: SupabaseClient<Database>,
+  followerId: string,
+  followingId: string
+): Promise<boolean> {
+  if (!followerId || (!followingId && followerId === followingId)) return false;
+  return repository.isFollowing(client, followerId, followingId);
 }

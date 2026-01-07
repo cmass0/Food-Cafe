@@ -45,3 +45,19 @@ export async function followingList(
   const items = (data ?? []).filter((row) => Boolean(row.following));
   return { items, total: count ?? items.length };
 }
+
+export async function isFollowing(
+  client: SupabaseClient<Database>,
+  followerId: string,
+  followingId: string
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("user_follows")
+    .select("follower_id")
+    .eq("follower_id", followerId)
+    .eq("following_id", followingId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+}
