@@ -18,14 +18,13 @@ export async function GET(req: Request) {
     const limit = Number.isFinite(limitParams) ? limitParams : undefined;
     const page = Number.isFinite(pageParams) ? pageParams : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
-    const tags = url.searchParams.getAll("tag");
     const search = url.searchParams.get("search") || undefined;
+    const searchField = url.searchParams.get("searchField") || undefined;
 
     const combos = await comboService.listCombos(supabase, {
       limit,
       page,
       writerUid,
-      tags,
       search,
     });
     return json({ data: combos }, 201);

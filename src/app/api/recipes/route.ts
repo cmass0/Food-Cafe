@@ -20,14 +20,13 @@ export async function GET(req: Request) {
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
-    const tags = url.searchParams.getAll("tag");
     const search = url.searchParams.get("search") || undefined;
     const supabase = getServerSupabase();
     const recipes = await recipeService.listRecipes(supabase, {
       limit,
       page,
       writerUid,
-      tags,
+ 
       search,
     });
 

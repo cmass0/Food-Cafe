@@ -32,9 +32,10 @@ export interface Combos {
 export type ComboListOptions = {
   page?: number;
   limit?: number;
-  tags?: string[];
+
   search?: string;
   writerUid?: string;
+  searchField?: ComboSearchField;
 };
 
 export type ComboListResult = {
@@ -48,10 +49,13 @@ export type ComboListResult = {
 export type FetchCombosParams = {
   limit: number;
   offset: number;
-  tags?: string[];
+
   writerUid?: string;
   search?: string;
+  searchField?: ComboSearchField;
 };
+
+export type ComboSearchField = "tag" | "title" | "tag_title" | "writer";
 
 export type ComboInsertDb = {
   id: string;

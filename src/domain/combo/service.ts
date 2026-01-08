@@ -101,7 +101,7 @@ export async function listCombos(
   const { items: rows, total: rowtotal } = await repo.fetchCombos(client, {
     limit,
     offset,
-    tags: parsed.tag,
+   
     search: parsed.search,
     writerUid: parsed.writerUid,
   });
