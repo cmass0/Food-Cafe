@@ -108,8 +108,9 @@ export async function listBookmarkedRecipes(
   const { items: rows, total: rowtotal } = await repo.selectRecipeByBookmarked(client, userId, {
     limit,
     offset,
-    tags: parsed.tags,
+
     search: parsed.search,
+    searchField: parsed.searchField,
   });
 
   const items = rows.map((row) => ({
@@ -139,8 +140,9 @@ export async function listLikedRecipes(
   const { items: rows, total: rowtotal } = await repo.selectRecipeByLike(client, userId, {
     limit,
     offset,
-    tags: parsed.tags,
+
     search: parsed.search,
+    searchField: parsed.searchField,
   });
 
   const items = rows.map((row) => ({
@@ -169,9 +171,10 @@ export async function listRecipes(
   const { items: rows, total: rowtotal } = await repo.fetchRecipes(client, {
     limit,
     offset,
-    tags: parsed.tags,
+
     writerUid: parsed.writerUid,
     search: parsed.search,
+    searchField: parsed.searchField,
   });
 
   let items = rows.map(mapRowToRecipe);

@@ -24,4 +24,5 @@ export const postListOptionsSchema = z.object({
   writerUid: z.string().uuid().optional(),
   type: z.string().trim().max(40).optional(),
   search: z.string().trim().max(200).optional(),
+  searchField: z.enum(["title", "writer", "contents", "title_contents"]).optional(),
 });

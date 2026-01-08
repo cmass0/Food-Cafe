@@ -44,6 +44,7 @@ export type PostListOptions = {
   writerUid?: string;
   type?: string;
   search?: string;
+  searchField?: PostSearchField;
 };
 
 export type FetchPostsParams = {
@@ -52,4 +53,7 @@ export type FetchPostsParams = {
   writerUid?: string;
   type?: string;
   search?: string;
+  searchField?: PostSearchField;
 };
+
+export type PostSearchField = "title" | "writer" | "contents" | "title_contents";

@@ -67,6 +67,7 @@ export async function listPosts(
     writerUid: parsed.writerUid,
     type: parsed.type,
     search: parsed.search,
+    searchField: parsed.searchField,
   });
 
   const items = rows.map(mapRowToPost);
