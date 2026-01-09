@@ -62,11 +62,7 @@ export default async function ProfilePage({
             <div className="-mt-9 flex items-end justify-between">
               <div className="flex items-end gap-4">
                 <Avatar className="h-20 w-20 border bg-background md:h-24 md:w-24">
-                  {me.photo_url ? (
-                    <AvatarImage src={me.photo_url} alt="프로필 이미지" />
-                  ) : (
-                    <User />
-                  )}
+                  {me.photo_url ? <AvatarImage src={me.photo_url} alt="프로필 이미지" /> : <User />}
                   <AvatarFallback>
                     <User />
                   </AvatarFallback>

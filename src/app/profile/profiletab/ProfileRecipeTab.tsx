@@ -1,5 +1,6 @@
 import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/domain/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 
 import ProfileRecipeGrid from "./ProfileRecipeGrid";
 import ProfilePagination from "./Profilepagenation";
@@ -21,19 +22,23 @@ const EMPTY_MESSAGES: Record<ProfileRecipeType, string> = {
 };
 
 export default async function ProfileRecipeTab({ type, page = 1, limit = 6, search, id }: Props) {
+  const currentUid = id ?? null;
+  if (!currentUid) {
+    return notFound();
+  }
+
   const supabase = getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user && type !== "written") {
     return <div className="text-sm text-slate-600">로그인이 필요합니다.</div>;
   }
 
   const currentPage = Math.max(1, Math.trunc(page));
   const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
   const trimmedSearch = search?.trim() || undefined;
-  const currentUid = id ? id : user.id;
 
   try {
     if (type === "written") {
