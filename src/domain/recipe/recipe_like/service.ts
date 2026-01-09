@@ -28,3 +28,12 @@ export async function buildLikedSetRecipe(
   if (!user) throw new Error("로그인이 필요합니다.");
   return userLikeRepo.fetchLikedRecipeIds(client, user.id, recipeIds);
 }
+
+export async function isLikedRecipe(
+  client: SupabaseClient<Database>,
+  recipeId: string,
+  userId: string
+): Promise<boolean> {
+  return userLikeRepo.isLikedRecipe(client, recipeId, userId);
+}
+

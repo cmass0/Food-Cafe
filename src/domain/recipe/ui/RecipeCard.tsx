@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
-import BookmarkBtn from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
-import LikeButton from "@/domain/recipe/recipe_like/ui/likebutton";
+import RecipeCardBookmarkButton from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
+import RecipeCardLikeButton from "@/domain/recipe/recipe_like/ui/likebutton";
 import { useState } from "react";
 import type { Recipe } from "../types";
 
@@ -24,8 +24,9 @@ export default function RecipeCard({
   recipe,
 }: RecipeCardProps) {
   const [liked, setLiked] = useState<boolean>(initialLiked);
-  const [likeCount, setLikeCount] = useState<number>(initialCount ?? recipe.likeCount ?? 0);
+  const [likeCount, setLikeCount] = useState<number>(initialCount);
   const [bookmarked, setBookmarked] = useState<boolean>(initialBookmarked);
+  const [bookmarkCount, setBookmarkCount] = useState<number>(recipe.bookmarkCount ?? 0);
 
   const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -39,6 +40,10 @@ export default function RecipeCard({
     if (typeof likedState.likeCount === "number") {
       setLikeCount(likedState.likeCount);
     }
+  }
+
+  async function BookmarkButtonHD(bookmarkedState: { bookmarked: boolean }) {
+    setBookmarked(bookmarkedState.bookmarked);
   }
 
   return (
@@ -75,13 +80,13 @@ export default function RecipeCard({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <BookmarkBtn
+            <RecipeCardBookmarkButton
               recipeId={recipe.id}
               marked={bookmarked}
-              count={0}
-              onChange={({ bookmarked }) => setBookmarked(bookmarked)}
+              count={bookmarkCount}
+              onChange={BookmarkButtonHD}
             />
-            <LikeButton
+            <RecipeCardLikeButton
               recipeId={recipe.id}
               liked={liked}
               count={likeCount}

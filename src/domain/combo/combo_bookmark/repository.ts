@@ -34,6 +34,6 @@ export async function fetchBookmarkedComboIds(
 export async function toggleComboBookmark(client: SupabaseClient<Database>, id: string) {
   return client.rpc("toggle_bookmark", {
     p_type: "combo",
-    p_id: id
+    p_id: id,
   });
 }

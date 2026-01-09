@@ -15,3 +15,12 @@ export async function buildBookmarkedSetCombo(
 
   return repo.fetchBookmarkedComboIds(client, user.id, comboIds);
 }
+
+export async function isBookmarkedCombo(
+  client: SupabaseClient<Database>,
+  userId: string,
+  comboId: string
+): Promise<boolean> {
+  const bookmarkedSet = await repo.fetchBookmarkedComboIds(client, userId, [comboId]);
+  return bookmarkedSet.has(comboId);
+}

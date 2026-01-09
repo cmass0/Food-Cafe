@@ -25,7 +25,7 @@ export async function POST(_: Request, { params }: contentParams) {
 
     if (!toggled || toggled.length === 0 || !toggled[0]) return notFound();
 
-    return json({ likecount: toggled[0].like_count, like: toggled[0].liked }, 200);
+    return json({ liked: toggled[0].liked, likeCount: toggled[0].like_count }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("레시피 좋아요 토글 실패", error);

@@ -28,7 +28,10 @@ export async function POST(req: Request, { params }: contentParams) {
 
     if (!bookmarkdata || bookmarkdata.length === 0) return notFound();
 
-    return json({ bookmarked: bookmarkdata[0]?.bookmarked });
+    return json({
+      bookmarked: bookmarkdata[0]?.bookmarked,
+      bookmarkcount: bookmarkdata[0]?.bookmark_count,
+    });
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("북마크 토글 실패", error);

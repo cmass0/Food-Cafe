@@ -16,4 +16,11 @@ export async function buildBookmarkedSetRecipe(
   return repo.fetchBookmarkedRecipeIds(client, user.id, recipeIds);
 }
 
-
+export async function isBookmarkedRecipe(
+  client: SupabaseClient<Database>,
+  userId: string,
+  recipeId: string
+): Promise<boolean> {
+  const bookmarkedSet = await repo.fetchBookmarkedRecipeIds(client, userId, [recipeId]);
+  return bookmarkedSet.has(recipeId);
+}

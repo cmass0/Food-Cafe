@@ -28,3 +28,13 @@ export async function buildLikedSetCombo(
   if (!user) throw new Error("로그인이 필요합니다.");
   return combolikeRepo.fetchLikedCombos(client, user.id, comboIds);
 }
+
+export async function isLikedCombo(
+  client: SupabaseClient<Database>,
+  comboId: string,
+  userId: string
+): Promise<boolean> {
+  return combolikeRepo.isLikedCombo(client, comboId, userId);
+}
+
+

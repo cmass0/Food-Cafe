@@ -3,7 +3,6 @@
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { Bookmark } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toggleRecipeBookmark } from "../api";
 import { ToggleRecipeBookmark } from "../type";
@@ -15,20 +14,10 @@ type Props = {
   onChange?(next: ToggleRecipeBookmark): void;
 };
 
-export default function BookmarkBtn({ recipeId, marked, count, onChange }: Props) {
-  return (
-    <React.Suspense fallback={null}>
-      <BookmarkBtnInner recipeId={recipeId} marked={marked} count={count} onChange={onChange} />
-    </React.Suspense>
-  );
-}
-
-function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
+export default function RecipeCardBookmarkButton({ recipeId, marked, count, onChange }: Props) {
   const [localMarked, setLocalMarked] = React.useState(marked);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   React.useEffect(() => {
     setLocalMarked(marked);
@@ -37,9 +26,9 @@ function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
   async function handleClick() {
     const currentMarked = onChange ? marked : localMarked;
     if (!user) {
-      const search = searchParams.toString();
-      const next = search ? `${pathname}?${search}` : pathname || "/recipes";
-      openAuthModal({ next });
+      const next = new URL(window.location.href);
+      const nextUrl = `${next.pathname}${next.search}`;
+      openAuthModal({ next: nextUrl });
       return;
     }
 
@@ -51,7 +40,7 @@ function BookmarkBtnInner({ recipeId, marked, count, onChange }: Props) {
         setLocalMarked(nextMarked);
       }
     } catch (error) {
-      console.error("Failed to toggle bookmark:", error);
+      console.error("북마크 토글 실패", error);
     }
   }
 

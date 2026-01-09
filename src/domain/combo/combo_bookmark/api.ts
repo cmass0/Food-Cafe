@@ -5,7 +5,7 @@ export async function toggleComboBookmark(
   comboId: string,
   currentlyBookmarked: boolean
 ): Promise<ToggleComboBookmark> {
-  const res = await fetch(`/api/combos/bookmark`, {
+  const res = await fetch(`/api/combos/${comboId}/bookmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ comboId, currentlyBookmarked }),
