@@ -101,9 +101,9 @@ export async function listCombos(
   const { items: rows, total: rowtotal } = await repo.fetchCombos(client, {
     limit,
     offset,
-   
     search: parsed.search,
     writerUid: parsed.writerUid,
+    searchField: parsed.searchField,
   });
 
   let items = rows.map(mapRowToCombination);
@@ -120,6 +120,76 @@ export async function listCombos(
   }
 
   return { items, limit, offset, hasMore, total: rowtotal };
+}
+
+export async function listBookmarkedCombos(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: ComboListOptions
+): Promise<ComboListResult> {
+  const parsed = comboListOptionsSchema.parse(options ?? {});
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = resolveOffset(parsed.page, limit);
+  const { items: rows, total: rowtotal } = await repo.selectCombobyBookmarked(
+    client,
+    {
+      limit,
+      offset,
+      search: parsed.search,
+      searchField: parsed.searchField,
+    },
+    userId
+  );
+
+  const items = rows.map((row) => ({
+    ...mapRowToCombination(row),
+    bookmarked: true,
+  }));
+  const total = Math.max(rowtotal, offset + items.length);
+  const hasMore = offset + items.length < total;
+
+  return {
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
+  };
+}
+
+export async function listLikedCombos(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: ComboListOptions
+): Promise<ComboListResult> {
+  const parsed = comboListOptionsSchema.parse(options ?? {});
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = resolveOffset(parsed.page, limit);
+  const { items: rows, total: rowtotal } = await repo.selectByCombobyLiked(
+    client,
+    {
+      limit,
+      offset,
+      search: parsed.search,
+      searchField: parsed.searchField,
+    },
+    userId
+  );
+
+  const items = rows.map((row) => ({
+    ...mapRowToCombination(row),
+    liked: true,
+  }));
+  const total = Math.max(rowtotal, offset + items.length);
+  const hasMore = offset + items.length < total;
+
+  return {
+    items,
+    total,
+    limit,
+    offset,
+    hasMore,
+  };
 }
 
 export async function getComboById(
