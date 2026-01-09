@@ -1,7 +1,8 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
-import KakaoShareButton from "@/domain/share/ui/KakaoShareButton";
+
 import ViewCount from "@/domain/view/ui/ViewCount.client";
+import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import Image from "next/image";
 import type { Recipe } from "../types";
 import { getDifficultyMeta } from "./difficultyMeta";
@@ -17,17 +18,8 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
   const steps =
     recipe.steps?.map((step) => step.description).filter((step) => step.length > 0) ?? [];
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim() ?? "";
-  const currentUrl = `${baseUrl}/recipes/${recipe.id}`;
-  const shareUrl = baseUrl ? new URL(`/recipes/${recipe.id}`, baseUrl).toString() : "";
-  const shareImageUrl = recipe.image
-    ? recipe.image.startsWith("http")
-      ? recipe.image
-      : baseUrl
-        ? new URL(recipe.image, baseUrl).toString()
-        : ""
-    : "";
+  const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/recipes/${recipe.id}`;
+  const shareImageUrl = recipe.image ? recipe.image : "";
 
   return (
     <article className="space-y-8">
@@ -135,9 +127,9 @@ export default async function RecipeDetail({ recipe }: { recipe: Recipe }) {
           {/* SNS 공유버튼 구현 */}
           <div className="flex flex-col items-center gap-1">
             <KakaoShareButton
-              recipeinfo={recipe}
+              contentinfo={{ title: recipe.title, description: recipe.summary }}
               imageUrl={shareImageUrl}
-              url={shareUrl}
+              url={currentUrl}
               label="카카오톡으로 공유"
               className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
             />
