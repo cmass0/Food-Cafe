@@ -2,8 +2,10 @@ import { unstable_noStore as noStore } from "next/cache";
 
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import * as postService from "@/domain/post/service";
+import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/domain/post/ui/PostList";
 import { getServerSupabase } from "@/lib/supabase/server";
+import PostSearchForm from "./PostSearchForm";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -20,6 +22,7 @@ type PostsPageProps = {
     writerUid?: SearchParamValue;
     type?: SearchParamValue;
     search?: SearchParamValue;
+    searchField?: SearchParamValue;
   };
 };
 
@@ -39,9 +42,10 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
 
   const writerUid = firstValue(searchParams?.writerUid);
   const type = firstValue(searchParams?.type);
-  const searchValue = firstValue(searchParams?.search);
+  const searchQuery = firstValue(searchParams?.search)?.trim();
+  const fieldParam =
+    (firstValue(searchParams?.searchField) as PostSearchField) ?? "title";
 
-  const keyword = searchValue?.trim() ?? undefined;
   const limit = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
 
@@ -50,15 +54,19 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     limit: limit,
     writerUid: writerUid ?? undefined,
     type: type ?? undefined,
-    search: keyword && keyword.length > 0 ? keyword : undefined,
+    ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
   });
 
   const pageSize = limit > 0 ? limit : 1;
 
+  // 페이지 네이션 동작 시 기존의 검색 쿼리를 유지하기위해 정보 저장
   const paginationQuery: Record<string, string> = {};
   if (writerUid) paginationQuery.writerUid = writerUid;
   if (type) paginationQuery.type = type;
-  if (keyword) paginationQuery.search = keyword;
+  if (searchQuery) {
+    paginationQuery.search = searchQuery;
+    paginationQuery.searchField = fieldParam;
+  }
 
   return (
     <>
@@ -67,7 +75,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <PostList posts={items} />
       </main>
 
-      <footer>
+      <footer className="flex flex-col items-center gap-4 pb-10">
         <PaginationComponent
           basePath="/posts"
           page={currentPage}
@@ -75,6 +83,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
           total={total}
           query={paginationQuery}
         />
+        <PostSearchForm />
       </footer>
     </>
   );

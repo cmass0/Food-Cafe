@@ -1,16 +1,22 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
-import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
+import type { Recipe, RecipeListResult, RecipeSearchField } from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
 
 const SORT_OPTIONS = [
@@ -19,9 +25,16 @@ const SORT_OPTIONS = [
   { key: "view", title: "조회" },
 ];
 
+const SEARCH_FIELD_OPTIONS: { value: RecipeSearchField; label: string }[] = [
+  { value: "title", label: "제목" },
+  { value: "tag", label: "태그" },
+  { value: "tag_title", label: "태그 + 제목" },
+  { value: "writer", label: "작성자" },
+];
+
 const DEFAULT_LIMIT = 12;
 
-function RecipesPageInner() {
+export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [sort, setSort] = useState<string>("recent");
   const [loading, setLoading] = useState(true);
@@ -30,6 +43,8 @@ function RecipesPageInner() {
     offset: 0,
     total: 0,
   });
+  const [searchField, setSearchField] = useState<RecipeSearchField>("title");
+  const [searchText, setSearchText] = useState("");
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -37,10 +52,14 @@ function RecipesPageInner() {
 
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
+  const searchQuery = searchParams.get("search");
+  const fieldParam = (searchParams.get("searchField") as RecipeSearchField) ?? "title";
+
   const parsedPage = Number(pageParam);
   const parsedLimit = Number(limitParam);
   const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
+
   // 현재 page에 대한 recipe 목록
   useEffect(() => {
     let mounted = true;
@@ -48,7 +67,11 @@ function RecipesPageInner() {
     async function fetchRecipes() {
       setLoading(true);
       try {
-        const data = await listRecipes({ limit: safeLimit, page: safePage });
+        const data = await listRecipes({
+          limit: safeLimit,
+          page: safePage,
+          ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
+        });
         const items = (data?.items ?? []).map((item: any) => ({
           ...item,
           createdAt: item?.createdAt ? new Date(item.createdAt) : null,
@@ -73,7 +96,7 @@ function RecipesPageInner() {
     return () => {
       mounted = false;
     };
-  }, [safeLimit, safePage, user?.id]);
+  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam]);
 
   // 레시피 정렬
   const sortedRecipes = useMemo(() => {
@@ -91,6 +114,7 @@ function RecipesPageInner() {
     });
   }, [recipes, sort]);
 
+  // 레시피 작성 페이지 이동
   function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     if (!user) {
@@ -100,8 +124,24 @@ function RecipesPageInner() {
     router.push("/recipes/new");
   }
 
+  function ReciepSearchHandler(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed = searchText.trim();
+    const params = new URLSearchParams();
+    if (trimmed) {
+      params.set("search", trimmed);
+      params.set("searchField", searchField);
+    }
+    router.push(params.size ? `/recipes?${params.toString()}` : "/recipes");
+  }
+
   const currentPage = safePage;
   const pageSize = pageMeta.limit > 0 ? pageMeta.limit : safeLimit;
+  const paginationQuery: Record<string, string> = {};
+  if (searchQuery) {
+    paginationQuery.search = searchQuery;
+    paginationQuery.searchField = fieldParam;
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
@@ -119,15 +159,57 @@ function RecipesPageInner() {
           </Button>
         </div>
 
-        <Tabs value={sort} onValueChange={setSort} className="w-full">
-          <TabsList className="grid w-full max-w-sm grid-cols-3 rounded-full px-1.5 py-1">
-            {SORT_OPTIONS.map(({ key, title }) => (
-              <TabsTrigger key={key} value={key} className="rounded-full text-sm">
-                {title}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs value={sort} onValueChange={setSort} className="w-full sm:w-auto">
+            <TabsList className="grid w-full max-w-sm grid-cols-3 rounded-full px-1.5 py-1 sm:w-auto">
+              {SORT_OPTIONS.map(({ key, title }) => (
+                <TabsTrigger key={key} value={key} className="rounded-full text-sm">
+                  {title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          {/* 페이지 내부 상단 검색바 */}
+          <form onSubmit={ReciepSearchHandler} className="w-full sm:w-auto">
+            <div className="flex w-full max-w-md overflow-hidden rounded-md border">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex w-32 items-center justify-between border-r px-3 py-2 text-sm cursor-pointer"
+                  >
+                    <span>
+                      {SEARCH_FIELD_OPTIONS.find((opt) => opt.value === searchField)?.label}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-32 text-sm">
+                  {SEARCH_FIELD_OPTIONS.map((opt) => (
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      key={opt.value}
+                      onClick={() => setSearchField(opt.value)}
+                    >
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="flex flex-1 items-center gap-2 px-3">
+                <input
+                  className="w-full border-0 text-sm outline-none"
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+                <button type="submit" className="text-gray-500">
+                  <Search className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </section>
 
       <section>
@@ -140,16 +222,9 @@ function RecipesPageInner() {
           page={currentPage}
           pageItemSize={pageSize}
           total={pageMeta.total}
+          query={paginationQuery}
         />
       </footer>
     </div>
-  );
-}
-
-export default function RecipesPage() {
-  return (
-    <Suspense fallback={null}>
-      <RecipesPageInner />
-    </Suspense>
   );
 }
