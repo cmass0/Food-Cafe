@@ -1,19 +1,19 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { ComboListResult, ComboRow } from "./types";
+import { ComboListResult, ComboRow, ComboSearchField } from "./types";
 
 export async function listCombos(params?: {
   limit?: number;
   page?: number;
   writerUid?: string;
-  tag?: string;
   search?: string;
+  searchField?: ComboSearchField;
 }): Promise<ComboListResult> {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
-  if (params?.tag) qs.set("tag", params.tag);
   if (params?.search) qs.set("search", params.search);
+  if (params?.searchField) qs.set("searchField", params.searchField);
 
   const res = await fetch(`/api/combos${qs ? `?${qs.toString()}` : ""}`, {
     cache: "no-store",
@@ -28,6 +28,15 @@ export async function fetchComboById(comboId: string): Promise<ComboRow> {
   if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
+}
+
+export async function fetchComboStatus(comboId: string): Promise<{
+  liked: boolean;
+  bookmarked: boolean;
+}> {
+  const res = await fetch(`/api/combos/${comboId}/status`, { cache: "no-store" });
+  if (!res.ok) await throwApiError(res);
+  return res.json();
 }
 
 export async function createCombo(body: unknown) {

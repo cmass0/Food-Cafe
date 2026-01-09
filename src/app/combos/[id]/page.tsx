@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getComboById } from "@/domain/combo/service";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { Bookmark, Heart, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import ComboLikeBookmarkButton from "../ui/likebookmarkButton";
+import KakaoShareButton from "@/domain/share/ui/KakaoShareButton";
+import { CopyClipButton } from "@/domain/recipe/ui/RecipeClip";
 
 function formatMinutes(value: number | null) {
   if (!value || value <= 0) return null;
@@ -88,14 +91,8 @@ export default async function ComboDetailPage({ params }: { params: { id: string
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" className="h-8 rounded-full px-4">
-                    <Bookmark className="mr-1 h-3.5 w-3.5" />
-                    저장
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-8 rounded-full px-4">
-                    <Heart className="mr-1 h-3.5 w-3.5" />
-                    좋아요
-                  </Button>
+                  <ComboLikeBookmarkButton combo={combo} />
+
                   <Button variant="outline" size="sm" className="h-8 rounded-full px-4">
                     <Share2 className="mr-1 h-3.5 w-3.5" />
                     공유
@@ -285,6 +282,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
           )}
         </section>
 
+        {/* 조리단계 섹션 */}
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-slate-900">조리 단계</h2>
           {steps.length ? (
@@ -341,6 +339,23 @@ export default async function ComboDetailPage({ params }: { params: { id: string
             </Card>
           )}
         </section>
+        <div className="flex items-start gap-4">
+          {/* SNS 공유버튼 구현 */}
+          <div className="flex flex-col items-center gap-1">
+            <KakaoShareButton
+              recipeinfo={recipe}
+              imageUrl={shareImageUrl}
+              url={shareUrl}
+              label="카카오톡으로 공유"
+              className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            <span className="text-xs text-slate-600">카카오톡으로 공유</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <CopyClipButton currentUrl={currentUrl} />
+            <span className="text-xs text-slate-600">URL 공유</span>
+          </div>
+        </div>
       </div>
     </main>
   );

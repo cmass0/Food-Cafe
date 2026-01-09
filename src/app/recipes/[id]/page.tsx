@@ -5,17 +5,12 @@ import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { listComments } from "@/domain/comment/service";
 import { CommentDisplayItem } from "@/domain/comment/types";
 import CommentThread from "@/domain/comment/ui/CommentThread.client";
-import { isBookmarkedRecipe } from "@/domain/recipe/recipe_bookmark/repository";
-import BookmarkBtn from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DeleteRecipeButton from "../components/DeleteRecipeButton";
-
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+import LikeBookmarkButton from "../ui/likebookmarkButton";
 
 export default async function RecipeDetailPage({
   params,
@@ -54,9 +49,6 @@ export default async function RecipeDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
-  const initialBookmarked = user?.id
-    ? await isBookmarkedRecipe(supabase, user.id, recipe.id)
-    : false;
 
   return (
     <main className="pt-[100px] pb-[100px]">
@@ -65,9 +57,8 @@ export default async function RecipeDetailPage({
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4">
           {/* 왼쪽 사이드 */}
           <aside className="order-3 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
-            <div className="flex justify-end">
-              <BookmarkBtn recipeId={recipe.id} marked={initialBookmarked} count={0} />
-            </div>
+            {/* 북마크 & 좋아요 버튼 */}
+            <LikeBookmarkButton recipe={recipe} />
             {isAuthor ? (
               <div className="flex justify-end">
                 <DeleteRecipeButton recipeId={recipe.id} />

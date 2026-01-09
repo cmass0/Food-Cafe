@@ -6,13 +6,14 @@ export async function listRecipes(params?: {
   page?: number;
   writerUid?: string;
   search?: string;
-  searchfield?: RecipeSearchField;
+  searchField?: RecipeSearchField;
 }): Promise<RecipeListResult> {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.search) qs.set("search", params.search);
+  if (params?.searchField) qs.set("searchField", params.searchField);
   
 
   const res = await fetch(`/api/recipes${qs.size ? `?${qs.toString()}` : ""}`, {
@@ -40,6 +41,15 @@ export async function getRecipe(id: string): Promise<Recipe> {
   if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data;
+}
+
+export async function fetchRecipeStatus(id: string): Promise<{
+  liked: boolean;
+  bookmarked: boolean;
+}> {
+  const res = await fetch(`/api/recipes/${id}/status`, { cache: "no-store" });
+  if (!res.ok) await throwApiError(res);
+  return res.json();
 }
 
 export async function updateRecipe(id: string, body: unknown): Promise<Recipe> {
