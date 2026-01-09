@@ -493,6 +493,21 @@ export type Database = {
           liked: boolean
         }[]
       }
+      get_top_combos_by_recent_likes: {
+        Args: { limit_size?: number; term: string }
+        Returns: {
+          combo_id: string
+          created_at: string
+          image: string
+          like_count: number
+          like_delta: number
+          summary: string
+          title: string
+          view_count: number
+          writer_name: string
+          writer_uid: string
+        }[]
+      }
       get_top_recipes_by_recent_likes: {
         Args: { limit_size?: number; term: string }
         Returns: {
