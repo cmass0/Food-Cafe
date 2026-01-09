@@ -1,4 +1,5 @@
 import * as comboService from "@/domain/combo/service";
+import { ComboSearchField } from "@/domain/combo/types";
 import {
   AuthErrorHelper,
   badRequest,
@@ -19,13 +20,14 @@ export async function GET(req: Request) {
     const page = Number.isFinite(pageParams) ? pageParams : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
     const search = url.searchParams.get("search") || undefined;
-    const searchField = url.searchParams.get("searchField") || undefined;
+    const searchField = (url.searchParams.get("searchField") as ComboSearchField) || undefined;
 
     const combos = await comboService.listCombos(supabase, {
       limit,
       page,
       writerUid,
       search,
+      searchField,
     });
     return json({ data: combos }, 201);
   } catch (error) {

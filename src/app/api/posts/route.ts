@@ -1,4 +1,5 @@
 import * as postService from "@/domain/post/service";
+import { PostSearchField } from "@/domain/post/types";
 import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
     const type = url.searchParams.get("type") ?? undefined;
     const search = url.searchParams.get("search") ?? undefined;
+    const searchField = (url.searchParams.get("searchField") as PostSearchField) ?? undefined;
 
     const supabase = getServerSupabase();
     const data = await postService.listPosts(supabase, {
@@ -24,6 +26,7 @@ export async function GET(req: Request) {
       writerUid,
       type,
       search,
+      searchField,
     });
     return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

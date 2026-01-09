@@ -37,9 +37,10 @@ export interface Recipe {
 export type RecipeListOptions = {
   limit?: number;
   page?: number;
-  tags?: string[];
+
   writerUid?: string;
   search?: string;
+  searchField?: RecipeSearchField;
 };
 
 export type RecipeIngredient = {
@@ -60,10 +61,13 @@ export type RecipeListResult = {
 export type FetchRecipesParams = {
   limit: number;
   offset: number;
-  tags?: string[];
+
   writerUid?: string;
   search?: string;
+  searchField?: RecipeSearchField;
 };
+
+export type RecipeSearchField = "tag" | "title" | "tag_title" | "writer";
 
 // DB Insert 용
 export type RecipeInsertDB = {

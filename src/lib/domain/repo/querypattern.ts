@@ -3,8 +3,7 @@ export function escapeArrayValue(value: string) {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
-// 검색 시 입력된 단어에 포함된 % 또는 _ 문자를 이스케이프 처리
-export function escapeIlike(term: string): string {
-  const str = term.replace(/[%_]/g, (match) => `\\${match}`);
-  return `%${str}%`;
+// 검색어 허용 범위 지정(한글/영문/숫자/공백)
+export function normalizeSearchTerm(value: string): string {
+  return value.replace(/[^가-힣a-zA-Z0-9\s]/g, "").trim();
 }

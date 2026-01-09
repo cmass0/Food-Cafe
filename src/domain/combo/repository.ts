@@ -1,3 +1,4 @@
+import { escapeArrayValue, normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -27,11 +28,27 @@ export async function fetchCombos(
     .order("id")
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("tags", params.tags);
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-  if (params.search) {
-    query = query.textSearch("tsv", params.search, { type: "websearch" });
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`title.ilike.${searchstr},tags.cs.{${tag}}`);
+    }
   }
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
@@ -44,16 +61,6 @@ export async function fetchCombos(
     items: data || [],
     total: count ?? 0,
   };
-}
-
-export async function fetchComboById(
-  client: SupabaseClient<Database>,
-  comboId: string
-): Promise<ComboRow | null> {
-  const { data, error } = await client.from("combos").select("*").eq("id", comboId).maybeSingle();
-  throwIfError(error);
-
-  return data;
 }
 
 export async function selectCombobyBookmarked(
@@ -71,12 +78,27 @@ export async function selectCombobyBookmarked(
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("combos.tags", params.tags);
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-
-  if (params.search) {
-    query = query.textSearch("combos.tsv", params.search, { type: "websearch" });
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("combos.title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("combos.writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("combos.tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`combos.title.ilike.${searchstr},combos.tags.cs.{${tag}}`);
+    }
   }
 
   const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
@@ -104,11 +126,27 @@ export async function selectByCombobyLiked(
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("combos.tags", params.tags);
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-  if (params.search) {
-    query = query.textSearch("combos.tsv", params.search, { type: "websearch" });
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("combos.title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("combos.writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("combos.tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`combos.title.ilike.${searchstr},combos.tags.cs.{${tag}}`);
+    }
   }
 
   const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
@@ -121,6 +159,16 @@ export async function selectByCombobyLiked(
   };
 }
 
+export async function fetchComboById(
+  client: SupabaseClient<Database>,
+  comboId: string
+): Promise<ComboRow | null> {
+  const { data, error } = await client.from("combos").select("*").eq("id", comboId).maybeSingle();
+  throwIfError(error);
+
+  return data;
+}
+
 export async function insertCombo(
   client: SupabaseClient<Database>,
   comboData: ComboInsertRow
@@ -128,7 +176,7 @@ export async function insertCombo(
   const { data, error } = await client.from("combos").insert(comboData).select("*").single();
   throwIfError(error);
   if (!data) {
-    throw new Error("콤보를 생성하지 못했습니다.");
+    throw new Error("레시피를 생성하는데 실패했습니다.");
   }
   return data;
 }
@@ -146,7 +194,7 @@ export async function updateCombo(
     .single();
   throwIfError(error);
   if (!data) {
-    throw new Error("콤보를 수정하지 못했습니다.");
+    throw new Error("레시피를 수정하는데 실패했습니다.");
   }
   return data;
 }

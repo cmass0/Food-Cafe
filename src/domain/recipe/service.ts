@@ -108,7 +108,6 @@ export async function listBookmarkedRecipes(
   const { items: rows, total: rowtotal } = await repo.selectRecipeByBookmarked(client, userId, {
     limit,
     offset,
-
     search: parsed.search,
     searchField: parsed.searchField,
   });
@@ -140,7 +139,6 @@ export async function listLikedRecipes(
   const { items: rows, total: rowtotal } = await repo.selectRecipeByLike(client, userId, {
     limit,
     offset,
-
     search: parsed.search,
     searchField: parsed.searchField,
   });
@@ -171,7 +169,6 @@ export async function listRecipes(
   const { items: rows, total: rowtotal } = await repo.fetchRecipes(client, {
     limit,
     offset,
-
     writerUid: parsed.writerUid,
     search: parsed.search,
     searchField: parsed.searchField,

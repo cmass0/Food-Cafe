@@ -1,20 +1,20 @@
-﻿
+import type { PostSearchField } from "./types";
 
-export async function listPosts(
-  params?: {
-    limit?: number;
-    page?: number;
-    writerUid?: string;
-    type?: string;
-    search?: string;
-  }
-) {
+export async function listPosts(params?: {
+  limit?: number;
+  page?: number;
+  writerUid?: string;
+  type?: string;
+  search?: string;
+  searchField?: PostSearchField;
+}) {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.type) qs.set("type", params.type);
   if (params?.search) qs.set("search", params.search);
+  if (params?.searchField) qs.set("searchField", params.searchField);
 
   const res = await fetch(`/api/posts${qs.size ? `?${qs.toString()}` : ""}`, {
     cache: "no-store",
@@ -76,3 +76,6 @@ export async function deletePost(id: string) {
     throw new Error(`Failed to delete post: ${res.status}`);
   }
 }
+
+
+

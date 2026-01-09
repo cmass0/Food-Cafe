@@ -1,5 +1,6 @@
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
+import { RecipeSearchField } from "@/domain/recipe/types";
 import {
   AuthErrorHelper,
   badRequest,
@@ -21,13 +22,15 @@ export async function GET(req: Request) {
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
     const search = url.searchParams.get("search") || undefined;
+    const searchField = (url.searchParams.get("searchField") as RecipeSearchField) || undefined;
     const supabase = getServerSupabase();
+
     const recipes = await recipeService.listRecipes(supabase, {
       limit,
       page,
       writerUid,
- 
       search,
+      searchField,
     });
 
     return json({ data: recipes });

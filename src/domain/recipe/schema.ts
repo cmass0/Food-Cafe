@@ -102,21 +102,9 @@ export const recipeUpdateSchema = z
 export const recipeListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
-
   writerUid: z.string().uuid().optional(),
   search: z.string().trim().max(200).optional(),
   searchField: z.enum(["tag", "title", "tag_title", "writer"]).optional(),
 });
 
-// export const requestRecipeSchema = z.object({
-//   id: z.string().uuid(),
-//   title: z.string(),
-//   summary: z.string().nullable().optional(),
-//   steps: z.array(recipeStepSchema),
-//   ingredients: z.array(ingredientItemSchema),
-//   image: z.string().trim().min(1),
-//   category: z.string().nullable(),
-//   tags: z.array(z.string()).optional(),
-//   tools: z.array(z.string()).nullable().optional(),
-//   tools_required: z.boolean().optional(),
-// });
+

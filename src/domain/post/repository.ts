@@ -2,6 +2,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/supabase";
 import type { FetchPostsParams, PostInsertDB, PostRow, PostUpdateDB } from "./types";
+import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 
 const POST_COLUMNS = [
   "id",
@@ -24,9 +25,7 @@ function throwIfError(error: PostgrestError | null): void {
   if (error) throw error;
 }
 
-function escapeIlike(term: string): string {
-  return term.replace(/[%_]/g, (match) => `\\${match}`);
-}
+
 
 export type FetchPostsResult = {
   items: PostRow[];
@@ -55,11 +54,24 @@ export async function fetchPosts(
     query = query.eq("type", params.type);
   }
 
-  if (params.search) {
-    const term = params.search.trim();
-    if (term.length > 0) {
-      const pattern = escapeIlike(term);
-      query = query.or(`title.ilike.%${pattern}%,writer_name.ilike.%${pattern}%`);
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
+  }
+  if (search) {
+    const searchstr = `%${search}%`;
+    if (params.searchField === "title") {
+      query = query.ilike("title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("writer_name", searchstr);
+    }
+    if (params.searchField === "contents") {
+      query = query.ilike("content", searchstr);
+    }
+    if (params.searchField === "title_contents") {
+      query = query.or(`title.ilike.${searchstr},content.ilike.${searchstr}`);
     }
   }
 

@@ -1,6 +1,7 @@
 import type { Database } from "@/types/supabase";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
+import { escapeArrayValue, normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type {
   FetchRecipesParams,
   FetchRecipesResult,
@@ -27,18 +28,31 @@ export async function fetchRecipes(
     .order("id")
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("tags", params.tags);
-  }
-
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
   }
-
-  if (params.search) {
-    query = query.textSearch("tsv", params.search, { type: "websearch" });
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`title.ilike.${searchstr},tags.cs.{${tag}}`);
+    }
+  }
   const { data, error, count } = await query;
   throwIfError(error);
   return {
@@ -71,14 +85,28 @@ export async function selectRecipeByBookmarked(
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("recipes.tags", params.tags);
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-
-  if (params.search) {
-    query = query.textSearch("recipes.tsv", params.search, { type: "websearch" });
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("recipes.title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("recipes.writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("recipes.tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`recipes.title.ilike.${searchstr},recipes.tags.cs.{${tag}}`);
+    }
   }
-
   const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   throwIfError(error);
@@ -105,12 +133,27 @@ export async function selectRecipeByLike(
     .eq("user_id", id)
     .order("created_at", { ascending: false });
 
-  if (params.tags && params.tags.length > 0) {
-    query = query.contains("recipes.tags", params.tags);
+  // 검색 조건 분기
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
   }
-
-  if (params.search) {
-    query = query.textSearch("recipes.tsv", params.search, { type: "plain" });
+  if (search) {
+    const searchstr = `%${search}%`;
+    const tag = escapeArrayValue(search);
+    if (params.searchField === "title") {
+      query = query.ilike("recipes.title", searchstr);
+    }
+    if (params.searchField === "writer") {
+      query = query.ilike("recipes.writer_name", searchstr);
+    }
+    if (params.searchField === "tag") {
+      query = query.contains("recipes.tags", [search]);
+    }
+    if (params.searchField === "tag_title") {
+      query = query.or(`recipes.title.ilike.${searchstr},recipes.tags.cs.{${tag}}`);
+    }
   }
 
   const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
