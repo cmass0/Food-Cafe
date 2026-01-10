@@ -2,13 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getComboById } from "@/domain/combo/service";
+import CommentArea from "@/domain/comment/ui/CommentArea";
+
+import { CopyClipButton } from "@/lib/shareButton/copycliep";
+import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { Share2 } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import ComboLikeBookmarkButton from "../ui/likebookmarkButton";
-import KakaoShareButton from "@/domain/share/ui/KakaoShareButton";
-import { CopyClipButton } from "@/domain/recipe/ui/RecipeClip";
 
 function formatMinutes(value: number | null) {
   if (!value || value <= 0) return null;
@@ -19,11 +21,17 @@ function formatMinutes(value: number | null) {
   return `${minutes}분`;
 }
 
-export default async function ComboDetailPage({ params }: { params: { id: string } }) {
+export default async function ComboDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   const comboId = params.id;
   const supabase = getServerSupabase();
-
   const combo = await getComboById(supabase, comboId);
+  const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/combos/${comboId}`;
 
   if (!combo) {
     notFound();
@@ -45,6 +53,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
     month: "short",
     day: "numeric",
   });
+  const commentLimit = 5;
 
   return (
     <main className="relative overflow-hidden">
@@ -59,8 +68,10 @@ export default async function ComboDetailPage({ params }: { params: { id: string
           </p>
         </header>
 
+        {/* 레시피 상단 카드 섹션 시작 */}
         <section className="rounded-3xl border border-emerald-100/70 bg-white/80 p-6 shadow-sm backdrop-blur">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+            {/* 레시피이미지 */}
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/40">
               {combo.image ? (
                 <Image
@@ -77,6 +88,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
               )}
             </div>
 
+            {/* 난이도/소요시간/도구여부 태그 및 좋아요, 북마크, 공유 버튼  */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap gap-2 text-xs text-emerald-700">
@@ -107,6 +119,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
                 </p>
               </div>
 
+              {/* 요약 정보 */}
               {combo.summary ? (
                 <div className="rounded-2xl border border-emerald-100/70 bg-emerald-50/70 p-4 text-sm leading-relaxed text-emerald-950">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-700">
@@ -118,6 +131,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
                 <p className="text-sm text-muted-foreground">요약 정보가 없습니다.</p>
               )}
 
+              {/* 태그 */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">태그</p>
                 <div className="flex flex-wrap gap-2">
@@ -137,6 +151,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
                 </div>
               </div>
 
+              {/* 사용도구 */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">사용 도구</p>
                 <div className="flex flex-wrap gap-2">
@@ -155,10 +170,17 @@ export default async function ComboDetailPage({ params }: { params: { id: string
                   )}
                 </div>
               </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button >수정</Button>
+                <Button className="bg-red-400 hover:bg-red-800">삭제</Button>
+              </div>
             </div>
           </div>
         </section>
+        {/* 레시피 상단 카드 섹션 끝 */}
 
+        {/* 조합 구성 섹션 시작*/}
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div className="space-y-1">
@@ -281,6 +303,7 @@ export default async function ComboDetailPage({ params }: { params: { id: string
             </Card>
           )}
         </section>
+        {/* 조합 구성 섹션 끝*/}
 
         {/* 조리단계 섹션 */}
         <section className="space-y-4">
@@ -343,9 +366,9 @@ export default async function ComboDetailPage({ params }: { params: { id: string
           {/* SNS 공유버튼 구현 */}
           <div className="flex flex-col items-center gap-1">
             <KakaoShareButton
-              recipeinfo={recipe}
-              imageUrl={shareImageUrl}
-              url={shareUrl}
+              contentinfo={{ title: combo.title, description: combo.summary }}
+              imageUrl={combo.image || ""}
+              url={currentUrl}
               label="카카오톡으로 공유"
               className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
             />
@@ -356,6 +379,13 @@ export default async function ComboDetailPage({ params }: { params: { id: string
             <span className="text-xs text-slate-600">URL 공유</span>
           </div>
         </div>
+        <CommentArea
+          parentType="combo"
+          parentId={combo.id}
+          basePath={`/combos/${comboId}`}
+          searchParams={searchParams}
+          limit={commentLimit}
+        />
       </div>
     </main>
   );
