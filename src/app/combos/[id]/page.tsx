@@ -10,6 +10,9 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { Share2 } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+
+import ComboDeleteButton from "../components/DeleteButton";
+import ComboUpdateButton from "../components/UpdateButton";
 import ComboLikeBookmarkButton from "../ui/likebookmarkButton";
 
 function formatMinutes(value: number | null) {
@@ -32,6 +35,7 @@ export default async function ComboDetailPage({
   const supabase = getServerSupabase();
   const combo = await getComboById(supabase, comboId);
   const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/combos/${comboId}`;
+  const userId = (await supabase.auth.getUser()).data.user?.id;
 
   if (!combo) {
     notFound();
@@ -171,10 +175,12 @@ export default async function ComboDetailPage({
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end">
-                <Button >수정</Button>
-                <Button className="bg-red-400 hover:bg-red-800">삭제</Button>
-              </div>
+              {combo.writerUid === userId && (
+                <div className="flex gap-2 justify-end">
+                  <ComboUpdateButton id={combo.id} />
+                  <ComboDeleteButton id={combo.id} />
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -362,9 +368,10 @@ export default async function ComboDetailPage({
             </Card>
           )}
         </section>
-        <div className="flex items-start gap-4">
-          {/* SNS 공유버튼 구현 */}
-          <div className="flex flex-col items-center gap-1">
+
+        {/* SNS 공유버튼 구현 */}
+        <div className="flex justify-center items-start gap-4">
+          <div className="flex flex-col  items-center gap-1">
             <KakaoShareButton
               contentinfo={{ title: combo.title, description: combo.summary }}
               imageUrl={combo.image || ""}
@@ -379,6 +386,8 @@ export default async function ComboDetailPage({
             <span className="text-xs text-slate-600">URL 공유</span>
           </div>
         </div>
+
+        
         <CommentArea
           parentType="combo"
           parentId={combo.id}

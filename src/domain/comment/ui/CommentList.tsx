@@ -1,8 +1,9 @@
 ﻿"use client";
 
 import { useAuth } from "@/app/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import type { Comment, CommentDisplayItem } from "../types";
+import ComfirmModal from "@/lib/ui/comfirmmodal";
+import type { CommentDisplayItem } from "../types";
+import { TriangleAlert } from "lucide-react";
 
 type CommentListProps = {
   items: CommentDisplayItem[];
@@ -39,9 +40,22 @@ export function CommentList({ items, loading, onDelete }: CommentListProps) {
                 </p>
               </div>
               {!isDeleted && currentUserID === item.writerUid ? (
-                <Button variant="ghost" size="sm" onClick={() => onDelete(item.id)}>
-                  삭제
-                </Button>
+                <ComfirmModal
+                  btnText="삭제"
+                  comfirmText={
+                    <div className="flex items-center gap-2">
+                      <TriangleAlert className="text-[#f55151]" />
+                      댓글을 삭제하시겠습니까?
+                    </div>
+                  }
+                  content="댓글을 삭제하면 복구할 수 없습니다. 삭제를 원하시면 확인 버튼을 눌러주세요."
+                  comfirmtype="삭제"
+                  oncomfirm={async () => {
+                    onDelete(item.id);
+                  }}
+                  triggerClassName="border-none hover-none"
+                  comfirmClassName="bg-red-400 text-white hover:bg-red-500"
+                />
               ) : null}
             </div>
             <p className={`mt-2 text-sm ${isDeleted ? "text-muted-foreground italic" : ""}`}>

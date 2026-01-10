@@ -108,7 +108,7 @@ export async function updatePostAction(
       return { ok: false, message: "게시글을 찾을 수 없습니다." };
     }
   } catch (err) {
-    console.error("[posts] update failed", err);
+    console.error("게시글 수정 실패", err);
     return { ok: false, message: DEFAULT_ERROR };
   }
 
@@ -117,12 +117,8 @@ export async function updatePostAction(
   redirect(`/posts/${id}`);
 }
 
-export async function deletePostAction(
-  _prevState: PostActionState,
-  formData: FormData
-): Promise<PostActionState> {
+export async function deletePostAction(id: string): Promise<PostActionState> {
   const supabase = getServerSupabase();
-  const id = (formData.get("id") as string | null)?.trim();
 
   if (!id) {
     return { ok: false, message: "게시글 ID가 필요합니다." };
@@ -131,7 +127,7 @@ export async function deletePostAction(
   try {
     await postService.removePost(supabase, id);
   } catch (err) {
-    console.error("[posts] delete failed", err);
+    console.error("게시글 삭제 실패", err);
     return { ok: false, message: DEFAULT_ERROR };
   }
 

@@ -7,6 +7,7 @@ import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DeleteRecipeButton from "../components/DeleteRecipeButton";
+import UpdateRecipeButton from "../components/UpdateRecipeButton";
 import LikeBookmarkButton from "../ui/likebookmarkButton";
 
 export default async function RecipeDetailPage({
@@ -37,17 +38,17 @@ export default async function RecipeDetailPage({
           <aside className="order-3 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
             {/* 북마크 & 좋아요 버튼 */}
             <LikeBookmarkButton recipe={recipe} />
-            {isAuthor ? (
-              <div className="flex justify-end">
-                <DeleteRecipeButton recipeId={recipe.id} />
-              </div>
-            ) : null}
           </aside>
 
           {/* 중앙 본문 */}
           <div className="order-1 min-w-0 space-y-8 lg:order-none lg:col-span-2">
             <RecipeDetail recipe={recipe} />
-
+            {isAuthor ? (
+              <div className="flex justify-end gap-2">
+                <UpdateRecipeButton id={recipe.id} />
+                <DeleteRecipeButton recipeId={recipe.id} />
+              </div>
+            ) : null}
             <CommentArea
               parentType="recipe"
               parentId={recipe.id}

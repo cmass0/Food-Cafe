@@ -1,32 +1,30 @@
 "use client";
 
-import { useTransition } from "react";
+import ComfirmModal from "@/lib/ui/comfirmmodal";
+import { TriangleAlert } from "lucide-react";
 import { deleteRecipeAction } from "../actions";
 
-type DeleteRecipeButtonProps = {
+type Props = {
   recipeId: string;
 };
 
-export default function DeleteRecipeButton({ recipeId }: DeleteRecipeButtonProps) {
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = () => {
-    const confirmed = window.confirm("레시피를 정말 삭제하시겠어요?");
-    if (!confirmed) return;
-
-    startTransition(async () => {
-      await deleteRecipeAction(recipeId);
-    });
-  };
-
+export default function DeleteRecipeButton({ recipeId }: Props) {
   return (
-    <button
-      type="button"
-      onClick={handleDelete}
-      disabled={isPending}
-      className="rounded border border-red-500 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
-    >
-      {isPending ? "삭제 중..." : "레시피 삭제"}
-    </button>
+    <ComfirmModal
+      btnText="삭제"
+      comfirmText={
+        <div className="flex items-center gap-2">
+          <TriangleAlert className="text-[#f55151]" />
+          레시피를 삭제하시겠습니까?
+        </div>
+      }
+      content="레시피를 삭제하면 복구할 수 없습니다. 삭제를 원하시면 확인 버튼을 눌러주세요."
+      comfirmtype="삭제"
+      oncomfirm={async () => {
+        await deleteRecipeAction(recipeId);
+      }}
+      triggerClassName="bg-red-400 text-white hover:bg-red-500"
+      comfirmClassName="bg-red-400 text-white hover:bg-red-500"
+    />
   );
 }

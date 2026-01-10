@@ -1,47 +1,32 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import ComfirmModal from "@/lib/ui/comfirmmodal";
+import { TriangleAlert } from "lucide-react";
+import { deletePostAction } from "../actions";
 
-import { Button } from "@/components/ui/button";
-import type { PostActionState } from "../actions";
-import { FormAlert } from "@/components/formalert/alertdialog";
-
-const initialState: PostActionState = { ok: true };
-
-type DeleteButtonProps = {
-  action: (state: PostActionState, formData: FormData) => Promise<PostActionState>;
+type Props = {
   id: string;
 };
 
-export default function DeleteButton({ action, id }: DeleteButtonProps) {
-  const [state, formAction] = useFormState(action, initialState);
-
-  const formid = `delete-form-${id}`;
+export default function PostDeleteButton({ id }: Props) {
+  const handleDelete = async () => {
+    deletePostAction(id);
+  };
 
   return (
-    <>
-      <form id={formid} action={formAction}>
-        <input type="hidden" name="id" value={id} />
-        {!state.ok && state.message ? (
-          <p className="text-sm text-destructive">{state.message}</p>
-        ) : null}
-      </form>
-      <FormAlert
-        showText="삭제"
-        des="asdasd"
-        title="sadasd"
-        action={<DeleteSubmitButton />}
-        formid={formid}
-      />
-    </>
-  );
-}
-
-function DeleteSubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="bg-red-700 hover:bg-re" type="submit" disabled={pending}>
-      {pending ? "삭제 중..." : "삭제"}
-    </Button>
+    <ComfirmModal
+      btnText="삭제"
+      comfirmText={
+        <div className="flex items-center gap-2">
+          <TriangleAlert className="text-[#f55151]" />
+          게시글을 삭제하시겠습니까?
+        </div>
+      }
+      content="게시글을 삭제하면 복구할 수 없습니다. 삭제를 원하시면 확인 버튼을 눌러주세요."
+      comfirmtype="삭제"
+      oncomfirm={handleDelete}
+      triggerClassName="bg-red-400 text-white hover:bg-red-500"
+      comfirmClassName="bg-red-400 text-white hover:bg-red-500"
+    />
   );
 }
