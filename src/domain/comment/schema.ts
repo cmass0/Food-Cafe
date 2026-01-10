@@ -4,6 +4,7 @@ import { z } from "zod";
 const parentTypeEnum = z.enum([...Constants.public.Enums.comment_parent_type] as [
   "recipe",
   "post",
+  "combo",
 ]);
 
 export const commentBodySchema = z.object({

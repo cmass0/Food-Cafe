@@ -1,10 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
-import { PaginationComponent } from "@/components/pagenation/pagenation";
-import { listComments } from "@/domain/comment/service";
-import { CommentDisplayItem } from "@/domain/comment/types";
-import CommentThread from "@/domain/comment/ui/CommentThread.client";
+import CommentArea from "@/domain/comment/ui/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
@@ -24,26 +21,7 @@ export default async function RecipeDetailPage({
   const recipe = await getRecipeById(supabase, params.id);
   if (!recipe) notFound();
 
-  const pageValue = searchParams?.commentPage ?? searchParams?.commentpage;
-  const pageNumber = Number(pageValue);
-  const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
   const commentLimit = 5;
-  const { items, total } = await listComments(supabase, {
-    parentType: "recipe",
-    parentId: recipe.id,
-    page: currentPage,
-    limit: commentLimit,
-  });
-
-  const displayItems: CommentDisplayItem[] = items.map((c) => ({
-    id: c.id,
-    writerName: c.writerName,
-    writerUid: c.writerUid,
-    content: c.content,
-    createdAt: c.createdAt.toISOString(),
-    updatedAt: c.updatedAt.toISOString(),
-    deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
-  }));
 
   const {
     data: { user },
@@ -70,22 +48,13 @@ export default async function RecipeDetailPage({
           <div className="order-1 min-w-0 space-y-8 lg:order-none lg:col-span-2">
             <RecipeDetail recipe={recipe} />
 
-            <section className="space-y-4 border-t border-border/60 pt-8">
-              <CommentThread
-                parentType="recipe"
-                parentId={recipe.id}
-                pageSize={commentLimit}
-                items={displayItems}
-              />
-
-              <PaginationComponent
-                basePath={`/recipes/${params.id}`}
-                page={currentPage}
-                pageItemSize={commentLimit}
-                total={total}
-                pageParam="commentPage"
-              />
-            </section>
+            <CommentArea
+              parentType="recipe"
+              parentId={recipe.id}
+              basePath={`/recipes/${params.id}`}
+              searchParams={searchParams}
+              limit={commentLimit}
+            />
           </div>
 
           {/* 오른쪽 사이드 */}

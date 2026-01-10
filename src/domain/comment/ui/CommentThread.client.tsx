@@ -10,7 +10,7 @@ import type { CommentDisplayItem } from "../types";
 import { CommentForm } from "./CommentForm";
 import { CommentList } from "./CommentList";
 
-type ParentType = "post" | "recipe";
+type ParentType = "post" | "recipe" | "combo";
 
 type CommentThreadProps = {
   parentType: ParentType;

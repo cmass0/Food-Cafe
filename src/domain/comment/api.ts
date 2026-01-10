@@ -2,7 +2,7 @@ import { CommentInsertInput } from "./types";
 
 export async function listComments(
   params: { 
-    parentType: "recipe" | "post";
+    parentType: "recipe" | "post" | "combo";
     parentId: string;
     page?: number;
     limit?: number;

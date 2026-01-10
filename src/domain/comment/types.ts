@@ -30,7 +30,7 @@ export type FetchCommentsParams = {
 export type CommentListOptions = {
   limit?: number;
   page?: number;
-  parentType?: "recipe" | "post";
+  parentType?: "recipe" | "post" | "combo";
   parentId?: string;
 };
 
