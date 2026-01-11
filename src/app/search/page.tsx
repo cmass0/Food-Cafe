@@ -6,26 +6,31 @@ import SearchResultCombos from "./section/resultCombos";
 import SearchResultPosts from "./section/resultPosts";
 import SearchResultRecipe from "./section/resultRecipe";
 
-export default async function SearchPage(searchParams: { query?: string }) {
-  const qs = searchParams.query;
+type Props = {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function SearchPage({ searchParams }: Props) {
+  const search = searchParams.query as string;
+  const page = Number(searchParams.page) || 1;
   const supabase = getServerSupabase();
 
   const [recipes, posts, combos] = await Promise.all([
-    listRecipes(supabase, { limit: 10, search: qs }),
-    listPosts(supabase, { limit: 10, search: qs }),
-    listCombos(supabase, { limit: 10, search: qs }),
+    listRecipes(supabase, { limit: 6, search, page }),
+    listPosts(supabase, { limit: 6, search, page }),
+    listCombos(supabase, { limit: 6, search, page }),
   ]);
 
   return (
-    <div>
+    <div className="py-10 px-4 max-w-4xl mx-auto space-y-6">
       <section>
-        <SearchResultRecipe recipes={recipes} />
+        <SearchResultRecipe recipes={recipes} searchParams={searchParams} />
       </section>
       <section>
-        <SearchResultPosts posts={posts} />
+        <SearchResultCombos combos={combos} searchParams={searchParams} />
       </section>
       <section>
-        <SearchResultCombos combos={combos} />
+        <SearchResultPosts posts={posts} searchParams={searchParams} />
       </section>
     </div>
   );
