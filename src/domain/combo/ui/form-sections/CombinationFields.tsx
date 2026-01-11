@@ -137,10 +137,12 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                             {/* 미리보기 field */}
                             <div className="space-y-5 rounded-md border border-muted-foreground/30 bg-background p-4 shadow-lg  w-[300px] h-[270px] ">
                               <div className="relative h-[150px] w-[200px] border-[2px] ">
-                                {imgPreview[item.id] ? (
+                                {/* 새 파일 미리보기 또는 기존 string URL (update) */}
+                                {imgPreview[item.id] ||
+                                (typeof item.image === "string" && item.image) ? (
                                   <Image
                                     className="rounded-md "
-                                    src={imgPreview[item.id] || ""}
+                                    src={imgPreview[item.id] || (item.image as string)}
                                     alt="previewimg"
                                     fill
                                   ></Image>

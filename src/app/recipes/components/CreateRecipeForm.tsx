@@ -18,14 +18,18 @@ export default function CreateRecipeForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (values: RecipeInsertDB, extras?: { imageFile: File | null }) => {
+  const handleSubmit = async (
+    values: RecipeInsertDB,
+    extras?: { imageFile: File | string | null }
+  ) => {
     if (!user) {
       openAuthModal({ next: "/recipes/new" });
       return;
     }
 
     const imageFile = extras?.imageFile ?? null;
-    if (!imageFile) {
+
+    if (!imageFile || !(imageFile instanceof File)) {
       setError("대표 이미지 파일을 선택해주세요.");
       return;
     }

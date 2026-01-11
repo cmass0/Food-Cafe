@@ -1,0 +1,97 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import type { RecipeInsertDB } from "@/domain/recipe/types";
+import RecipeForm from "@/domain/recipe/ui/RecipeForm";
+import { uploadBucketImage } from "@/lib/storage";
+import { updateRecipeAction } from "../actions";
+
+type Props = {
+  recipeId: string;
+  defaultValues: Partial<RecipeInsertDB>;
+};
+
+export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (
+    values: RecipeInsertDB,
+    extras?: { imageFile: File | string | null }
+  ) => {
+    if (!user) {
+      openAuthModal({ next: `/recipes/edit?id=${recipeId}` });
+      return;
+    }
+
+    const imageFile = extras?.imageFile ?? null;
+    if (!imageFile) {
+      setError("이미지를 선택해 주세요.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // File이면 업로드, string이면 기존 URL 그대로 사용
+      let finalUrl: string | null = null;
+      if (imageFile instanceof File) {
+        const { publicUrl, signedUrl } = await uploadBucketImage(
+          "recipes",
+          user.id,
+          recipeId,
+          imageFile,
+          {
+            contentType: imageFile.type,
+            upsert: true,
+          }
+        );
+        finalUrl = publicUrl ?? signedUrl ?? null;
+      } else {
+        finalUrl = imageFile;
+      }
+
+      if (!finalUrl) {
+        throw new Error("이미지를 가져오지 못했습니다.");
+      }
+
+      await updateRecipeAction(recipeId, {
+        title: values.title,
+        summary: values.summary,
+        steps: values.steps,
+        image: finalUrl,
+        tags: values.tags,
+        category: values.category,
+        difficulty: values.difficulty,
+        time_minutes: values.time_minutes,
+        servings: values.servings,
+      });
+      router.refresh();
+      router.push(`/recipes/${recipeId}`);
+    } catch (err) {
+      console.error("레시피 수정 과정에서 오류가 발생했습니다.", err);
+      setError("수정에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <RecipeForm
+        defaultValues={defaultValues}
+        onSubmit={handleSubmit}
+        submitLabel={submitting ? "수정 중..." : "수정하기"}
+      />
+      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+    </div>
+  );
+}

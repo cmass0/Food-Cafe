@@ -1,22 +1,37 @@
+"use client";
+
 import { FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type ChangeEvent } from "react";
+import { ChangeEvent, useState } from "react";
 import { type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { ComboFormSchema } from "../../schema";
 import { ComboFormValues } from "../../types";
 
 type ImageUploadFieldProps = {
   form: UseFormReturn<ComboFormValues>;
-  imagePreview: string | null;
-  handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
-export function ComboImageUploadField({
-  form,
-  imagePreview,
-  handleFileChange,
-}: ImageUploadFieldProps) {
+export function ComboImageUploadField({ form }: ImageUploadFieldProps) {
+  // 기존 이미지 URL이 있으면 초기 미리보기로 설정
+  const existingImage = form.getValues("image");
+  const initialPreview = typeof existingImage === "string" ? existingImage : null;
+  const [imagePreview, setImagePreview] = useState<string | null>(initialPreview);
+
+  // 이미지 파일 변경 처리
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      // 파일 선택 취소 시 기존 이미지로 복원
+      const currentImage = form.getValues("image");
+      if (typeof currentImage !== "string") {
+        form.setValue("image", null, { shouldValidate: true });
+      }
+      setImagePreview(typeof currentImage === "string" ? currentImage : null);
+      return;
+    }
+
+    form.setValue("image", file, { shouldValidate: true });
+    setImagePreview(URL.createObjectURL(file));
+  };
   return (
     <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
       <div className="flex items-center justify-between">
@@ -32,7 +47,6 @@ export function ComboImageUploadField({
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
                   {imagePreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={imagePreview}
                       alt="대표 이미지 미리보기"
@@ -50,8 +64,6 @@ export function ComboImageUploadField({
                     accept="image/*"
                     onChange={(event) => {
                       handleFileChange(event);
-                      const nextFile = event.target.files?.[0] ?? null;
-                      field.onChange(nextFile);
                     }}
                     onBlur={field.onBlur}
                     name={field.name}

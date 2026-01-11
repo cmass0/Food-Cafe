@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { ComboFormSchema } from "../schema";
 import { ComboFormValues, ComboSteps } from "../types";
@@ -15,7 +15,10 @@ import { ComboSummaryField } from "./form-sections/SummaryFiled";
 
 type ComboFormProps = {
   defaultValues?: Partial<ComboFormValues>;
-  onSubmit: (values: ComboFormValues, extras?: { imageFile: File | null }) => Promise<void>;
+  onSubmit?: (
+    values: ComboFormValues,
+    extras?: { imageFile: File | string | null }
+  ) => Promise<void>;
   submitLabel?: string;
 };
 
@@ -50,7 +53,6 @@ export default function ComboForm({
 }: ComboFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [toolsInput, setToolsInput] = useState((defaultValues?.tools ?? []).join(", "));
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const defaultValuesForForm = {
     title: defaultValues?.title ?? "",
@@ -61,7 +63,7 @@ export default function ComboForm({
     tools: defaultValues?.tools ?? [],
     items: defaultValues?.items ?? [],
     steps: defaultValues?.steps ?? [{ description: "" }],
-    image: null,
+    image: defaultValues?.image ?? null,
   };
   const form = useForm<ComboFormValues>({
     resolver: zodResolver(ComboFormSchema),
@@ -92,23 +94,11 @@ export default function ComboForm({
       steps: buildRecipeListItem(values.steps),
     };
 
-    await onSubmit(payload, { imageFile: values.image });
-  });
-
-  // 이미지 파일 변경 처리
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      form.setValue("image", null, { shouldValidate: true });
-      setImagePreview(null);
-      return;
+    if (onSubmit) {
+      const imageFile = values.image as File | string | null;
+      await onSubmit(payload, { imageFile });
     }
-
-    form.setValue("image", file, { shouldValidate: true });
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
-  };
+  });
 
   return (
     <Form {...form}>
@@ -131,11 +121,7 @@ export default function ComboForm({
               setToolsInput={setToolsInput}
               normalizeTools={normalizeTools}
             />
-            <ComboImageUploadField
-              form={form}
-              imagePreview={imagePreview}
-              handleFileChange={handleFileChange}
-            />
+            <ComboImageUploadField form={form} />
             <CombinationFields form={form} itemsArray={itemsArray} />
             <ComboStepsFields form={form} stepsArray={stepsArray} />
             <ComboSummaryField form={form} summaryLength={summaryLength} />

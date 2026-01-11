@@ -32,13 +32,13 @@ export const ComboItemsSchema = z.array(
     }),
   ])
 );
-// ComboItems의 image 필드는 form에서 File 형태로 입력받기 때문에 별도 스키마 정의
-const comboItemImageFileSchema = z.preprocess(
+// ComboItems의 image 필드는 form에서 File(새 업로드) 또는 string(업데이트시 기존 url) 허용
+const comboItemImageFormSchema = z.preprocess(
   (value) => (value == null ? undefined : value),
-  imageFileSchema.optional()
+  z.union([imageFileSchema, imageFieldSchema]).optional()
 );
 
-// ComboItems의 image 필드는 form에서 File 형태로 입력받음
+// ComboItems의 image 필드는 form에서 File 또는 string을 입력받음
 export const ComboItemsSchemaAtForm = z.array(
   z.union([
     z.object({
@@ -52,7 +52,7 @@ export const ComboItemsSchemaAtForm = z.array(
       type: z.literal("product"),
       productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
       summary: z.string().max(500).optional(),
-      image: comboItemImageFileSchema,
+      image: comboItemImageFormSchema,
     }),
   ])
 );
@@ -80,6 +80,9 @@ export const ComboInsertSchema = z.object({
   writer_name: z.string().max(200).optional(),
 });
 
+// 폼용 이미지 스키마 File(새 업로드) 또는 string(업데이트시 기존 url사용) 허용
+const imageFormSchema = z.union([imageFileSchema, imageFieldSchema]).nullable().optional();
+
 export const ComboFormSchema = ComboInsertSchema.omit({
   id: true,
   image: true,
@@ -87,7 +90,7 @@ export const ComboFormSchema = ComboInsertSchema.omit({
   writer_uid: true,
   writer_name: true,
 }).extend({
-  image: imageFileSchema,
+  image: imageFormSchema,
   items: ComboItemsSchemaAtForm,
 });
 
