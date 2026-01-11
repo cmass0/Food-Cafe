@@ -17,7 +17,7 @@ import { SummaryField } from "./form-sections/SummaryField";
 
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertDB>;
-  onSubmit: (values: RecipeInsertDB, extras?: { imageFile: File | null }) => Promise<void>;
+  onSubmit: (values: RecipeInsertDB, extras?: { imageFile: File | string | null }) => Promise<void>;
   submitLabel?: string;
 };
 
@@ -57,7 +57,11 @@ export default function RecipeForm({
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [toolsInput, setToolsInput] = useState((defaultValues?.tools ?? []).join(", "));
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // 기존 이미지 URL이 있으면 초기 미리보기로 설정
+  const existingImage = defaultValues?.image;
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    typeof existingImage === "string" ? existingImage : null
+  );
 
   // 폼 초기값 설정
   const defaultValuesForForm: FormValues = {
@@ -73,7 +77,7 @@ export default function RecipeForm({
       { name: "", amount: "", unit: "g", unitCustom: "" },
     ],
     steps: defaultValues?.steps ?? [{ description: "" }],
-    imageFile: null,
+    imageFile: defaultValues?.image ?? null, // 기존 이미지 URL 또는 null
   };
 
   const form = useForm<FormValues>({
@@ -115,21 +119,24 @@ export default function RecipeForm({
       time_minutes: values.time_minutes,
       servings: values.servings,
     };
-    await onSubmit(payload, { imageFile: values.imageFile });
+    const imageFile = values.imageFile as File | string | null;
+    await onSubmit(payload, { imageFile });
   });
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      form.setValue("imageFile", null, { shouldValidate: true });
-      setImagePreview(null);
+      // 파일 선택 취소 시 기존 이미지로 복원
+      const currentImage = form.getValues("imageFile");
+      if (typeof currentImage !== "string") {
+        form.setValue("imageFile", defaultValues?.image ?? null, { shouldValidate: true });
+      }
+      setImagePreview(typeof defaultValues?.image === "string" ? defaultValues.image : null);
       return;
     }
     form.clearErrors("imageFile");
     form.setValue("imageFile", file, { shouldValidate: true });
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   return (
