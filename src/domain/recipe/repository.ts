@@ -33,11 +33,18 @@ export async function fetchRecipes(
   }
   // 검색 조건 분기
   const rawSearch = params.search ?? "";
+
   const search = normalizeSearchTerm(rawSearch);
   if (rawSearch.trim().length > 0 && !search) {
     return { items: [], total: 0 };
   }
+
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 각 page별 필드선택 후 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {
@@ -53,6 +60,7 @@ export async function fetchRecipes(
       query = query.or(`title.ilike.${searchstr},tags.cs.{${tag}}`);
     }
   }
+
   const { data, error, count } = await query;
   throwIfError(error);
   return {
@@ -92,6 +100,11 @@ export async function selectRecipeByBookmarked(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("recipes.tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 필드 선택 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {
@@ -140,6 +153,11 @@ export async function selectRecipeByLike(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("recipes.tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 필드 선택 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {

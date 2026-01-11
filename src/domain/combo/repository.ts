@@ -35,6 +35,11 @@ export async function fetchCombos(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 필드 선택 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {
@@ -85,6 +90,11 @@ export async function selectCombobyBookmarked(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("combos.tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 필드 선택 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {
@@ -133,6 +143,11 @@ export async function selectByCombobyLiked(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("combos.tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 필드 선택 검색
     const searchstr = `%${search}%`;
     const tag = escapeArrayValue(search);
     if (params.searchField === "title") {

@@ -1,8 +1,8 @@
-import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+﻿import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
+import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type { FetchPostsParams, PostInsertDB, PostRow, PostUpdateDB } from "./types";
-import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 
 const POST_COLUMNS = [
   "id",
@@ -24,8 +24,6 @@ function mapRows(rows: unknown): PostRow[] {
 function throwIfError(error: PostgrestError | null): void {
   if (error) throw error;
 }
-
-
 
 export type FetchPostsResult = {
   items: PostRow[];
@@ -60,6 +58,11 @@ export async function fetchPosts(
     return { items: [], total: 0 };
   }
   if (search) {
+    // 전체 검색
+    if (!params.searchField) {
+      query = query.textSearch("tsv", search, { type: "websearch", config: "simple" });
+    }
+    // 각 page별 필드선택 후 검색
     const searchstr = `%${search}%`;
     if (params.searchField === "title") {
       query = query.ilike("title", searchstr);
@@ -140,3 +143,4 @@ export async function deletePostRecord(
     .eq("writer_uid", ownerUid);
   throwIfError(error);
 }
+
