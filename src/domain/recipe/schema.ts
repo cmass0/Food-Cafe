@@ -1,4 +1,4 @@
-﻿import { imageFieldSchema, imageFileSchema, tagSchema } from "@/lib/domain/schema";
+﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
 
 const ingredientItemSchema = z
@@ -57,8 +57,14 @@ export const recipeInsertSchema = z.object({
     .max(50, "인분은 50 이하로 입력해 주세요."),
 });
 
+// 폼용 이미지 스키마: File(새 업로드) 또는 string(기존 URL) 허용
+const imageFormSchema = z
+  .union([z.instanceof(File), z.string().min(1)])
+  .nullable()
+  .optional();
+
 export const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
-  imageFile: imageFileSchema,
+  imageFile: imageFormSchema,
 });
 
 export const recipeUpdateSchema = z
@@ -106,5 +112,3 @@ export const recipeListOptionsSchema = z.object({
   search: z.string().trim().max(200).optional(),
   searchField: z.enum(["tag", "title", "tag_title", "writer"]).optional(),
 });
-
-
