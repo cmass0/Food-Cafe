@@ -1,23 +1,18 @@
 "use client";
 
-import { ChevronDown, Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
 import type { Recipe, RecipeListResult, RecipeSearchField } from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
+import SearchForm from "@/lib/search/searchform";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -43,8 +38,7 @@ export default function RecipesPage() {
     offset: 0,
     total: 0,
   });
-  const [searchField, setSearchField] = useState<RecipeSearchField>("title");
-  const [searchText, setSearchText] = useState("");
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -124,7 +118,11 @@ export default function RecipesPage() {
     router.push("/recipes/new");
   }
 
-  function ReciepSearchHandler(event: React.FormEvent<HTMLFormElement>) {
+  function ReciepSearchHandler(
+    event: React.FormEvent<HTMLFormElement>,
+    searchText: string,
+    searchField: RecipeSearchField
+  ) {
     event.preventDefault();
     const trimmed = searchText.trim();
     const params = new URLSearchParams();
@@ -171,44 +169,12 @@ export default function RecipesPage() {
           </Tabs>
 
           {/* 페이지 내부 상단 검색바 */}
-          <form onSubmit={ReciepSearchHandler} className="w-full sm:w-auto">
-            <div className="flex w-full max-w-md overflow-hidden rounded-md border">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex w-32 items-center justify-between border-r px-3 py-2 text-sm cursor-pointer"
-                  >
-                    <span>
-                      {SEARCH_FIELD_OPTIONS.find((opt) => opt.value === searchField)?.label}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent className="w-32 text-sm">
-                  {SEARCH_FIELD_OPTIONS.map((opt) => (
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      key={opt.value}
-                      onClick={() => setSearchField(opt.value)}
-                    >
-                      {opt.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div className="flex flex-1 items-center gap-2 px-3">
-                <input
-                  className="w-full border-0 text-sm outline-none"
-                  onChange={(e) => setSearchText(e.target.value)}
-                />
-                <button type="submit" className="text-gray-500">
-                  <Search className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </form>
+          <SearchForm<RecipeSearchField>
+            searchHandler={ReciepSearchHandler}
+            searchoptions={SEARCH_FIELD_OPTIONS}
+            searchQuery={searchQuery || ""}
+            searchFieldQuery={fieldParam}
+          />
         </div>
       </section>
 
