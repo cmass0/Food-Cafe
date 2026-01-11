@@ -12,9 +12,7 @@ import { useEffect, useState } from "react";
 type props = {
   recipe: Recipe;
 };
-export default function LikeBookmarkButton({
-  recipe,
-}: props) {
+export default function LikeBookmarkButton({ recipe }: props) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
   const [bookmarked, setBookmarked] = useState(false);
@@ -64,19 +62,25 @@ export default function LikeBookmarkButton({
   }
 
   return (
-    <div className="flex justify-end gap-2">
-      <RecipeCardBookmarkButton
-        recipeId={recipe.id}
-        marked={bookmarked}
-        count={bookmarkCount ?? 0}
-        onChange={handleBookmarkChange}
-      />
-      <RecipeCardLikeButton
-        recipeId={recipe.id}
-        liked={liked}
-        count={likeCount ?? 0}
-        onChange={handleLikeChange}
-      />
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
+        <RecipeCardBookmarkButton
+          recipeId={recipe.id}
+          marked={bookmarked}
+          count={bookmarkCount ?? 0}
+          onChange={handleBookmarkChange}
+        />
+        <span className="text-sm text-slate-600">{bookmarkCount}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <RecipeCardLikeButton
+          recipeId={recipe.id}
+          liked={liked}
+          count={likeCount ?? 0}
+          onChange={handleLikeChange}
+        />
+        <span className="text-sm text-slate-600">{likeCount}</span>
+      </div>
     </div>
   );
 }

@@ -62,19 +62,25 @@ export default function ComboLikeBookmarkButton({ combo }: props) {
   }
 
   return (
-    <div className="flex justify-end gap-2">
-      <ComboCardBookmarkButton
-        comboId={combo.id}
-        marked={bookmarked}
-        count={bookmarkCount ?? 0}
-        onChange={handleBookmarkChange}
-      />
-      <ComboCardLikeButton
-        comboId={combo.id}
-        liked={liked}
-        count={likeCount ?? 0}
-        onChange={handleLikeChange}
-      />
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
+        <ComboCardBookmarkButton
+          comboId={combo.id}
+          marked={bookmarked}
+          count={bookmarkCount ?? 0}
+          onChange={handleBookmarkChange}
+        />
+        <span className="text-sm text-slate-600">{bookmarkCount}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <ComboCardLikeButton
+          comboId={combo.id}
+          liked={liked}
+          count={likeCount ?? 0}
+          onChange={handleLikeChange}
+        />
+        <span className="text-sm text-slate-600">{likeCount}</span>
+      </div>
     </div>
   );
 }
