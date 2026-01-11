@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getComboById } from "@/domain/combo/service";
 import CommentArea from "@/domain/comment/ui/CommentArea";
@@ -7,7 +6,6 @@ import CommentArea from "@/domain/comment/ui/CommentArea";
 import { CopyClipButton } from "@/lib/shareButton/copycliep";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { Share2 } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -43,7 +41,7 @@ export default async function ComboDetailPage({
 
   const timeLabel = formatMinutes(combo.timeMinutes);
   const tags = combo.tags.filter((tag) => typeof tag === "string" && tag.length > 0);
-  const tools = (combo.tools ?? []).filter((tool) => typeof tool === "string" && tool.length > 0);
+  const tools = combo.tools?.filter((tool) => tool.length > 0) ?? [];
   const steps = combo.steps?.map((step) => step.description) ?? [];
   const items = combo.items ?? [];
   const toolRequiredLabel = combo.toolRequired || tools.length > 0 ? "도구 필요" : "도구 필요 없음";
@@ -60,7 +58,7 @@ export default async function ComboDetailPage({
   const commentLimit = 5;
 
   return (
-    <main className="relative overflow-hidden">
+    <main className="relative overflow-hidden pt-24 pb-24">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">
@@ -106,14 +104,7 @@ export default async function ComboDetailPage({
                     </Badge>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <ComboLikeBookmarkButton combo={combo} />
-
-                  <Button variant="outline" size="sm" className="h-8 rounded-full px-4">
-                    <Share2 className="mr-1 h-3.5 w-3.5" />
-                    공유
-                  </Button>
-                </div>
+                <div className="flex flex-wrap gap-2"></div>
               </div>
 
               <div className="space-y-2">
@@ -174,13 +165,18 @@ export default async function ComboDetailPage({
                   )}
                 </div>
               </div>
-
-              {combo.writerUid === userId && (
-                <div className="flex gap-2 justify-end">
-                  <ComboUpdateButton id={combo.id} />
-                  <ComboDeleteButton id={combo.id} />
+              {/* 좋아요/북마크 & 수정/삭제 버튼 */}
+              <div className="flex items-center justify-between  mt-5">
+                <div>
+                  <ComboLikeBookmarkButton combo={combo} />
                 </div>
-              )}
+                {combo.writerUid === userId && (
+                  <div className="flex gap-2">
+                    <ComboUpdateButton id={combo.id} />
+                    <ComboDeleteButton id={combo.id} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -387,7 +383,6 @@ export default async function ComboDetailPage({
           </div>
         </div>
 
-        
         <CommentArea
           parentType="combo"
           parentId={combo.id}
