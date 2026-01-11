@@ -18,20 +18,29 @@ type Props<TField extends string> = {
   ) => void;
   searchoptions: { value: TField; label: string }[];
   searchQuery?: string;
+  searchFieldQuery?: TField;
 };
 
 export default function SearchForm<TField extends string>({
   searchHandler,
   searchoptions,
   searchQuery,
+  searchFieldQuery,
 }: Props<TField>) {
-  const [searchField, setSearchField] = useState<TField>("title" as TField);
+  const initialField = searchFieldQuery ?? searchoptions[0]?.value ?? ("title" as TField);
+  const [searchField, setSearchField] = useState<TField>(initialField);
   const [searchText, setSearchText] = useState(searchQuery ?? "");
 
   // searchQuery prop이 변경될 때 searchText 상태 업데이트
   useEffect(() => {
     setSearchText(searchQuery ?? "");
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchFieldQuery) {
+      setSearchField(searchFieldQuery);
+    }
+  }, [searchFieldQuery]);
 
   return (
     <form onSubmit={(e) => searchHandler(e, searchText, searchField)} className="w-full sm:w-auto">
