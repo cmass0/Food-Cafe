@@ -139,7 +139,7 @@ export type ComboItemsForm =
       type: "product";
       productName: string;
       summary?: string;
-      image?: File | null;
+      image?: File | string | null;
     };
 
 export type ComboItems =

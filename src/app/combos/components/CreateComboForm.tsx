@@ -20,14 +20,18 @@ export default function CreateComboForm() {
 
   type ComboFormValues = z.input<typeof ComboFormSchema>;
 
-  const handleSubmit = async (values: ComboFormValues, extras?: { imageFile: File | null }) => {
+  const handleSubmit = async (
+    values: ComboFormValues,
+    extras?: { imageFile: File | string | null }
+  ) => {
     if (!user) {
       openAuthModal({ next: "/combos/new" });
       return;
     }
 
     const imageFile = extras?.imageFile ?? null;
-    if (!imageFile) {
+    // 생성 시에는 반드시 File이어야 함
+    if (!imageFile || !(imageFile instanceof File)) {
       setError("이미지 파일을 선택해 주세요.");
       return;
     }
@@ -37,10 +41,16 @@ export default function CreateComboForm() {
 
     try {
       const comboId = crypto.randomUUID();
-      const { publicUrl, signedUrl } = await uploadBucketImage("combos", user.id, comboId, imageFile, {
-        contentType: imageFile.type,
-        upsert: false,
-      });
+      const { publicUrl, signedUrl } = await uploadBucketImage(
+        "combos",
+        user.id,
+        comboId,
+        imageFile,
+        {
+          contentType: imageFile.type,
+          upsert: false,
+        }
+      );
       const finalUrl = publicUrl ?? signedUrl ?? null;
       if (!finalUrl) {
         throw new Error("이미지 를 가져오지 못했습니다.");
@@ -50,10 +60,16 @@ export default function CreateComboForm() {
         await Promise.all(
           (values.items ?? []).map(async (item) => {
             if (item.type === "product" && item.image && item.image instanceof File) {
-              const { publicUrl } = await uploadBucketImage("combos", user.id, comboId, item.image, {
-                contentType: item.image.type,
-                upsert: false,
-              });
+              const { publicUrl } = await uploadBucketImage(
+                "combos",
+                user.id,
+                comboId,
+                item.image,
+                {
+                  contentType: item.image.type,
+                  upsert: false,
+                }
+              );
               return {
                 ...item,
                 image: publicUrl ?? null,
