@@ -2,13 +2,21 @@
 
 import { useRouter } from "next/navigation";
 
-import SlideShow from "@/component/main-slide";
+import SlideShow from "@/component/navbar/mainslider/main-slide";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { useAuth } from "./auth/auth-context";
 
 import RecipeTopFooterSlide from "@/component/footer/topRecipe/footer-slide";
 import CombosTopFooterSlide from "@/component/footer/topRecipeCombo/footer-slide";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Home() {
   const router = useRouter();
@@ -54,13 +62,28 @@ export default function Home() {
               >
                 커뮤니티 참여하기
               </Button>
-              <Button
-                variant="outline"
-                className="rounded-full border border-[rgba(148,163,184,0.6)] bg-[rgba(15,23,42,0.02)] px-[1.6rem] py-[0.6rem] font-medium text-[#0f172a] transition hover:border-[rgba(148,163,184,0.9)] hover:bg-[rgba(248,250,252,0.9)]"
-                onClick={() => handleCta("/recipes/new")}
-              >
-                레시피 공유하기
-              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="outline"
+                    className="rounded-full border border-[rgba(148,163,184,0.6)] bg-[rgba(15,23,42,0.02)] px-[1.6rem] py-[0.6rem] font-medium text-[#0f172a] transition hover:border-[rgba(148,163,184,0.9)] hover:bg-[rgba(248,250,252,0.9)]"
+                    onClick={() => handleCta("/recipes/new")}
+                  >
+                    레시피 공유하기
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>공유 형태를 선택해주세요</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleCta("/recipes/new")}>
+                    레시피
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCta("/combos/new")}>
+                    레시피 조합
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </span>
         </header>
