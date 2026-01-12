@@ -1,5 +1,5 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import type { Recipe, RecipeListResult, RecipeSearchField } from "./types";
+import type { Recipe, RecipeListResult, RecipeSearchField, RecipeSort } from "./types";
 
 export async function listRecipes(params?: {
   limit?: number;
@@ -7,6 +7,7 @@ export async function listRecipes(params?: {
   writerUid?: string;
   search?: string;
   searchField?: RecipeSearchField;
+  sort?: RecipeSort;
 }): Promise<RecipeListResult> {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
@@ -14,6 +15,7 @@ export async function listRecipes(params?: {
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.search) qs.set("search", params.search);
   if (params?.searchField) qs.set("searchField", params.searchField);
+  if (params?.sort) qs.set("sort", params.sort);
   
 
   const res = await fetch(`/api/recipes${qs.size ? `?${qs.toString()}` : ""}`, {

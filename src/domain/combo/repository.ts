@@ -21,12 +21,19 @@ export async function fetchCombos(
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
 
-  let query = client
-    .from("combos")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .order("id")
-    .range(safeOffset, Math.max(rangeEnd, safeOffset));
+  let query = client.from("combos").select("*", { count: "exact" });
+
+  if (params.sort === "like") {
+    query = query.order("like_count", { ascending: false });
+  }
+  if (params.sort === "view") {
+    query = query.order("view_count", { ascending: false });
+  }
+  if (!params.sort || params.sort === "recent") {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  query = query.order("id").range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   // 검색 조건 분기
   const rawSearch = params.search ?? "";

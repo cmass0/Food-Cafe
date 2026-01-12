@@ -1,5 +1,5 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { ComboListResult, ComboRow, ComboSearchField } from "./types";
+import { ComboListResult, ComboRow, ComboSearchField, ComboSort } from "./types";
 
 export async function listCombos(params?: {
   limit?: number;
@@ -7,6 +7,7 @@ export async function listCombos(params?: {
   writerUid?: string;
   search?: string;
   searchField?: ComboSearchField;
+  sort?: ComboSort;
 }): Promise<ComboListResult> {
   const qs = new URLSearchParams();
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
@@ -14,6 +15,7 @@ export async function listCombos(params?: {
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
   if (params?.search) qs.set("search", params.search);
   if (params?.searchField) qs.set("searchField", params.searchField);
+  if (params?.sort) qs.set("sort", params.sort);
 
   const res = await fetch(`/api/combos${qs ? `?${qs.toString()}` : ""}`, {
     cache: "no-store",

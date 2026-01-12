@@ -104,6 +104,7 @@ export async function listCombos(
     search: parsed.search,
     writerUid: parsed.writerUid,
     searchField: parsed.searchField,
+    sort: parsed.sort,
   });
 
   let items = rows.map(mapRowToCombination);

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/app/auth/auth-context";
 import { listCombos } from "@/domain/combo/api";
-import type { ComboListResult, ComboSearchField, Combos } from "@/domain/combo/types";
+import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
 import ComboCard from "@/domain/combo/ui/ComboCard";
 import ComboFooter from "@/domain/combo/ui/ComboFooter";
 import ComboPreviewCard from "@/domain/combo/ui/ComboPreviewCard";
@@ -14,8 +14,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_LIMIT = 6;
-
-type ComboSort = "recent" | "like" | "view";
 
 const SORT_OPTIONS: { value: ComboSort; label: string }[] = [
   { value: "recent", label: "최신" },
@@ -58,6 +56,7 @@ export default function CombosPage() {
         const data = await listCombos({
           limit: requestedPageSize,
           page: currentPage,
+          sort,
           ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
         });
         const items = (data?.items ?? []).map((item: any) => ({
@@ -82,22 +81,9 @@ export default function CombosPage() {
     return () => {
       mounted = false;
     };
-  }, [requestedPageSize, currentPage, searchQuery, fieldParam, user?.id]);
+  }, [requestedPageSize, currentPage, searchQuery, fieldParam, user?.id, sort]);
 
-  const sortedCombos = useMemo(() => {
-    const base = [...combos];
-    if (sort === "like") {
-      return base.sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
-    }
-    if (sort === "view") {
-      return base.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
-    }
-    return base.sort((a, b) => {
-      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [combos, sort]);
+  const sortedCombos = combos;
 
   useEffect(() => {
     if (sortedCombos.length === 0) {
@@ -132,7 +118,7 @@ export default function CombosPage() {
         </Button>
       </header>
 
-      <Card>
+      <Card className="p-4">
         <Tabs value={sort} onValueChange={(value) => setSort(parseSort(value))}>
           <TabsList className="bg-background/60">
             {SORT_OPTIONS.map((option) => (

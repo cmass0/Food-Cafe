@@ -41,6 +41,7 @@ export type RecipeListOptions = {
   writerUid?: string;
   search?: string;
   searchField?: RecipeSearchField;
+  sort?: RecipeSort;
 };
 
 export type RecipeIngredient = {
@@ -65,9 +66,11 @@ export type FetchRecipesParams = {
   writerUid?: string;
   search?: string;
   searchField?: RecipeSearchField;
+  sort?: RecipeSort;
 };
 
 export type RecipeSearchField = "tag" | "title" | "tag_title" | "writer";
+export type RecipeSort = "recent" | "like" | "view";
 
 // DB Insert 용
 export type RecipeInsertDB = {

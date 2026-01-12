@@ -36,6 +36,7 @@ export type ComboListOptions = {
   search?: string;
   writerUid?: string;
   searchField?: ComboSearchField;
+  sort?: ComboSort;
 };
 
 export type ComboListResult = {
@@ -53,9 +54,11 @@ export type FetchCombosParams = {
   writerUid?: string;
   search?: string;
   searchField?: ComboSearchField;
+  sort?: ComboSort;
 };
 
 export type ComboSearchField = "tag" | "title" | "tag_title" | "writer";
+export type ComboSort = "recent" | "like" | "view";
 
 export type ComboInsertDb = {
   id: string;

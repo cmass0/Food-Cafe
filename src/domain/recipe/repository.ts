@@ -21,19 +21,28 @@ export async function fetchRecipes(
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
-  let query = client
-    .from("recipes")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .order("id")
-    .range(safeOffset, Math.max(rangeEnd, safeOffset));
+  let query = client.from("recipes").select("*", { count: "exact" });
+
+  // 정렬 조건 분기
+  if (params.sort === "like") {
+    query = query.order("like_count", { ascending: false });
+  }
+  if (params.sort === "view") {
+    query = query.order("view_count", { ascending: false });
+  }
+  if (params.sort === "recent") {
+    query = query.order("created_at", { ascending: false });
+  }
+  // 정렬 후 동일 값에 대한 2차 정렬
+  query = query.order("id").range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
   }
+
+
   // 검색 조건 분기
   const rawSearch = params.search ?? "";
-
   const search = normalizeSearchTerm(rawSearch);
   if (rawSearch.trim().length > 0 && !search) {
     return { items: [], total: 0 };

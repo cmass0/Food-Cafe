@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { PaginationComponent } from "@/components/pagenation/pagenation";
@@ -10,9 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
-import type { Recipe, RecipeListResult, RecipeSearchField } from "@/domain/recipe/types";
+import type {
+  Recipe,
+  RecipeListResult,
+  RecipeSearchField,
+  RecipeSort,
+} from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
-import SearchForm from "@/lib/search/searchform";
+import SearchForm from "@/lib/searchForm/searchform";
 
 const SORT_OPTIONS = [
   { key: "recent", title: "최신" },
@@ -31,7 +36,7 @@ const DEFAULT_LIMIT = 12;
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [sort, setSort] = useState<string>("recent");
+  const [sort, setSort] = useState<RecipeSort>("recent");
   const [loading, setLoading] = useState(true);
   const [pageMeta, setPageMeta] = useState<Pick<RecipeListResult, "limit" | "offset" | "total">>({
     limit: DEFAULT_LIMIT,
@@ -54,7 +59,7 @@ export default function RecipesPage() {
   const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
 
-  // 현재 page에 대한 recipe 목록
+  // 현재 page에 해당하는 recipe 목록
   useEffect(() => {
     let mounted = true;
 
@@ -64,6 +69,7 @@ export default function RecipesPage() {
         const data = await listRecipes({
           limit: safeLimit,
           page: safePage,
+          sort,
           ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
         });
         const items = (data?.items ?? []).map((item: any) => ({
@@ -80,7 +86,7 @@ export default function RecipesPage() {
           });
         }
       } catch (error) {
-        console.error("레시피 목록을 불러오는데 실패했습니다.", error);
+        console.error("레시피 목록을 불러오는 데 실패했습니다.", error);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -90,23 +96,7 @@ export default function RecipesPage() {
     return () => {
       mounted = false;
     };
-  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam]);
-
-  // 레시피 정렬
-  const sortedRecipes = useMemo(() => {
-    const base = [...recipes];
-    if (sort === "like") {
-      return base.sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
-    }
-    if (sort === "view") {
-      return base.sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
-    }
-    return base.sort((a, b) => {
-      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [recipes, sort]);
+  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort]);
 
   // 레시피 작성 페이지 이동
   function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
@@ -158,7 +148,11 @@ export default function RecipesPage() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Tabs value={sort} onValueChange={setSort} className="w-full sm:w-auto">
+          <Tabs
+            value={sort}
+            onValueChange={(value) => setSort(value as RecipeSort)}
+            className="w-full sm:w-auto"
+          >
             <TabsList className="grid w-full max-w-sm grid-cols-3 rounded-full px-1.5 py-1 sm:w-auto">
               {SORT_OPTIONS.map(({ key, title }) => (
                 <TabsTrigger key={key} value={key} className="rounded-full text-sm">
@@ -168,7 +162,7 @@ export default function RecipesPage() {
             </TabsList>
           </Tabs>
 
-          {/* 페이지 내부 상단 검색바 */}
+          {/* 페이지 네비게이션 바 */}
           <SearchForm<RecipeSearchField>
             searchHandler={ReciepSearchHandler}
             searchoptions={SEARCH_FIELD_OPTIONS}
@@ -179,7 +173,7 @@ export default function RecipesPage() {
       </section>
 
       <section>
-        <RecipeList recipes={sortedRecipes} className="mt-4" />
+        <RecipeList recipes={recipes} className="mt-4" />
       </section>
 
       <footer className="flex justify-center">

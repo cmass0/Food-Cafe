@@ -172,10 +172,12 @@ export async function listRecipes(
     writerUid: parsed.writerUid,
     search: parsed.search,
     searchField: parsed.searchField,
+    sort: parsed.sort,
   });
 
   let items = rows.map(mapRowToRecipe);
   const total = Math.max(rowtotal, offset + items.length);
+
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
   let bookmarkedSet = new Set<string>();

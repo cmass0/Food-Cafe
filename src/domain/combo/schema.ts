@@ -8,6 +8,7 @@ export const comboListOptionsSchema = z.object({
   writerUid: z.string().uuid().optional(),
   search: z.string().trim().max(200).optional(),
   searchField: z.enum(["tag", "title", "tag_title", "writer"]).optional(),
+  sort: z.enum(["recent", "like", "view"]).optional(),
 });
 
 export const ComboSetpsSchema = z.object({

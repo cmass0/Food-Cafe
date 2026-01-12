@@ -1,5 +1,5 @@
 import * as comboService from "@/domain/combo/service";
-import { ComboSearchField } from "@/domain/combo/types";
+import { ComboSearchField, ComboSort } from "@/domain/combo/types";
 import {
   AuthErrorHelper,
   badRequest,
@@ -21,6 +21,11 @@ export async function GET(req: Request) {
     const writerUid = url.searchParams.get("writerUid") || undefined;
     const search = url.searchParams.get("search") || undefined;
     const searchField = (url.searchParams.get("searchField") as ComboSearchField) || undefined;
+    const sortParam = url.searchParams.get("sort");
+    const sort =
+      sortParam === "recent" || sortParam === "like" || sortParam === "view"
+        ? (sortParam as ComboSort)
+        : undefined;
 
     const combos = await comboService.listCombos(supabase, {
       limit,
@@ -28,6 +33,7 @@ export async function GET(req: Request) {
       writerUid,
       search,
       searchField,
+      sort,
     });
     return json({ data: combos }, 201);
   } catch (error) {
