@@ -16,9 +16,8 @@ export async function POST(_: Request, { params }: contentParams) {
       p_combo_id: params.id,
     });
 
-    if (!view_count) return notFound();
-
     if (error) return respondWithSupabaseError(error);
+    if (!view_count) return notFound();
 
     return json({ viewCount: view_count }, 200);
   } catch (error) {

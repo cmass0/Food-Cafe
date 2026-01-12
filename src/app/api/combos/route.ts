@@ -7,8 +7,10 @@ import {
   isPostgrestError,
   json,
   respondWithSupabaseError,
+  validationError,
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { ZodError } from "zod";
 
 export async function GET(req: Request) {
   try {
@@ -35,7 +37,7 @@ export async function GET(req: Request) {
       searchField,
       sort,
     });
-    return json({ data: combos }, 201);
+    return json({ data: combos });
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("조합을 가져오는데 실패했습니다.", error);
@@ -64,5 +66,16 @@ export async function POST(req: Request) {
       writer_uid: user.id,
     });
     return json({ data: combo }, 201);
-  } catch (error) {}
+  } catch (error) {
+    if (isPostgrestError(error)) {
+      return respondWithSupabaseError(error);
+    }
+
+    if (error instanceof ZodError) {
+      console.error("레시피 생성 실패 - zod검증 오류", error);
+      return validationError(error.errors);
+    }
+    console.error("조합 생성에 실패했습니다.", error);
+    return internalError();
+  }
 }

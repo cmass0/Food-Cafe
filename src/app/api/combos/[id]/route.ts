@@ -1,4 +1,4 @@
-import { ComboUpdateSchema } from "@/domain/combo/schema";
+﻿import { ComboUpdateSchema } from "@/domain/combo/schema";
 import * as comboService from "@/domain/combo/service";
 import { contentParams } from "@/lib/api/prams-type";
 import {
@@ -6,6 +6,7 @@ import {
   internalError,
   isPostgrestError,
   json,
+  notFound,
   respondWithSupabaseError,
   validationError,
 } from "@/lib/api/route-error";
@@ -17,15 +18,15 @@ export async function GET(_: Request, { params }: contentParams) {
 
     const comboId = params.id;
     const combo = await comboService.getComboById(supabase, comboId);
-    if (!combo) return badRequest("해당 레시피 조합을 찾을 수 없습니다");
+    if (!combo) return notFound();
 
     return json({ data: combo });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("레시피 조합을 가져오지 못했습니다.", error);
+      console.error("?덉떆??議고빀??媛?몄삤吏 紐삵뻽?듬땲??", error);
       return respondWithSupabaseError(error);
     }
-    console.error("레시피 조합을 가져오지 못했습니다.", error);
+    console.error("?덉떆??議고빀??媛?몄삤吏 紐삵뻽?듬땲??", error);
     return internalError();
   }
 }
@@ -37,7 +38,7 @@ export async function PUT(req: Request, { params }: contentParams) {
     try {
       body = await req.json();
     } catch {
-      return badRequest("잘못된 JSON 형식입니다.");
+      return badRequest("?섎せ??JSON ?뺤떇?낅땲??");
     }
     const parse = ComboUpdateSchema.safeParse(body);
     if (!parse.success) {
@@ -49,10 +50,10 @@ export async function PUT(req: Request, { params }: contentParams) {
     return json({ data: updated });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("레시피 수정에 실패하였습니다.", error);
+      console.error("?덉떆???섏젙???ㅽ뙣?섏??듬땲??", error);
       return respondWithSupabaseError(error);
     }
-    console.error("레시피 수정에 실패하였습니다.", error);
+    console.error("?덉떆???섏젙???ㅽ뙣?섏??듬땲??", error);
     return internalError();
   }
 }
@@ -60,18 +61,19 @@ export async function PUT(req: Request, { params }: contentParams) {
 export async function DELETE(_: Request, { params }: contentParams) {
   const supabase = getServerSupabase();
   try {
-    const combo = comboService.getComboById(supabase, params.id);
-    if (!combo) return badRequest("레시피 조합을 찾을 수 없습니다.");
+    const combo = await comboService.getComboById(supabase, params.id);
+    if (!combo) return notFound();
 
     await comboService.removeCombo(supabase, params.id);
 
-    return json({ message: "레시피 조합이 삭제되었습니다." }, 200);
+    return json({ message: "?덉떆??議고빀????젣?섏뿀?듬땲??" }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("레시피 수정에 실패하였습니다.", error);
+      console.error("?덉떆???섏젙???ㅽ뙣?섏??듬땲??", error);
       return respondWithSupabaseError(error);
     }
-    console.error("레시피 수정에 실패하였습니다.", error);
+    console.error("?덉떆???섏젙???ㅽ뙣?섏??듬땲??", error);
     return internalError();
   }
 }
+

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     if (authError) return authError;
 
     const recipe = await recipeService.createRecipe(supabase, parsed);
-    return json({ data: recipe, status: 201 });
+    return json({ data: recipe }, 201);
   } catch (error) {
     if (isPostgrestError(error)) {
       console.error("레시피 생성 실패", error);

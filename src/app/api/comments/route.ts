@@ -1,6 +1,13 @@
 import * as commentService from "@/domain/comment/service";
-import { CommentInsertInput } from "@/domain/comment/types";
-import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
+import {
+  AuthErrorHelper,
+  badRequest,
+  internalError,
+  isPostgrestError,
+  json,
+  respondWithSupabaseError,
+  validationError,
+} from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
@@ -14,59 +21,46 @@ export async function GET(req: Request) {
     const pageParam = Number(url.searchParams.get("page") ?? "");
     const parentType = url.searchParams.get("parentType");
     const parentId = url.searchParams.get("parentId");
-
     const supabase = getServerSupabase();
+
     const data = await commentService.listComments(supabase, {
       limit: Number.isFinite(limitParam) ? limitParam : undefined,
       page: Number.isFinite(pageParam) ? pageParam : undefined,
-      parentType: parentType as "recipe" | "post" | undefined,
+      parentType: parentType as "recipe" | "post" | "combo" | undefined,
       parentId: parentId ?? undefined,
     });
-    return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
+    return json({ data });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
-    }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    const detail = (error as any)?.message ?? String(error);
-    console.error("[comments] GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR", detail }, { status: 500 });
+    console.error("댓글을 가져오는데 실패했습니다.", error);
+    return internalError();
   }
 }
 
 export async function POST(req: Request) {
+  let body;
+  const supabase = getServerSupabase();
   try {
-    const supabase = getServerSupabase();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    const body: CommentInsertInput = await req.json();
+    body = await req.json();
+  } catch {
+    return badRequest("잘못된 JSON 형식입니다.");
+  }
 
-    if (error) throw error;
-    if (!user) {
-      return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    }
-
+  const { user, error } = await AuthErrorHelper();
+  if (error) return error;
+  try {
     const created = await commentService.createComment(supabase, user.id, body);
-    return Response.json({ data: created }, { status: 201 });
+    return json({ data: created }, 201);
   } catch (error) {
     if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
+      return validationError(error.errors);
     }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    const detail = (error as any)?.message ?? String(error);
-    console.error("[comments] POST failed", error);
-    return Response.json({ error: "INTERNAL_ERROR", detail }, { status: 500 });
+    console.error("댓글 생성에 실패했습니다.", error);
+    return internalError();
   }
 }

@@ -9,7 +9,7 @@ import {
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export async function POST(req: Request, { params }: contentParams) {
+export async function POST(_req: Request, { params }: contentParams) {
   const supabase = getServerSupabase();
 
   try {
@@ -30,7 +30,7 @@ export async function POST(req: Request, { params }: contentParams) {
 
     return json({
       bookmarked: bookmarkdata[0]?.bookmarked,
-      bookmarkcount: bookmarkdata[0]?.bookmark_count,
+      bookmarkCount: bookmarkdata[0]?.bookmark_count,
     });
   } catch (error) {
     if (isPostgrestError(error)) {

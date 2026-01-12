@@ -1,11 +1,14 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
-import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
+import {
+  internalError,
+  isPostgrestError,
+  json,
+  respondWithSupabaseError,
+  validationError,
+} from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
@@ -20,7 +23,7 @@ export async function GET(req: Request) {
     const searchField = (url.searchParams.get("searchField") as PostSearchField) ?? undefined;
 
     const supabase = getServerSupabase();
-    const data = await postService.listPosts(supabase, {
+    const posts = await postService.listPosts(supabase, {
       limit,
       page,
       writerUid,
@@ -28,19 +31,13 @@ export async function GET(req: Request) {
       search,
       searchField,
     });
-    return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
+    return json({ data: posts });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
-    }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[posts] GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("게시글 조회 실패", error);
+    return internalError();
   }
 }
 
@@ -52,15 +49,13 @@ export async function POST(req: Request) {
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
+      console.error("게시글 생성 실패 - zod검증 오류", error);
+      return validationError(error);
     }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[posts] POST failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("게시글 생성 실패", error);
+    return internalError();
   }
 }

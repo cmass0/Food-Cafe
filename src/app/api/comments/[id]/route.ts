@@ -1,87 +1,83 @@
 import * as commentService from "@/domain/comment/service";
-import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
+import { contentParams } from "@/lib/api/prams-type";
+import {
+  AuthErrorHelper,
+  badRequest,
+  internalError,
+  isPostgrestError,
+  json,
+  notFound,
+  respondWithSupabaseError,
+  validationError,
+} from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
+
 import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
-export async function GET(_req: Request, { params }: RouteContext) {
+export async function GET(_req: Request, { params }: contentParams) {
   try {
     const supabase = getServerSupabase();
     const comment = await commentService.getComment(supabase, params.id);
     if (!comment) {
-      return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+      return notFound();
     }
-    return Response.json({ data: comment }, { headers: { "Cache-Control": "no-store" } });
+    return json({ data: comment });
   } catch (error) {
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[comments/:id] GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("댓글을 가져오는데 실패했습니다.", error);
+    return internalError();
   }
 }
 
-export async function PUT(req: Request, { params }: RouteContext) {
+export async function PUT(req: Request, { params }: contentParams) {
+  let body;
+  const supabase = getServerSupabase();
   try {
-    const supabase = getServerSupabase();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error) throw error;
-    if (!user) {
-      return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    }
+    body = await req.json();
+  } catch {
+    return badRequest("잘못된 JSON 형식입니다.");
+  }
 
-    const body = await req.json();
+  const { user, error } = await AuthErrorHelper();
+  if (error) return error;
+
+  try {
     const updated = await commentService.updateComment(supabase, params.id, body);
     if (!updated) {
-      return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+      return notFound();
     }
 
-    return Response.json({ data: updated });
+    return json({ data: updated });
   } catch (error) {
     if (error instanceof ZodError) {
-      return Response.json(
-        { error: "VALIDATION_ERROR", details: error.flatten() },
-        { status: 400 }
-      );
+      return validationError(error);
     }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[comments/:id] PUT failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("댓글 수정에 실패했습니다.", error);
+    return internalError();
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteContext) {
-  try {
-    const supabase = getServerSupabase();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error) throw error;
-    if (!user) {
-      return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
-    }
+export async function DELETE(_req: Request, { params }: contentParams) {
+  const supabase = getServerSupabase();
 
+  const { user, error } = await AuthErrorHelper();
+  if (error) return error;
+  try {
     await commentService.deleteComment(supabase, params.id);
-    return new Response(null, { status: 204 });
+    return json({ message: "댓글이 삭제되었습니다." }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[comments/:id] DELETE failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("댓글 삭제에 실패했습니다.", error);
+    return internalError();
   }
 }

@@ -20,9 +20,8 @@ export async function POST(req: Request, { params }: contentParams) {
       p_id: params.id,
     });
 
-    if (!bookmarkdata || bookmarkdata.length === 0 || !bookmarkdata[0]) return notFound();
-
     if (error) return respondWithSupabaseError(error);
+    if (!bookmarkdata || bookmarkdata.length === 0 || !bookmarkdata[0]) return notFound();
     return json(
       { bookmarked: bookmarkdata[0].bookmarked, bookmarkcount: bookmarkdata[0].bookmark_count },
       200

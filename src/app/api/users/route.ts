@@ -1,6 +1,11 @@
 // src/app/api/users/route.ts
 import * as userService from "@/domain/user/service";
-import { isPostgrestError, respondWithSupabaseError } from "@/lib/api/route-error";
+import {
+  internalError,
+  isPostgrestError,
+  json,
+  respondWithSupabaseError,
+} from "@/lib/api/route-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +16,7 @@ export async function GET(req: Request) {
     const username = url.searchParams.get("username");
     if (username) {
       const user = await userService.findUserByDisplayName(username);
-      return Response.json({ data: user }, { headers: { "Cache-Control": "no-store" } });
+      return json({ data: user });
     }
 
     const limitParam = Number(url.searchParams.get("limit") ?? "");
@@ -19,16 +24,12 @@ export async function GET(req: Request) {
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const data = await userService.listUsers({ limit, page });
-    return Response.json({ data }, { headers: { "Cache-Control": "no-store" } });
+    return json({ data });
   } catch (error) {
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }
-    console.error("[users] GET failed", error);
-    return Response.json({ error: "INTERNAL_ERROR" }, { status: 500 });
+    console.error("사용자 목록을 가져오는데 실패했습니다.", error);
+    return internalError();
   }
-}
-
-export async function POST(): Promise<Response> {
-  return Response.json({ error: "METHOD_NOT_ALLOWED" }, { status: 405 });
 }

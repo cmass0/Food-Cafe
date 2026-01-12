@@ -4,10 +4,10 @@ import {
   internalError,
   isPostgrestError,
   json,
+  notFound,
   respondWithSupabaseError,
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
 
 export async function POST(_: Request, { params }: contentParams) {
   const supabase = getServerSupabase();
