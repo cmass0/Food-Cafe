@@ -1,9 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as userFollowService from "@/domain/follow/service";
 import FollowButton from "@/domain/follow/ui/FollowButton";
@@ -11,7 +10,9 @@ import * as userService from "@/domain/user/service";
 import { User } from "lucide-react";
 
 import { getServerSupabase } from "@/lib/supabase/server";
-import ProfileRecipeTab from "../profiletab/ProfileRecipeTab";
+import ProfileSearchForm from "../ProfileSearchForm";
+import ComboTabContainer from "../profiletab/combo/ComboTabContainer";
+import RecipeTabContainer from "../profiletab/recipe/RecipeTabContainer";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,13 @@ type ProfileSearchParams = {
   page?: string | string[];
   search?: string | string[];
   email?: string | string[];
+  section?: string | string[];
 };
 
 function normalizeParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   if (typeof value === "string") return value;
   return undefined;
-}
-
-function buildTabHref(tab: string, search?: string) {
-  const params = new URLSearchParams();
-  params.set("tab", tab);
-  if (search) {
-    params.set("search", search);
-  }
-  return `?${params.toString()}`;
 }
 
 export default async function ProfilePage({
@@ -46,7 +39,7 @@ export default async function ProfilePage({
 }) {
   const supabase = getServerSupabase();
 
-  // 다른 사용자 정보 가져오기
+  // 타 사용자 정보 가져오기
   const another_user = await userService.getUserById(params.id);
   if (!another_user) {
     return notFound();
@@ -58,28 +51,36 @@ export default async function ProfilePage({
   } = await supabase.auth.getUser();
 
   if (searchParams?.email === "changed") {
-    alert("이메일이 변경되었습니다. 변경된 이메일로 로그인 해주세요.");
+    alert("이메일이 변경되었습니다. 변경된 이메일로 로그인해 주세요.");
   }
 
   const isSelf = viewer?.id === another_user.id;
   let isFollowing = false;
 
   if (viewer && !isSelf) {
-    isFollowing = await userFollowService.checkIsFollowing(
-      supabase,
-      viewer.id,
-      another_user.id
-    );
+    isFollowing = await userFollowService.checkIsFollowing(supabase, viewer.id, another_user.id);
   }
 
   const tabParam = normalizeParam(searchParams?.tab);
   const activeTab = tabParam === "bookmark" || tabParam === "like" ? tabParam : "written";
+  const sectionParam = normalizeParam(searchParams?.section);
+  const activeSection = sectionParam === "combo" ? "combo" : "recipe";
   const pageParam = normalizeParam(searchParams?.page);
   const pageNum = pageParam ? Number(pageParam) : 1;
   const currentPage = Number.isFinite(pageNum) && pageNum > 0 ? Math.trunc(pageNum) : 1;
   const searchParam = normalizeParam(searchParams?.search);
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
+
+  function buildSectionHref(section: "recipe" | "combo") {
+    const params = new URLSearchParams();
+    params.set("section", section);
+    params.set("tab", activeTab);
+    if (search) {
+      params.set("search", search);
+    }
+    return `?${params.toString()}`;
+  }
 
   return (
     <main className="pt-[50px] pb-[50px]">
@@ -91,7 +92,7 @@ export default async function ProfilePage({
               <div className="flex items-end gap-4">
                 <Avatar className="h-20 w-20 border bg-background md:h-24 md:w-24">
                   {another_user.photo_url ? (
-                    <AvatarImage src={another_user.photo_url} alt="프로필 이미지" />
+                    <AvatarImage src={another_user.photo_url} alt="?꾨줈???대?吏" />
                   ) : (
                     <User />
                   )}
@@ -100,9 +101,7 @@ export default async function ProfilePage({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="text-2xl font-semibold">
-                    {another_user.display_name ?? "-"}
-                  </div>
+                  <div className="text-2xl font-semibold">{another_user.display_name ?? "-"}</div>
                   <div className="text-gray-500">{another_user.email ?? "-"}</div>
                 </div>
               </div>
@@ -119,15 +118,7 @@ export default async function ProfilePage({
           </CardContent>
         </Card>
         <div className="flex items-center justify-between rounded-2xl border-1.5 px-1.5 pb-2 pt-2">
-          <form method="get" className="w-[30%]">
-            <input type="hidden" name="tab" value={activeTab} />
-            <Input
-              name="search"
-              className="rounded-2xl bg-amber-50"
-              placeholder="검색: 레시피/태그"
-              defaultValue={search ?? ""}
-            />
-          </form>
+          <ProfileSearchForm activeTab={activeTab} activeSection={activeSection} search={search} />
           <Tabs defaultValue="popular">
             <TabsList className="h-full">
               <TabsTrigger value="popular">인기순</TabsTrigger>
@@ -138,48 +129,49 @@ export default async function ProfilePage({
           </Tabs>
         </div>
 
-        <div className="pt-6">
-          <Tabs defaultValue={activeTab}>
-            <TabsList className="h-full">
-              <TabsTrigger value="written" asChild>
-                <Link href={buildTabHref("written", search)}>작성 레시피</Link>
-              </TabsTrigger>
-              <TabsTrigger value="bookmark" asChild>
-                <Link href={buildTabHref("bookmark", search)}>북마크</Link>
-              </TabsTrigger>
-              <TabsTrigger value="like" asChild>
-                <Link href={buildTabHref("like", search)}>좋아요</Link>
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="written">
-                <ProfileRecipeTab
-                  type="written"
-                  page={activeTab === "written" ? currentPage : 1}
-                  limit={pageSize}
-                  search={search}
-                  id={another_user.id}
-                />
-              </TabsContent>
-            <TabsContent value="bookmark">
-              <ProfileRecipeTab
-                type="bookmark"
-                page={activeTab === "bookmark" ? currentPage : 1}
-                limit={pageSize}
-                search={search}
-                id={another_user.id}
-              />
-            </TabsContent>
-            <TabsContent value="like">
-              <ProfileRecipeTab
-                type="like"
-                page={activeTab === "like" ? currentPage : 1}
-                limit={pageSize}
-                search={search}
-                id={another_user.id}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+        <Tabs value={activeSection} className="w-full">
+          <TabsList className="flex w-fit gap-2 border-0 bg-transparent p-0 shadow-none">
+            <TabsTrigger
+              value="recipe"
+              className="relative -mb-px rounded-t-md rounded-b-none border border-amber-200 bg-amber-100/70 px-4 py-2 text-xs text-slate-600 transition data-[state=active]:border-b-amber-50 data-[state=active]:bg-amber-50 data-[state=active]:text-[18px] data-[state=active]:font-semibold data-[state=active]:text-slate-900 data-[state=active]:shadow-none data-[state=inactive]:border-b-transparent data-[state=inactive]:opacity-40"
+              asChild
+            >
+              <Link href={buildSectionHref("recipe")}>레시피</Link>
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="combo"
+              className="relative -mb-px rounded-t-md rounded-b-none border border-amber-200 bg-amber-100/70 px-4 py-2 text-xs text-slate-600 transition data-[state=active]:border-b-amber-50 data-[state=active]:bg-amber-50 data-[state=active]:text-[18px] data-[state=active]:font-semibold data-[state=active]:text-slate-900 data-[state=active]:shadow-none data-[state=inactive]:border-b-transparent data-[state=inactive]:opacity-40"
+              asChild
+            >
+              <Link href={buildSectionHref("combo")}>레시피 조합</Link>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent
+            value="recipe"
+            className="mt-0 border border-amber-200 border-t-0 bg-amber-50 p-4"
+          >
+            <RecipeTabContainer
+              activeTab={activeTab as "written" | "bookmark" | "like"}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              search={search}
+              me={another_user}
+            />
+          </TabsContent>
+          <TabsContent
+            value="combo"
+            className="mt-0 border border-amber-200 border-t-0 bg-amber-50 p-4"
+          >
+            <ComboTabContainer
+              activeTab={activeTab as "written" | "bookmark" | "like"}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              search={search}
+              me={another_user}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
