@@ -1,4 +1,4 @@
-﻿import { Eye, Heart } from "lucide-react";
+﻿import { Bookmark, Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,18 +15,20 @@ type RecipeCardProps = {
   initialLiked: boolean;
   initialCount: number;
   initialBookmarked: boolean;
+  initialBookmarkCount: number;
 };
 
 export default function RecipeCard({
   initialLiked,
   initialCount,
   initialBookmarked,
+  initialBookmarkCount,
   recipe,
 }: RecipeCardProps) {
   const [liked, setLiked] = useState<boolean>(initialLiked);
   const [likeCount, setLikeCount] = useState<number>(initialCount);
   const [bookmarked, setBookmarked] = useState<boolean>(initialBookmarked);
-  const [bookmarkCount, setBookmarkCount] = useState<number>(recipe.bookmarkCount ?? 0);
+  const [bookmarkCount, setBookmarkCount] = useState<number>(initialBookmarkCount);
 
   const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -42,8 +44,15 @@ export default function RecipeCard({
     }
   }
 
-  async function BookmarkButtonHD(bookmarkedState: { bookmarked: boolean }) {
+  async function BookmarkButtonHD(bookmarkedState: {
+    bookmarked: boolean;
+    bookmarkCount?: number | null;
+  }) {
     setBookmarked(bookmarkedState.bookmarked);
+
+    if (typeof bookmarkedState.bookmarkCount === "number") {
+      setBookmarkCount(bookmarkedState.bookmarkCount);
+    }
   }
 
   return (
@@ -104,10 +113,14 @@ export default function RecipeCard({
 
       <CardFooter className="flex flex-col gap-2 border-t border-emerald-700/60 bg-emerald-950/40 px-4 py-3 text-[11px] text-emerald-100/85">
         <div className="flex w-full items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5">
-              <Heart className="h-3 w-3 fill-emerald-300/80 text-emerald-50" />
+              <Heart className="h-3 w-3 fill-red-400 text-red-50" />
               <span>{likeCount}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Bookmark className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+              <span>{bookmarkCount}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Eye className="h-3 w-3 text-emerald-100" />
@@ -127,9 +140,9 @@ export default function RecipeCard({
         </div>
 
         <div className="flex w-full flex-wrap justify-start gap-2 text-[11px] text-emerald-100/80">
-          {recipe.tags.slice(0, 2).map((tag) => (
+          {recipe.tags.slice(0, 2).map((tag, index) => (
             <span
-              key={tag}
+              key={index}
               className="rounded-full border border-emerald-400/30 bg-emerald-900/40 px-3 py-1"
             >
               #{tag}

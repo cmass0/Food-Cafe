@@ -26,6 +26,7 @@ export default function RecipeList({
               initialLiked={recipe.liked ?? false}
               initialCount={recipe.likeCount ?? 0}
               initialBookmarked={recipe.bookmarked ?? false}
+              initialBookmarkCount={recipe.bookmarkCount ?? 0}
             />
           </li>
         ))}
