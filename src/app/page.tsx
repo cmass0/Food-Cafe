@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 
@@ -64,11 +64,10 @@ export default function Home() {
               </Button>
 
               <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     className="rounded-full border border-[rgba(148,163,184,0.6)] bg-[rgba(15,23,42,0.02)] px-[1.6rem] py-[0.6rem] font-medium text-[#0f172a] transition hover:border-[rgba(148,163,184,0.9)] hover:bg-[rgba(248,250,252,0.9)]"
-                    onClick={() => handleCta("/recipes/new")}
                   >
                     레시피 공유하기
                   </Button>
