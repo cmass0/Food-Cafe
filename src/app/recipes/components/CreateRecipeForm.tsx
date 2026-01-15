@@ -13,7 +13,7 @@ import { uploadBucketImage } from "@/lib/storage";
 
 export default function CreateRecipeForm() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
   const { openAuthModal } = useAuthModal();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +56,9 @@ export default function CreateRecipeForm() {
 
       const created = await createRecipe({
         ...values,
+        writer_name: displayName,
+        writer_uid: user.id,
+        writer_email: user.email,
         id: recipeId,
         image: finalUrl,
       });
