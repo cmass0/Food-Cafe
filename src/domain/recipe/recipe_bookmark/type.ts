@@ -6,6 +6,7 @@ export type UserBookmarkUpdate = Database["public"]["Tables"]["recipe_bookmarks"
 
 export type ToggleRecipeBookmark = {
   bookmarked: boolean;
+  bookmarkCount: number;
 };
 
 export type UserRecipeBookmarkOptions = {
