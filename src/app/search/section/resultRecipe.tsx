@@ -1,8 +1,8 @@
-import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { RecipeListResult } from "@/domain/recipe/types";
+import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { Bookmark, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,8 +18,7 @@ export default function SearchResultRecipe({ recipes, searchParams }: Props) {
   const query = searchParams;
   const pageImtemCount = recipes.limit;
   const total = recipes.total;
-  const currentPage = Number(query.page) ?? 1;
-  console.log("qs: ", query);
+  const currentPage = Number(query.recipePage) || 1;
 
   return (
     <Card className="rounded-xl shadow-sm">
@@ -89,6 +88,8 @@ export default function SearchResultRecipe({ recipes, searchParams }: Props) {
         blockSize={5}
         total={total}
         query={query}
+        pageParam="recipePage"
+        scroll={false}
       />
     </Card>
   );

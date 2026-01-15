@@ -12,13 +12,16 @@ type Props = {
 
 export default async function SearchPage({ searchParams }: Props) {
   const search = searchParams.query as string;
-  const page = Number(searchParams.page) || 1;
+
   const supabase = getServerSupabase();
+  const recipePage = Number(searchParams.recipePage) || 1;
+  const comboPage = Number(searchParams.comboPage) || 1;
+  const postPage = Number(searchParams.postPage) || 1;
 
   const [recipes, posts, combos] = await Promise.all([
-    listRecipes(supabase, { limit: 6, search, page }),
-    listPosts(supabase, { limit: 6, search, page }),
-    listCombos(supabase, { limit: 6, search, page }),
+    listRecipes(supabase, { limit: 6, search, page: recipePage }),
+    listPosts(supabase, { limit: 6, search, page: postPage }),
+    listCombos(supabase, { limit: 6, search, page: comboPage }),
   ]);
 
   return (

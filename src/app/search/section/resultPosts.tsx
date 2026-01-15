@@ -1,7 +1,7 @@
-import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PostListResult } from "@/domain/post/types";
+import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import Link from "next/link";
 
 type Props = {
@@ -15,7 +15,7 @@ export default function SearchResultPosts({ posts, searchParams }: Props) {
   const query = searchParams;
   const pageImtemCount = posts.limit;
   const total = posts.total;
-  const currentPage = Number(query.page) ?? 1;
+  const currentPage = Number(query.postPage) || 1;
 
   function formatTime(date: Date): string {
     const now = new Date();
@@ -76,6 +76,8 @@ export default function SearchResultPosts({ posts, searchParams }: Props) {
         blockSize={5}
         total={total}
         query={query}
+        pageParam="postPage"
+        scroll={false}
       />
     </Card>
   );
