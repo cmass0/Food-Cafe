@@ -13,7 +13,7 @@ import { z } from "zod";
 
 export default function CreateComboForm() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
   const { openAuthModal } = useAuthModal();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,8 @@ export default function CreateComboForm() {
       ).filter(Boolean);
       const created = await createCombo({
         ...values,
-        writerUid: user.id,
+        writer_name: displayName,
+        writer_uid: user.id,
         items: Insertvalues,
         id: comboId,
         image: finalUrl,
