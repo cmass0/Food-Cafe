@@ -99,15 +99,15 @@ export default function ComboCard({ combo, isActive, onSelect }: ComboCardProps)
 
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Heart className="h-3 w-3 fill-pink-400 text-red-500" />
+              <Heart className="h-3 w-3 fill-red-400 text-red-400" />
               {likeCount}
             </span>
             <span className="flex items-center gap-1.5">
-              <Eye className="h-3 w-3 text-black" /> {combo.viewCount ?? 0}
+              <Bookmark className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              {bookmarkCount}
             </span>
             <span className="flex items-center gap-1.5">
-              <Bookmark className="h-3 w-3 fill-emerald-400 text-black" />
-              {bookmarkCount}
+              <Eye className="h-3 w-3 text-black" /> {combo.viewCount ?? 0}
             </span>
           </div>
 

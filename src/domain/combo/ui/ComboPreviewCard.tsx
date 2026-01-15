@@ -64,15 +64,15 @@ export default function ComboPreviewCard({ combo }: ComboPreviewCardProps) {
             <span>난이도 {combo?.difficulty ?? "미정"}</span>
             <span>총시간 {combo?.timeMinutes ? `${combo.timeMinutes}분` : "미정"}</span>
             <span className="flex items-center gap-1.5">
-              <Heart className="h-3 w-3 fill-pink-400 text-red-500" />
+              <Heart className="h-3 w-3 fill-red-400 text-red-400" />
               {combo?.likeCount ?? 0}
             </span>
             <span className="flex items-center gap-1.5">
-              <Eye className="h-3 w-3 text-black" /> {combo?.viewCount ?? 0}
+              <Bookmark className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              {combo?.bookmarkCount ?? 0}
             </span>
             <span className="flex items-center gap-1.5">
-              <Bookmark className="h-3 w-3 fill-emerald-400 text-black" />
-              {combo?.bookmarkCount ?? 0}
+              <Eye className="h-3 w-3 text-black" /> {combo?.viewCount ?? 0}
             </span>
           </div>
 
