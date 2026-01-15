@@ -4,11 +4,7 @@ import { notFound } from "next/navigation";
 import CommentArea from "@/domain/comment/ui/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
-import RecipeIngredientsPanel from "@/domain/recipe/ui/RecipeIngredientsPanel";
 import { getServerSupabase } from "@/lib/supabase/server";
-import DeleteRecipeButton from "../components/DeleteRecipeButton";
-import UpdateRecipeButton from "../components/UpdateRecipeButton";
-import LikeBookmarkButton from "../ui/likebookmarkButton";
 
 export default async function RecipeDetailPage({
   params,
@@ -30,25 +26,15 @@ export default async function RecipeDetailPage({
   const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
 
   return (
-    <main className="pt-[100px] pb-[100px]">
-      <div className="mx-auto max-w-screen-2xl px-4">
-        {/* 모바일: 1열 / 데스크톱: 4열 */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-4">
-          {/* 왼쪽 사이드 */}
-          <aside className="order-3 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
-            {/* 북마크 & 좋아요 버튼 */}
-            <LikeBookmarkButton recipe={recipe} />
-          </aside>
+    <main className="relative pt-24 pb-24">
+      {/* 본문*/}
+      <div className="mx-auto w-full max-w-6xl px-4">
+        <div className="flex flex-col gap-10 xl:grid ">
+          <div className="xl:col-start-1">
+            <RecipeDetail recipe={recipe} isAuthor={isAuthor} />
+          </div>
 
-          {/* 중앙 본문 */}
-          <div className="order-1 min-w-0 space-y-8 lg:order-none lg:col-span-2">
-            <RecipeDetail recipe={recipe} />
-            {isAuthor ? (
-              <div className="flex justify-end gap-2">
-                <UpdateRecipeButton id={recipe.id} />
-                <DeleteRecipeButton recipeId={recipe.id} />
-              </div>
-            ) : null}
+          <div className="xl:col-start-1 xl:row-start-2">
             <CommentArea
               parentType="recipe"
               parentId={recipe.id}
@@ -57,11 +43,6 @@ export default async function RecipeDetailPage({
               limit={commentLimit}
             />
           </div>
-
-          {/* 오른쪽 사이드 */}
-          <aside className="order-2 min-w-0 space-y-4 lg:order-none lg:col-span-1 lg:self-start lg:sticky lg:top-24">
-            <RecipeIngredientsPanel ingredients={recipe.ingredients} />
-          </aside>
         </div>
       </div>
     </main>
