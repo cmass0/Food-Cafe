@@ -1,20 +1,17 @@
-import { Badge } from "@/components/ui/badge";
+﻿import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 
 import DeleteRecipeButton from "@/app/recipes/components/DeleteRecipeButton";
 import UpdateRecipeButton from "@/app/recipes/components/UpdateRecipeButton";
 import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
-import ViewCount from "@/domain/view/ui/ViewCount.client";
+
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import Image from "next/image";
 import type { Recipe } from "../types";
 import { getDifficultyMeta } from "./difficultyMeta";
 import { CopyClipButton } from "./RecipeClip";
-
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 
 function formatMinutes(value: number | null | undefined) {
   if (!value || value <= 0) return null;
@@ -37,6 +34,7 @@ export default async function RecipeDetail({
   const tools = recipe.tools?.filter((tool) => tool.length > 0) ?? [];
   const steps =
     recipe.steps?.map((step) => step.description).filter((step) => step.length > 0) ?? [];
+  const ingredientCount = recipe.ingredients?.length ?? 0;
   const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/recipes/${recipe.id}`;
   const shareImageUrl = recipe.image ? recipe.image : "";
 
@@ -104,7 +102,7 @@ export default async function RecipeDetail({
               <p className="text-sm text-muted-foreground">
                 <AuthorProfileMenu name={recipe.writerName} userId={recipe.writerUid} /> ·{" "}
                 {createdLabel} · 조회{" "}
-                <ViewCount type="recipe" id={recipe.id} initialCount={recipe.viewCount ?? 0} />
+            
               </p>
             </div>
 
@@ -167,6 +165,10 @@ export default async function RecipeDetail({
             </div>
           </div>
         </div>
+      </section>
+      {/* 재료  */}
+      <section>
+        <RecipeIngredientsPanel ingredients={recipe.ingredients} />
       </section>
 
       {/* 조리 단계 섹션 */}

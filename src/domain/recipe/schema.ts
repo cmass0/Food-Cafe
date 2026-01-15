@@ -55,6 +55,9 @@ export const recipeInsertSchema = z.object({
     .int("인분은 정수로 입력해 주세요.")
     .min(1, "인분은 1 이상이어야 합니다.")
     .max(50, "인분은 50 이하로 입력해 주세요."),
+  writer_uid: z.string().uuid().optional(),
+  writer_name: z.string().trim().max(200).optional(),
+  writer_email: z.string().email().optional(),
 });
 
 // 폼용 이미지 스키마: File(새 업로드) 또는 string(기존 URL) 허용
