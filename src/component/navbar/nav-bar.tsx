@@ -64,6 +64,14 @@ export default function Navbar() {
                   <Link href="/posts">커뮤니티</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  asChild
+                  className="rounded-full px-3 py-2 transition hover:bg-white/10"
+                >
+                  <Link href="/ranking">랭킹</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
         </div>
