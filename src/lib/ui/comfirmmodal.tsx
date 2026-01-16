@@ -1,4 +1,5 @@
 "use client";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,14 +13,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-type props = {
-  btnText: string; // 모달 호출 버튼 텍스트
+type Props = {
+  btnText?: string; // 모달 호출 버튼 텍스트
   comfirmText: React.ReactNode; // 확인할 텍스트 jsx.Element 도 가능
   content: string; // 모달 내용
   comfirmtype: string; // 결정을 수락할 내용의 종류
   oncomfirm?: () => void; // 확인 버튼 클릭 시 실행할 함수
   triggerClassName?: string; // 모달 호출 버튼에 대한 클래스
   comfirmClassName?: string; // 결정 수락 버튼에 대한 클래스
+  cancelText?: string; // 취소 버튼 텍스트
+  showTrigger?: boolean; // 트리거 버튼 표시 여부
+  open?: boolean; // 모달 열림 상태 제어
+  onOpenChange?: (open: boolean) => void; // 모달 열림 상태 변경 핸들러
 };
 
 export default function ComfirmModal({
@@ -30,14 +35,23 @@ export default function ComfirmModal({
   oncomfirm,
   triggerClassName,
   comfirmClassName,
-}: props) {
+  cancelText = "취소",
+  showTrigger = true,
+  open,
+  onOpenChange,
+}: Props) {
+  const alertDialogProps =
+    typeof open === "boolean" ? ({ open, onOpenChange } as const) : ({} as const);
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" className={triggerClassName}>
-          {btnText}
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog {...alertDialogProps}>
+      {showTrigger ? (
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" className={triggerClassName}>
+            {btnText ?? "확인"}
+          </Button>
+        </AlertDialogTrigger>
+      ) : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{comfirmText}</AlertDialogTitle>
@@ -47,7 +61,7 @@ export default function ComfirmModal({
           <AlertDialogAction onClick={oncomfirm} className={comfirmClassName}>
             {comfirmtype}
           </AlertDialogAction>
-          <AlertDialogCancel>닫기</AlertDialogCancel>
+          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
