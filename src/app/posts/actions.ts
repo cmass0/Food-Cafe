@@ -1,10 +1,9 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { redirect } from "next/navigation";
 
-import { postInsertSchema, postUpdateSchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -31,30 +30,37 @@ export async function createPostAction(
   }
 
   const title = (formData.get("title") as string | null)?.trim() ?? "";
-  const content = (formData.get("content") as string | null)?.trim() ?? "";
+  const rawJson = formData.get("content_json");
+  // 의도치 않은 값 삽입 방지
+  if (typeof rawJson !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
+  const contentText = formData.get("content_text");
+  // 의도치 않은 값 삽입 방지
+  if (typeof contentText !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
+
   const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
   const writerName = deriveDisplayName(user) ?? user.email ?? "user";
 
   const payload = {
     title,
-    content,
-    writerName,
+    content_json: rawJson,
+    content_text: contentText,
+    writer_name: writerName,
     type: typeRaw || undefined,
+    writer_uid: user.id,
   };
 
-  const parsed = postInsertSchema.safeParse(payload);
-  if (!parsed.success) {
-    return { ok: false, message: "입력값을 확인해주세요." };
-  }
-
   try {
-    const post = await postService.createPost(supabase, parsed.data);
+    const post = await postService.createPost(supabase, payload, user.id);
     revalidatePath("/posts");
     revalidatePath(`/posts/${post.id}`);
     redirect(`/posts/${post.id}`);
   } catch (err) {
     if (isRedirectError(err)) throw err;
-    console.error("[posts] create failed", err);
+    console.error("게시글 생성 실패", err);
     return { ok: false, message: DEFAULT_ERROR };
   }
 
@@ -89,20 +95,32 @@ export async function updatePostAction(
     return { ok: false, message: "게시글 ID가 필요합니다." };
   }
 
-  const parsed = postUpdateSchema.safeParse({
-    title: (formData.get("title") as string | null)?.trim() || undefined,
-    content: (formData.get("content") as string | null)?.trim() || undefined,
-    type: (formData.get("type") as string | null)?.trim() || undefined,
-  });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!parsed.success) {
-    return { ok: false, message: "수정할 내용을 올바르게 입력해주세요." };
+  if (error || !user) {
+    return { ok: false, message: "로그인이 필요합니다." };
   }
+
+  const rawJson = formData.get("content_json");
+  const contentJson = typeof rawJson === "string" ? JSON.parse(rawJson) : undefined;
+  const contentText = formData.get("content_text") as unknown;
+  const title = (formData.get("title") as string | null)?.trim() || undefined;
+  const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
 
   try {
     const writerName = await deriveAuthorDisplayNameByPostId(supabase, id);
-    const payload = { ...parsed.data, writerName };
-    const post = await postService.updatePost(supabase, id, payload);
+
+    const payload = {
+      title,
+      content_json: contentJson,
+      content_text: contentText,
+      writer_name: writerName,
+      type: typeRaw || undefined,
+    };
+    const post = await postService.updatePost(supabase, id, user.id, payload);
 
     if (!post) {
       return { ok: false, message: "게시글을 찾을 수 없습니다." };
@@ -124,8 +142,17 @@ export async function deletePostAction(id: string): Promise<PostActionState> {
     return { ok: false, message: "게시글 ID가 필요합니다." };
   }
 
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return { ok: false, message: "로그인이 필요합니다." };
+  }
+
   try {
-    await postService.removePost(supabase, id);
+    await postService.removePost(supabase, id, user.id);
   } catch (err) {
     console.error("게시글 삭제 실패", err);
     return { ok: false, message: DEFAULT_ERROR };
