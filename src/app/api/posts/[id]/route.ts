@@ -1,7 +1,8 @@
-﻿import { postUpdateSchema } from "@/domain/post/schema";
+import { postUpdateSchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
 import { contentParams } from "@/lib/api/prams-type";
 import {
+  AuthErrorHelper,
   badRequest,
   internalError,
   isPostgrestError,
@@ -29,6 +30,7 @@ export async function GET(_: Request, { params }: contentParams) {
 }
 
 export async function PUT(req: Request, { params }: contentParams) {
+  const supabase = getServerSupabase();
   try {
     let body: unknown;
     try {
@@ -42,8 +44,12 @@ export async function PUT(req: Request, { params }: contentParams) {
       return validationError(parsed.error);
     }
 
-    const supabase = getServerSupabase();
-    const updated = await postService.updatePost(supabase, params.id, parsed.data);
+    const { user, error } = await AuthErrorHelper();
+    if (error) {
+      return error;
+    }
+
+    const updated = await postService.updatePost(supabase, params.id, user.id, parsed.data);
     if (!updated) return notFound("해당 게시글을 찾을 수 없습니다.");
 
     return json({ data: updated });
@@ -59,11 +65,11 @@ export async function PUT(req: Request, { params }: contentParams) {
 export async function DELETE(_: Request, { params }: contentParams) {
   try {
     const supabase = getServerSupabase();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    await postService.removePost(supabase, params.id);
+    const { user, error } = await AuthErrorHelper();
+    if (error) {
+      return error;
+    }
+    await postService.removePost(supabase, params.id, user.id);
     return json({ message: "게시글이 삭제되었습니다." }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {

@@ -1,6 +1,7 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
 import {
+  AuthErrorHelper,
   internalError,
   isPostgrestError,
   json,
@@ -44,8 +45,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const supabase = getServerSupabase();
+    const { user, error } = await AuthErrorHelper();
+    if (error) {
+      return error;
+    }
     const body = await req.json();
-    const created = await postService.createPost(supabase, body);
+    const created = await postService.createPost(supabase, body, user.id);
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
