@@ -1,7 +1,8 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { isJson } from "../recipe/service";
+
+import { isJson } from "@/lib/domain/service/jsoncheck";
 import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
 import { buildLikedSetCombo } from "./combo_like/service";
 import * as repo from "./repository";

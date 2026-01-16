@@ -66,11 +66,8 @@ export default function CommentThread({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 댓글을 삭제하시겠습니까?")) return;
-    setError(null);
     try {
       await deleteComment(id);
-      router.refresh();
     } catch (err) {
       console.error("Failed to delete comment", err);
       setError("댓글을 삭제하는 중 오류가 발생했습니다.");

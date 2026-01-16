@@ -49,6 +49,7 @@ export default function RecipeCardLikeButton({ recipeId, liked, count, onChange 
     }
   }
 
+  // onchange가 있으면 변경이 존재하므로 prop으로 받은 값을 사용하고, 없으면 로컬 상태를 사용
   const displayLiked = onChange ? liked : localLiked;
   const displayCount = onChange ? count : localCount;
 

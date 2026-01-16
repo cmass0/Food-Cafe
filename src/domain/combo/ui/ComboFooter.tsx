@@ -1,7 +1,7 @@
 "use client";
 
-import { PaginationComponent } from "@/components/pagenation/pagenation";
-import SearchForm from "@/lib/search/searchform";
+import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import SearchForm from "@/lib/searchForm/searchform";
 import { useRouter } from "next/navigation";
 import type { ComboSearchField } from "../types";
 
