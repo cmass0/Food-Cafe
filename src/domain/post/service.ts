@@ -1,56 +1,35 @@
-import { resolveLimit, resolveOffset } from "@/lib/pagination";
+﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import * as repository from "./repository";
 import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import type {
   Post,
+  PostCreateInput,
   PostInsertDB,
   PostListOptions,
   PostListResult,
   PostRow,
-  PostUpdateDB,
 } from "./types";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
+const MAX_JSON_CHARS = 200_000;
 
 function mapRowToPost(row: PostRow): Post {
   return {
     id: row.id,
     title: row.title,
-    content: row.content,
+    contentJson: row.content_json ?? null,
+    contentText: row.content_text ?? null,
     writerName: row.writer_name,
     writerUid: row.writer_uid,
     number: row.number ?? null,
-    check: row.view_count ?? 0,
+    viewCount: row.view_count ?? 0,
     type: row.type ?? "board",
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
-}
-
-function buildInsertPayload(
-  input: ReturnType<typeof postInsertSchema.parse>,
-  writerUid: string
-): PostInsertDB {
-  return {
-    title: input.title,
-    content: input.content,
-    writer_name: input.writerName,
-    writer_uid: writerUid,
-    type: input.type ?? "board",
-  };
-}
-
-function buildUpdatePayload(parsed: ReturnType<typeof postUpdateSchema.parse>): PostUpdateDB {
-  const payload: PostUpdateDB = {};
-
-  if (parsed.title !== undefined) payload.title = parsed.title;
-  if (parsed.content !== undefined) payload.content = parsed.content;
-  if (parsed.writerName !== undefined) payload.writer_name = parsed.writerName;
-  if (parsed.type !== undefined) payload.type = parsed.type;
-  return payload;
 }
 
 export async function listPosts(
@@ -88,16 +67,38 @@ export async function getPost(client: SupabaseClient<Database>, id: string): Pro
   return row ? mapRowToPost(row) : null;
 }
 
-export async function createPost(client: SupabaseClient<Database>, input: unknown): Promise<Post> {
-  const {
-    data: { user },
-    error,
-  } = await client.auth.getUser();
-  if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다.");
+export async function createPost(
+  client: SupabaseClient<Database>,
+  input: PostCreateInput,
+  writerUid: string
+): Promise<Post> {
+  let contentJson = input.content_json;
 
-  const parsed = postInsertSchema.parse(input);
-  const payload = buildInsertPayload(parsed, user.id);
+  // 문자열로 들어오는 경우 처리
+  if (typeof contentJson === "string") {
+    // 크기 제한 검사
+    if (contentJson.length > MAX_JSON_CHARS) {
+      throw new Error("컨텐츠의 길이가 초과되었습니다.");
+    }
+    // 본문 비어있는지 검사
+    if (contentJson.trim() === "") {
+      throw new Error("내용을 입력해 주세요.");
+    }
+    try {
+      contentJson = JSON.parse(contentJson);
+    } catch {
+      throw new Error("유효하지 않은 형식입니다.");
+    }
+  }
+ 
+
+  const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
+  const payload: PostInsertDB = {
+    ...parsed,
+    content_text: parsed.content_text ?? null,
+    type: parsed.type ?? "board",
+    writer_uid: writerUid,
+  };
   const row = await repository.insertPostRecord(client, payload);
   return mapRowToPost(row);
 }
@@ -105,33 +106,25 @@ export async function createPost(client: SupabaseClient<Database>, input: unknow
 export async function updatePost(
   client: SupabaseClient<Database>,
   id: string,
+  ownerUid: string,
   input: unknown
 ): Promise<Post | null> {
   const parsed = postUpdateSchema.parse(input);
-  const updatePayload = buildUpdatePayload(parsed);
+
   let row: PostRow | null = null;
 
-  if (Object.keys(updatePayload).length > 0) {
-    const {
-      data: { user },
-      error,
-    } = await client.auth.getUser();
-    if (error) throw error;
-    if (!user) throw new Error("로그인이 필요합니다.");
-    row = await repository.updatePostRecordByOwner(client, id, user.id, updatePayload);
-  } else {
-    row = await repository.selectPostById(client, id);
-  }
+  row = await repository.updatePostRecordByOwner(client, id, ownerUid, parsed);
 
   return row ? mapRowToPost(row) : null;
 }
 
-export async function removePost(client: SupabaseClient<Database>, id: string): Promise<void> {
-  const {
-    data: { user },
-    error,
-  } = await client.auth.getUser();
-  if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다.");
-  await repository.deletePostRecord(client, id, user.id);
+export async function removePost(
+  client: SupabaseClient<Database>,
+  id: string,
+  ownerUid: string
+): Promise<void> {
+  if (!ownerUid) {
+    throw new Error("UNAUTHORIZED");
+  }
+  await repository.deletePostRecord(client, id, ownerUid);
 }

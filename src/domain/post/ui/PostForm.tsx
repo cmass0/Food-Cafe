@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { $getRoot, EditorState, type SerializedEditorState } from "lexical";
+import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
-import { $getRoot, createEditor, type SerializedEditorState } from "lexical";
+import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
+import type { PostActionState } from "@/app/posts/actions";
 import { Editor } from "@/components/blocks/editor-x/editor";
-import { nodes } from "@/components/blocks/editor-x/nodes";
-import { editorTheme } from "@/components/editor/themes/editor-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PostActionState } from "@/app/posts/actions";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import ComfirmModal from "@/lib/ui/comfirmmodal";
 
 type PostFormAction = (state: PostActionState, formData: FormData) => Promise<PostActionState>;
 
@@ -38,151 +38,126 @@ export default function PostForm({
 }: PostFormProps) {
   const [state, formAction] = useFormState(action, initialState);
   const [contentError, setContentError] = useState<string | null>(null);
-  const [contentHtml, setContentHtml] = useState<string>(defaultValues?.content ?? "");
+  const [contentText, setContentText] = useState<string>(defaultValues?.content ?? "");
   const [serializedState, setSerializedState] = useState<SerializedEditorState | undefined>(
     undefined
   );
-
-  // Dedicated editor instance for converting between HTML and serialized Lexical state
-  const conversionEditor = useMemo(
-    () =>
-      createEditor({
-        namespace: "post-form-converter",
-        theme: editorTheme,
-        nodes,
-      }),
-    []
-  );
-
-  const htmlToSerialized = useCallback(
-    (html?: string | null): SerializedEditorState | undefined => {
-      if (!html || !html.trim()) return undefined;
-      try {
-        const dom = new DOMParser().parseFromString(html, "text/html");
-        conversionEditor.update(() => {
-          const nodesFromDom = $generateNodesFromDOM(conversionEditor, dom);
-          const root = $getRoot();
-          root.clear();
-          nodesFromDom.forEach((node) => root.append(node));
-        });
-        return conversionEditor.getEditorState().toJSON();
-      } catch (error) {
-        console.error("[post-form] failed to parse HTML into editor state", error);
-        return undefined;
-      }
-    },
-    [conversionEditor]
-  );
-
-  const serializedToHtml = useCallback(
-    (state?: SerializedEditorState): string => {
-      if (!state) return "";
-      try {
-        const parsed = conversionEditor.parseEditorState(state);
-        conversionEditor.setEditorState(parsed);
-        let html = "";
-        conversionEditor.update(() => {
-          html = $generateHtmlFromNodes(conversionEditor);
-        });
-        return html;
-      } catch (error) {
-        console.error("[post-form] failed to serialize editor state to HTML", error);
-        return "";
-      }
-    },
-    [conversionEditor]
-  );
+  const { pending } = useFormStatus();
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState("");
+  const { openAuthModal } = useAuthModal();
 
   useEffect(() => {
-    setSerializedState(htmlToSerialized(defaultValues?.content));
-    setContentHtml(defaultValues?.content ?? "");
-  }, [defaultValues?.content, htmlToSerialized]);
-
-  const handleEditorChange = useCallback(
-    (next: SerializedEditorState) => {
-      setSerializedState(next);
-      const html = serializedToHtml(next);
-      setContentHtml(html);
-      if (contentError && html.trim()) {
-        setContentError(null);
+    if (!state.ok && state.message) {
+      if (state.message === "로그인이 필요합니다.") {
+        openAuthModal();
+        return;
       }
-    },
-    [contentError, serializedToHtml]
-  );
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (!contentHtml.trim()) {
-      event.preventDefault();
-      setContentError("내용을 입력해 주세요.");
-      return;
+      setErrorModalMessage(state.message);
+      setErrorModalOpen(true);
     }
-    setContentError(null);
+  }, [openAuthModal, state]);
+
+  // Editor 관련 핸들러
+  const handleSerializedChange = (editorState: SerializedEditorState) => {
+    setSerializedState(editorState);
   };
 
+  // 게시글 본문에서 사용자 입력 텍스트만 추출
+  const handleEditorStateChange = (state: EditorState) => {
+    let text = "";
+    state.read(() => {
+      text = $getRoot().getTextContent();
+    });
+    setContentText(text.trim());
+  };
+  
+
+  const imageUploadSet = () => {};
+
   return (
-    <form className="flex flex-col gap-6" action={formAction} onSubmit={handleSubmit}>
-      {defaultValues?.id ? <input type="hidden" name="id" defaultValue={defaultValues.id} /> : null}
-
-      <div className="space-y-2">
-        <Label htmlFor="title" className="text-sm font-semibold">
-          제목
-        </Label>
-        <Input
-          id="title"
-          name="title"
-          type="text"
-          defaultValue={defaultValues?.title ?? ""}
-          required
-          maxLength={150}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold">내용</Label>
-        <Editor editorSerializedState={serializedState} onSerializedChange={handleEditorChange} />
-        <input type="hidden" name="content" value={contentHtml} required />
-        {contentError ? <p className="text-sm text-destructive">{contentError}</p> : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="type" className="text-sm font-semibold">
-          타입
-        </Label>
-        <Input
-          id="type"
-          name="type"
-          type="text"
-          defaultValue={defaultValues?.type ?? "board"}
-          maxLength={40}
-        />
-        <p className="text-xs text-muted-foreground">게시글 유형을 간단히 표시하세요. (예: board)</p>
-      </div>
-
-      {!state.ok && state.message ? (
-        <p className="text-sm text-destructive">{state.message}</p>
-      ) : null}
-
-      <div className="flex items-center justify-end gap-2">
-        {cancelHref ? (
-          <Link className="rounded border border-input px-3 py-2 text-sm" href={cancelHref}>
-            취소
-          </Link>
+    <>
+      <ComfirmModal
+        showTrigger={false}
+        open={errorModalOpen}
+        onOpenChange={setErrorModalOpen}
+        btnText=""
+        comfirmText={
+          <div className="flex items-center gap-2">
+            <TriangleAlert className="text-[#f55151]" />
+            오류가 발생했습니다
+          </div>
+        }
+        content={errorModalMessage}
+        comfirmtype="확인"
+        cancelText="닫기"
+        oncomfirm={() => setErrorModalOpen(false)}
+      />
+      <form className="flex flex-col gap-6" action={formAction}>
+        {defaultValues?.id ? (
+          <input type="hidden" name="id" defaultValue={defaultValues.id} />
         ) : null}
-        <SubmitButton label={submitLabel} />
-      </div>
-    </form>
-  );
-}
+        <div className="space-y-2">
+          <Label htmlFor="title" className="text-sm font-semibold">
+            제목
+          </Label>
+          <Input
+            id="title"
+            name="title"
+            type="text"
+            defaultValue={defaultValues?.title ?? ""}
+            required
+            maxLength={150}
+          />
+        </div>
 
-type SubmitButtonProps = {
-  label: string;
-};
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">내용</Label>
+          <Editor
+            editorSerializedState={serializedState}
+            onChange={handleEditorStateChange}
+            onSerializedChange={handleSerializedChange}
+          />
+          <input type="hidden" name="content_text" value={contentText} required />
+          <input
+            type="hidden"
+            name="content_json"
+            value={serializedState ? JSON.stringify(serializedState) : ""}
+          />
+          {contentError ? <p className="text-sm text-destructive">{contentError}</p> : null}
+        </div>
 
-function SubmitButton({ label }: SubmitButtonProps) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "처리 중..." : label}
-    </Button>
+        <div className="space-y-2">
+          <Label htmlFor="type" className="text-sm font-semibold">
+            타입
+          </Label>
+          <Input
+            id="type"
+            name="type"
+            type="text"
+            defaultValue={defaultValues?.type ?? "board"}
+            maxLength={40}
+          />
+          <p className="text-xs text-muted-foreground">
+            게시글 유형을 간단히 표시하세요. (예: board)
+          </p>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          {cancelHref ? (
+            <Link className="rounded border border-input px-3 py-2 text-sm" href={cancelHref}>
+              취소
+            </Link>
+          ) : null}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={pending}>
+              {pending ? "처리 중..." : "제출"}
+            </Button>
+            <Button type="button" className="bg-red-400 hover:bg-red-600">
+              취소
+            </Button>
+          </div>
+        </div>
+      </form>
+    </>
   );
 }

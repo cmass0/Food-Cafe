@@ -7,7 +7,8 @@ import type { FetchPostsParams, PostInsertDB, PostRow, PostUpdateDB } from "./ty
 const POST_COLUMNS = [
   "id",
   "title",
-  "content",
+  "content_json",
+  "content_text",
   "writer_uid",
   "writer_name",
   "type",
@@ -71,10 +72,10 @@ export async function fetchPosts(
       query = query.ilike("writer_name", searchstr);
     }
     if (params.searchField === "contents") {
-      query = query.ilike("content", searchstr);
+      query = query.ilike("content_text", searchstr);
     }
     if (params.searchField === "title_contents") {
-      query = query.or(`title.ilike.${searchstr},content.ilike.${searchstr}`);
+      query = query.or(`title.ilike.${searchstr},content_text.ilike.${searchstr}`);
     }
   }
 

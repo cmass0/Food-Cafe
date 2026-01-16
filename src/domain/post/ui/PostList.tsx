@@ -41,17 +41,14 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
 
-  const handleCreateClick = React.useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (!user) {
-        event.preventDefault();
-        openAuthModal({ next: "/posts/new" });
-        return;
-      }
-      route.push("/posts/new");
-    },
-    [user, openAuthModal, route]
-  );
+  const handleCreateClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!user) {
+      event.preventDefault();
+      openAuthModal({ next: "/posts/new" });
+      return;
+    }
+    route.push("/posts/new");
+  };
 
   return (
     <div className="">
@@ -100,7 +97,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
                   </TableCell>
                   <TableCell className="text-center">{formatDate(post.createdAt)}</TableCell>
                   <TableCell className="w-[80px] text-center text-xs text-muted-foreground">
-                    {post.check}
+                    {post.viewCount}
                   </TableCell>
                 </TableRow>
               );
