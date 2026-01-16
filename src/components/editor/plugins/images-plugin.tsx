@@ -29,6 +29,7 @@ import {
 } from "lexical";
 import { JSX, useEffect, useRef, useState } from "react";
 
+import { useAuth } from "@/app/auth/auth-context";
 import {
   $createImageNode,
   $isImageNode,
@@ -41,6 +42,7 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { randomKey, uploadBucketImage } from "@/lib/storage";
 
 export type InsertImagePayload = Readonly<ImagePayload>;
 
@@ -106,19 +108,29 @@ export function InsertImageUploadedDialogBody({
   const [src, setSrc] = useState("");
   const [altText, setAltText] = useState("");
 
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+  const draftIdRef = useRef(randomKey("draft"));
+
   const isDisabled = src === "";
 
-  const loadImage = (files: FileList | null) => {
-    const reader = new FileReader();
-    reader.onload = function () {
-      if (typeof reader.result === "string") {
-        setSrc(reader.result);
-      }
-      return "";
-    };
+  const loadImage = async (files: FileList | null) => {
     const file = files?.[0];
-    if (file) {
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (!userId) return;
+
+    try {
+      const { publicUrl } = await uploadBucketImage(
+        "posts-temp",
+        userId,
+        draftIdRef.current,
+        file,
+        { contentType: file.type }
+      );
+      setSrc(publicUrl ?? "");
+    } catch (error) {
+      console.error("이미지 업로드 실패", error);
+      setSrc("");
     }
   };
 
@@ -129,7 +141,9 @@ export function InsertImageUploadedDialogBody({
         <Input
           id="image-upload"
           type="file"
-          onChange={(e) => loadImage(e.target.files)}
+          onChange={(e) => {
+            void loadImage(e.target.files);
+          }}
           accept="image/*"
           data-test-id="image-modal-file-upload"
         />
