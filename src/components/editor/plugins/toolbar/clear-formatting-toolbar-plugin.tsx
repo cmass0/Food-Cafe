@@ -81,6 +81,7 @@ export function ClearFormattingToolbarPlugin() {
       aria-label="Clear formatting"
       variant={"outline"}
       size="icon"
+      type="button"
       onClick={clearFormatting}
     >
       <EraserIcon className="size-4" />
