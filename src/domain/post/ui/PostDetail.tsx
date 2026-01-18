@@ -1,6 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import type { Post } from "../types";
+import PostContentHtml from "./PostContentHtml.client";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (
@@ -25,7 +26,7 @@ export default function PostDetail({ post }: { post: Post }) {
             ) : null}
           </div>
         </header>
-        <section className="prose max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+        <PostContentHtml contentJson={post.contentJson} />
       </article>
     </div>
   );
