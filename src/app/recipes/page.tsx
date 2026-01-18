@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
-import { PaginationComponent } from "@/components/pagenation/pagenation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
@@ -17,6 +16,7 @@ import type {
   RecipeSort,
 } from "@/domain/recipe/types";
 import RecipeList from "@/domain/recipe/ui/RecipeList";
+import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import SearchForm from "@/lib/searchForm/searchform";
 
 const SORT_OPTIONS = [
