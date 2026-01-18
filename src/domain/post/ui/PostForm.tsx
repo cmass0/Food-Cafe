@@ -2,7 +2,7 @@
 
 import { $getRoot, EditorState, type SerializedEditorState } from "lexical";
 import { TriangleAlert } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import ComfirmModal from "@/lib/ui/comfirmmodal";
+import { Json } from "@/types/supabase";
 
 type PostFormAction = (state: PostActionState, formData: FormData) => Promise<PostActionState>;
 
@@ -21,7 +22,7 @@ type PostFormProps = {
   defaultValues?: {
     id?: string;
     title?: string;
-    content?: string;
+    contentJson?: Json;
     type?: string;
   };
   submitLabel?: string;
@@ -37,15 +38,16 @@ export default function PostForm({
   cancelHref,
 }: PostFormProps) {
   const [state, formAction] = useFormState(action, initialState);
-  const [contentError, setContentError] = useState<string | null>(null);
-  const [contentText, setContentText] = useState<string>(defaultValues?.content ?? "");
+  const [contentText, setContentText] = useState<string>("");
   const [serializedState, setSerializedState] = useState<SerializedEditorState | undefined>(
-    undefined
+    defaultValues?.contentJson as SerializedEditorState | undefined
   );
   const { pending } = useFormStatus();
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const { openAuthModal } = useAuthModal();
+  const router = useRouter();
 
   useEffect(() => {
     if (!state.ok && state.message) {
@@ -71,9 +73,11 @@ export default function PostForm({
     });
     setContentText(text.trim());
   };
-  
 
-  const imageUploadSet = () => {};
+  const handleCancelConfirm = () => {
+    setCancelModalOpen(false);
+    router.push(cancelHref ?? "/posts");
+  };
 
   return (
     <>
@@ -92,6 +96,17 @@ export default function PostForm({
         comfirmtype="확인"
         cancelText="닫기"
         oncomfirm={() => setErrorModalOpen(false)}
+      />
+      <ComfirmModal
+        showTrigger={false}
+        open={cancelModalOpen}
+        onOpenChange={setCancelModalOpen}
+        btnText=""
+        comfirmText="게시글 작성을 취소하시겠습니까?"
+        content="작성 중인 내용은 저장되지 않습니다."
+        comfirmtype="확인"
+        cancelText="닫기"
+        oncomfirm={handleCancelConfirm}
       />
       <form className="flex flex-col gap-6" action={formAction}>
         {defaultValues?.id ? (
@@ -124,7 +139,6 @@ export default function PostForm({
             name="content_json"
             value={serializedState ? JSON.stringify(serializedState) : ""}
           />
-          {contentError ? <p className="text-sm text-destructive">{contentError}</p> : null}
         </div>
 
         <div className="space-y-2">
@@ -143,16 +157,15 @@ export default function PostForm({
           </p>
         </div>
         <div className="flex items-center justify-end gap-2">
-          {cancelHref ? (
-            <Link className="rounded border border-input px-3 py-2 text-sm" href={cancelHref}>
-              취소
-            </Link>
-          ) : null}
           <div className="flex gap-2">
             <Button type="submit" disabled={pending}>
               {pending ? "처리 중..." : "제출"}
             </Button>
-            <Button type="button" className="bg-red-400 hover:bg-red-600">
+            <Button
+              type="button"
+              className="bg-red-400 hover:bg-red-600"
+              onClick={() => setCancelModalOpen(true)}
+            >
               취소
             </Button>
           </div>
