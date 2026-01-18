@@ -3,9 +3,11 @@
 import { createHeadlessEditor } from "@lexical/headless";
 import { $generateHtmlFromNodes } from "@lexical/html";
 import type { SerializedEditorState } from "lexical";
+
 import sanitizeHtml from "sanitize-html";
 
 import { nodes } from "@/components/blocks/editor-x/nodes";
+import { useEffect, useState } from "react";
 
 function isSerializedEditorState(value: unknown): value is SerializedEditorState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -55,9 +57,15 @@ function sanitizePostHtml(html: string): string {
 }
 
 export default function PostContentHtml({ contentJson }: { contentJson: unknown }) {
-  const contentHtml = isSerializedEditorState(contentJson)
-    ? sanitizePostHtml(lexicalJsonToHtml(contentJson))
-    : "";
+  const [contentHtml, setContentHtml] = useState("");
+
+  useEffect(() => {
+    if (!isSerializedEditorState(contentJson)) {
+      setContentHtml("");
+      return;
+    }
+    setContentHtml(sanitizePostHtml(lexicalJsonToHtml(contentJson)));
+  }, [contentJson]);
 
   return <section className="prose max-w-none" dangerouslySetInnerHTML={{ __html: contentHtml }} />;
 }
