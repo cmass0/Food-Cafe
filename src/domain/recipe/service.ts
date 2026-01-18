@@ -15,6 +15,7 @@ import type {
   RecipeStep,
   RecipeUpdateDB,
 } from "./types";
+import { isJson } from "@/lib/domain/service/jsoncheck";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -24,10 +25,6 @@ export function normaliseTextArray(value: string[] | null | undefined): string[]
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
-// 객체가 JSON 형태인지 검사
-export function isJson(obj: unknown): obj is Record<string, unknown> {
-  return typeof obj === "object" && obj !== null;
-}
 
 // json 형태로 저장된 재료목록을 RecipeIngredient 배열로 변환
 export function toArrayIngredient(value: unknown): RecipeIngredient[] {
