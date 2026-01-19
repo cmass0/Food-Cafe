@@ -1,11 +1,11 @@
 import { unstable_noStore as noStore } from "next/cache";
 
-import { PaginationComponent } from "@/components/pagenation/pagenation";
 import * as postService from "@/domain/post/service";
 import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/domain/post/ui/PostList";
+import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
-import PostSearchForm from "./PostSearchForm";
+import PostSearchForm from "./components/PostSearchForm";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -43,8 +43,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const writerUid = firstValue(searchParams?.writerUid);
   const type = firstValue(searchParams?.type);
   const searchQuery = firstValue(searchParams?.search)?.trim();
-  const fieldParam =
-    (firstValue(searchParams?.searchField) as PostSearchField) ?? "title";
+  const fieldParam = (firstValue(searchParams?.searchField) as PostSearchField) ?? "title";
 
   const limit = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;

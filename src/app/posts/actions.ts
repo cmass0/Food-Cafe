@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import * as postService from "@/domain/post/service";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { Database } from "@/types/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export type PostActionState = {
   ok: boolean;
@@ -14,6 +16,69 @@ export type PostActionState = {
 };
 
 const DEFAULT_ERROR = "요청 처리 과정에서 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+const IMAGE_BUCKET = "Food-Cafe";
+const PUBLIC_PREFIX = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${IMAGE_BUCKET}/`;
+const TEMP_PREFIX = `${PUBLIC_PREFIX}posts-temp/`;
+
+// lexical 에디터의 contentJson 내 임시 이미지 경로를 영구 경로로 변경하는 함수
+// lexical이 dom같은 트리구조이므로 이미지 노드가 포함된 모든 노드를 재귀적으로 탐색
+async function replaceTempImageSrcs(
+  supabase: SupabaseClient<Database>,
+  node: unknown,
+  userId: string,
+  postId: string
+): Promise<boolean> {
+  if (!node || !PUBLIC_PREFIX) return false;
+
+  let changed = false;
+
+  // 배열인 경우 재귀 호출
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      if (await replaceTempImageSrcs(supabase, item, userId, postId)) {
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  if (typeof node !== "object") return false;
+  const obj = node as Record<string, unknown>;
+
+  // 이미지 객체인지 확인 및 임시 경로인지 확인
+  if (obj.type === "image" && typeof obj.src === "string") {
+    const isTemp = obj.src.startsWith(TEMP_PREFIX);
+    const isFinal = obj.src.startsWith(`${PUBLIC_PREFIX}posts/`);
+
+    if (isTemp) {
+      // 임시 경로인 경우 영구 경로로 이동 처리 후 임시 경로 삭제
+      const fromPath = obj.src.slice(PUBLIC_PREFIX.length);
+      const filename = fromPath.split("/").slice(3).join("/");
+      if (filename) {
+        const toPath = `posts/${userId}/${postId}/${filename}`;
+        try {
+          await supabase.storage.from(IMAGE_BUCKET).copy(fromPath, toPath);
+          await supabase.storage.from(IMAGE_BUCKET).remove([fromPath]);
+          obj.src = `${PUBLIC_PREFIX}${toPath}`;
+          changed = true;
+        } catch (error) {
+          console.error("게시글 이미지 이동 실패", error);
+        }
+      }
+    }
+
+    if (!isTemp && !isFinal) {
+      throw new Error();
+    }
+  }
+  // 객체면 위쪽 이미지 경로 처리 후 재귀호출
+  for (const value of Object.values(obj)) {
+    if (await replaceTempImageSrcs(supabase, value, userId, postId)) {
+      changed = true;
+    }
+  }
+  return changed;
+}
 
 export async function createPostAction(
   _prevState: PostActionState,
@@ -40,6 +105,10 @@ export async function createPostAction(
   if (typeof contentText !== "string") {
     return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
   }
+  const contentHtml = formData.get("content_html");
+  if (typeof contentHtml !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
 
   const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
   const writerName = deriveDisplayName(user) ?? user.email ?? "user";
@@ -47,6 +116,7 @@ export async function createPostAction(
   const payload = {
     title,
     content_json: rawJson,
+    content_html: contentHtml,
     content_text: contentText,
     writer_name: writerName,
     type: typeRaw || undefined,
@@ -55,6 +125,14 @@ export async function createPostAction(
 
   try {
     const post = await postService.createPost(supabase, payload, user.id);
+    if (post.contentJson) {
+      const changed = await replaceTempImageSrcs(supabase, post.contentJson, user.id, post.id);
+      if (changed) {
+        await postService.updatePost(supabase, post.id, user.id, {
+          content_json: post.contentJson,
+        });
+      }
+    }
     revalidatePath("/posts");
     revalidatePath(`/posts/${post.id}`);
     redirect(`/posts/${post.id}`);
@@ -65,23 +143,6 @@ export async function createPostAction(
   }
 
   return { ok: true };
-}
-
-async function deriveAuthorDisplayNameByPostId(
-  client: ReturnType<typeof getServerSupabase>,
-  postId: string
-): Promise<string> {
-  const post = await postService.getPost(client, postId);
-  if (!post?.writerUid) return "익명";
-
-  try {
-    const res = await fetch(`/api/users/${post.writerUid}`, { cache: "no-store" });
-    if (!res.ok) return post.writerName ?? "익명";
-    const json = await res.json();
-    return json?.data?.display_name ?? post.writerName ?? "익명";
-  } catch {
-    return post.writerName ?? "익명";
-  }
 }
 
 export async function updatePostAction(
@@ -105,19 +166,28 @@ export async function updatePostAction(
   }
 
   const rawJson = formData.get("content_json");
-  const contentJson = typeof rawJson === "string" ? JSON.parse(rawJson) : undefined;
-  const contentText = formData.get("content_text") as unknown;
+  // 의도치 않은 값 삽입 방지
+  if (typeof rawJson !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
+  const contentText = formData.get("content_text");
+  // 의도치 않은 값 삽입 방지
+  if (typeof contentText !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
+  const contentHtml = formData.get("content_html");
+  if (typeof contentHtml !== "string") {
+    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
+  }
   const title = (formData.get("title") as string | null)?.trim() || undefined;
   const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
 
   try {
-    const writerName = await deriveAuthorDisplayNameByPostId(supabase, id);
-
     const payload = {
       title,
-      content_json: contentJson,
+      content_json: rawJson,
+      content_html: contentHtml,
       content_text: contentText,
-      writer_name: writerName,
       type: typeRaw || undefined,
     };
     const post = await postService.updatePost(supabase, id, user.id, payload);

@@ -1,18 +1,16 @@
-﻿import { unstable_noStore as noStore } from "next/cache";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import CommentArea from "@/domain/comment/ui/CommentArea";
 import * as postService from "@/domain/post/service";
 import PostDetail from "@/domain/post/ui/PostDetail";
+import ViewHit from "@/domain/view/ui/ViewHit.client";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-import { deletePostAction } from "../actions";
 import DeleteButton from "./DeleteButton";
 import UpdateButton from "./UpdateButton";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+const commentLimit = 10;
 
 export default async function PostDetailPage({
   params,
@@ -28,8 +26,6 @@ export default async function PostDetailPage({
     notFound();
   }
 
-  const commentLimit = 10;
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -37,10 +33,11 @@ export default async function PostDetailPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col px-6 py-10">
+      <ViewHit type="post" id={post.id} />
       <PostDetail post={post} />
 
       {isAuthor && (
-        <section className="space-y-4 pt-10">
+        <section className="space-y-4 py-10">
           <div className=" flex gap-2.5 justify-end">
             <UpdateButton id={post.id} />
             <DeleteButton id={post.id} />

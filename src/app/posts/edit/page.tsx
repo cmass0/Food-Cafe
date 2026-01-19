@@ -21,7 +21,7 @@ export default async function PostEditPage({ searchParams }: { searchParams: { i
         defaultValues={{
           id: post.id,
           title: post.title ?? "",
-          content: post.content ?? "",
+          contentJson: post.contentJson,
           type: post.type ?? "board",
         }}
         submitLabel="수정"
