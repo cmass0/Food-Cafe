@@ -1,25 +1,25 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
-type ViewHitType = "post" | "recipe";
+type ViewHitType = "post" | "recipe" | "combo";
 
 type ViewHitProps = {
   type: ViewHitType;
   id: string;
-  dedupeMs?: number;
   refreshAfterHit?: boolean;
 };
 
 function buildUrl(type: ViewHitType, id: string) {
-  return `/api/${type === "post" ? "posts" : "recipes"}/${id}/view`;
+  if (type === "post") return `/api/posts/${id}/view`;
+  if (type === "recipe") return `/api/recipes/${id}/view`;
+  return `/api/combos/${id}/view`;
 }
 
 export default function ViewHit({
   type,
   id,
-  dedupeMs = 300,
   refreshAfterHit = true,
 }: ViewHitProps) {
   const router = useRouter();
@@ -30,18 +30,6 @@ export default function ViewHit({
     const signature = `${type}:${id}`;
     if (lastHitRef.current === signature) return;
     lastHitRef.current = signature;
-
-    const storageKey = `view-hit:${type}:${id}`;
-    const now = Date.now();
-
-    try {
-      const raw = sessionStorage.getItem(storageKey);
-      const previous = raw ? Number(raw) : 0;
-      if (Number.isFinite(previous) && previous > 0 && now - previous < dedupeMs) {
-        return;
-      }
-      sessionStorage.setItem(storageKey, String(now));
-    } catch {}
 
     const url = buildUrl(type, id);
 
@@ -54,11 +42,9 @@ export default function ViewHit({
         });
         if (!res.ok) return;
         if (refreshAfterHit) router.refresh();
-      } catch {
-        // ignore
-      }
+      } catch {}
     })();
-  }, [type, id, dedupeMs, refreshAfterHit, router]);
+  }, [type, id, refreshAfterHit, router]);
 
   return null;
 }
