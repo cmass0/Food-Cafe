@@ -11,7 +11,7 @@ export default function RankingPage() {
     <main className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">TOP 50</h1>
-        <p className="text-sm text-muted-foreground">일간 / 주간 / 월간 인기 목록입니다.</p>
+        <p className="text-sm text-muted-foreground">월간 / 주간 / 일간 인기 목록입니다.</p>
       </header>
 
       <Tabs defaultValue="recipe" className="w-full">
@@ -23,8 +23,8 @@ export default function RankingPage() {
         </div>
 
         <TabsContent value="recipe">
-          <Tabs defaultValue="daily" className="w-full">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="monthly" className="w-full">
+            <TabsList className="mb-4 flex-row-reverse">
               <TabsTrigger value="daily">일간</TabsTrigger>
               <TabsTrigger value="weekly">주간</TabsTrigger>
               <TabsTrigger value="monthly">월간</TabsTrigger>
@@ -42,8 +42,8 @@ export default function RankingPage() {
         </TabsContent>
 
         <TabsContent value="combo">
-          <Tabs defaultValue="daily" className="w-full">
-            <TabsList className="mb-4">
+          <Tabs defaultValue="monthly" className="w-full">
+            <TabsList className="mb-4 flex-row-reverse">
               <TabsTrigger value="daily">일간</TabsTrigger>
               <TabsTrigger value="weekly">주간</TabsTrigger>
               <TabsTrigger value="monthly">월간</TabsTrigger>

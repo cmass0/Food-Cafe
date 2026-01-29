@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getComboById } from "@/domain/combo/service";
 import CommentArea from "@/domain/comment/ui/CommentArea";
+import ViewHit from "@/domain/view/ui/ViewHit.client";
 
 import { CopyClipButton } from "@/lib/shareButton/copycliep";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
@@ -60,6 +61,7 @@ export default async function ComboDetailPage({
   return (
     <main className="relative overflow-hidden pt-24 pb-24">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4">
+        <ViewHit type="combo" id={combo.id} />
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">
             조합 레시피

@@ -52,7 +52,7 @@ export default function SearchResultPosts({ posts, searchParams }: Props) {
                     <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
                     <h3 className="font-semibold text-base truncate">{post.title}</h3>
                   </div>
-                  <p className="text-sm text-gray-600 truncate mb-2 pl-4">{post.content}</p>
+                  <p className="text-sm text-gray-600 truncate mb-2 pl-4">{post.contentText}</p>
                 </Link>
                 <div className="flex items-center gap-3 text-xs text-gray-400 pl-4">
                   <Link
