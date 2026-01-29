@@ -10,6 +10,8 @@ import type {
   PostListOptions,
   PostListResult,
   PostRow,
+  PostUpdateDB,
+  PostUpdateInput,
 } from "./types";
 
 const DEFAULT_LIMIT = 10;
@@ -21,6 +23,7 @@ function mapRowToPost(row: PostRow): Post {
     id: row.id,
     title: row.title,
     contentJson: row.content_json ?? null,
+    contentHtml: row.content_html ?? null,
     contentText: row.content_text ?? null,
     writerName: row.writer_name,
     writerUid: row.writer_uid,
@@ -90,7 +93,6 @@ export async function createPost(
       throw new Error("유효하지 않은 형식입니다.");
     }
   }
- 
 
   const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
   const payload: PostInsertDB = {
@@ -106,14 +108,36 @@ export async function createPost(
 export async function updatePost(
   client: SupabaseClient<Database>,
   id: string,
-  ownerUid: string,
-  input: unknown
+  writerUid: string,
+  input: PostUpdateInput
 ): Promise<Post | null> {
-  const parsed = postUpdateSchema.parse(input);
+  let contentJson = input.content_json;
+
+  // 문자열로 들어오는 경우 처리
+  if (typeof contentJson === "string") {
+    // 크기 제한 검사
+    if (contentJson.length > MAX_JSON_CHARS) {
+      throw new Error("컨텐츠의 길이가 초과되었습니다.");
+    }
+    // 본문 비어있는지 검사
+    if (contentJson.trim() === "") {
+      throw new Error("내용을 입력해 주세요.");
+    }
+    try {
+      contentJson = JSON.parse(contentJson);
+    } catch {
+      throw new Error("유효하지 않은 형식입니다.");
+    }
+  }
+
+  const payload: PostUpdateDB = postUpdateSchema.parse({
+    ...input,
+    ...(contentJson !== undefined ? { content_json: contentJson } : {}),
+  });
 
   let row: PostRow | null = null;
 
-  row = await repository.updatePostRecordByOwner(client, id, ownerUid, parsed);
+  row = await repository.updatePostRecordByOwner(client, id, writerUid, payload);
 
   return row ? mapRowToPost(row) : null;
 }
@@ -121,10 +145,10 @@ export async function updatePost(
 export async function removePost(
   client: SupabaseClient<Database>,
   id: string,
-  ownerUid: string
+  writerUid: string
 ): Promise<void> {
-  if (!ownerUid) {
+  if (!writerUid) {
     throw new Error("UNAUTHORIZED");
   }
-  await repository.deletePostRecord(client, id, ownerUid);
+  await repository.deletePostRecord(client, id, writerUid);
 }
