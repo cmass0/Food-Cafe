@@ -76,6 +76,8 @@ export default function ComboForm({
   const summaryLength = (form.watch("summary") ?? "").length;
   //
   const itemsArray = useFieldArray({ control: form.control, name: "items" });
+  const showSubmitError =
+    form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
 
   // 폼 제출 처리
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -128,8 +130,17 @@ export default function ComboForm({
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={form.formState.isSubmitting} className="px-6">
+        <div className="flex items-center gap-3">
+          {showSubmitError ? (
+            <p className="text-sm text-destructive" role="alert">
+              입력을 완료해 주세요.
+            </p>
+          ) : null}
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            className="ml-auto px-6"
+          >
             {form.formState.isSubmitting ? "저장 중..." : submitLabel}
           </Button>
         </div>
