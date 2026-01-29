@@ -15,26 +15,31 @@ import Image from "next/image";
 type TopRecipesCarouselProps = {
   label: string;
   contents: TopRecipe[] | TopCombo[];
+  maxCount?: number;
 };
 
-export default function TopCarousel({ label, contents }: TopRecipesCarouselProps) {
+export default function TopCarousel({ label, contents, maxCount }: TopRecipesCarouselProps) {
   const rankBadges = [
     { bg: "bg-[#f7c948]", text: "text-[#6b4000]", label: "1위" }, // 금
     { bg: "bg-[#e5e7eb]", text: "text-[#1f2937]", label: "2위" }, // 은
     { bg: "bg-[#d97757]", text: "text-[#fff7ed]", label: "3위" }, // 동
   ];
   const existContents = contents && contents.length > 0;
+  const countLabel = typeof maxCount === "number" ? `TOP ${maxCount}` : "TOP 10";
   return (
     <>
       {existContents ? (
-        <div className="relative ">
-          <div className="mb-2 text-xs text-muted-foreground ">{label} TOP 10</div>
-          <Carousel opts={{ align: "start", dragFree: true }} className="relative pr-10 pl-10 ">
+        <div className="relative overflow-x-hidden">
+          <div className="mb-2 text-xs text-muted-foreground ">{label} {countLabel}</div>
+          <Carousel
+            opts={{ align: "start", dragFree: true, containScroll: "trimSnaps" }}
+            className="relative w-full min-w-0 px-2 sm:px-4 md:px-6"
+          >
             <CarouselContent className="pb-2">
               {contents.map((content, index) => (
                 <CarouselItem
                   key={content.id}
-                  className="min-w-[220px] max-w-[240px] basis-[220px]"
+                  className="basis-[80%] sm:basis-[60%] md:basis-[45%] lg:basis-[30%] xl:basis-[220px]"
                 >
                   <article className="relative flex flex-col overflow-hidden rounded-xl bg-card shadow-sm">
                     {rankBadges[index] ? (
@@ -88,11 +93,11 @@ export default function TopCarousel({ label, contents }: TopRecipesCarouselProps
 
             <CarouselPrevious
               variant="secondary"
-              className="left-0 h-7 w-7 -translate-x-1 border border-emerald-200 bg-emerald-50/90 text-emerald-800 shadow-sm hover:bg-white"
+              className="left-2 top-1/2 h-7 w-7 -translate-y-1/2 border border-emerald-200 bg-emerald-50/90 text-emerald-800 shadow-sm hover:bg-white"
             />
             <CarouselNext
               variant="secondary"
-              className="right-0 h-7 w-7 translate-x-1 border border-emerald-200 bg-emerald-50/90 text-emerald-800 shadow-sm hover:bg-white"
+              className="right-2 top-1/2 h-7 w-7 -translate-y-1/2 border border-emerald-200 bg-emerald-50/90 text-emerald-800 shadow-sm hover:bg-white"
             />
           </Carousel>
         </div>
