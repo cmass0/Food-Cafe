@@ -8,6 +8,7 @@ const POST_COLUMNS = [
   "id",
   "title",
   "content_json",
+  "content_html",
   "content_text",
   "writer_uid",
   "writer_name",

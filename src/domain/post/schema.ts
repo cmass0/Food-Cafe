@@ -19,6 +19,7 @@ const postContentJsonSchema = z.union([z.record(jsonValueSchema), z.array(jsonVa
 export const postInsertSchema = z.object({
   title: z.string().trim().min(1, "제목을 입력해 주세요.").max(150),
   content_json: postContentJsonSchema,
+  content_html: z.string().nullable().optional(),
   content_text: z.string().trim().optional(),
   writer_name: z.string().trim().min(1, "작성자를 입력해 주세요.").max(120),
   type: z.string().trim().max(40).optional(),
@@ -28,6 +29,7 @@ export const postUpdateSchema = z
   .object({
     title: z.string().trim().min(1).max(150).optional(),
     content_json: postContentJsonSchema.optional(),
+    content_html: z.string().nullable().optional(),
     content_text: z.string().trim().optional(),
     writer_name: z.string().trim().min(1).max(120).optional(),
     type: z.string().trim().max(40).optional(),

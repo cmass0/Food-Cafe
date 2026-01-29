@@ -5,6 +5,7 @@ export type PostRow = Tables<"posts">;
 export type PostInsertDB = {
   title: string;
   content_json: Json;
+  content_html?: string | null;
   content_text?: string | null;
   writer_uid: string;
   writer_name: string;
@@ -14,6 +15,7 @@ export type PostInsertDB = {
 export type PostCreateInput = {
   title: string;
   content_json: string;
+  content_html?: string | null;
   content_text?: string | null;
   writer_uid: string;
   writer_name: string;
@@ -23,6 +25,16 @@ export type PostCreateInput = {
 export type PostUpdateDB = Partial<{
   title: string;
   content_json: Json;
+  content_html: string | null;
+  content_text: string | null;
+  writer_name: string;
+  type: string;
+}>;
+
+export type PostUpdateInput = Partial<{
+  title: string;
+  content_json: Json | string;
+  content_html: string | null;
   content_text: string | null;
   writer_name: string;
   type: string;
@@ -32,6 +44,7 @@ export interface Post {
   id: string;
   title: string;
   contentJson: Json | null;
+  contentHtml: string | null;
   contentText: string | null;
   writerName: string;
   writerUid: string | null;
