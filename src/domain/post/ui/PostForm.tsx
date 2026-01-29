@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { buildPostContentHtml } from "@/domain/post/ui/PostContentHtml";
 import ComfirmModal from "@/lib/ui/comfirmmodal";
 import { Json } from "@/types/supabase";
 
@@ -39,6 +40,7 @@ export default function PostForm({
 }: PostFormProps) {
   const [state, formAction] = useFormState(action, initialState);
   const [contentText, setContentText] = useState<string>("");
+  const [contentHtml, setContentHtml] = useState<string>("");
   const [serializedState, setSerializedState] = useState<SerializedEditorState | undefined>(
     defaultValues?.contentJson as SerializedEditorState | undefined
   );
@@ -49,6 +51,7 @@ export default function PostForm({
   const { openAuthModal } = useAuthModal();
   const router = useRouter();
 
+  // 로그인 모달 또는 오류 모달 처리
   useEffect(() => {
     if (!state.ok && state.message) {
       if (state.message === "로그인이 필요합니다.") {
@@ -59,6 +62,19 @@ export default function PostForm({
       setErrorModalOpen(true);
     }
   }, [openAuthModal, state]);
+
+  // serializedState가 변경될 때 contentHtml 업데이트
+  useEffect(() => {
+    if (!serializedState) {
+      setContentHtml("");
+      return;
+    }
+    try {
+      setContentHtml(buildPostContentHtml(serializedState));
+    } catch {
+      setContentHtml("");
+    }
+  }, [serializedState]);
 
   // Editor 관련 핸들러
   const handleSerializedChange = (editorState: SerializedEditorState) => {
@@ -134,6 +150,7 @@ export default function PostForm({
             onSerializedChange={handleSerializedChange}
           />
           <input type="hidden" name="content_text" value={contentText} required />
+          <input type="hidden" name="content_html" value={contentHtml} />
           <input
             type="hidden"
             name="content_json"
