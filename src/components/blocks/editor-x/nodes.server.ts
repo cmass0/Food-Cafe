@@ -1,18 +1,13 @@
+import "@/lib/dom-shim/register";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
+import { HorizontalRuleNode } from "@lexical/extension";
 import { HashtagNode } from "@lexical/hashtag";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { OverflowNode } from "@lexical/overflow";
-import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import {
-  Klass,
-  LexicalNode,
-  LexicalNodeReplacement,
-  ParagraphNode,
-  TextNode,
-} from "lexical";
+import { Klass, LexicalNode, LexicalNodeReplacement, ParagraphNode, TextNode } from "lexical";
 
 import { TweetNode } from "@/components/editor/nodes/embeds/tweet-node.server";
 import { YouTubeNode } from "@/components/editor/nodes/embeds/youtube-node.server";
@@ -23,9 +18,7 @@ import { LayoutContainerNode } from "@/components/editor/nodes/layout-container-
 import { LayoutItemNode } from "@/components/editor/nodes/layout-item-node";
 import { MentionNode } from "@/components/editor/nodes/mention-node";
 
-export const nodesServer: ReadonlyArray<
-  Klass<LexicalNode> | LexicalNodeReplacement
-> = [
+export const nodesServer: ReadonlyArray<Klass<LexicalNode> | LexicalNodeReplacement> = [
   HeadingNode,
   ParagraphNode,
   TextNode,
