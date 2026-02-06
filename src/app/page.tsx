@@ -34,27 +34,29 @@ export default function Home() {
   return (
     <div className="mx-auto mb-[100px] w-full max-w-[1500px] px-4 lg:px-0">
       <section>
-        <header className="flex flex-col items-center justify-evenly gap-8 border-b border-[#bebebe] py-16 lg:flex-row lg:gap-[30px] lg:px-[10rem] lg:py-[10rem]">
+        <header className="flex flex-col items-center justify-center gap-30 sm:gap-15 border-b border-[#bebebe] py-16 lg:flex-row lg:px-[10rem] lg:py-[10rem]">
           <span className="block h-[260px] w-full max-w-[450px] sm:h-[320px] lg:h-[350px]">
             <SlideShow />
           </span>
           <span>
-            <h1 className="m-0 text-[32px] font-bold text-[#444] sm:text-[36px] lg:pl-[9.5rem] lg:text-[40px]">
-              <span className="bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-transparent [-webkit-background-clip:text]">
-                맛있는
-              </span>{" "}
-              레시피
-            </h1>
+            <div className="text-center lg:text-left">
+              <h1 className=" m-0 text-[32px] font-bold text-[#444] sm:text-[35px] lg:pl-[9.5rem] lg:text-[40px] whitespace-nowrap">
+                <span className="bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-transparent [-webkit-background-clip:text]">
+                  맛있는
+                </span>{" "}
+                <span>레시피</span>
+              </h1>
 
-            <h1 className="m-0 text-[32px] font-bold text-[#444] sm:text-[36px] lg:text-[40px]">
-              건강한
-              <span className="bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-transparent [-webkit-background-clip:text]">
-                한 끼
-              </span>
-            </h1>
-            <h1 className="m-0 bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-[32px] font-bold text-transparent [-webkit-background-clip:text] sm:text-[36px] lg:pl-[5rem] lg:text-[40px]">
-              Only for you
-            </h1>
+              <h1 className="m-0 text-[32px] font-bold text-[#444] sm:text-[35px] lg:text-[40px]">
+                건강한{" "}
+                <span className="bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-transparent [-webkit-background-clip:text]">
+                  한 끼
+                </span>
+              </h1>
+              <h1 className="m-0 bg-gradient-to-r from-[#39b385] to-[#7cbe42] bg-clip-text text-[32px] font-bold text-transparent [-webkit-background-clip:text] sm:text-[36px] lg:pl-[5rem] lg:text-[40px]">
+                Only for you
+              </h1>
+            </div>
             <div className="mt-12 flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-20">
               <Button
                 className="rounded-full bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-[1.6rem] py-[0.6rem] font-semibold text-white shadow-[0_8px_18px_rgba(22,163,74,0.35)] transition hover:from-[#15803d] hover:to-[#16a34a] hover:shadow-[0_10px_24px_rgba(22,163,74,0.45)]"
