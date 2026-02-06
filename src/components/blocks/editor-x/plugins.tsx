@@ -41,7 +41,6 @@ import { ContextMenuPlugin } from "@/components/editor/plugins/context-menu-plug
 import { DragDropPastePlugin } from "@/components/editor/plugins/drag-drop-paste-plugin";
 import { DraggableBlockPlugin } from "@/components/editor/plugins/draggable-block-plugin";
 import { AutoEmbedPlugin } from "@/components/editor/plugins/embeds/auto-embed-plugin";
-import { TwitterPlugin } from "@/components/editor/plugins/embeds/twitter-plugin";
 import { YouTubePlugin } from "@/components/editor/plugins/embeds/youtube-plugin";
 import { EmojiPickerPlugin } from "@/components/editor/plugins/emoji-picker-plugin";
 import { EmojisPlugin } from "@/components/editor/plugins/emojis-plugin";
@@ -101,7 +100,6 @@ import { EMOJI } from "@/components/editor/transformers/markdown-emoji-transform
 import { HR } from "@/components/editor/transformers/markdown-hr-transformer";
 import { IMAGE } from "@/components/editor/transformers/markdown-image-transformer";
 import { TABLE } from "@/components/editor/transformers/markdown-table-transformer";
-import { TWEET } from "@/components/editor/transformers/markdown-tweet-transformer";
 import { Separator } from "@/components/ui/separator";
 
 const placeholder = "Press / for commands...";
@@ -198,7 +196,6 @@ export function Plugins({}) {
         <LayoutPlugin />
 
         <AutoEmbedPlugin />
-        <TwitterPlugin />
         <YouTubePlugin />
 
         <CodeHighlightPlugin />
@@ -210,7 +207,6 @@ export function Plugins({}) {
             HR,
             IMAGE,
             EMOJI,
-            TWEET,
             CHECK_LIST,
             ...ELEMENT_TRANSFORMERS,
             ...MULTILINE_ELEMENT_TRANSFORMERS,
@@ -237,7 +233,6 @@ export function Plugins({}) {
             QuotePickerPlugin(),
             CodePickerPlugin(),
             DividerPickerPlugin(),
-            EmbedsPickerPlugin({ embed: "tweet" }),
             EmbedsPickerPlugin({ embed: "youtube-video" }),
             ImagePickerPlugin(),
             ColumnsLayoutPickerPlugin(),
@@ -285,7 +280,6 @@ export function Plugins({}) {
                 HR,
                 IMAGE,
                 EMOJI,
-                TWEET,
                 CHECK_LIST,
                 ...ELEMENT_TRANSFORMERS,
                 ...MULTILINE_ELEMENT_TRANSFORMERS,
