@@ -2,7 +2,6 @@ import {
   DecoratorBlockNode,
   SerializedDecoratorBlockNode,
 } from "@lexical/react/LexicalDecoratorBlockNode";
-import type { JSX } from "react";
 import type {
   DOMConversionMap,
   DOMConversionOutput,
@@ -12,6 +11,7 @@ import type {
   NodeKey,
   Spread,
 } from "lexical";
+import type { JSX } from "react";
 
 export type SerializedYouTubeNode = Spread<
   {
@@ -20,9 +20,7 @@ export type SerializedYouTubeNode = Spread<
   SerializedDecoratorBlockNode
 >;
 
-function $convertYoutubeElement(
-  domNode: HTMLElement
-): null | DOMConversionOutput {
+function $convertYoutubeElement(domNode: HTMLElement): null | DOMConversionOutput {
   const videoID = domNode.getAttribute("data-lexical-youtube");
   if (videoID) {
     const node = $createYouTubeNode(videoID);
@@ -63,11 +61,12 @@ export class YouTubeNode extends DecoratorBlockNode {
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement("div");
-    element.setAttribute("data-embed", "youtube");
-    element.setAttribute("data-id", this.__id);
-    element.textContent = `https://www.youtube.com/watch?v=${this.__id}`;
-    return { element };
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("class", "w-full aspect-video");
+    iframe.src = `https://www.youtube-nocookie.com/embed/${this.__id}`;
+    iframe.allowFullscreen = true;
+    iframe.title = "YouTube video";
+    return { element: iframe };
   }
 
   static importDOM(): DOMConversionMap | null {
