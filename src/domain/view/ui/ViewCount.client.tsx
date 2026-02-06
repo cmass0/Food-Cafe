@@ -1,64 +1,54 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
 
-type ViewType = "post" | "recipe";
+type ViewType = "post" | "recipe" | "combo";
 
 type ViewCountProps = {
   type: ViewType;
   id: string;
   initialCount: number;
-  dedupeMs?: number;
 };
 
-function buildUrl(type: ViewType, id: string) {
-  return `/api/${type === "post" ? "posts" : "recipes"}/${id}/view`;
-}
+const VIEW_PATHS: Record<ViewType, string> = {
+  post: "posts",
+  recipe: "recipes",
+  combo: "combos",
+};
 
-export default function ViewCount({ type, id, initialCount, dedupeMs = 300 }: ViewCountProps) {
-  const [count, setCount] = React.useState<number>(initialCount);
+export default function ViewCount({ type, id, initialCount }: ViewCountProps) {
+  const [count, setCount] = useState(initialCount);
+  const lastHitRef = useRef<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount, id, type]);
+
+  useEffect(() => {
     if (!id) return;
-
-    const storageKey = `view-hit:${type}:${id}`;
-    const now = Date.now();
-
-    try {
-      const raw = sessionStorage.getItem(storageKey);
-      const previous = raw ? Number(raw) : 0;
-      if (Number.isFinite(previous) && previous > 0 && now - previous < dedupeMs) {
-        return;
-      }
-      sessionStorage.setItem(storageKey, String(now));
-    } catch {}
-
-    const url = buildUrl(type, id);
+    const signature = `${type}:${id}`;
+    if (lastHitRef.current === signature) return;
+    lastHitRef.current = signature;
 
     (async () => {
       try {
-        const res = await fetch(url, {
+        const res = await fetch(`/api/${VIEW_PATHS[type]}/${id}/view`, {
           method: "POST",
           cache: "no-store",
           keepalive: true,
         });
         if (!res.ok) return;
-
-        const contentType = res.headers.get("content-type") ?? "";
-        if (contentType.includes("application/json")) {
-          const json = await res.json();
-          const next = Number(json?.viewCount);
-          if (Number.isFinite(next)) {
-            setCount(next);
-            return;
-          }
+        const data = await res.json().catch(() => null);
+        if (data && typeof data.viewCount === "number") {
+          setCount(data.viewCount);
+          return;
         }
-
         setCount((prev) => prev + 1);
-      } catch {}
+      } catch {
+        // ignore
+      }
     })();
-  }, [type, id, dedupeMs]);
+  }, [id, type]);
 
   return <span>{count}</span>;
 }
-
