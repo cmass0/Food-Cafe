@@ -18,10 +18,9 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext"
 import { PopoverPortal } from "@radix-ui/react-popover"
 import type { LexicalEditor } from "lexical"
-import { TwitterIcon, YoutubeIcon } from "lucide-react"
+import { YoutubeIcon } from "lucide-react"
 
 import { useEditorModal } from "@/components/editor/editor-hooks/use-modal"
-import { INSERT_TWEET_COMMAND } from "@/components/editor/plugins/embeds/twitter-plugin"
 import { INSERT_YOUTUBE_COMMAND } from "@/components/editor/plugins/embeds/youtube-plugin"
 import { Button } from "@/components/ui/button"
 import {
@@ -88,43 +87,7 @@ export const YoutubeEmbedConfig: CustomEmbedConfig = {
   type: "youtube-video",
 }
 
-export const TwitterEmbedConfig: CustomEmbedConfig = {
-  // e.g. Tweet or Google Map.
-  contentName: "Tweet",
-
-  exampleUrl: "https://twitter.com/jack/status/20",
-
-  // Icon for display.
-  icon: <TwitterIcon className="size-4" />,
-
-  // Create the Lexical embed node from the url data.
-  insertNode: (editor: LexicalEditor, result: EmbedMatchResult) => {
-    editor.dispatchCommand(INSERT_TWEET_COMMAND, result.id)
-  },
-
-  // For extra searching.
-  keywords: ["tweet", "twitter"],
-
-  // Determine if a given URL is a match and return url data.
-  parseUrl: (text: string) => {
-    const match =
-      /^https:\/\/(twitter|x)\.com\/(#!\/)?(\w+)\/status(es)*\/(\d+)/.exec(text)
-
-    const id = match?.[5]
-    if (typeof id === "string" && id.length > 0) {
-      return {
-        id,
-        url: text,
-      }
-    }
-
-    return null
-  },
-
-  type: "tweet",
-}
-
-export const EmbedConfigs = [TwitterEmbedConfig, YoutubeEmbedConfig]
+export const EmbedConfigs = [YoutubeEmbedConfig]
 
 const debounce = (callback: (text: string) => void, delay: number) => {
   let timeoutId: number
