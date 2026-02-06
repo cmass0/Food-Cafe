@@ -1,6 +1,7 @@
 ﻿import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
+import ViewCount from "@/domain/view/ui/ViewCount.client";
 
 import DeleteRecipeButton from "@/app/recipes/components/DeleteRecipeButton";
 import UpdateRecipeButton from "@/app/recipes/components/UpdateRecipeButton";
@@ -102,7 +103,7 @@ export default async function RecipeDetail({
               <p className="text-sm text-muted-foreground">
                 <AuthorProfileMenu name={recipe.writerName} userId={recipe.writerUid} /> ·{" "}
                 {createdLabel} · 조회{" "}
-            
+                <ViewCount type="recipe" id={recipe.id} initialCount={recipe.viewCount ?? 0} />
               </p>
             </div>
 
