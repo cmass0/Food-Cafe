@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import CommentArea from "@/domain/comment/ui/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
-import ViewHit from "@/domain/view/ui/ViewHit.client";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export default async function RecipeDetailPage({
@@ -32,7 +31,6 @@ export default async function RecipeDetailPage({
       <div className="mx-auto w-full max-w-6xl px-4">
         <div className="flex flex-col gap-10 xl:grid ">
           <div className="xl:col-start-1">
-            <ViewHit type="recipe" id={recipe.id} />
             <RecipeDetail recipe={recipe} isAuthor={isAuthor} />
           </div>
 
