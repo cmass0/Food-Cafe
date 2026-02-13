@@ -39,14 +39,14 @@ export default function RecipeIngredientsPanel({ ingredients }: Props) {
               </div>
 
               {hasName ? (
-                <div className="flex just">
+                <div className="flex justify-end">
                   <a
                     href={buildCoupangSearchUrl(ingredientName)}
                     target="_blank"
                     rel="noopener noreferrer nofollow sponsored"
                     className="inline-flex w-fit items-center  rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
                   >
-                    재료 구매
+                    구매
                   </a>
                 </div>
               ) : null}
