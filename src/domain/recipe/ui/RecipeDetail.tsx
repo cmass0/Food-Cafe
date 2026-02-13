@@ -13,6 +13,7 @@ import type { Recipe } from "../types";
 import { getDifficultyMeta } from "./difficultyMeta";
 import { CopyClipButton } from "./RecipeClip";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
+import RecipeToolsPanel from "./RecipeToolsPanel";
 
 function formatMinutes(value: number | null | undefined) {
   if (!value || value <= 0) return null;
@@ -32,10 +33,8 @@ export default async function RecipeDetail({
 }) {
   const tags = recipe.tags?.filter((tag) => typeof tag === "string" && tag.length > 0) ?? [];
   const chips = recipe.category ? [recipe.category, ...tags] : tags;
-  const tools = recipe.tools?.filter((tool) => tool.length > 0) ?? [];
   const steps =
     recipe.steps?.map((step) => step.description).filter((step) => step.length > 0) ?? [];
-  const ingredientCount = recipe.ingredients?.length ?? 0;
   const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/recipes/${recipe.id}`;
   const shareImageUrl = recipe.image ? recipe.image : "";
 
@@ -81,7 +80,7 @@ export default async function RecipeDetail({
           </div>
 
           {/* 기본정보 */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-7">
             {/* 메타 태그 */}
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex flex-wrap gap-2 text-xs text-emerald-700">
@@ -134,28 +133,9 @@ export default async function RecipeDetail({
                 </div>
               </div>
             ) : null}
-            {/* 도구 */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground">사용 도구</p>
-              <div className="flex flex-wrap gap-2">
-                {tools.length ? (
-                  tools.map((tool) => (
-                    <Badge
-                      key={tool}
-                      variant="outline"
-                      className="rounded-full border-emerald-200/80 bg-white text-emerald-700"
-                    >
-                      {tool}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground">도구가 없습니다.</span>
-                )}
-              </div>
-            </div>
 
             {/* 좋아요/북마크 & 수정/삭제 버튼 */}
-            <div className="flex items-center justify-between mt-5">
+            <div className="mt-auto flex items-center justify-between">
               <LikeBookmarkButton recipe={recipe} />
               {isAuthor && (
                 <div className="flex gap-2">
@@ -168,6 +148,9 @@ export default async function RecipeDetail({
         </div>
       </section>
       {/* 재료  */}
+      <section>
+        <RecipeToolsPanel tools={recipe.tools} />
+      </section>
       <section>
         <RecipeIngredientsPanel ingredients={recipe.ingredients} />
       </section>
