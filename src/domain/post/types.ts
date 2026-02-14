@@ -15,7 +15,6 @@ export type PostInsertDB = {
 export type PostCreateInput = {
   title: string;
   content_json: string;
-  content_html?: string | null;
   content_text?: string | null;
   writer_uid: string;
   writer_name: string;

@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import ComboDeleteButton from "../components/DeleteButton";
 import ComboUpdateButton from "../components/UpdateButton";
 import ComboLikeBookmarkButton from "../ui/likebookmarkButton";
+import ComboToolsPanel from "@/domain/combo/ui/ComboToolsPanel";
 
 function formatMinutes(value: number | null) {
   if (!value || value <= 0) return null;
@@ -92,7 +93,7 @@ export default async function ComboDetailPage({
             </div>
 
             {/* 난이도/소요시간/도구여부 태그 및 좋아요, 북마크, 공유 버튼  */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-7">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap gap-2 text-xs text-emerald-700">
                   {metaChips.map((chip) => (
@@ -149,7 +150,7 @@ export default async function ComboDetailPage({
               </div>
 
               {/* 사용도구 */}
-              <div className="space-y-2">
+              <div className="hidden space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">사용 도구</p>
                 <div className="flex flex-wrap gap-2">
                   {tools.length ? (
@@ -168,7 +169,7 @@ export default async function ComboDetailPage({
                 </div>
               </div>
               {/* 좋아요/북마크 & 수정/삭제 버튼 */}
-              <div className="flex items-center justify-between  mt-5">
+              <div className="mt-auto flex items-center justify-between">
                 <div>
                   <ComboLikeBookmarkButton combo={combo} />
                 </div>
@@ -310,6 +311,10 @@ export default async function ComboDetailPage({
         {/* 조합 구성 섹션 끝*/}
 
         {/* 조리단계 섹션 */}
+        <section>
+          <ComboToolsPanel tools={combo.tools} />
+        </section>
+
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-slate-900">조리 단계</h2>
           {steps.length ? (
@@ -337,14 +342,6 @@ export default async function ComboDetailPage({
                 >
                   {toolRequiredLabel}
                 </Badge>
-                {tools.length ? (
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-emerald-200/80 bg-emerald-50 text-emerald-800"
-                  >
-                    도구 {tools.length}개
-                  </Badge>
-                ) : null}
               </div>
               <ol className="space-y-3">
                 {steps.map((step, index) => (

@@ -68,7 +68,7 @@ export default function PostList({ posts, className, showCreateLink = true }: Po
       {posts.length !== 0 && (
         <Table>
           <TableHeader className="bg-emerald-100">
-            <TableRow className="text">
+            <TableRow className="text hover:bg-transparent">
               <TableHead className="w-[100px] text-center">번호</TableHead>
               <TableHead className="w-2/5 text-center">제목</TableHead>
               <TableHead className="w-1/5 text-center">글쓴이</TableHead>
