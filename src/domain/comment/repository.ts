@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import { CommentInsertDB, CommentRow, CommentUpdateDB, FetchCommentsParams } from "./types";
+import type {
+  CommentInsertRow,
+  CommentRow,
+  CommentUpdateRow,
+  FetchCommentsParams,
+} from "./types";
 
 function mapRows(rows: CommentRow[]): CommentRow[] {
   return Array.isArray(rows) ? (rows as CommentRow[]) : [];
@@ -54,7 +59,7 @@ export async function selectCommentById(
 
 export async function insertComment(
   client: SupabaseClient<Database>,
-  payload: CommentInsertDB
+  payload: CommentInsertRow
 ): Promise<CommentRow> {
   const { data, error } = await client
     .from("comments")
@@ -71,7 +76,7 @@ export async function insertComment(
 export async function updateComment(
   client: SupabaseClient<Database>,
   id: string,
-  payload: Partial<CommentUpdateDB>
+  payload: Partial<CommentUpdateRow>
 ): Promise<CommentRow | null> {
   const { data, error } = await client
     .from("comments")

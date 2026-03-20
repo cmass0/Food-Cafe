@@ -11,7 +11,7 @@ import ComboFooter from "@/domain/combo/ui/ComboFooter";
 import ComboPreviewCard from "@/domain/combo/ui/ComboPreviewCard";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_LIMIT = 6;
 
@@ -26,7 +26,7 @@ function parseSort(value: string): ComboSort {
   return "recent";
 }
 
-export default function CombosPage() {
+function CombosPageInner() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const pageParam = searchParams.get("page");
@@ -161,5 +161,13 @@ export default function CombosPage() {
         <ComboPreviewCard combo={activeCombo ?? null} />
       </main>
     </div>
+  );
+}
+
+export default function CombosPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-10" />}>
+      <CombosPageInner />
+    </Suspense>
   );
 }

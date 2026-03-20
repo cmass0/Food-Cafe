@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
+  },
   images: {
     domains: [
       "firebasestorage.googleapis.com",

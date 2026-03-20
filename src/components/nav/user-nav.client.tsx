@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import Link from "next/link";
 
-export default function ProfileButton() {
+function ProfileButtonInner() {
   const { user, status, displayName } = useAuth();
   const name = displayName || deriveDisplayName(user) || "";
   const pathname = usePathname();
@@ -71,5 +72,17 @@ export default function ProfileButton() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+export default function ProfileButton() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-9 w-24 rounded-full bg-emerald-50/70 animate-pulse" aria-hidden="true" />
+      }
+    >
+      <ProfileButtonInner />
+    </Suspense>
   );
 }

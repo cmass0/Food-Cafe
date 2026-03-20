@@ -77,7 +77,7 @@ function useOAuthSignIn() {
   );
 }
 
-export default function AuthButtons({ className }: { className?: string }) {
+function AuthButtonsInner({ className }: { className?: string }) {
   const signIn = useOAuthSignIn();
   return (
     <div className={cn("grid gap-2", className)}>
@@ -147,5 +147,13 @@ export default function AuthButtons({ className }: { className?: string }) {
         }
       )}
     </div>
+  );
+}
+
+export default function AuthButtons({ className }: { className?: string }) {
+  return (
+    <React.Suspense fallback={<div className={cn("grid gap-2", className)} aria-hidden="true" />}>
+      <AuthButtonsInner className={className} />
+    </React.Suspense>
   );
 }

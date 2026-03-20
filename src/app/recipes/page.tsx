@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ const SEARCH_FIELD_OPTIONS: { value: RecipeSearchField; label: string }[] = [
 
 const DEFAULT_LIMIT = 12;
 
-export default function RecipesPage() {
+function RecipesPageInner() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [sort, setSort] = useState<RecipeSort>("recent");
   const [loading, setLoading] = useState(true);
@@ -186,5 +186,13 @@ export default function RecipesPage() {
         />
       </footer>
     </div>
+  );
+}
+
+export default function RecipesPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto w-full max-w-6xl px-6 py-10" />}>
+      <RecipesPageInner />
+    </Suspense>
   );
 }
