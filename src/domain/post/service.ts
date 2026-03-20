@@ -13,6 +13,7 @@ import type {
   PostUpdateDB,
   PostUpdateInput,
 } from "./types";
+import { buildPostContentHtml } from "./ui/PostContentHtml";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
@@ -93,8 +94,8 @@ export async function createPost(
       throw new Error("유효하지 않은 형식입니다.");
     }
   }
-
-  const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
+  const content_html = buildPostContentHtml(contentJson);
+  const parsed = postInsertSchema.parse({ ...input, content_html, content_json: contentJson });
   const payload: PostInsertDB = {
     ...parsed,
     content_text: parsed.content_text ?? null,
@@ -132,7 +133,10 @@ export async function updatePost(
 
   const payload: PostUpdateDB = postUpdateSchema.parse({
     ...input,
-    ...(contentJson !== undefined ? { content_json: contentJson } : {}),
+
+    ...(contentJson !== undefined
+      ? { content_json: contentJson, content_html: buildPostContentHtml(contentJson) }
+      : {}),
   });
 
   let row: PostRow | null = null;

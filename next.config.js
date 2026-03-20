@@ -8,6 +8,7 @@ const nextConfig = {
       "firebasestorage.googleapis.com",
       "vtkcngubofjqddqvcufp.supabase.co",
       "images.unsplash.com",
+      "placehold.co",
     ],
   },
 };

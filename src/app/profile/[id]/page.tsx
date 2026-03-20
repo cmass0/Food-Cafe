@@ -103,14 +103,19 @@ export default async function ProfilePage({
                 <div>
                   <div className="text-2xl font-semibold">{another_user.display_name ?? "-"}</div>
                   <div className="text-gray-500">{another_user.email ?? "-"}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    팔로워 {another_user?.follower_count ?? 0}
+                    <span className="mx-2" aria-hidden="true">
+                      ·
+                    </span>
+                    팔로잉 {another_user?.following_count ?? 0}
+                  </div>
                 </div>
               </div>
               {!isSelf ? (
                 <FollowButton
                   targetUserId={another_user.id}
                   initialIsFollowing={isFollowing}
-                  initialFollowerCount={another_user?.follower_count ?? 0}
-                  followingCount={another_user?.following_count ?? 0}
                   canFollow={Boolean(viewer)}
                 />
               ) : null}

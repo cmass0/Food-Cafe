@@ -63,7 +63,7 @@ export default async function ProfilePage({
         <Card className="w-full min-h-[200px] overflow-hidden">
           <div className="h-[100px] bg-gradient-to-r from-green-200 to-green-600 md:h-[110px]" />
           <CardContent className="pt-0">
-            <div className="-mt-9 flex items-end justify-between">
+            <div className="-mt-5 flex items-end justify-between">
               <div className="flex items-end gap-4">
                 <Avatar className="h-20 w-20 border bg-background md:h-24 md:w-24">
                   {me.photo_url ? <AvatarImage src={me.photo_url} alt="프로필 이미지" /> : <User />}
@@ -74,6 +74,13 @@ export default async function ProfilePage({
                 <div>
                   <div className="text-2xl font-semibold">{me.display_name ?? "-"}</div>
                   <div className="text-gray-500">{me.email ?? "-"}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    팔로워 {me.follower_count ?? 0}
+                    <span className="mx-2" aria-hidden="true">
+                      ·
+                    </span>
+                    팔로잉 {me.following_count ?? 0}
+                  </div>
                 </div>
               </div>
               <EditSheet userProfile={me} />

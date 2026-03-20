@@ -54,11 +54,19 @@ async function replaceTempImageSrcs(
       // 임시 경로인 경우 영구 경로로 이동 처리 후 임시 경로 삭제
       const fromPath = obj.src.slice(PUBLIC_PREFIX.length);
       const filename = fromPath.split("/").slice(3).join("/");
+
       if (filename) {
         const toPath = `posts/${userId}/${postId}/${filename}`;
         try {
-          await supabase.storage.from(IMAGE_BUCKET).copy(fromPath, toPath);
-          await supabase.storage.from(IMAGE_BUCKET).remove([fromPath]);
+          const { error: copyError } = await supabase.storage
+            .from(IMAGE_BUCKET)
+            .copy(fromPath, toPath);
+          if (copyError) console.error("copy error: ", copyError);
+
+          const { error: removeError } = await supabase.storage
+            .from(IMAGE_BUCKET)
+            .remove([fromPath]);
+          if (removeError) console.error("remove error: ", removeError);
           obj.src = `${PUBLIC_PREFIX}${toPath}`;
           changed = true;
         } catch (error) {
@@ -105,10 +113,6 @@ export async function createPostAction(
   if (typeof contentText !== "string") {
     return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
   }
-  const contentHtml = formData.get("content_html");
-  if (typeof contentHtml !== "string") {
-    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
-  }
 
   const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
   const writerName = deriveDisplayName(user) ?? user.email ?? "user";
@@ -116,7 +120,6 @@ export async function createPostAction(
   const payload = {
     title,
     content_json: rawJson,
-    content_html: contentHtml,
     content_text: contentText,
     writer_name: writerName,
     type: typeRaw || undefined,
@@ -126,10 +129,13 @@ export async function createPostAction(
   try {
     const post = await postService.createPost(supabase, payload, user.id);
     if (post.contentJson) {
-      const changed = await replaceTempImageSrcs(supabase, post.contentJson, user.id, post.id);
+      const contentJsonObj =
+        typeof post.contentJson === "string" ? JSON.parse(post.contentJson) : post.contentJson;
+
+      const changed = await replaceTempImageSrcs(supabase, contentJsonObj, user.id, post.id);
       if (changed) {
         await postService.updatePost(supabase, post.id, user.id, {
-          content_json: post.contentJson,
+          content_json: JSON.stringify(contentJsonObj),
         });
       }
     }
@@ -175,10 +181,6 @@ export async function updatePostAction(
   if (typeof contentText !== "string") {
     return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
   }
-  const contentHtml = formData.get("content_html");
-  if (typeof contentHtml !== "string") {
-    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
-  }
   const title = (formData.get("title") as string | null)?.trim() || undefined;
   const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
 
@@ -186,7 +188,6 @@ export async function updatePostAction(
     const payload = {
       title,
       content_json: rawJson,
-      content_html: contentHtml,
       content_text: contentText,
       type: typeRaw || undefined,
     };
