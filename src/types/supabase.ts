@@ -122,6 +122,7 @@ export type Database = {
           title: string
           tools: string[] | null
           tools_required: boolean
+          tsv: unknown
           updated_at: string
           view_count: number
           writer_name: string | null
@@ -143,6 +144,7 @@ export type Database = {
           title: string
           tools?: string[] | null
           tools_required?: boolean
+          tsv?: unknown
           updated_at?: string
           view_count?: number
           writer_name?: string | null
@@ -164,6 +166,7 @@ export type Database = {
           title?: string
           tools?: string[] | null
           tools_required?: boolean
+          tsv?: unknown
           updated_at?: string
           view_count?: number
           writer_name?: string | null
@@ -210,13 +213,16 @@ export type Database = {
       posts: {
         Row: {
           comment_count: number
-          content: string
+          content_json: Json | null
+          content_html: string | null
+          content_text: string | null
           created_at: string
           id: string
           like_count: number
           number: number
           tags: string[]
           title: string
+          tsv: unknown
           type: string
           updated_at: string
           view_count: number
@@ -225,13 +231,16 @@ export type Database = {
         }
         Insert: {
           comment_count?: number
-          content: string
+          content_json?: Json | null
+          content_html?: string | null
+          content_text?: string | null
           created_at?: string
           id?: string
           like_count?: number
           number?: number
           tags?: string[]
           title: string
+          tsv?: unknown
           type?: string
           updated_at?: string
           view_count?: number
@@ -240,13 +249,16 @@ export type Database = {
         }
         Update: {
           comment_count?: number
-          content?: string
+          content_json?: Json | null
+          content_html?: string | null
+          content_text?: string | null
           created_at?: string
           id?: string
           like_count?: number
           number?: number
           tags?: string[]
           title?: string
+          tsv?: unknown
           type?: string
           updated_at?: string
           view_count?: number
@@ -564,13 +576,16 @@ export type Database = {
         Args: { p_delta: number; p_post_id: string }
         Returns: {
           comment_count: number
-          content: string
+          content_json: Json | null
+          content_html: string | null
+          content_text: string | null
           created_at: string
           id: string
           like_count: number
           number: number
           tags: string[]
           title: string
+          tsv: unknown
           type: string
           updated_at: string
           view_count: number
@@ -604,7 +619,7 @@ export type Database = {
       uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
-      comment_parent_type: "recipe" | "post"
+      comment_parent_type: "recipe" | "post" | "combo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -732,7 +747,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      comment_parent_type: ["recipe", "post"],
+      comment_parent_type: ["recipe", "post", "combo"],
     },
   },
 } as const
