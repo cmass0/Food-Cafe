@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
+import ViewCount from "@/domain/view/ui/ViewCount.client";
 import type { Post } from "../types";
-import PostContentHtml from "./PostContentHtml.client";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (
@@ -17,7 +17,9 @@ export default function PostDetail({ post }: { post: Post }) {
             <Separator orientation="vertical" className="mx-1 h-4 bg-gray-700" />
             <span>{post.createdAt.toLocaleString("ko-KR")}</span>
             <Separator orientation="vertical" className="mx-1 h-4 bg-gray-700" />
-            <span>조회수 {post.viewCount}</span>
+            <span>
+              조회수 <ViewCount type="post" id={post.id} initialCount={post.viewCount} />
+            </span>
             {post.type ? (
               <>
                 <Separator orientation="vertical" className="mx-1 h-4 bg-gray-700 " />
@@ -26,7 +28,12 @@ export default function PostDetail({ post }: { post: Post }) {
             ) : null}
           </div>
         </header>
-        <PostContentHtml contentJson={post.contentJson} />
+        {post.contentHtml ? (
+          <section
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+          />
+        ) : null}
       </article>
     </div>
   );
