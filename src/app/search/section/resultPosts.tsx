@@ -11,7 +11,7 @@ type Props = {
 
 export default function SearchResultPosts({ posts, searchParams }: Props) {
   const postitems = posts.items;
-  const basePath = `${process.env.NEXT_PUBLIC_BASE_URL}/search`;
+  const basePath = "/search";
   const query = searchParams;
   const pageImtemCount = posts.limit;
   const total = posts.total;

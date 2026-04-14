@@ -14,7 +14,7 @@ type Props = {
 
 export default function SearchResultCombos({ combos, searchParams }: Props) {
   const comboItems = combos.items;
-  const basePath = `${process.env.NEXT_PUBLIC_BASE_URL}/search`;
+  const basePath = "/search";
   const query = searchParams;
   const pageImtemCount = combos.limit;
   const total = combos.total;

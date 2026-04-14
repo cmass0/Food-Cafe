@@ -14,7 +14,7 @@ type Props = {
 
 export default function SearchResultRecipe({ recipes, searchParams }: Props) {
   const recipeitems = recipes.items;
-  const basePath = `${process.env.NEXT_PUBLIC_BASE_URL}/search`;
+  const basePath = "/search";
   const query = searchParams;
   const pageImtemCount = recipes.limit;
   const total = recipes.total;
