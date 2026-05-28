@@ -7,9 +7,10 @@ import {
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export async function POST(_: Request, { params }: contentParams) {
+export async function POST(_: Request, props: contentParams) {
+  const params = await props.params;
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const { data: view_count, error } = await supabase.rpc("increment_post_view", {
       p_post_id: params.id,
     });

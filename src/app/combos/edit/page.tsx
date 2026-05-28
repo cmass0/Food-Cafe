@@ -3,11 +3,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import UpdateComboForm from "../components/UpdateComboForm";
 
-export default async function ComboEditPage({ searchParams }: { searchParams: { id?: string } }) {
+export default async function ComboEditPage(props: { searchParams: Promise<{ id?: string }> }) {
+  const searchParams = await props.searchParams;
   const id = searchParams?.id;
   if (!id) notFound();
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const combo = await getComboById(supabase, id);
   if (!combo) {
     notFound();

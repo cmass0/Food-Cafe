@@ -23,7 +23,7 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
     return notFound();
   }
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();

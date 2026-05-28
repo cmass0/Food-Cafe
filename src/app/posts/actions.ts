@@ -1,7 +1,7 @@
 ﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 
 import * as postService from "@/domain/post/service";
@@ -92,7 +92,7 @@ export async function createPostAction(
   _prevState: PostActionState,
   formData: FormData
 ): Promise<PostActionState> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
     error,
@@ -155,7 +155,7 @@ export async function updatePostAction(
   _prevState: PostActionState,
   formData: FormData
 ): Promise<PostActionState> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const id = (formData.get("id") as string | null)?.trim();
 
   if (!id) {
@@ -207,7 +207,7 @@ export async function updatePostAction(
 }
 
 export async function deletePostAction(id: string): Promise<PostActionState> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
 
   if (!id) {
     return { ok: false, message: "게시글 ID가 필요합니다." };

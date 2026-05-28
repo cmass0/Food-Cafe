@@ -5,8 +5,8 @@ import type { Database } from "@/types/supabase";
 
 type ServerClient = SupabaseClient<Database>;
 
-export function getServerSupabase(): ServerClient {
-  const cookieStore = cookies();
+export async function getServerSupabase(): Promise<ServerClient> {
+  const cookieStore = await cookies();
   const url = process.env.SUPABASE_URL!;
   const anon = process.env.SUPABASE_ANON_KEY!;
   if (!url || !anon) {

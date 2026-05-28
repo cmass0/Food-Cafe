@@ -10,10 +10,11 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export default async function SearchPage({ searchParams }: Props) {
+export default async function SearchPage(props: Props) {
+  const searchParams = await props.searchParams;
   const search = searchParams.query as string;
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const recipePage = Number(searchParams.recipePage) || 1;
   const comboPage = Number(searchParams.comboPage) || 1;
   const postPage = Number(searchParams.postPage) || 1;

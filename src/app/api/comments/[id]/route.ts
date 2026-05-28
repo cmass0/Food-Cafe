@@ -17,9 +17,10 @@ import { ZodError } from "zod";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, { params }: contentParams) {
+export async function GET(_req: Request, props: contentParams) {
+  const params = await props.params;
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const comment = await commentService.getComment(supabase, params.id);
     if (!comment) {
       return notFound();
@@ -34,9 +35,10 @@ export async function GET(_req: Request, { params }: contentParams) {
   }
 }
 
-export async function PUT(req: Request, { params }: contentParams) {
+export async function PUT(req: Request, props: contentParams) {
+  const params = await props.params;
   let body;
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   try {
     body = await req.json();
   } catch {
@@ -65,8 +67,9 @@ export async function PUT(req: Request, { params }: contentParams) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: contentParams) {
-  const supabase = getServerSupabase();
+export async function DELETE(_req: Request, props: contentParams) {
+  const params = await props.params;
+  const supabase = await getServerSupabase();
 
   const { user, error } = await AuthErrorHelper();
   if (error) return error;

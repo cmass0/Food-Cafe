@@ -30,14 +30,15 @@ function normalizeParam(value: string | string[] | undefined): string | undefine
   return undefined;
 }
 
-export default async function ProfilePage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams?: ProfileSearchParams;
-}) {
-  const supabase = getServerSupabase();
+export default async function ProfilePage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams?: Promise<ProfileSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const supabase = await getServerSupabase();
 
   // 타 사용자 정보 가져오기
   const another_user = await userService.getUserById(params.id);

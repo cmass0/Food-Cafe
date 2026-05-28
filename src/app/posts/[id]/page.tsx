@@ -11,15 +11,16 @@ import UpdateButton from "./UpdateButton";
 
 const commentLimit = 10;
 
-export default async function PostDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
-}) {
+export default async function PostDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   noStore();
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const post = await postService.getPost(supabase, params.id);
   if (!post) {
     notFound();

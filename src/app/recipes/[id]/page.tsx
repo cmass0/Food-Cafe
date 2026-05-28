@@ -6,15 +6,16 @@ import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export default async function RecipeDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function RecipeDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   noStore();
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const recipe = await getRecipeById(supabase, params.id);
   if (!recipe) notFound();
 

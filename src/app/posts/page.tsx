@@ -16,14 +16,14 @@ const DEFAULT_LIMIT = 10;
 type SearchParamValue = string | string[] | undefined;
 
 type PostsPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: SearchParamValue;
     limit?: SearchParamValue;
     writerUid?: SearchParamValue;
     type?: SearchParamValue;
     search?: SearchParamValue;
     searchField?: SearchParamValue;
-  };
+  }>;
 };
 
 function firstValue(value: SearchParamValue): string | undefined {
@@ -31,9 +31,10 @@ function firstValue(value: SearchParamValue): string | undefined {
   return value;
 }
 
-export default async function PostsPage({ searchParams }: PostsPageProps) {
+export default async function PostsPage(props: PostsPageProps) {
+  const searchParams = await props.searchParams;
   noStore();
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
 
   const pageValue = firstValue(searchParams?.page);
   const limitValue = firstValue(searchParams?.limit);

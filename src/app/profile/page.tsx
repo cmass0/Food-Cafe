@@ -26,11 +26,12 @@ function normalizeParam(value: string | string[] | undefined): string | undefine
   return undefined;
 }
 
-export default async function ProfilePage({
-  searchParams,
-}: {
-  searchParams?: ProfileSearchParams;
-}) {
+export default async function ProfilePage(
+  props: {
+    searchParams?: Promise<ProfileSearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const me = await userService.getSelf();
   if (!me) {
     return notFound();

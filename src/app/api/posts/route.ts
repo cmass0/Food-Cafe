@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     const search = url.searchParams.get("search") ?? undefined;
     const searchField = (url.searchParams.get("searchField") as PostSearchField) ?? undefined;
 
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const posts = await postService.listPosts(supabase, {
       limit,
       page,
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const { user, error } = await AuthErrorHelper();
     if (error) {
       return error;

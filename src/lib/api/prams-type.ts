@@ -1,3 +1,3 @@
-export type contentParams = { params: { id: string } };
+export type contentParams = { params: Promise<{ id: string }> };
 
-export type userParams = { params: { userid: string } };
+export type userParams = { params: Promise<{ userid: string }> };

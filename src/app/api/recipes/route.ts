@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       sortParam === "recent" || sortParam === "like" || sortParam === "view"
         ? (sortParam as RecipeSort)
         : undefined;
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
 
     const recipes = await recipeService.listRecipes(supabase, {
       limit,
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     } catch {
       return badRequest("잘못된 JSON 형식입니다.");
     }
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const parsed = recipeInsertSchema.parse(body);
 
     const { user, error: authError } = await AuthErrorHelper();

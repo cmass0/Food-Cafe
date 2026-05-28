@@ -4,11 +4,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { updatePostAction } from "../actions";
 
-export default async function PostEditPage({ searchParams }: { searchParams: { id?: string } }) {
+export default async function PostEditPage(props: { searchParams: Promise<{ id?: string }> }) {
+  const searchParams = await props.searchParams;
   const id = searchParams?.id;
   if (!id) notFound();
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const post = await postService.getPost(supabase, id);
   if (!post) {
     notFound();

@@ -12,9 +12,10 @@ import {
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export async function GET(_: Request, { params }: contentParams) {
+export async function GET(_: Request, props: contentParams) {
+  const params = await props.params;
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
 
     const comboId = params.id;
     const combo = await comboService.getComboById(supabase, comboId);
@@ -31,9 +32,10 @@ export async function GET(_: Request, { params }: contentParams) {
   }
 }
 
-export async function PUT(req: Request, { params }: contentParams) {
+export async function PUT(req: Request, props: contentParams) {
+  const params = await props.params;
   let body;
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   try {
     try {
       body = await req.json();
@@ -58,8 +60,9 @@ export async function PUT(req: Request, { params }: contentParams) {
   }
 }
 
-export async function DELETE(_: Request, { params }: contentParams) {
-  const supabase = getServerSupabase();
+export async function DELETE(_: Request, props: contentParams) {
+  const params = await props.params;
+  const supabase = await getServerSupabase();
   try {
     const combo = await comboService.getComboById(supabase, params.id);
     if (!combo) return notFound();

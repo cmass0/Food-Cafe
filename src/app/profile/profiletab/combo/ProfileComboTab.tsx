@@ -21,7 +21,7 @@ export default async function ProfileComboTab({ type, page = 1, limit = 6, searc
     return notFound();
   }
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();

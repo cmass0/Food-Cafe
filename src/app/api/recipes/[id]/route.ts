@@ -17,9 +17,10 @@ import { getServerSupabase } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(_: Request, { params }: contentParams) {
+export async function GET(_: Request, props: contentParams) {
+  const params = await props.params;
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const item = await service.getRecipeById(supabase, params.id);
     if (!item) return notFound("해당 레시피를 찾을 수 없습니다.");
 
@@ -34,7 +35,8 @@ export async function GET(_: Request, { params }: contentParams) {
   }
 }
 
-export async function PUT(req: Request, { params }: contentParams) {
+export async function PUT(req: Request, props: contentParams) {
+  const params = await props.params;
   try {
     let body: unknown;
     try {
@@ -51,7 +53,7 @@ export async function PUT(req: Request, { params }: contentParams) {
     const { error } = await AuthErrorHelper();
     if (error) return error;
 
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const updated = await service.updateRecipe(supabase, params.id, parsed.data);
     return json({ data: updated });
   } catch (error) {
@@ -64,8 +66,9 @@ export async function PUT(req: Request, { params }: contentParams) {
   }
 }
 
-export async function DELETE(_: Request, { params }: contentParams) {
-  const supabase = getServerSupabase();
+export async function DELETE(_: Request, props: contentParams) {
+  const params = await props.params;
+  const supabase = await getServerSupabase();
   try {
     const existing = await service.getRecipeById(supabase, params.id);
     if (!existing) return notFound("레시피를 찾을 수 없습니다.");

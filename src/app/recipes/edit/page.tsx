@@ -3,11 +3,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import UpdateRecipeForm from "../components/UpdateRecipeForm";
 
-export default async function RecipeEditPage({ searchParams }: { searchParams: { id?: string } }) {
+export default async function RecipeEditPage(props: { searchParams: Promise<{ id?: string }> }) {
+  const searchParams = await props.searchParams;
   const id = searchParams?.id;
   if (!id) notFound();
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const recipe = await getRecipeById(supabase, id);
   if (!recipe) {
     notFound();

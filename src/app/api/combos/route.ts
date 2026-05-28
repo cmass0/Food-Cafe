@@ -15,7 +15,7 @@ import { ZodError } from "zod";
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const limitParams = Number(url.searchParams.get("limit"));
     const pageParams = Number(url.searchParams.get("page"));
     const limit = Number.isFinite(limitParams) ? limitParams : undefined;
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   let body;
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   try {
     body = await req.json();
   } catch {

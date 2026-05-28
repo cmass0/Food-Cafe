@@ -30,7 +30,7 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
 }
 
 export async function getSelf(): Promise<UserRow | null> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
     error,
@@ -41,7 +41,7 @@ export async function getSelf(): Promise<UserRow | null> {
 }
 
 export async function updateSelf(input: unknown): Promise<UserRow> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
     error,
@@ -63,7 +63,7 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
 }
 
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const limit = resolveLimit(options?.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(options?.page, limit);
   const { items: rows, total: rawTotal } = await repository.fetchUsers(supabase, {
@@ -86,18 +86,18 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
 }
 
 export async function findUserByDisplayName(name: string): Promise<UserRow | null> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   return repository.selectUserByDisplayName(supabase, name);
   
 }
 
 export async function getUserById(id: string): Promise<UserRow | null> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   return repository.selectUserById(supabase, id);
 }
 
 export async function deleteUserById(): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const {
     data: { user },
     error,

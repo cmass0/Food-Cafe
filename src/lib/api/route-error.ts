@@ -34,7 +34,7 @@ export async function AuthErrorHelper(userid?: string) {
   const {
     data: { user },
     error,
-  } = await getServerSupabase().auth.getUser();
+  } = await (await getServerSupabase()).auth.getUser();
   if (error) throw error;
 
   if (!user) {

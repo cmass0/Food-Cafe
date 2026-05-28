@@ -1,14 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
-  },
+  serverExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
   images: {
-    domains: [
-      "firebasestorage.googleapis.com",
-      "vtkcngubofjqddqvcufp.supabase.co",
-      "images.unsplash.com",
-      "placehold.co",
+    remotePatterns: [
+      { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+      { protocol: "https", hostname: "vtkcngubofjqddqvcufp.supabase.co" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
   },
 };

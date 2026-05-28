@@ -10,9 +10,10 @@ import {
 } from "@/lib/api/route-error";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export async function GET(_: Request, { params }: contentParams) {
+export async function GET(_: Request, props: contentParams) {
+  const params = await props.params;
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const { user, error: autherror } = await AuthErrorHelper();
     if (autherror) return autherror;
 

@@ -21,7 +21,7 @@ function handleError(error: unknown): never {
 
 export async function createComboAction(input: ComboInsertDb) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const {
       data: { user },
       error,
@@ -44,7 +44,7 @@ export async function createComboAction(input: ComboInsertDb) {
 
 export async function updateComboAction(id: string, patch: ComboUpdateDb) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const combo = await comboService.updateCombo(supabase, id, patch);
     revalidatePath(`/combos/${id}`);
     revalidatePath("/combos");
@@ -57,7 +57,7 @@ export async function updateComboAction(id: string, patch: ComboUpdateDb) {
 
 export async function deleteComboAction(id: string) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     await comboService.removeCombo(supabase, id);
     revalidatePath("/combos");
     revalidatePath("/search");

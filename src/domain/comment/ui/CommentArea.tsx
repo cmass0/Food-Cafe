@@ -25,7 +25,7 @@ export default async function CommentArea({
   const pageNumber = Number(pageValue);
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
 
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { items, total } = await listComments(supabase, {
     parentType,
     parentId,

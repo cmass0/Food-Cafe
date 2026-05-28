@@ -10,8 +10,9 @@ import { getServerSupabase } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(_: Request, { params }: contentParams) {
-  const supabase = getServerSupabase();
+export async function POST(_: Request, props: contentParams) {
+  const params = await props.params;
+  const supabase = await getServerSupabase();
   try {
     const { data: recipe, error } = await supabase.rpc("increment_recipe_view", {
       p_recipe_id: params.id,

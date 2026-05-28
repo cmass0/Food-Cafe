@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     const pageParam = Number(url.searchParams.get("page") ?? "");
     const parentType = url.searchParams.get("parentType");
     const parentId = url.searchParams.get("parentId");
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
 
     const data = await commentService.listComments(supabase, {
       limit: Number.isFinite(limitParam) ? limitParam : undefined,
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   let body;
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   try {
     body = await req.json();
   } catch {

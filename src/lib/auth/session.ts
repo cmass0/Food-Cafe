@@ -1,7 +1,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function getUserOrNull() {
-  const { data, error } = await getServerSupabase().auth.getUser();
+  const { data, error } = await (await getServerSupabase()).auth.getUser();
   if (error) throw error;
   return data.user ?? null;
 }

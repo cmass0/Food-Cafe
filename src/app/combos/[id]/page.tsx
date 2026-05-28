@@ -24,15 +24,16 @@ function formatMinutes(value: number | null) {
   return `${minutes}분`;
 }
 
-export default async function ComboDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function ComboDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const comboId = params.id;
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const combo = await getComboById(supabase, comboId);
   const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/combos/${comboId}`;
   const userId = (await supabase.auth.getUser()).data.user?.id;

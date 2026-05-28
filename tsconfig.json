@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
-    "paths": { "@/*": ["*"] },
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -9,24 +10,27 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "useUnknownInCatchVariables": true,
-
     "noEmit": true,
     "incremental": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-
-    "plugins": [{ "name": "next" }]
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/component/navbar/nav-bar.tsx"
+    "src/component/navbar/nav-bar.tsx",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -13,9 +13,10 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_: Request, { params }: Ctx) {
+export async function GET(_: Request, props: Ctx) {
+  const params = await props.params;
   try {
     const { error: authError } = await AuthErrorHelper(params.id);
     if (authError) return authError;
@@ -31,7 +32,8 @@ export async function GET(_: Request, { params }: Ctx) {
   }
 }
 
-export async function PUT(req: Request, { params }: Ctx) {
+export async function PUT(req: Request, props: Ctx) {
+  const params = await props.params;
   try {
     let body: unknown;
     try {
@@ -60,7 +62,8 @@ export async function PUT(req: Request, { params }: Ctx) {
   }
 }
 
-export async function DELETE(_: Request, { params }: Ctx) {
+export async function DELETE(_: Request, props: Ctx) {
+  const params = await props.params;
   try {
     const { error: authError } = await AuthErrorHelper(params.id);
     if (authError) return authError;

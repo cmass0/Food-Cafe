@@ -21,7 +21,7 @@ function handleError(error: unknown): never {
 
 export async function createRecipeAction(input: RecipeInsertDB) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const {
       data: { user },
       error,
@@ -44,7 +44,7 @@ export async function createRecipeAction(input: RecipeInsertDB) {
 
 export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     const recipe = await recipeService.updateRecipe(supabase, id, patch);
     revalidatePath(`/recipes/${id}`);
     revalidatePath("/recipes");
@@ -57,7 +57,7 @@ export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
 
 export async function deleteRecipeAction(id: string) {
   try {
-    const supabase = getServerSupabase();
+    const supabase = await getServerSupabase();
     await recipeService.removeRecipe(supabase, id);
     revalidatePath("/recipes");
     revalidatePath("/search");
