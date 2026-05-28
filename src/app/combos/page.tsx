@@ -268,7 +268,7 @@ function ComboPreviewPanel({
 }) {
   if (!combo || !stats) {
     return (
-      <aside className="hidden rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-500 lg:block">
+      <aside className="hidden h-full items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-500 lg:flex">
         조합을 선택하면 상세 미리보기가 표시됩니다.
       </aside>
     );
@@ -279,7 +279,7 @@ function ComboPreviewPanel({
   const tags = combo.tags?.length ? combo.tags.slice(0, 6) : ["조합"];
 
   return (
-    <aside className="rounded-lg border border-zinc-200 bg-white shadow-sm lg:sticky lg:top-24 lg:self-start">
+    <aside className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white shadow-sm">
       <div className="relative aspect-[4/2.6] overflow-hidden rounded-t-lg bg-emerald-50">
         {combo.image ? (
           <Image
@@ -302,7 +302,7 @@ function ComboPreviewPanel({
         </div>
       </div>
 
-      <div className="space-y-5 p-5">
+      <div className="flex flex-1 flex-col gap-5 px-5 pt-5">
         <div>
           <h2 className="line-clamp-1 text-xl font-black text-zinc-950">{combo.title}</h2>
           <div className="mt-2 flex items-center gap-2 text-sm font-medium text-zinc-500">
@@ -353,11 +353,11 @@ function ComboPreviewPanel({
           </div>
         </div>
 
-        <div>
+        <div className="min-h-0">
           <h3 className="text-sm font-bold text-zinc-950">구성 레시피</h3>
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 max-h-[156px] space-y-2 overflow-y-auto overscroll-contain pr-1">
             {activeItems.length ? (
-              activeItems.slice(0, 4).map((item, index) => {
+              activeItems.map((item, index) => {
                 const title = itemTitle(item);
                 const image = itemImage(item);
                 return (
@@ -392,7 +392,7 @@ function ComboPreviewPanel({
           </div>
         </div>
 
-        <Button asChild className="h-12 w-full rounded-lg bg-[#2e9a48] font-bold text-white hover:bg-[#247d3a]">
+        <Button asChild className="mt-auto h-12 w-full rounded-lg bg-[#2e9a48] font-bold text-white hover:bg-[#247d3a]">
           <Link href={`/combos/${combo.id}`}>상세보기</Link>
         </Button>
       </div>
@@ -623,8 +623,8 @@ function CombosPageInner() {
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <section className="space-y-7">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch">
+          <section className="flex flex-col gap-7">
             {loading ? (
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
