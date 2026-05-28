@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -20,6 +21,12 @@ type Props<TField extends string> = {
   searchoptions: { value: TField; label: string }[]; // 검색 필드 옵션
   searchQuery?: string; // 검색 텍스트
   searchFieldQuery?: TField; // 선택한 검색 필드
+  placeholder?: string;
+  className?: string;
+  containerClassName?: string;
+  selectTriggerClassName?: string;
+  inputClassName?: string;
+  submitClassName?: string;
 };
 
 export default function SearchForm<TField extends string>({
@@ -27,6 +34,12 @@ export default function SearchForm<TField extends string>({
   searchoptions,
   searchQuery,
   searchFieldQuery,
+  placeholder,
+  className,
+  containerClassName,
+  selectTriggerClassName,
+  inputClassName,
+  submitClassName,
 }: Props<TField>) {
   const initialField = searchFieldQuery ?? searchoptions[0]?.value ?? ("title" as TField);
   const [searchField, setSearchField] = useState<TField>(initialField);
@@ -44,10 +57,23 @@ export default function SearchForm<TField extends string>({
   }, [searchFieldQuery]);
 
   return (
-    <form onSubmit={(e) => searchHandler(e, searchText, searchField)} className="w-full sm:w-auto">
-      <div className="flex w-full max-w-md overflow-hidden rounded-md border">
+    <form
+      onSubmit={(e) => searchHandler(e, searchText, searchField)}
+      className={cn("w-full sm:w-auto", className)}
+    >
+      <div
+        className={cn(
+          "flex w-full max-w-md overflow-hidden rounded-md border",
+          containerClassName
+        )}
+      >
         <Select value={searchField} onValueChange={(value) => setSearchField(value as TField)}>
-          <SelectTrigger className="w-32 rounded-none border-0 border-r px-3 py-2 text-sm">
+          <SelectTrigger
+            className={cn(
+              "w-32 rounded-none border-0 border-r px-3 py-2 text-sm",
+              selectTriggerClassName
+            )}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="w-32 text-sm">
@@ -61,10 +87,18 @@ export default function SearchForm<TField extends string>({
         <div className="flex flex-1 items-center gap-2 px-3">
           <input
             value={searchText}
-            className="w-full border-0 text-sm outline-none"
+            placeholder={placeholder}
+            className={cn(
+              "w-full border-0 text-sm outline-none placeholder:text-zinc-400",
+              inputClassName
+            )}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <button type="submit" className="text-gray-500">
+          <button
+            type="submit"
+            className={cn("text-gray-500", submitClassName)}
+            aria-label="검색"
+          >
             <Search className="h-4 w-4 cursor-pointer" />
           </button>
         </div>
