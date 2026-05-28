@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-background text-foreground min-h-screen antialiased">
+      <body className={`${inter.className} bg-background text-foreground min-h-screen antialiased`}>
         <Providers>
           <Navbar />
           {children}
