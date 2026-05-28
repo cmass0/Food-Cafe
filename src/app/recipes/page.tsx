@@ -34,7 +34,7 @@ const SEARCH_FIELD_OPTIONS: { value: RecipeSearchField; label: string }[] = [
   { value: "writer", label: "작성자" },
 ];
 
-const DEFAULT_LIMIT = 8;
+const DEFAULT_LIMIT = 12;
 
 function formatCount(value: number | null | undefined): string {
   return new Intl.NumberFormat("ko-KR").format(value ?? 0);
