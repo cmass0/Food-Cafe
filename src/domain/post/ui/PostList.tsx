@@ -60,15 +60,6 @@ const TYPE_STYLES: Record<string, TypeStyle> = {
   },
 };
 
-const AVATAR_TONES = [
-  "bg-emerald-100 text-emerald-700",
-  "bg-lime-100 text-lime-700",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-violet-100 text-violet-700",
-];
-
 function formatDate(date: Date) {
   const now = new Date();
   const sameYear = date.getFullYear() === now.getFullYear();
@@ -90,11 +81,6 @@ function formatType(type: string): TypeStyle {
 function initials(name: string) {
   const trimmed = name.trim();
   return trimmed ? trimmed.slice(0, 1).toUpperCase() : "?";
-}
-
-function avatarTone(name: string) {
-  const code = name.charCodeAt(0) || 0;
-  return AVATAR_TONES[code % AVATAR_TONES.length];
 }
 
 export default function PostList({ posts, className }: PostListProps) {
@@ -136,12 +122,12 @@ export default function PostList({ posts, className }: PostListProps) {
               const writerName = post.writerName || "익명";
               const writerContent = (
                 <>
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className={cn("text-xs font-bold", avatarTone(writerName))}>
+                  <Avatar className="h-7 w-7 opacity-80">
+                    <AvatarFallback className="border border-zinc-200 bg-zinc-100 text-[11px] font-semibold text-zinc-500">
                       {initials(writerName)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="max-w-[110px] truncate">{writerName}</span>
+                  <span className="max-w-[110px] truncate text-zinc-500">{writerName}</span>
                 </>
               );
 
@@ -175,12 +161,12 @@ export default function PostList({ posts, className }: PostListProps) {
                       <Link
                         href={`/profile/${post.writerUid}`}
                         prefetch={false}
-                        className="mx-auto flex w-fit items-center gap-3 font-medium text-zinc-700"
+                        className="mx-auto flex w-fit items-center gap-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-700"
                       >
                         {writerContent}
                       </Link>
                     ) : (
-                      <div className="mx-auto flex w-fit items-center gap-3 font-medium text-zinc-700">
+                      <div className="mx-auto flex w-fit items-center gap-2.5 text-sm font-medium text-zinc-500">
                         {writerContent}
                       </div>
                     )}
