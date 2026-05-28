@@ -110,7 +110,7 @@ export default function PostList({ posts, className }: PostListProps) {
             <tr className="h-12 border-b border-zinc-200">
               <th className="w-[110px] px-5 text-center font-semibold">번호</th>
               <th className="px-5 text-center font-semibold">제목</th>
-              <th className="w-[220px] px-5 text-center font-semibold">글쓴이</th>
+              <th className="w-[220px] px-5 text-left font-semibold">글쓴이</th>
               <th className="w-[140px] px-5 text-center font-semibold">날짜</th>
               <th className="w-[120px] px-5 text-center font-semibold">조회수</th>
             </tr>
@@ -156,17 +156,17 @@ export default function PostList({ posts, className }: PostListProps) {
                       </Link>
                     </div>
                   </td>
-                  <td className="px-5">
+                  <td className="px-5 text-left">
                     {post.writerUid ? (
                       <Link
                         href={`/profile/${post.writerUid}`}
                         prefetch={false}
-                        className="mx-auto flex w-fit items-center gap-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-700"
+                        className="flex w-full items-center gap-2.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-700"
                       >
                         {writerContent}
                       </Link>
                     ) : (
-                      <div className="mx-auto flex w-fit items-center gap-2.5 text-sm font-medium text-zinc-500">
+                      <div className="flex w-full items-center gap-2.5 text-sm font-medium text-zinc-500">
                         {writerContent}
                       </div>
                     )}
