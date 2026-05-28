@@ -49,6 +49,7 @@ export interface Post {
   writerUid: string | null;
   number: number | null;
   viewCount: number;
+  commentCount: number;
   type: string;
   createdAt: Date;
   updatedAt: Date;

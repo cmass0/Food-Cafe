@@ -30,6 +30,7 @@ function mapRowToPost(row: PostRow): Post {
     writerUid: row.writer_uid,
     number: row.number ?? null,
     viewCount: row.view_count ?? 0,
+    commentCount: row.comment_count ?? 0,
     type: row.type ?? "board",
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),

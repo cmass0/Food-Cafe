@@ -15,6 +15,7 @@ const POST_COLUMNS = [
   "type",
   "number",
   "view_count",
+  "comment_count",
   "created_at",
   "updated_at",
 ].join(", ");
