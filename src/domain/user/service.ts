@@ -1,4 +1,5 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import * as repository from "./repository";
@@ -104,5 +105,19 @@ export async function deleteUserById(): Promise<void> {
   } = await supabase.auth.getUser();
   if (error) throw error;
   if (!user) throw new Error("로그인이 필요합니다.");
+
+  const admin = getAdminSupabase();
+
+  // 1. public.users 레코드 삭제
+  //    DB FK가 모두 CASCADE로 설정되어 있어 recipes, combos, comments,
+  //    likes, bookmarks, follows 등 연관 데이터가 자동으로 함께 삭제됨
   await repository.deleteUserRecord(supabase, user.id);
+
+  // 2. 스토리지에 저장된 프로필 사진 삭제
+  await repository.deleteUserAvatar(admin, user.id);
+
+  // 3. Supabase Auth 계정 삭제 — service role 필요
+  //    auth를 마지막에 삭제해야 앞 단계에서 세션 권한이 유지됨
+  const { error: authDeleteError } = await admin.auth.admin.deleteUser(user.id);
+  if (authDeleteError) throw authDeleteError;
 }

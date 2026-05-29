@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { UserRow } from "@/domain/user/types";
 
+import DeleteAccount from "./ui/DeleteAccount";
 import EditEmail from "./ui/editemail";
 import EditName from "./ui/editname";
 import EditPhoto from "./ui/editphoto";
@@ -39,6 +40,11 @@ export default function EditSheet({ userProfile }: Prps) {
           <EditPhoto userProfile={userProfile} />
           <EditName userProfile={userProfile} />
           <EditEmail userProfile={userProfile} />
+
+          {/* 위험 구역 — 위쪽 편집 섹션과 구분선으로 분리 */}
+          <div className="border-t pt-4">
+            <DeleteAccount userId={userProfile.id} />
+          </div>
 
           <SheetFooter className="mt-2">
             <SheetClose asChild>
