@@ -1,12 +1,15 @@
 "use client";
 
 import { ClipboardCopy } from "lucide-react";
+import type { ReactNode } from "react";
 
 type Props = {
   currentUrl: string;
+  className?: string;
+  children?: ReactNode;
 };
 
-export function CopyClipButton({ currentUrl }: Props) {
+export function CopyClipButton({ currentUrl, className, children }: Props) {
   const copyClip = async () => {
     try {
       await navigator.clipboard.writeText(currentUrl);
@@ -19,13 +22,16 @@ export function CopyClipButton({ currentUrl }: Props) {
 
   return (
     <button
-      className="inline-flex h-[69px] w-[68px] items-center justify-center rounded-md border border-border/70 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+      className={
+        className ??
+        "inline-flex h-[69px] w-[68px] items-center justify-center rounded-md border border-border/70 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+      }
       type="button"
       onClick={copyClip}
       aria-label="URL 공유"
       title="URL 공유"
     >
-      <ClipboardCopy className="h-6 w-6" />
+      {children ?? <ClipboardCopy className="h-6 w-6" />}
     </button>
   );
 }

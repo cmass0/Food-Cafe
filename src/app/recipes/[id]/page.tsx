@@ -27,24 +27,19 @@ export default async function RecipeDetailPage(
   const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
 
   return (
-    <main className="relative pt-24 pb-24">
-      {/* 본문*/}
-      <div className="mx-auto w-full max-w-6xl px-4">
-        <div className="flex flex-col gap-10 xl:grid ">
-          <div className="xl:col-start-1">
-            <RecipeDetail recipe={recipe} isAuthor={isAuthor} />
-          </div>
+    <main className="bg-white pb-20 pt-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 lg:px-8">
+        <RecipeDetail recipe={recipe} isAuthor={isAuthor} />
 
-          <div className="xl:col-start-1 xl:row-start-2">
-            <CommentArea
-              parentType="recipe"
-              parentId={recipe.id}
-              basePath={`/recipes/${params.id}`}
-              searchParams={searchParams}
-              limit={commentLimit}
-            />
-          </div>
-        </div>
+        <CommentArea
+          parentType="recipe"
+          parentId={recipe.id}
+          basePath={`/recipes/${params.id}`}
+          searchParams={searchParams}
+          limit={commentLimit}
+          showTitle
+          className="border-t-0 pt-0"
+        />
       </div>
     </main>
   );

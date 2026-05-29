@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import type { ReactNode } from "react";
 
 type contentinfo = {
   description?: string | null;
@@ -33,6 +34,7 @@ type Props = {
   url: string;
   label?: string;
   className?: string;
+  children?: ReactNode;
 };
 
 const KAKAO_SHARE_BUTTON_IMAGE =
@@ -44,6 +46,7 @@ export default function KakaoShareButton({
   url,
   label = "카카오톡 공유하기",
   className,
+  children,
 }: Props) {
   const initKakao = () => {
     const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
@@ -93,7 +96,7 @@ export default function KakaoShareButton({
         disabled={!isReady}
         aria-label={label}
       >
-        <img src={KAKAO_SHARE_BUTTON_IMAGE} alt={label} className="block" />
+        {children ?? <img src={KAKAO_SHARE_BUTTON_IMAGE} alt={label} className="block" />}
       </button>
     </>
   );

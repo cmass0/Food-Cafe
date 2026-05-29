@@ -1,16 +1,25 @@
-﻿import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
-import ViewCount from "@/domain/view/ui/ViewCount.client";
+import {
+  Bookmark,
+  ChefHat,
+  ChevronRight,
+  Clock3,
+  Lightbulb,
+  Link2,
+  MoreHorizontal,
+  Quote,
+  Share2,
+  Sprout,
+  Users,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 import DeleteRecipeButton from "@/app/recipes/components/DeleteRecipeButton";
 import UpdateRecipeButton from "@/app/recipes/components/UpdateRecipeButton";
 import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
-
+import ViewCount from "@/domain/view/ui/ViewCount.client";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
-import Image from "next/image";
 import type { Recipe } from "../types";
-import { getDifficultyMeta } from "./difficultyMeta";
 import { CopyClipButton } from "./RecipeClip";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
@@ -24,221 +33,306 @@ function formatMinutes(value: number | null | undefined) {
   return `${minutes}분`;
 }
 
-export default async function RecipeDetail({
+function formatDate(value: Date) {
+  return value.toLocaleDateString("ko-KR", {
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function initials(name: string | null | undefined) {
+  return name?.trim().slice(0, 1).toUpperCase() || "U";
+}
+
+function uniqueChips(recipe: Recipe) {
+  const tags = recipe.tags?.filter((tag) => typeof tag === "string" && tag.trim().length > 0) ?? [];
+  const chips = recipe.category ? [recipe.category, ...tags] : tags;
+  return Array.from(new Set(chips.map((chip) => chip.trim()).filter(Boolean)));
+}
+
+export default function RecipeDetail({
   recipe,
   isAuthor = false,
 }: {
   recipe: Recipe;
   isAuthor?: boolean;
 }) {
-  const tags = recipe.tags?.filter((tag) => typeof tag === "string" && tag.length > 0) ?? [];
-  const chips = recipe.category ? [recipe.category, ...tags] : tags;
+  const chips = uniqueChips(recipe);
   const steps =
-    recipe.steps?.map((step) => step.description).filter((step) => step.length > 0) ?? [];
-  const currentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/recipes/${recipe.id}`;
-  const shareImageUrl = recipe.image ? recipe.image : "";
-
+    recipe.steps?.map((step) => step.description.trim()).filter((step) => step.length > 0) ?? [];
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
+  const currentUrl = `${baseUrl}/recipes/${recipe.id}`;
+  const shareImageUrl = recipe.image ?? "";
   const timeLabel = formatMinutes(recipe.timeMinutes);
-  const metaChips = [
-    recipe.difficulty ? `난이도 ${recipe.difficulty}` : null,
-    timeLabel ? `소요 ${timeLabel}` : null,
-    recipe.servings ? `${recipe.servings}인분` : null,
-  ].filter(Boolean) as string[];
-
-  const createdLabel = recipe.createdAt.toLocaleDateString("ko-KR", {
-    month: "short",
-    day: "numeric",
-  });
+  const writerName = recipe.writerName ?? "무명 셰프";
 
   return (
     <article className="space-y-10">
-      {/* 헤더 */}
-      <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-600">레시피</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">레시피 상세</h1>
-        <p className="text-sm text-muted-foreground">재료와 조리 단계를 한눈에 확인하세요.</p>
-      </header>
+      <nav className="flex items-center gap-2 text-sm font-medium text-zinc-500">
+        <Link href="/" className="transition hover:text-[#15933d]">
+          홈
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <Link href="/recipes" className="transition hover:text-[#15933d]">
+          레시피
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="line-clamp-1 text-zinc-700">{recipe.title}</span>
+      </nav>
 
-      {/* 상단 카드 섹션 */}
-      <section className="rounded-3xl border border-emerald-100/70 bg-white/80 p-6 shadow-sm backdrop-blur">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          {/* 이미지 */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/40">
+      <section className="grid gap-8 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
+        <div className="space-y-5">
+          <div className="relative aspect-[4/2.7] overflow-hidden rounded-lg bg-emerald-50">
             {recipe.image ? (
               <Image
                 src={recipe.image}
                 alt={recipe.title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 60vw"
+                sizes="(max-width: 1024px) 100vw, 560px"
+                priority
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full w-full items-center justify-center text-sm font-medium text-emerald-700">
                 이미지가 없습니다.
               </div>
             )}
+
+            <div className="absolute inset-0 grid place-items-center bg-black/5">
+              <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white/90 bg-white/20 text-white shadow-sm backdrop-blur-sm">
+                <ChefHat className="h-7 w-7" />
+              </span>
+            </div>
+
+            <span className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full bg-white text-[#15933d] shadow-sm">
+              <Bookmark className="h-5 w-5" />
+            </span>
           </div>
 
-          {/* 기본정보 */}
-          <div className="flex flex-col gap-7">
-            {/* 메타 태그 */}
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex flex-wrap gap-2 text-xs text-emerald-700">
-                {metaChips.map((chip) => (
-                  <Badge
-                    key={chip}
-                    variant="outline"
-                    className="rounded-full border-emerald-200/80 bg-emerald-50 text-emerald-800"
-                  >
-                    {chip}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* 제목 & 작성자 */}
-            <div className="space-y-2">
-              <h2 className="text-3xl font-semibold text-slate-900">{recipe.title}</h2>
-              <p className="text-sm text-muted-foreground">
-                <AuthorProfileMenu name={recipe.writerName} userId={recipe.writerUid} /> ·{" "}
-                {createdLabel} · 조회{" "}
-                <ViewCount type="recipe" id={recipe.id} initialCount={recipe.viewCount ?? 0} />
-              </p>
-            </div>
-
-            {/* 요약 */}
-            {recipe.summary ? (
-              <div className="rounded-2xl border border-emerald-100/70 bg-emerald-50/70 p-4 text-sm leading-relaxed text-emerald-950">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                  요약
-                </p>
-                <p className="whitespace-pre-line">{recipe.summary}</p>
-              </div>
-            ) : null}
-
-            {/* 태그 */}
-            {chips.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">태그</p>
-                <div className="flex flex-wrap gap-2">
-                  {chips.map((chip, idx) => (
-                    <Badge
-                      key={`${chip}-${idx}`}
-                      variant="outline"
-                      className="rounded-full border-emerald-200/80 bg-white text-emerald-700"
-                    >
-                      {chip}
-                    </Badge>
-                  ))}
+          <div className="hidden items-center gap-4 sm:flex">
+            <button
+              type="button"
+              aria-label="이전 이미지"
+              className="grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm"
+            >
+              <ChevronRight className="h-5 w-5 rotate-180" />
+            </button>
+            <div className="grid flex-1 grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-[4/2.5] overflow-hidden rounded-md border border-zinc-200 bg-emerald-50"
+                >
+                  {recipe.image ? (
+                    <Image
+                      src={recipe.image}
+                      alt={`${recipe.title} 미리보기 ${index + 1}`}
+                      fill
+                      sizes="120px"
+                      className="object-cover"
+                    />
+                  ) : null}
                 </div>
-              </div>
-            ) : null}
-
-            {/* 좋아요/북마크 & 수정/삭제 버튼 */}
-            <div className="mt-auto flex items-center justify-between">
-              <LikeBookmarkButton recipe={recipe} />
-              {isAuthor && (
-                <div className="flex gap-2">
-                  <UpdateRecipeButton id={recipe.id} />
-                  <DeleteRecipeButton recipeId={recipe.id} />
-                </div>
-              )}
+              ))}
             </div>
+            <button
+              type="button"
+              aria-label="다음 이미지"
+              className="grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
+
+        <div className="flex flex-col justify-center">
+          <div className="flex flex-wrap gap-2">
+            {recipe.difficulty ? (
+              <span className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700">
+                난이도 {recipe.difficulty}
+              </span>
+            ) : null}
+            {timeLabel ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700">
+                <Clock3 className="h-4 w-4" />
+                소요 {timeLabel}
+              </span>
+            ) : null}
+            {recipe.servings ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700">
+                <Users className="h-4 w-4" />
+                {recipe.servings}인분
+              </span>
+            ) : null}
+          </div>
+
+          <h1 className="mt-7 text-4xl font-black tracking-tight text-zinc-950">{recipe.title}</h1>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm font-medium text-zinc-500">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-600">
+              {initials(writerName)}
+            </span>
+            <span>{writerName}</span>
+            <span>·</span>
+            <span>{formatDate(recipe.createdAt)}</span>
+            <span>·</span>
+            <span>
+              조회 <ViewCount type="recipe" id={recipe.id} initialCount={recipe.viewCount ?? 0} />
+            </span>
+          </div>
+
+          {recipe.summary ? (
+            <div className="mt-8 rounded-lg border border-emerald-200 bg-emerald-50/40 p-5">
+              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-emerald-700">
+                <Quote className="h-5 w-5" />
+                요약
+              </div>
+              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">{recipe.summary}</p>
+            </div>
+          ) : null}
+
+          {chips.length ? (
+            <div className="mt-7 space-y-3">
+              <p className="text-sm font-bold text-zinc-700">태그</p>
+              <div className="flex flex-wrap gap-2">
+                {chips.slice(0, 5).map((chip) => (
+                  <Link
+                    key={chip}
+                    href={`/recipes?search=${encodeURIComponent(chip)}&searchField=tag_title`}
+                    className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    {chip}
+                  </Link>
+                ))}
+                {chips.length > 5 ? (
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-zinc-200 text-zinc-500">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-9 flex flex-wrap items-center justify-between gap-4">
+            <LikeBookmarkButton recipe={recipe} />
+            <div className="flex items-center gap-3 text-sm font-medium text-zinc-600">
+              <span>공유하기</span>
+              <Share2 className="h-4 w-4" />
+            </div>
+          </div>
+
+          {isAuthor ? (
+            <div className="mt-5 flex gap-2">
+              <UpdateRecipeButton id={recipe.id} />
+              <DeleteRecipeButton recipeId={recipe.id} />
+            </div>
+          ) : null}
+        </div>
       </section>
-      {/* 재료  */}
-      <section>
-        <RecipeToolsPanel tools={recipe.tools} />
-      </section>
-      <section>
+
+      <div className="border-t border-zinc-200" />
+
+      <section className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-3 text-xl font-black text-zinc-950">
+            <Sprout className="h-5 w-5 text-[#15933d]" />
+            재료
+          </h2>
+          <span className="text-sm font-medium text-zinc-500">
+            총 {recipe.ingredients?.length ?? 0}개
+          </span>
+        </div>
         <RecipeIngredientsPanel ingredients={recipe.ingredients} />
       </section>
 
-      {/* 조리 단계 섹션 */}
+      <RecipeToolsPanel tools={recipe.tools} />
+
       {steps.length > 0 ? (
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-slate-900">조리 단계</h2>
-          <div className="rounded-3xl border border-emerald-100/70 bg-white/80 p-6 shadow-sm">
-            {/* 난이도 툴팁 포함 메타 뱃지 */}
-            <div className="mb-4 flex flex-wrap gap-2 text-xs text-emerald-700">
-              {recipe.difficulty ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="outline"
-                        className="cursor-help rounded-full border-emerald-200/80 bg-emerald-50 text-emerald-800"
-                      >
-                        난이도 {recipe.difficulty}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-xs leading-relaxed">
-                      {(() => {
-                        const meta = getDifficultyMeta(recipe.difficulty);
-                        if (!meta) return recipe.difficulty;
-                        return (
-                          <div className="space-y-1">
-                            <div className="font-semibold">{meta.label}</div>
-                            <p className="text-muted-foreground">{meta.description}</p>
-                            <p className="text-amber-600">주의: {meta.warning}</p>
-                            <p className="text-emerald-700">추천 대상: {meta.recommend}</p>
-                          </div>
-                        );
-                      })()}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : null}
-              {timeLabel ? (
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-emerald-200/80 bg-emerald-50 text-emerald-800"
-                >
-                  소요 {timeLabel}
-                </Badge>
-              ) : null}
-              {recipe.servings ? (
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-emerald-200/80 bg-emerald-50 text-emerald-800"
-                >
-                  {recipe.servings}인분
-                </Badge>
-              ) : null}
-            </div>
-            <ol className="space-y-3">
-              {steps.map((step, idx) => (
-                <li
-                  key={idx}
-                  className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-4 py-3 text-sm leading-relaxed text-emerald-950"
-                >
-                  <div className="mb-1 text-xs font-semibold text-emerald-700">Step {idx + 1}</div>
-                  <p className="whitespace-pre-line">{step}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
+        <section className="border-t border-zinc-200 pt-8">
+          <h2 className="flex items-center gap-3 text-xl font-black text-zinc-950">
+            <ChefHat className="h-5 w-5 text-[#15933d]" />
+            조리 단계
+          </h2>
+
+          <ol className="mt-6 space-y-4">
+            {steps.map((step, index) => (
+              <li key={`${index}-${step.slice(0, 12)}`} className="grid gap-4 sm:grid-cols-[44px_1fr]">
+                <div className="flex justify-center sm:block">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="grid gap-5 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm sm:grid-cols-[190px_1fr] sm:items-center">
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-emerald-50">
+                    {recipe.image ? (
+                      <Image
+                        src={recipe.image}
+                        alt={`Step ${index + 1}`}
+                        fill
+                        sizes="190px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs font-bold text-emerald-700">
+                        Step {index + 1}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-zinc-950">Step {index + 1}</h3>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600">{step}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
         </section>
       ) : null}
 
-      {/* 공유 버튼 */}
-      <div className="flex justify-center items-start gap-4">
-        <div className="flex flex-col items-center gap-1">
+      <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="relative overflow-hidden rounded-lg border border-emerald-100 bg-emerald-50 p-6">
+          <div className="relative z-10 max-w-[58%] space-y-3">
+            <h2 className="flex items-center gap-2 text-lg font-black text-emerald-800">
+              <Lightbulb className="h-5 w-5" />
+              셰프의 팁
+            </h2>
+            <p className="text-sm leading-7 text-zinc-700">
+              기호에 따라 재료의 양을 조절하면 더 취향에 맞는 맛을 만들 수 있어요.
+            </p>
+          </div>
+          {recipe.image ? (
+            <Image
+              src={recipe.image}
+              alt=""
+              fill
+              sizes="600px"
+              className="object-cover opacity-20"
+            />
+          ) : null}
+        </div>
+
+        <div className="grid gap-4">
           <KakaoShareButton
             contentinfo={{ title: recipe.title, description: recipe.summary }}
             imageUrl={shareImageUrl}
             url={currentUrl}
             label="카카오톡으로 공유"
-            className="inline-flex cursor-pointer border-0 bg-transparent p-0 shadow-none disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          <span className="text-xs text-slate-600">카카오톡으로 공유</span>
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg bg-[#fee24c] px-5 text-sm font-black text-zinc-900 transition hover:bg-[#f7d93e] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="rounded-full bg-zinc-900 px-2 py-1 text-xs font-black text-[#fee24c]">
+              TALK
+            </span>
+            카카오톡으로 공유
+          </KakaoShareButton>
+          <CopyClipButton
+            currentUrl={currentUrl}
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+          >
+            <Link2 className="h-5 w-5" />
+            URL 복사
+          </CopyClipButton>
         </div>
-        <div className="flex flex-col items-center gap-1">
-          <CopyClipButton currentUrl={currentUrl} />
-          <span className="text-xs text-slate-600">URL 공유</span>
-        </div>
-      </div>
+      </section>
     </article>
   );
 }

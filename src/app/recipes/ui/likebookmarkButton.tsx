@@ -1,23 +1,30 @@
 "use client";
 
-import { useAuth } from "@/app/auth/auth-context";
-import { ToggleComboBookmark } from "@/domain/combo/combo_bookmark/type";
-import { ToggleComboLike } from "@/domain/combo/combo_like/types";
-import { fetchRecipeStatus } from "@/domain/recipe/api";
-import RecipeCardBookmarkButton from "@/domain/recipe/recipe_bookmark/ui/bookmarkbtn";
-import RecipeCardLikeButton from "@/domain/recipe/recipe_like/ui/likebutton";
-import { Recipe } from "@/domain/recipe/types";
+import { Bookmark, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type props = {
+import { useAuth } from "@/app/auth/auth-context";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { fetchRecipeStatus } from "@/domain/recipe/api";
+import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
+import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
+import type { Recipe } from "@/domain/recipe/types";
+
+type Props = {
   recipe: Recipe;
 };
-export default function LikeBookmarkButton({ recipe }: props) {
-  const [liked, setLiked] = useState(false);
+
+function formatCount(value: number | null | undefined) {
+  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
+}
+
+export default function LikeBookmarkButton({ recipe }: Props) {
+  const [liked, setLiked] = useState(recipe.liked ?? false);
   const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarked, setBookmarked] = useState(recipe.bookmarked ?? false);
   const [bookmarkCount, setBookmarkCount] = useState(recipe.bookmarkCount ?? 0);
   const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
 
   useEffect(() => {
     setLikeCount(recipe.likeCount ?? 0);
@@ -48,39 +55,65 @@ export default function LikeBookmarkButton({ recipe }: props) {
     };
   }, [recipe.id, user?.id]);
 
-  function handleLikeChange(next: ToggleComboLike) {
-    setLiked(next.liked);
-    setLikeCount(next.likeCount);
+  function requireAuth() {
+    const current = new URL(window.location.href);
+    openAuthModal({ next: `${current.pathname}${current.search}` });
   }
 
-  function handleBookmarkChange(next: ToggleComboBookmark) {
-    setBookmarkCount((prev) => {
-      const delta = next.bookmarked === bookmarked ? 0 : next.bookmarked ? 1 : -1;
-      return Math.max(0, prev + delta);
-    });
-    setBookmarked(next.bookmarked);
+  async function handleBookmark() {
+    if (!user) {
+      requireAuth();
+      return;
+    }
+
+    try {
+      const next = await toggleRecipeBookmark(recipe.id, bookmarked);
+      setBookmarked(next.bookmarked);
+      if (typeof next.bookmarkCount === "number") {
+        setBookmarkCount(next.bookmarkCount);
+      }
+    } catch (error) {
+      console.error("북마크 토글 실패", error);
+    }
+  }
+
+  async function handleLike() {
+    if (!user) {
+      requireAuth();
+      return;
+    }
+
+    try {
+      const next = await toggleRecipeLike(recipe.id);
+      setLiked(next.liked);
+      if (typeof next.likeCount === "number") {
+        setLikeCount(next.likeCount);
+      }
+    } catch (error) {
+      console.error("좋아요 토글 실패", error);
+    }
   }
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1">
-        <RecipeCardBookmarkButton
-          recipeId={recipe.id}
-          marked={bookmarked}
-          count={bookmarkCount ?? 0}
-          onChange={handleBookmarkChange}
-        />
-        <span className="text-sm text-slate-600">{bookmarkCount}</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <RecipeCardLikeButton
-          recipeId={recipe.id}
-          liked={liked}
-          count={likeCount ?? 0}
-          onChange={handleLikeChange}
-        />
-        <span className="text-sm text-slate-600">{likeCount}</span>
-      </div>
+      <button
+        type="button"
+        onClick={handleBookmark}
+        className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50"
+        aria-label={`북마크 ${formatCount(bookmarkCount)}`}
+      >
+        <Bookmark className={`h-5 w-5 text-amber-400 ${bookmarked ? "fill-amber-400" : ""}`} />
+        {formatCount(bookmarkCount)}
+      </button>
+      <button
+        type="button"
+        onClick={handleLike}
+        className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-red-200 hover:bg-red-50"
+        aria-label={`좋아요 ${formatCount(likeCount)}`}
+      >
+        <Heart className={`h-5 w-5 text-red-400 ${liked ? "fill-red-400" : ""}`} />
+        {formatCount(likeCount)}
+      </button>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { listComments } from "@/domain/comment/service";
 import type { CommentDisplayItem, CommentParentTypeEnum } from "@/domain/comment/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import CommentThread from "./CommentThread.client";
 
 type Props = {
@@ -11,6 +12,8 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
   pageParam?: string;
   limit?: number;
+  className?: string;
+  showTitle?: boolean;
 };
 
 export default async function CommentArea({
@@ -20,6 +23,8 @@ export default async function CommentArea({
   searchParams,
   pageParam = "commentPage",
   limit = 5,
+  className,
+  showTitle = false,
 }: Props) {
   const pageValue = searchParams?.[pageParam];
   const pageNumber = Number(pageValue);
@@ -44,7 +49,8 @@ export default async function CommentArea({
   }));
 
   return (
-    <section className="space-y-4 border-t border-border/60 pt-8">
+    <section className={cn("space-y-4 border-t border-border/60 pt-8", className)}>
+      {showTitle ? <h2 className="text-lg font-black text-zinc-950">댓글 {total}</h2> : null}
       <CommentThread
         parentType={parentType}
         parentId={parentId}
