@@ -189,7 +189,7 @@ function ComboGridCard({
           onSelect();
         }
       }}
-      className={`group overflow-hidden rounded-lg border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`group overflow-hidden rounded-lg border bg-white text-left shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md ${
         isActive ? "border-[#438e4d] ring-1 ring-[#438e4d]" : "border-zinc-200"
       }`}
     >
@@ -221,13 +221,13 @@ function ComboGridCard({
       </div>
 
       <div className="space-y-3 p-4">
-        <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-zinc-500">
+          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
             {initials(writerName)}
           </span>
-          <span>{writerName}</span>
-          <span>·</span>
-          <span>{formatAge(combo.createdAt)}</span>
+          <span className="truncate">{writerName}</span>
+          <span className="shrink-0">·</span>
+          <span className="shrink-0">{formatAge(combo.createdAt)}</span>
         </div>
 
         <div className="flex items-center justify-between text-xs text-zinc-500">
@@ -302,7 +302,7 @@ function ComboPreviewPanel({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-5 px-5 pt-5">
+      <div className="flex flex-1 flex-col gap-5 px-5 py-5">
         <div>
           <h2 className="line-clamp-1 text-xl font-black text-zinc-950">{combo.title}</h2>
           <div className="mt-2 flex items-center gap-2 text-sm font-medium text-zinc-500">
@@ -355,7 +355,7 @@ function ComboPreviewPanel({
 
         <div className="min-h-0">
           <h3 className="text-sm font-bold text-zinc-950">구성 레시피</h3>
-          <div className="mt-3 max-h-[156px] space-y-2 overflow-y-auto overscroll-contain pr-1">
+          <div className="mt-3 h-[156px] space-y-2 overflow-y-auto overscroll-contain pr-1">
             {activeItems.length ? (
               activeItems.map((item, index) => {
                 const title = itemTitle(item);
