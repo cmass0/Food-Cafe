@@ -24,7 +24,7 @@ export async function POST(req: Request, props: contentParams) {
     if (error) return respondWithSupabaseError(error);
     if (!bookmarkdata || bookmarkdata.length === 0 || !bookmarkdata[0]) return notFound();
     return json(
-      { bookmarked: bookmarkdata[0].bookmarked, bookmarkcount: bookmarkdata[0].bookmark_count },
+      { bookmarked: bookmarkdata[0].bookmarked, bookmarkCount: bookmarkdata[0].bookmark_count },
       200
     );
   } catch (error) {
