@@ -83,6 +83,7 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     timeMinutes: row.time_minutes ?? null,
     servings: row.servings ?? null,
     likeCount: row.like_count,
+    commentCount: row.comment_count,
     bookmarkCount: row.bookmark_count,
     viewCount: row.view_count,
     lastLikedAt: row.last_liked_at,

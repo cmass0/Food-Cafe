@@ -332,6 +332,7 @@ export type Database = {
       recipes: {
         Row: {
           bookmark_count: number
+          comment_count: number
           category: string | null
           created_at: string
           difficulty: string | null
@@ -357,6 +358,7 @@ export type Database = {
         }
         Insert: {
           bookmark_count?: number
+          comment_count?: number
           category?: string | null
           created_at?: string
           difficulty?: string | null
@@ -382,6 +384,7 @@ export type Database = {
         }
         Update: {
           bookmark_count?: number
+          comment_count?: number
           category?: string | null
           created_at?: string
           difficulty?: string | null

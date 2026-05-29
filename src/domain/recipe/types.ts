@@ -22,6 +22,7 @@ export interface Recipe {
   timeMinutes: number | null;
   servings?: number | null;
   likeCount: number;
+  commentCount: number;
   viewCount: number;
   writerUid: string | null;
   writerName: string | null;
