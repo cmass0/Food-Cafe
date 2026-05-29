@@ -85,12 +85,10 @@ export default function RankingGrid({ items, hrefPrefix }: RankingGridProps) {
               ) : (
                 <p className="text-xs text-muted-foreground">{item.writerName ?? "Unknown"}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-3 w-3 fill-red-400 text-red-400" /> {item.likeCount}
-                  <Eye className="h-3 w-3 text-muted-foreground" /> {item.viewCount}
-                </div>
-              </p>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Heart className="h-3 w-3 fill-red-400 text-red-400" /> {item.likeCount}
+                <Eye className="h-3 w-3 text-muted-foreground" /> {item.viewCount}
+              </div>
             </div>
           </Card>
         );
