@@ -1,7 +1,6 @@
 import Navbar from "@/component/navbar/nav-bar";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-import "react-quill/dist/quill.snow.css";
 import "./globals.css";
 import Providers from "./providers";
 
