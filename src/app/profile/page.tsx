@@ -7,7 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ProfileSearchForm from "./ProfileSearchForm";
-import EditSheet from "./edit/page";
+import EditSheet from "./edit/EditSheet";
 import ComboTabContainer from "./profiletab/combo/ComboTabContainer";
 import RecipeTabContainer from "./profiletab/recipe/RecipeTabContainer";
 
