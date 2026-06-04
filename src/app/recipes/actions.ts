@@ -20,6 +20,7 @@ function handleError(error: unknown): never {
 }
 
 export async function createRecipeAction(input: RecipeInsertDB) {
+  let recipeId: string;
   try {
     const supabase = await getServerSupabase();
     const {
@@ -34,12 +35,14 @@ export async function createRecipeAction(input: RecipeInsertDB) {
     }
 
     const recipe = await recipeService.createRecipe(supabase, input);
-    revalidatePath("/recipes");
-    revalidatePath("/search");
-    redirect(`/recipes/${recipe.id}`);
+    recipeId = recipe.id;
   } catch (error) {
     handleError(error);
   }
+
+  revalidatePath("/recipes");
+  revalidatePath("/search");
+  redirect(`/recipes/${recipeId}`);
 }
 
 export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
@@ -59,10 +62,11 @@ export async function deleteRecipeAction(id: string) {
   try {
     const supabase = await getServerSupabase();
     await recipeService.removeRecipe(supabase, id);
-    revalidatePath("/recipes");
-    revalidatePath("/search");
-    redirect("/recipes");
   } catch (error) {
     handleError(error);
   }
+
+  revalidatePath("/recipes");
+  revalidatePath("/search");
+  redirect("/recipes");
 }

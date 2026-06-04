@@ -1,7 +1,6 @@
 ﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { isRedirectError } from "next/dist/client/components/redirect";
 import { redirect } from "next/navigation";
 
 import * as postService from "@/domain/post/service";
@@ -126,6 +125,7 @@ export async function createPostAction(
     writer_uid: user.id,
   };
 
+  let postId: string;
   try {
     const post = await postService.createPost(supabase, payload, user.id);
     if (post.contentJson) {
@@ -139,16 +139,15 @@ export async function createPostAction(
         });
       }
     }
-    revalidatePath("/posts");
-    revalidatePath(`/posts/${post.id}`);
-    redirect(`/posts/${post.id}`);
+    postId = post.id;
   } catch (err) {
-    if (isRedirectError(err)) throw err;
     console.error("게시글 생성 실패", err);
     return { ok: false, message: DEFAULT_ERROR };
   }
 
-  return { ok: true };
+  revalidatePath("/posts");
+  revalidatePath(`/posts/${postId}`);
+  redirect(`/posts/${postId}`);
 }
 
 export async function updatePostAction(

@@ -20,6 +20,7 @@ function handleError(error: unknown): never {
 }
 
 export async function createComboAction(input: ComboInsertDb) {
+  let comboId: string;
   try {
     const supabase = await getServerSupabase();
     const {
@@ -34,12 +35,14 @@ export async function createComboAction(input: ComboInsertDb) {
     }
 
     const combo = await comboService.createCombo(supabase, input);
-    revalidatePath("/combos");
-    revalidatePath("/search");
-    redirect(`/combos/${combo.id}`);
+    comboId = combo.id;
   } catch (error) {
     handleError(error);
   }
+
+  revalidatePath("/combos");
+  revalidatePath("/search");
+  redirect(`/combos/${comboId}`);
 }
 
 export async function updateComboAction(id: string, patch: ComboUpdateDb) {
@@ -59,10 +62,11 @@ export async function deleteComboAction(id: string) {
   try {
     const supabase = await getServerSupabase();
     await comboService.removeCombo(supabase, id);
-    revalidatePath("/combos");
-    revalidatePath("/search");
-    redirect("/combos");
   } catch (error) {
     handleError(error);
   }
+
+  revalidatePath("/combos");
+  revalidatePath("/search");
+  redirect("/combos");
 }
