@@ -57,10 +57,10 @@ export function ImageUploadField({
                           variant="secondary"
                           size="icon"
                           aria-label={`이미지 ${index + 1} 삭제`}
-                          className="absolute right-2 top-2 h-7 w-7 rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
+                          className="absolute right-1.5 top-1.5 h-6 w-6 rounded-full bg-background/80 text-muted-foreground shadow-sm hover:bg-background hover:text-foreground"
                           onClick={() => handleRemoveImage(index)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     ))
