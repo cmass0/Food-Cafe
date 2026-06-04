@@ -83,6 +83,9 @@ export async function selectRecipeById(
   id: string
 ): Promise<RecipeRow | null> {
   const { data, error } = await client.from("recipes").select("*").eq("id", id).maybeSingle();
+  // id가 유효한 UUID 형식이 아니면 Postgres가 22P02 에러를 던진다.
+  // 이 경우 "없는 레시피"로 간주해 notFound(404)로 흘려보낸다.
+  if (error?.code === "22P02") return null;
   throwIfError(error);
   return data;
 }
