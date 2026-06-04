@@ -24,15 +24,15 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
 
   const handleSubmit = async (
     values: RecipeInsertDB,
-    extras?: { imageFile: File | string | null }
+    extras?: { imageFiles: Array<File | string> }
   ) => {
     if (!user) {
       openAuthModal({ next: `/recipes/edit?id=${recipeId}` });
       return;
     }
 
-    const imageFile = extras?.imageFile ?? null;
-    if (!imageFile) {
+    const imageFiles = extras?.imageFiles ?? [];
+    if (imageFiles.length === 0) {
       setError("이미지를 선택해 주세요.");
       return;
     }
@@ -42,22 +42,27 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
 
     try {
       // File이면 업로드, string이면 기존 URL 그대로 사용
-      let finalUrl: string | null = null;
-      if (imageFile instanceof File) {
-        const { publicUrl, signedUrl } = await uploadBucketImage(
-          "recipes",
-          user.id,
-          recipeId,
-          imageFile,
-          {
-            contentType: imageFile.type,
-            upsert: true,
+      const imageUrls = await Promise.all(
+        imageFiles.map(async (imageFile) => {
+          if (imageFile instanceof File) {
+            const { publicUrl, signedUrl } = await uploadBucketImage(
+              "recipes",
+              user.id,
+              recipeId,
+              imageFile,
+              {
+                contentType: imageFile.type,
+                upsert: true,
+              }
+            );
+            return publicUrl ?? signedUrl ?? null;
           }
-        );
-        finalUrl = publicUrl ?? signedUrl ?? null;
-      } else {
-        finalUrl = imageFile;
-      }
+
+          return imageFile;
+        })
+      );
+      const finalUrls = imageUrls.filter((url): url is string => Boolean(url));
+      const finalUrl = finalUrls[0] ?? null;
 
       if (!finalUrl) {
         throw new Error("이미지를 가져오지 못했습니다.");
@@ -67,8 +72,12 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
         title: values.title,
         summary: values.summary,
         steps: values.steps,
+        ingredients: values.ingredients,
         image: finalUrl,
+        images: finalUrls,
         tags: values.tags,
+        tools: values.tools,
+        tools_required: values.tools_required,
         category: values.category,
         difficulty: values.difficulty,
         time_minutes: values.time_minutes,

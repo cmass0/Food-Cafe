@@ -25,6 +25,14 @@ export function normaliseTextArray(value: string[] | null | undefined): string[]
   return value.filter((item) => typeof item === "string" && item.length > 0);
 }
 
+export function normaliseImageArray(
+  images: string[] | null | undefined,
+  fallback?: string | null
+): string[] {
+  const result = normaliseTextArray(images);
+  if (result.length > 0) return result;
+  return fallback ? [fallback] : [];
+}
 
 // json 형태로 저장된 재료목록을 RecipeIngredient 배열로 변환
 export function toArrayIngredient(value: unknown): RecipeIngredient[] {
@@ -75,6 +83,7 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     steps: toArraySteps(row.steps),
     ingredients: toArrayIngredient(row.ingredients),
     image: row.image,
+    images: normaliseImageArray(row.images, row.image),
     category: row.category,
     tags: normaliseTextArray(row.tags),
     tools: row.tools ?? null,

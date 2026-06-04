@@ -338,6 +338,7 @@ export type Database = {
           difficulty: string | null
           id: string
           image: string | null
+          images: string[]
           ingredients: Json
           last_liked_at: string | null
           like_count: number
@@ -364,6 +365,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           image?: string | null
+          images?: string[]
           ingredients?: Json
           last_liked_at?: string | null
           like_count?: number
@@ -390,6 +392,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           image?: string | null
+          images?: string[]
           ingredients?: Json
           last_liked_at?: string | null
           like_count?: number

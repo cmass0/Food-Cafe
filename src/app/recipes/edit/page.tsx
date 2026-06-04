@@ -19,6 +19,7 @@ export default async function RecipeEditPage(props: { searchParams: Promise<{ id
     summary: recipe.summary || "",
     steps: recipe.steps || [],
     image: recipe.image || null,
+    images: recipe.images,
     tags: recipe.tags,
     ingredients: recipe.ingredients || [],
     category: recipe.category || "",

@@ -1,6 +1,11 @@
 ﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
 
+const imageListSchema = z
+  .array(z.string().trim().min(1).max(2048, "이미지 경로는 2048자 이하만 가능합니다."))
+  .max(10, "이미지는 최대 10장까지 추가할 수 있습니다.")
+  .optional();
+
 const ingredientItemSchema = z
   .object({
     name: z.string().trim().min(1, "재료명을 입력해 주세요.").max(200),
@@ -37,6 +42,7 @@ export const recipeInsertSchema = z.object({
     .min(1, "재료를 한 개 이상 입력해 주세요.")
     .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
   image: imageFieldSchema,
+  images: imageListSchema,
   category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
   tags: z.array(tagSchema).max(10, "태그는 최대 10개까지 추가할 수 있습니다.").optional(),
   tools: z
@@ -66,8 +72,14 @@ const imageFormSchema = z
   .nullable()
   .optional();
 
-export const recipeFormSchema = recipeInsertSchema.omit({ image: true, id: true }).extend({
+const imageFilesFormSchema = z
+  .array(z.union([z.instanceof(File), z.string().min(1)]))
+  .max(10, "이미지는 최대 10장까지 추가할 수 있습니다.")
+  .optional();
+
+export const recipeFormSchema = recipeInsertSchema.omit({ image: true, images: true, id: true }).extend({
   imageFile: imageFormSchema,
+  imageFiles: imageFilesFormSchema,
 });
 
 export const recipeUpdateSchema = z
@@ -84,6 +96,7 @@ export const recipeUpdateSchema = z
       .min(1, "재료를 한 개 이상 입력해 주세요.")
       .optional(),
     image: imageFieldSchema,
+    images: imageListSchema,
 
     category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),

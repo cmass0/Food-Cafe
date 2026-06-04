@@ -15,9 +15,17 @@ import { IngredientsFields } from "./form-sections/IngredientsFields";
 import { StepsFields } from "./form-sections/StepsFields";
 import { SummaryField } from "./form-sections/SummaryField";
 
+type ImageItem = {
+  value: File | string;
+  preview: string;
+};
+
 type RecipeFormProps = {
   defaultValues?: Partial<RecipeInsertDB>;
-  onSubmit: (values: RecipeInsertDB, extras?: { imageFile: File | string | null }) => Promise<void>;
+  onSubmit: (
+    values: RecipeInsertDB,
+    extras?: { imageFiles: Array<File | string> }
+  ) => Promise<void>;
   submitLabel?: string;
 };
 
@@ -58,9 +66,14 @@ export default function RecipeForm({
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [toolsInput, setToolsInput] = useState((defaultValues?.tools ?? []).join(", "));
   // 기존 이미지 URL이 있으면 초기 미리보기로 설정
-  const existingImage = defaultValues?.image;
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    typeof existingImage === "string" ? existingImage : null
+  const existingImages =
+    defaultValues?.images?.length
+      ? defaultValues.images
+      : typeof defaultValues?.image === "string"
+        ? [defaultValues.image]
+        : [];
+  const [imageItems, setImageItems] = useState<ImageItem[]>(
+    existingImages.map((image) => ({ value: image, preview: image }))
   );
 
   // 폼 초기값 설정
@@ -77,7 +90,8 @@ export default function RecipeForm({
       { name: "", amount: "", unit: "g", unitCustom: "" },
     ],
     steps: defaultValues?.steps ?? [{ description: "" }],
-    imageFile: defaultValues?.image ?? null, // 기존 이미지 URL 또는 null
+    imageFile: existingImages[0] ?? null, // 기존 대표 이미지 URL 또는 null
+    imageFiles: existingImages,
   };
 
   const form = useForm<FormValues>({
@@ -91,6 +105,12 @@ export default function RecipeForm({
   const summaryLength = (form.watch("summary") ?? "").length;
   const showSubmitError =
     form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
+
+  const syncImageValues = (items: ImageItem[]) => {
+    const values = items.map((item) => item.value);
+    form.setValue("imageFile", values[0] ?? null, { shouldValidate: true });
+    form.setValue("imageFiles", values, { shouldValidate: true });
+  };
 
   // 폼 제출 처리
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -121,24 +141,42 @@ export default function RecipeForm({
       time_minutes: values.time_minutes,
       servings: values.servings,
     };
-    const imageFile = values.imageFile as File | string | null;
-    await onSubmit(payload, { imageFile });
+    const imageFiles = (values.imageFiles ?? []) as Array<File | string>;
+    await onSubmit(payload, { imageFiles });
   });
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      // 파일 선택 취소 시 기존 이미지로 복원
-      const currentImage = form.getValues("imageFile");
-      if (typeof currentImage !== "string") {
-        form.setValue("imageFile", defaultValues?.image ?? null, { shouldValidate: true });
-      }
-      setImagePreview(typeof defaultValues?.image === "string" ? defaultValues.image : null);
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
       return;
     }
     form.clearErrors("imageFile");
-    form.setValue("imageFile", file, { shouldValidate: true });
-    setImagePreview(URL.createObjectURL(file));
+    const availableSlots = Math.max(10 - imageItems.length, 0);
+    const filesToAdd = files.slice(0, availableSlots);
+    if (filesToAdd.length === 0) {
+      event.currentTarget.value = "";
+      return;
+    }
+
+    const nextItems = [
+      ...imageItems,
+      ...filesToAdd.map((file) => ({ value: file, preview: URL.createObjectURL(file) })),
+    ];
+
+    setImageItems(nextItems);
+    syncImageValues(nextItems);
+    event.currentTarget.value = "";
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const target = imageItems[index];
+    if (target?.preview.startsWith("blob:")) {
+      URL.revokeObjectURL(target.preview);
+    }
+
+    const nextItems = imageItems.filter((_, itemIndex) => itemIndex !== index);
+    setImageItems(nextItems);
+    syncImageValues(nextItems);
   };
 
   return (
@@ -164,8 +202,9 @@ export default function RecipeForm({
             />
             <ImageUploadField
               form={form}
-              imagePreview={imagePreview}
+              imagePreviews={imageItems.map((item) => item.preview)}
               handleFileChange={handleFileChange}
+              handleRemoveImage={handleRemoveImage}
             />
             <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
             <StepsFields form={form} stepsArray={stepsArray} />

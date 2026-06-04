@@ -14,6 +14,7 @@ export interface Recipe {
   steps: RecipeStep[];
   ingredients: RecipeIngredient[];
   image: string | null;
+  images: string[];
   category: string | null;
   tags: string[];
   tools: string[] | null;
@@ -81,6 +82,7 @@ export type RecipeInsertDB = {
   steps: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;
+  images?: string[];
   category?: string | null;
   tags?: string[];
   tools?: string[] | null;
@@ -100,6 +102,7 @@ export type RecipeUpdateDB = {
   steps?: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;
+  images?: string[];
   category?: string | null;
   tags?: string[];
   tools?: string[] | null;

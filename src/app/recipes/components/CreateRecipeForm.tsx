@@ -20,16 +20,17 @@ export default function CreateRecipeForm() {
 
   const handleSubmit = async (
     values: RecipeInsertDB,
-    extras?: { imageFile: File | string | null }
+    extras?: { imageFiles: Array<File | string> }
   ) => {
     if (!user) {
       openAuthModal({ next: "/recipes/new" });
       return;
     }
 
-    const imageFile = extras?.imageFile ?? null;
+    const imageFiles = extras?.imageFiles ?? [];
+    const uploadFiles = imageFiles.filter((imageFile): imageFile is File => imageFile instanceof File);
 
-    if (!imageFile || !(imageFile instanceof File)) {
+    if (uploadFiles.length === 0) {
       setError("대표 이미지 파일을 선택해주세요.");
       return;
     }
@@ -39,18 +40,24 @@ export default function CreateRecipeForm() {
 
     try {
       const recipeId = crypto.randomUUID();
-      const { publicUrl, signedUrl } = await uploadBucketImage(
-        "recipes",
-        user.id,
-        recipeId,
-        imageFile,
-        {
-          contentType: imageFile.type,
-          upsert: false,
-        }
+      const uploadedImages = await Promise.all(
+        uploadFiles.map(async (imageFile) => {
+          const { publicUrl, signedUrl } = await uploadBucketImage(
+            "recipes",
+            user.id,
+            recipeId,
+            imageFile,
+            {
+              contentType: imageFile.type,
+              upsert: false,
+            }
+          );
+          return publicUrl ?? signedUrl ?? null;
+        })
       );
-      const finalUrl = publicUrl ?? signedUrl ?? null;
-      if (!finalUrl) {
+      const imageUrls = uploadedImages.filter((url): url is string => Boolean(url));
+      const representativeImage = imageUrls[0] ?? null;
+      if (!representativeImage) {
         throw new Error("이미지 URL 생성에 실패했습니다.");
       }
 
@@ -60,7 +67,8 @@ export default function CreateRecipeForm() {
         writer_uid: user.id,
         writer_email: user.email,
         id: recipeId,
-        image: finalUrl,
+        image: representativeImage,
+        images: imageUrls,
       });
 
       router.push(`/recipes/${created.id}`);

@@ -4,10 +4,8 @@ import {
   ChevronRight,
   Clock3,
   Lightbulb,
-  Link2,
   MoreHorizontal,
   Quote,
-  Share2,
   Sprout,
   Users,
 } from "lucide-react";
@@ -20,7 +18,6 @@ import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import type { Recipe } from "../types";
-import { CopyClipButton } from "./RecipeClip";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -50,6 +47,11 @@ function uniqueChips(recipe: Recipe) {
   return Array.from(new Set(chips.map((chip) => chip.trim()).filter(Boolean)));
 }
 
+function recipeImages(recipe: Recipe) {
+  if (recipe.images.length > 0) return recipe.images;
+  return recipe.image ? [recipe.image] : [];
+}
+
 export default function RecipeDetail({
   recipe,
   isAuthor = false,
@@ -58,11 +60,13 @@ export default function RecipeDetail({
   isAuthor?: boolean;
 }) {
   const chips = uniqueChips(recipe);
+  const images = recipeImages(recipe);
+  const mainImage = images[0] ?? null;
   const steps =
     recipe.steps?.map((step) => step.description.trim()).filter((step) => step.length > 0) ?? [];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "";
   const currentUrl = `${baseUrl}/recipes/${recipe.id}`;
-  const shareImageUrl = recipe.image ?? "";
+  const shareImageUrl = mainImage ?? "";
   const timeLabel = formatMinutes(recipe.timeMinutes);
   const writerName = recipe.writerName ?? "무명 셰프";
 
@@ -83,9 +87,9 @@ export default function RecipeDetail({
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
         <div className="space-y-5">
           <div className="relative aspect-[4/2.7] overflow-hidden rounded-lg bg-emerald-50">
-            {recipe.image ? (
+            {mainImage ? (
               <Image
-                src={recipe.image}
+                src={mainImage}
                 alt={recipe.title}
                 fill
                 className="object-cover"
@@ -109,40 +113,29 @@ export default function RecipeDetail({
             </span>
           </div>
 
-          <div className="hidden items-center gap-4 sm:flex">
-            <button
-              type="button"
-              aria-label="이전 이미지"
-              className="grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm"
-            >
-              <ChevronRight className="h-5 w-5 rotate-180" />
-            </button>
-            <div className="grid flex-1 grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, index) => (
+          {images.length > 1 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {images.map((image, index) => (
                 <div
-                  key={index}
+                  key={`${image}-${index}`}
                   className="relative aspect-[4/2.5] overflow-hidden rounded-md border border-zinc-200 bg-emerald-50"
                 >
-                  {recipe.image ? (
-                    <Image
-                      src={recipe.image}
-                      alt={`${recipe.title} 미리보기 ${index + 1}`}
-                      fill
-                      sizes="120px"
-                      className="object-cover"
-                    />
+                  <Image
+                    src={image}
+                    alt={`${recipe.title} 미리보기 ${index + 1}`}
+                    fill
+                    sizes="160px"
+                    className="object-cover"
+                  />
+                  {index === 0 ? (
+                    <span className="absolute left-2 top-2 rounded bg-white/90 px-2 py-0.5 text-[10px] font-bold text-zinc-700">
+                      대표
+                    </span>
                   ) : null}
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              aria-label="다음 이미지"
-              className="grid h-11 w-11 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+          ) : null}
         </div>
 
         <div className="flex flex-col justify-center">
@@ -215,10 +208,6 @@ export default function RecipeDetail({
 
           <div className="mt-9 flex flex-wrap items-center justify-between gap-4">
             <LikeBookmarkButton recipe={recipe} />
-            <div className="flex items-center gap-3 text-sm font-medium text-zinc-600">
-              <span>공유하기</span>
-              <Share2 className="h-4 w-4" />
-            </div>
           </div>
 
           {isAuthor ? (
@@ -255,36 +244,40 @@ export default function RecipeDetail({
           </h2>
 
           <ol className="mt-6 space-y-4">
-            {steps.map((step, index) => (
-              <li key={`${index}-${step.slice(0, 12)}`} className="grid gap-4 sm:grid-cols-[44px_1fr]">
-                <div className="flex justify-center sm:block">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
-                    {index + 1}
-                  </span>
-                </div>
-                <div className="grid gap-5 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm sm:grid-cols-[190px_1fr] sm:items-center">
-                  <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-emerald-50">
-                    {recipe.image ? (
-                      <Image
-                        src={recipe.image}
-                        alt={`Step ${index + 1}`}
-                        fill
-                        sizes="190px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs font-bold text-emerald-700">
-                        Step {index + 1}
-                      </div>
-                    )}
+            {steps.map((step, index) => {
+              const stepImage = images.length > 0 ? images[index % images.length] : null;
+
+              return (
+                <li key={`${index}-${step.slice(0, 12)}`} className="grid gap-4 sm:grid-cols-[44px_1fr]">
+                  <div className="flex justify-center sm:block">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
+                      {index + 1}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="font-black text-zinc-950">Step {index + 1}</h3>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600">{step}</p>
+                  <div className="grid gap-5 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm sm:grid-cols-[190px_1fr] sm:items-center">
+                    <div className="relative aspect-[16/9] overflow-hidden rounded-md bg-emerald-50">
+                      {stepImage ? (
+                        <Image
+                          src={stepImage}
+                          alt={`Step ${index + 1}`}
+                          fill
+                          sizes="190px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-emerald-700">
+                          Step {index + 1}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-black text-zinc-950">Step {index + 1}</h3>
+                      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600">{step}</p>
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ol>
         </section>
       ) : null}
@@ -297,12 +290,12 @@ export default function RecipeDetail({
               셰프의 팁
             </h2>
             <p className="text-sm leading-7 text-zinc-700">
-              기호에 따라 재료의 양을 조절하면 더 취향에 맞는 맛을 만들 수 있어요.
+              기호에 따라 재료의 양을 조절하면 내 취향에 맞는 맛을 만들 수 있어요.
             </p>
           </div>
-          {recipe.image ? (
+          {mainImage ? (
             <Image
-              src={recipe.image}
+              src={mainImage}
               alt=""
               fill
               sizes="600px"
@@ -324,13 +317,6 @@ export default function RecipeDetail({
             </span>
             카카오톡으로 공유
           </KakaoShareButton>
-          <CopyClipButton
-            currentUrl={currentUrl}
-            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-          >
-            <Link2 className="h-5 w-5" />
-            URL 복사
-          </CopyClipButton>
         </div>
       </section>
     </article>
