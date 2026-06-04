@@ -36,6 +36,7 @@ export const recipeInsertSchema = z.object({
     .min(1, "제목을 입력해 주세요.")
     .max(200, "제목은 200자 이하만 가능합니다."),
   summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+  chef_tip: z.string().trim().max(500, "셰프의 팁은 500자 이하만 가능합니다.").nullable().optional(),
   steps: z.array(recipeStepSchema).min(1, "단계를 한 개 이상 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
@@ -90,6 +91,7 @@ export const recipeUpdateSchema = z
       .min(1, "제목을 입력해 주세요.")
       .max(200, "제목은 200자 이하만 가능합니다."),
     summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+    chef_tip: z.string().trim().max(500, "셰프의 팁은 500자 이하만 가능합니다.").nullable().optional(),
     steps: z.array(recipeStepSchema),
     ingredients: z
       .array(ingredientItemSchema)

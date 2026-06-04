@@ -80,6 +80,7 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     id: row.id,
     title: row.title,
     summary: row.summary,
+    chefTip: row.chef_tip ?? null,
     steps: toArraySteps(row.steps),
     ingredients: toArrayIngredient(row.ingredients),
     image: row.image,

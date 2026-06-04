@@ -71,6 +71,7 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
       await updateRecipeAction(recipeId, {
         title: values.title,
         summary: values.summary,
+        chef_tip: values.chef_tip,
         steps: values.steps,
         ingredients: values.ingredients,
         image: finalUrl,

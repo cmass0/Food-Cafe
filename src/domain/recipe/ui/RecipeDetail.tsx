@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Clock3,
   Lightbulb,
+  Link2,
   MoreHorizontal,
   Quote,
   Sprout,
@@ -18,6 +19,7 @@ import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import type { Recipe } from "../types";
+import { CopyClipButton } from "./RecipeClip";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -283,26 +285,28 @@ export default function RecipeDetail({
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="relative overflow-hidden rounded-lg border border-emerald-100 bg-emerald-50 p-6">
-          <div className="relative z-10 max-w-[58%] space-y-3">
-            <h2 className="flex items-center gap-2 text-lg font-black text-emerald-800">
-              <Lightbulb className="h-5 w-5" />
-              셰프의 팁
-            </h2>
-            <p className="text-sm leading-7 text-zinc-700">
-              기호에 따라 재료의 양을 조절하면 내 취향에 맞는 맛을 만들 수 있어요.
-            </p>
+        {recipe.chefTip ? (
+          <div className="relative overflow-hidden rounded-lg border border-emerald-100 bg-emerald-50 p-6">
+            <div className="relative z-10 max-w-[58%] space-y-3">
+              <h2 className="flex items-center gap-2 text-lg font-black text-emerald-800">
+                <Lightbulb className="h-5 w-5" />
+                셰프의 팁
+              </h2>
+              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">{recipe.chefTip}</p>
+            </div>
+            {mainImage ? (
+              <Image
+                src={mainImage}
+                alt=""
+                fill
+                sizes="600px"
+                className="object-cover opacity-20"
+              />
+            ) : null}
           </div>
-          {mainImage ? (
-            <Image
-              src={mainImage}
-              alt=""
-              fill
-              sizes="600px"
-              className="object-cover opacity-20"
-            />
-          ) : null}
-        </div>
+        ) : (
+          <div />
+        )}
 
         <div className="grid gap-4">
           <KakaoShareButton
@@ -317,6 +321,13 @@ export default function RecipeDetail({
             </span>
             카카오톡으로 공유
           </KakaoShareButton>
+          <CopyClipButton
+            currentUrl={currentUrl}
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+          >
+            <Link2 className="h-5 w-5" />
+            URL 복사
+          </CopyClipButton>
         </div>
       </section>
     </article>

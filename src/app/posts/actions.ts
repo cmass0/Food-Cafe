@@ -1,7 +1,7 @@
 ﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { isRedirectError } from "next/dist/client/components/redirect";
 import { redirect } from "next/navigation";
 
 import * as postService from "@/domain/post/service";

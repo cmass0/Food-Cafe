@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { BasicInfoFields } from "./form-sections/BasicInfoFields";
+import { ChefTipField } from "./form-sections/ChefTipField";
 import { ImageUploadField } from "./form-sections/ImageUploadField";
 import { IngredientsFields } from "./form-sections/IngredientsFields";
 import { StepsFields } from "./form-sections/StepsFields";
@@ -80,6 +81,7 @@ export default function RecipeForm({
   const defaultValuesForForm: FormValues = {
     title: defaultValues?.title ?? "",
     summary: defaultValues?.summary ?? "",
+    chef_tip: defaultValues?.chef_tip ?? null,
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     tools: defaultValues?.tools ?? [],
@@ -103,6 +105,7 @@ export default function RecipeForm({
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });
   const ingredientsArray = useFieldArray({ control: form.control, name: "ingredients" });
   const summaryLength = (form.watch("summary") ?? "").length;
+  const chefTipLength = (form.watch("chef_tip") ?? "").length;
   const showSubmitError =
     form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
 
@@ -131,6 +134,7 @@ export default function RecipeForm({
     const payload: RecipeInsertDB = {
       title: values.title,
       summary: values.summary?.trim() ? values.summary.trim() : null,
+      chef_tip: values.chef_tip?.trim() ? values.chef_tip.trim() : null,
       steps: buildRecipeListItem(values.steps),
       category: values.category?.trim() ? values.category.trim() : "",
       tags: tags,
@@ -209,6 +213,7 @@ export default function RecipeForm({
             <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
             <StepsFields form={form} stepsArray={stepsArray} />
             <SummaryField form={form} summaryLength={summaryLength} />
+            <ChefTipField form={form} chefTipLength={chefTipLength} />
           </CardContent>
         </Card>
 

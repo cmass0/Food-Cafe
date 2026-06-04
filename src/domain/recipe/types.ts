@@ -11,6 +11,7 @@ export interface Recipe {
   id: string;
   title: string;
   summary: string | null;
+  chefTip: string | null;
   steps: RecipeStep[];
   ingredients: RecipeIngredient[];
   image: string | null;
@@ -79,6 +80,7 @@ export type RecipeInsertDB = {
   id?: string;
   title: string;
   summary?: string | null;
+  chef_tip?: string | null;
   steps: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;
@@ -99,6 +101,7 @@ export type RecipeInsertDB = {
 export type RecipeUpdateDB = {
   title?: string;
   summary?: string | null;
+  chef_tip?: string | null;
   steps?: RecipeStep[];
   ingredients?: RecipeIngredient[];
   image?: string | null;

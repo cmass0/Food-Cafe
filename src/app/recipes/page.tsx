@@ -115,7 +115,12 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
   return (
     <article className="group overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative aspect-[4/2.5] overflow-hidden bg-emerald-50">
-        <Link href={`/recipes/${recipe.id}`} prefetch={false} aria-label={`${recipe.title} 상세 보기`}>
+        <Link
+          href={`/recipes/${recipe.id}`}
+          prefetch={false}
+          aria-label={`${recipe.title} 상세 보기`}
+          className="relative block h-full w-full"
+        >
           {recipe.image ? (
             <Image
               src={recipe.image}

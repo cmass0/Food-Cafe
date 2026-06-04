@@ -17,6 +17,7 @@ export default async function RecipeEditPage(props: { searchParams: Promise<{ id
   const defaultValues = {
     title: recipe.title,
     summary: recipe.summary || "",
+    chef_tip: recipe.chefTip || "",
     steps: recipe.steps || [],
     image: recipe.image || null,
     images: recipe.images,

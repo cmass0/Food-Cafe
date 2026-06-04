@@ -13,8 +13,7 @@ export function CopyClipButton({ currentUrl, className, children }: Props) {
   const copyClip = async () => {
     try {
       await navigator.clipboard.writeText(currentUrl);
-
-      alert("URL이 복사되었습니다");
+      alert("URL이 복사되었습니다.");
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -28,8 +27,8 @@ export function CopyClipButton({ currentUrl, className, children }: Props) {
       }
       type="button"
       onClick={copyClip}
-      aria-label="URL 공유"
-      title="URL 공유"
+      aria-label="URL 복사"
+      title="URL 복사"
     >
       {children ?? <ClipboardCopy className="h-6 w-6" />}
     </button>
