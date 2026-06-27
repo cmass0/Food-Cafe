@@ -1,16 +1,18 @@
 export async function throwApiError(res: Response): Promise<never> {
+  let message = res.statusText || `Request failed: ${res.status}`;
+
   try {
     const data = await res.json();
-    const message =
+    message =
       data?.details?.message ||
       data?.details?.hint ||
       data?.details ||
       data?.message ||
       data?.error ||
-      res.statusText ||
-      `Request failed: ${res.status}`;
-    throw new Error(message);
+      message;
   } catch {
-    throw new Error(res.statusText || `Request failed: ${res.status}`);
+    // Keep the default status message when the response is not JSON.
   }
+
+  throw new Error(message);
 }

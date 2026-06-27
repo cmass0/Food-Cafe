@@ -1,13 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getBrowserSupabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { toggleFollow } from "@/domain/follow/api";
 import * as React from "react";
 
 type Props = {
   targetUserId: string;
   initialIsFollowing: boolean;
+  // 카운트 표시를 같은 클라이언트 트리에서 관리하기 위해 콜백으로 위임
+  // 응답에 카운트가 포함되므로 부모 상태에 그대로 반영하면 router.refresh() 불필요
+  onCountsChange?: (counts: { followerCount: number; followingCount: number }) => void;
   canFollow?: boolean;
   className?: string;
 };
@@ -15,10 +17,10 @@ type Props = {
 export default function FollowButton({
   targetUserId,
   initialIsFollowing,
+  onCountsChange,
   canFollow = true,
   className,
 }: Props) {
-  const router = useRouter();
   const [isFollowing, setIsFollowing] = React.useState(initialIsFollowing);
   const [isPending, startTransition] = React.useTransition();
 
@@ -26,21 +28,16 @@ export default function FollowButton({
     if (!canFollow || isPending) return;
 
     startTransition(async () => {
-      const supabase = getBrowserSupabase();
-      const { data, error } = await supabase.rpc("toggle_follow", {
-        p_target_id: targetUserId,
-      });
-
-      if (error) {
+      try {
+        const { following, followerCount, followingCount } = await toggleFollow(targetUserId);
+        setIsFollowing(following);
+        // 부모(프로필 헤더)가 follower/following 카운트를 실시간으로 갱신할 수 있도록 전달
+        onCountsChange?.({ followerCount, followingCount });
+      } catch (error) {
         console.error("[follow] toggle failed:", error);
-        return;
       }
-
-      setIsFollowing(Boolean(data));
-      // 팔로워/팔로잉 카운트가 서버 컴포넌트에 표시되므로 refresh로 최신값 반영
-      router.refresh();
     });
-  }, [canFollow, isPending, router, targetUserId]);
+  }, [canFollow, isPending, onCountsChange, targetUserId]);
 
   const buttonLabel = isFollowing ? "언팔로우" : "팔로우";
 

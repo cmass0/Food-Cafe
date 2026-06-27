@@ -332,9 +332,9 @@ export type Database = {
       recipes: {
         Row: {
           bookmark_count: number
-          chef_tip: string | null
           comment_count: number
           category: string | null
+          chef_tip: string | null
           created_at: string
           difficulty: string | null
           id: string
@@ -360,9 +360,9 @@ export type Database = {
         }
         Insert: {
           bookmark_count?: number
-          chef_tip?: string | null
           comment_count?: number
           category?: string | null
+          chef_tip?: string | null
           created_at?: string
           difficulty?: string | null
           id?: string
@@ -388,9 +388,9 @@ export type Database = {
         }
         Update: {
           bookmark_count?: number
-          chef_tip?: string | null
           comment_count?: number
           category?: string | null
+          chef_tip?: string | null
           created_at?: string
           difficulty?: string | null
           id?: string
@@ -551,6 +551,7 @@ export type Database = {
         Returns: {
           bookmark_count: number
           category: string | null
+          chef_tip: string | null
           created_at: string
           difficulty: string | null
           id: string
@@ -624,7 +625,14 @@ export type Database = {
           bookmarked: boolean
         }[]
       }
-      toggle_follow: { Args: { p_target_id: string }; Returns: boolean }
+      toggle_follow: {
+        Args: { p_target_id: string }
+        Returns: {
+          following: boolean
+          follower_count: number
+          following_count: number
+        }[]
+      }
       uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
