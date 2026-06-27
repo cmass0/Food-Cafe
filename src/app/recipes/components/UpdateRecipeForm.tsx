@@ -41,7 +41,6 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
     setError(null);
 
     try {
-      // File이면 업로드, string이면 기존 URL 그대로 사용
       const imageUrls = await Promise.all(
         imageFiles.map(async (imageFile) => {
           if (imageFile instanceof File) {
@@ -78,7 +77,7 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
         images: finalUrls,
         tags: values.tags,
         tools: values.tools,
-        tools_required: values.tools_required,
+        tools_required: (values.tools?.length ?? 0) > 0,
         category: values.category,
         difficulty: values.difficulty,
         time_minutes: values.time_minutes,
@@ -88,7 +87,7 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
       router.push(`/recipes/${recipeId}`);
     } catch (err) {
       console.error("레시피 수정 과정에서 오류가 발생했습니다.", err);
-      setError("수정에 실패했습니다. 다시 시도해주세요.");
+      setError("수정에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setSubmitting(false);
     }

@@ -13,6 +13,13 @@ import {
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
+function parseRecipeSearchField(value: string | null): RecipeSearchField | undefined {
+  if (value === "tag" || value === "title" || value === "tag_title" || value === "writer") {
+    return value;
+  }
+  return undefined;
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -22,7 +29,7 @@ export async function GET(req: Request) {
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
     const search = url.searchParams.get("search") || undefined;
-    const searchField = (url.searchParams.get("searchField") as RecipeSearchField) || undefined;
+    const searchField = parseRecipeSearchField(url.searchParams.get("searchField"));
     const sortParam = url.searchParams.get("sort");
     const sort =
       sortParam === "recent" || sortParam === "like" || sortParam === "view"

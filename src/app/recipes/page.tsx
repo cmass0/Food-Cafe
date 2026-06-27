@@ -36,6 +36,13 @@ const SEARCH_FIELD_OPTIONS: { value: RecipeSearchField; label: string }[] = [
 
 const DEFAULT_LIMIT = 12;
 
+function parseRecipeSearchField(value: string | null): RecipeSearchField {
+  if (value === "tag" || value === "title" || value === "tag_title" || value === "writer") {
+    return value;
+  }
+  return "title";
+}
+
 function formatCount(value: number | null | undefined): string {
   return new Intl.NumberFormat("ko-KR").format(value ?? 0);
 }
@@ -253,7 +260,7 @@ function RecipesPageInner() {
   const pageParam = searchParams.get("page");
   const limitParam = searchParams.get("limit");
   const searchQuery = searchParams.get("search");
-  const fieldParam = (searchParams.get("searchField") as RecipeSearchField) ?? "title";
+  const fieldParam = parseRecipeSearchField(searchParams.get("searchField"));
 
   const [searchText, setSearchText] = useState(searchQuery ?? "");
   const [searchField, setSearchField] = useState<RecipeSearchField>(fieldParam);

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ChangeEvent } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { recipeFormSchema } from "../schema";
 import type { FormValues, IngredientUnit, RecipeInsertDB, RecipeStep } from "../types";
 
@@ -81,7 +81,7 @@ export default function RecipeForm({
   const defaultValuesForForm: FormValues = {
     title: defaultValues?.title ?? "",
     summary: defaultValues?.summary ?? "",
-    chef_tip: defaultValues?.chef_tip ?? null,
+    chef_tip: defaultValues?.chef_tip ?? "",
     category: defaultValues?.category ?? "",
     tags: defaultValues?.tags ?? [],
     tools: defaultValues?.tools ?? [],
@@ -104,8 +104,10 @@ export default function RecipeForm({
 
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });
   const ingredientsArray = useFieldArray({ control: form.control, name: "ingredients" });
-  const summaryLength = (form.watch("summary") ?? "").length;
-  const chefTipLength = (form.watch("chef_tip") ?? "").length;
+  const summaryValue = useWatch({ control: form.control, name: "summary" });
+  const chefTipValue = useWatch({ control: form.control, name: "chef_tip" });
+  const summaryLength = (summaryValue ?? "").length;
+  const chefTipLength = (chefTipValue ?? "").length;
   const showSubmitError =
     form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
 

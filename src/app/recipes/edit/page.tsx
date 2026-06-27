@@ -27,6 +27,7 @@ export default async function RecipeEditPage(props: { searchParams: Promise<{ id
     difficulty: recipe.difficulty || "",
     time_minutes: recipe.timeMinutes || 0,
     servings: recipe.servings || 0,
+    tools: recipe.tools || [],
   };
 
   return (

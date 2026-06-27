@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Clock3,
   Lightbulb,
-  Link2,
   MoreHorizontal,
   Quote,
   Sprout,
@@ -19,7 +18,6 @@ import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import type { Recipe } from "../types";
-import { CopyClipButton } from "./RecipeClip";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -71,6 +69,7 @@ export default function RecipeDetail({
   const shareImageUrl = mainImage ?? "";
   const timeLabel = formatMinutes(recipe.timeMinutes);
   const writerName = recipe.writerName ?? "무명 셰프";
+  const chefTip = recipe.chefTip?.trim();
 
   return (
     <article className="space-y-10">
@@ -285,14 +284,14 @@ export default function RecipeDetail({
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {recipe.chefTip ? (
+        {chefTip ? (
           <div className="relative overflow-hidden rounded-lg border border-emerald-100 bg-emerald-50 p-6">
             <div className="relative z-10 max-w-[58%] space-y-3">
               <h2 className="flex items-center gap-2 text-lg font-black text-emerald-800">
                 <Lightbulb className="h-5 w-5" />
                 셰프의 팁
               </h2>
-              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">{recipe.chefTip}</p>
+              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">{chefTip}</p>
             </div>
             {mainImage ? (
               <Image
@@ -321,13 +320,6 @@ export default function RecipeDetail({
             </span>
             카카오톡으로 공유
           </KakaoShareButton>
-          <CopyClipButton
-            currentUrl={currentUrl}
-            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-          >
-            <Link2 className="h-5 w-5" />
-            URL 복사
-          </CopyClipButton>
         </div>
       </section>
     </article>
