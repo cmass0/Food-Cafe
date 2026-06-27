@@ -1,6 +1,5 @@
-﻿"use client";
+"use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
@@ -17,22 +16,27 @@ type CommentThreadProps = {
   parentId: string;
   pageSize?: number;
   items: CommentDisplayItem[];
+  initialTotal: number;
+  showTitle: boolean;
   defaultWriterName?: string;
 };
 
 export default function CommentThread({
   parentType,
   parentId,
-  pageSize,
   items,
+  initialTotal,
+  showTitle,
 }: CommentThreadProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 목록과 카운트를 클라이언트 상태로 관리 — 응답값으로 즉시 갱신, router.refresh() 불필요
+  const [list, setList] = useState<CommentDisplayItem[]>(items);
+  const [total, setTotal] = useState(initialTotal);
 
   const { user, displayName } = useAuth();
   const { openAuthModal } = useAuthModal();
-  const router = useRouter();
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -49,14 +53,26 @@ export default function CommentThread({
     setSubmitting(true);
     setError(null);
     try {
-      await createComment({
+      const { comment, parentCommentCount } = await createComment({
         parentType,
         parentId,
         writerName: displayName || user.user_metadata?.name || user.email,
         content: content.trim(),
       });
+
+      // 응답으로 받은 새 댓글을 맨 앞에 추가, 카운트는 서버가 알려준 값으로 동기화
+      const newItem: CommentDisplayItem = {
+        id: comment.id,
+        writerName: comment.writerName,
+        writerUid: comment.writerUid,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        deletedAt: comment.deletedAt,
+      };
+      setList((prev) => [newItem, ...prev]);
+      setTotal(parentCommentCount);
       setContent("");
-      router.refresh();
     } catch (err) {
       console.error("Failed to create comment", err);
       setError("댓글을 작성하는 중 오류가 발생했습니다.");
@@ -67,7 +83,13 @@ export default function CommentThread({
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteComment(id);
+      const { parentCommentCount } = await deleteComment(id);
+      // 해당 댓글을 deleted_at 처리 (목록에서 완전히 제거하지 않고 "삭제됨" 표시)
+      const deletedAt = new Date().toISOString();
+      setList((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, deletedAt } : item))
+      );
+      setTotal(parentCommentCount);
     } catch (err) {
       console.error("Failed to delete comment", err);
       setError("댓글을 삭제하는 중 오류가 발생했습니다.");
@@ -76,6 +98,9 @@ export default function CommentThread({
 
   return (
     <section className="space-y-4 pt-4">
+      {showTitle ? (
+        <h2 className="text-lg font-black text-zinc-950">댓글 {total}</h2>
+      ) : null}
       <CommentForm
         content={content}
         submitting={submitting}
@@ -83,7 +108,7 @@ export default function CommentThread({
         onChange={setContent}
         onSubmit={handleSubmit}
       />
-      <CommentList items={items} onDelete={handleDelete} />
+      <CommentList items={list} onDelete={handleDelete} />
     </section>
   );
 }

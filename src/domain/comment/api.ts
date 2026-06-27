@@ -1,4 +1,8 @@
-import { CommentInsertInput } from "./types";
+import {
+  CommentDeleteResponse,
+  CommentInsertInput,
+  CommentMutationResponse,
+} from "./types";
 
 export async function listComments(
   params: { 
@@ -38,7 +42,9 @@ export async function getComment(id: string) {
   return json.data;
 }
 
-export async function createComment(body: CommentInsertInput) {
+// 응답: { comment, parentCommentCount }
+// like/bookmark와 동일하게 "응답에 새 카운트 포함"
+export async function createComment(body: CommentInsertInput): Promise<CommentMutationResponse> {
   const res = await fetch(`/api/comments`, {
     method: "POST",
     headers: {
@@ -50,7 +56,7 @@ export async function createComment(body: CommentInsertInput) {
     throw new Error(`Failed to create comment: ${res.status}`);
   }
   const json = await res.json();
-  return json.data;
+  return json.data as CommentMutationResponse;
 }
 
 export async function updateComment(id: string, body: unknown) {
@@ -69,16 +75,14 @@ export async function updateComment(id: string, body: unknown) {
 
 }
 
-export async function deleteComment(id: string) {
+// 응답: { parentType, parentId, parentCommentCount }
+export async function deleteComment(id: string): Promise<CommentDeleteResponse> {
   const res = await fetch(`/api/comments/${id}`, {
     method: "DELETE",
-  }); 
+  });
   if (!res.ok) {
     throw new Error(`Failed to delete comment: ${res.status}`);
   }
-  if(res.status === 204) {
-    return undefined;
-  }
   const json = await res.json();
-  return json.data;
+  return json.data as CommentDeleteResponse;
 }

@@ -85,15 +85,28 @@ export async function getComment(
   return row ? mapRowToComment(row) : null;
 }
 
+// 응답 표준: 댓글 자체 + 부모 entity의 새 comment_count
+// "Mutation은 새 카운트를 응답에 포함한다" 원칙에 맞춰 트리거가 갱신한 값을 같이 반환
+export type CommentMutationResult = {
+  comment: Comment;
+  parentCommentCount: number;
+};
+
 export async function createComment(
   client: SupabaseClient<Database>,
   writerUid: string,
   input: CommentInsertInput
-): Promise<Comment> {
+): Promise<CommentMutationResult> {
   const parsed = commentInsertSchema.parse({ ...(input as object), writerUid });
   const payload = buildInsertPayload(parsed);
   const row = await repository.insertComment(client, payload);
-  return mapRowToComment(row);
+  // 트리거가 부모 테이블의 comment_count를 이미 +1 해놓은 상태 — 그 값을 읽어 함께 반환
+  const parentCommentCount = await repository.selectParentCommentCount(
+    client,
+    row.parent_type,
+    row.parent_id
+  );
+  return { comment: mapRowToComment(row), parentCommentCount };
 }
 
 export async function updateComment(
@@ -115,7 +128,18 @@ export async function updateComment(
   return mapRowToComment(row);
 }
 
-export async function deleteComment(client: SupabaseClient<Database>, id: string): Promise<void> {
+// 삭제 응답: 갱신된 부모 카운트와 parent 정보
+// 트리거가 deleted_at 갱신을 감지해 카운트를 -1 한 직후 값을 읽어 반환
+export type CommentDeleteResult = {
+  parentType: "recipe" | "post" | "combo";
+  parentId: string;
+  parentCommentCount: number;
+};
+
+export async function deleteComment(
+  client: SupabaseClient<Database>,
+  id: string
+): Promise<CommentDeleteResult> {
   const {
     data: { user },
     error,
@@ -123,5 +147,19 @@ export async function deleteComment(client: SupabaseClient<Database>, id: string
   if (error) throw error;
   if (!user) throw new Error("로그인이 필요합니다");
 
+  // 부모 정보가 응답에 필요하므로 삭제 직전에 row를 한 번 조회
+  const target = await repository.selectCommentById(client, id);
+  if (!target) throw new Error("댓글을 찾을 수 없습니다.");
+
   await repository.deleteComment(client, id);
+  const parentCommentCount = await repository.selectParentCommentCount(
+    client,
+    target.parent_type,
+    target.parent_id
+  );
+  return {
+    parentType: target.parent_type,
+    parentId: target.parent_id,
+    parentCommentCount,
+  };
 }

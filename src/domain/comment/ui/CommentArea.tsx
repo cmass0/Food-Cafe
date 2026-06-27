@@ -50,12 +50,15 @@ export default async function CommentArea({
 
   return (
     <section className={cn("space-y-4 border-t border-border/60 pt-8", className)}>
-      {showTitle ? <h2 className="text-lg font-black text-zinc-950">댓글 {total}</h2> : null}
+      {/* key에 page를 포함 — 페이지 이동 시 CommentThread를 다시 mount해 SSR 데이터로 초기화 */}
       <CommentThread
+        key={`${parentId}-${currentPage}`}
         parentType={parentType}
         parentId={parentId}
         pageSize={limit}
         items={displayItems}
+        initialTotal={total}
+        showTitle={showTitle}
       />
       <PaginationComponent
         basePath={basePath}

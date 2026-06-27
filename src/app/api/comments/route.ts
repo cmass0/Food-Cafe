@@ -51,8 +51,13 @@ export async function POST(req: Request) {
   const { user, error } = await AuthErrorHelper();
   if (error) return error;
   try {
-    const created = await commentService.createComment(supabase, user.id, body);
-    return json({ data: created }, 201);
+    const { comment, parentCommentCount } = await commentService.createComment(
+      supabase,
+      user.id,
+      body
+    );
+    // 새 댓글 + 부모의 갱신된 comment_count를 함께 응답 (like/bookmark와 동일 패턴)
+    return json({ data: { comment, parentCommentCount } }, 201);
   } catch (error) {
     if (error instanceof ZodError) {
       return validationError(error.errors);

@@ -103,4 +103,21 @@ export async function deleteComment(
   if (error) throw error;
 }
 
+// 부모 entity의 최신 comment_count 조회
+// 트리거가 갱신해놓은 값을 그대로 읽기만 함 — service에서 응답에 실어보내기 위해 사용
+export async function selectParentCommentCount(
+  client: SupabaseClient<Database>,
+  parentType: "recipe" | "post" | "combo",
+  parentId: string
+): Promise<number> {
+  const table = parentType === "recipe" ? "recipes" : parentType === "combo" ? "combos" : "posts";
+  const { data, error } = await client
+    .from(table)
+    .select("comment_count")
+    .eq("id", parentId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.comment_count as number | undefined) ?? 0;
+}
+
 

@@ -74,8 +74,9 @@ export async function DELETE(_req: Request, props: contentParams) {
   const { user, error } = await AuthErrorHelper();
   if (error) return error;
   try {
-    await commentService.deleteComment(supabase, params.id);
-    return json({ message: "댓글이 삭제되었습니다." }, 200);
+    const result = await commentService.deleteComment(supabase, params.id);
+    // 갱신된 부모 카운트 + parent 정보 함께 응답 — 클라이언트가 setState로 즉시 갱신
+    return json({ data: result }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
