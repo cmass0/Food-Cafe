@@ -58,37 +58,43 @@ export default function RecipeTabContainer({
         </TabsList>
         {toolbar}
         <TabsContent value="written" className="mt-8">
-          <ProfileRecipeTab
-            type="written"
-            page={activeTab === "written" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "written" ? (
+            <ProfileRecipeTab
+              type="written"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="bookmark" className="mt-8">
-          <ProfileRecipeTab
-            type="bookmark"
-            page={activeTab === "bookmark" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "bookmark" ? (
+            <ProfileRecipeTab
+              type="bookmark"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="like" className="mt-8">
-          <ProfileRecipeTab
-            type="like"
-            page={activeTab === "like" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "like" ? (
+            <ProfileRecipeTab
+              type="like"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

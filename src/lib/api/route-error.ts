@@ -1,4 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
+import { isAuthSessionMissingError } from "@/lib/auth/errors";
 import { getServerSupabase } from "../supabase/server";
 
 // 공통 JSON 응답 생성기
@@ -35,10 +36,19 @@ export async function AuthErrorHelper(userid?: string) {
     data: { user },
     error,
   } = await (await getServerSupabase()).auth.getUser();
+  if (isAuthSessionMissingError(error)) {
+    return {
+      user: null,
+      error: json({ error: "UNAUTHORIZED", message: "로그인이 필요합니다." }, 401),
+    };
+  }
   if (error) throw error;
 
   if (!user) {
-    return { user: null, error: json({ error: "UNAUTHORIZED" }, 401) };
+    return {
+      user: null,
+      error: json({ error: "UNAUTHORIZED", message: "로그인이 필요합니다." }, 401),
+    };
   }
 
   if (userid && user.id !== userid) {

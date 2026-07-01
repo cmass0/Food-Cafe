@@ -5,6 +5,7 @@ import * as React from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { isUnauthorizedApiError } from "@/lib/api/client";
 import { toggleComboLike } from "../api";
 import { ToggleComboLike } from "../types";
 
@@ -14,6 +15,11 @@ type Props = {
   count: number;
   onChange?(next: ToggleComboLike): void;
 };
+
+function currentNextUrl() {
+  const next = new URL(window.location.href);
+  return `${next.pathname}${next.search}`;
+}
 
 export default function ComboCardLikeButton({ comboId, liked, count, onChange }: Props) {
   const [localLiked, setLocalLiked] = React.useState(liked);
@@ -28,9 +34,7 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
 
   async function handleClick() {
     if (!user) {
-      const next = new URL(window.location.href);
-      const nextUrl = `${next.pathname}${next.search}`;
-      openAuthModal({ next: nextUrl });
+      openAuthModal({ next: currentNextUrl() });
       return;
     }
 
@@ -45,7 +49,11 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
         }
       }
     } catch (error) {
-      console.error("Failed to toggle like:", error);
+      if (isUnauthorizedApiError(error)) {
+        openAuthModal({ next: currentNextUrl() });
+        return;
+      }
+      console.error("조합 좋아요 토글 실패:", error);
     }
   }
 
@@ -55,8 +63,8 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
   return (
     <button
       type="button"
-      aria-label={`Like ${displayCount}`}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/60 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+      aria-label={`좋아요 ${displayCount}`}
+      className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-emerald-300/60 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
       onClick={handleClick}
     >
       <Heart
@@ -64,7 +72,7 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
           displayLiked ? "fill-red-400 text-red-400" : "text-red-400"
         }`}
       />
-      <span className="sr-only">Like {displayCount}</span>
+      <span className="sr-only">좋아요 {displayCount}</span>
     </button>
   );
 }

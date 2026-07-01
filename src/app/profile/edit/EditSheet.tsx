@@ -19,12 +19,11 @@ import EditEmail from "./ui/editemail";
 import EditName from "./ui/editname";
 import EditPhoto from "./ui/editphoto";
 
-type Prps = {
+type Props = {
   userProfile: UserRow;
 };
 
-export default function EditSheet({ userProfile }: Prps) {
-
+export default function EditSheet({ userProfile }: Props) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -36,24 +35,36 @@ export default function EditSheet({ userProfile }: Prps) {
           프로필 수정
         </Button>
       </SheetTrigger>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent className="sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>프로필 편집</SheetTitle>
-          <SheetDescription>
-            변경할 항목별로 저장 버튼을 눌러 업데이트할 수 있습니다.
-          </SheetDescription>
+          <SheetDescription>프로필 이미지, 닉네임, 이메일을 변경할 수 있습니다.</SheetDescription>
         </SheetHeader>
-        <div className="mt-6 grid gap-6">
-          <EditPhoto userProfile={userProfile} />
-          <EditName userProfile={userProfile} />
-          <EditEmail userProfile={userProfile} />
 
-          {/* 위험 구역 — 위쪽 편집 섹션과 구분선으로 분리 */}
-          <div className="border-t pt-4">
+        <div className="mt-6 grid gap-8">
+          <section className="grid gap-5">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">기본 정보</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                변경할 항목을 수정한 뒤 각 항목의 저장 버튼을 눌러 주세요.
+              </p>
+            </div>
+            <EditPhoto userProfile={userProfile} />
+            <EditName userProfile={userProfile} />
+            <EditEmail userProfile={userProfile} />
+          </section>
+
+          <section className="grid gap-3 border-t pt-6">
+            {/* <div>
+              <h3 className="text-sm font-semibold text-foreground">계정 관리</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                계정 삭제는 되돌릴 수 없으니 신중하게 진행해 주세요.
+              </p>
+            </div> */}
             <DeleteAccount userId={userProfile.id} />
-          </div>
+          </section>
 
-          <SheetFooter className="mt-2">
+          <SheetFooter>
             <SheetClose asChild>
               <Button type="button" variant="outline">
                 닫기

@@ -58,37 +58,43 @@ export default function ComboTabContainer({
         </TabsList>
         {toolbar}
         <TabsContent value="written" className="mt-8">
-          <ProfileComboTab
-            type="written"
-            page={activeTab === "written" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "written" ? (
+            <ProfileComboTab
+              type="written"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="bookmark" className="mt-8">
-          <ProfileComboTab
-            type="bookmark"
-            page={activeTab === "bookmark" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "bookmark" ? (
+            <ProfileComboTab
+              type="bookmark"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="like" className="mt-8">
-          <ProfileComboTab
-            type="like"
-            page={activeTab === "like" ? currentPage : 1}
-            limit={pageSize}
-            search={search}
-            sort={sort}
-            view={view}
-            id={me.id}
-          />
+          {activeTab === "like" ? (
+            <ProfileComboTab
+              type="like"
+              page={currentPage}
+              limit={pageSize}
+              search={search}
+              sort={sort}
+              view={view}
+              id={me.id}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

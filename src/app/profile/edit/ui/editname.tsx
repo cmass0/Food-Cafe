@@ -28,7 +28,7 @@ export default function EditName({ userProfile }: Props) {
 
     const nextName = displayName.trim();
     if (!nextName) {
-      setNameError("이름을 입력해주세요.");
+      setNameError("닉네임을 입력해주세요.");
       return;
     }
 
@@ -44,10 +44,10 @@ export default function EditName({ userProfile }: Props) {
           nickname: nextName,
         },
       });
-      setNameSuccess("이름이 변경되었습니다.");
+      setNameSuccess("닉네임이 변경되었습니다.");
     } catch (error) {
-      console.error("이름 변경에 실패했습니다.", error);
-      setNameError("이름 변경에 실패했습니다. 다시 시도해주세요.");
+      console.error("닉네임 변경에 실패했습니다.", error);
+      setNameError("닉네임 변경에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setNameSaving(false);
     }
@@ -55,13 +55,13 @@ export default function EditName({ userProfile }: Props) {
 
   return (
     <form onSubmit={handleNameSubmit} className="grid gap-2">
-      <Label htmlFor="display_name">이름</Label>
+      <Label htmlFor="display_name">닉네임</Label>
       <Input
         id="display_name"
         name="display_name"
         value={displayName}
         onChange={(event) => setDisplayName(event.target.value)}
-        placeholder="변경할 이름을 입력하세요"
+        placeholder="변경할 닉네임을 입력하세요"
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         {nameError ? (
@@ -72,7 +72,7 @@ export default function EditName({ userProfile }: Props) {
           <div />
         )}
         <Button type="submit" disabled={nameSaving}>
-          {nameSaving ? "이름 변경 중..." : "이름 변경"}
+          {nameSaving ? "닉네임 변경 중..." : "닉네임 변경"}
         </Button>
       </div>
     </form>

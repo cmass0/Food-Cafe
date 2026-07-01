@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import AuthRequiredModal from "@/domain/auth/ui/AuthRequiredModal";
 import * as comboService from "@/domain/combo/service";
 import * as recipeService from "@/domain/recipe/service";
 import * as userService from "@/domain/user/service";
@@ -19,7 +20,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
 import { getServerSupabase } from "@/lib/supabase/server";
 import ProfileSearchForm from "./ProfileSearchForm";
@@ -88,11 +88,31 @@ function compactCount(value: number | null | undefined) {
   return value ?? 0;
 }
 
+function buildProfileNext(searchParams: ProfileSearchParams | undefined): string {
+  const params = new URLSearchParams();
+  const section = normalizeParam(searchParams?.section);
+  const tab = normalizeParam(searchParams?.tab);
+  const page = normalizeParam(searchParams?.page);
+  const search = normalizeParam(searchParams?.search);
+  const sort = normalizeParam(searchParams?.sort);
+  const view = normalizeParam(searchParams?.view);
+
+  if (section) params.set("section", section);
+  if (tab) params.set("tab", tab);
+  if (page) params.set("page", page);
+  if (search) params.set("search", search);
+  if (sort) params.set("sort", sort);
+  if (view) params.set("view", view);
+
+  const query = params.toString();
+  return query ? `/profile?${query}` : "/profile";
+}
+
 export default async function ProfilePage(props: { searchParams?: Promise<ProfileSearchParams> }) {
   const searchParams = await props.searchParams;
   const me = await userService.getSelf();
   if (!me) {
-    return notFound();
+    return <AuthRequiredModal next={buildProfileNext(searchParams)} />;
   }
 
   const activeTab = normalizeProfileTab(normalizeParam(searchParams?.tab));

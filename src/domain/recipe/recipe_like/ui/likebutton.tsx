@@ -5,6 +5,7 @@ import * as React from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { isUnauthorizedApiError } from "@/lib/api/client";
 import { toggleRecipeLike } from "../api";
 import { ToggleLikeRecipe } from "../types";
 
@@ -14,6 +15,11 @@ type Props = {
   count: number;
   onChange?(next: ToggleLikeRecipe): void;
 };
+
+function currentNextUrl() {
+  const next = new URL(window.location.href);
+  return `${next.pathname}${next.search}`;
+}
 
 export default function RecipeCardLikeButton({ recipeId, liked, count, onChange }: Props) {
   const [localLiked, setLocalLiked] = React.useState(liked);
@@ -28,9 +34,7 @@ export default function RecipeCardLikeButton({ recipeId, liked, count, onChange 
 
   async function handleClick() {
     if (!user) {
-      const next = new URL(window.location.href);
-      const nextUrl = `${next.pathname}${next.search}`;
-      openAuthModal({ next: nextUrl });
+      openAuthModal({ next: currentNextUrl() });
       return;
     }
 
@@ -45,19 +49,22 @@ export default function RecipeCardLikeButton({ recipeId, liked, count, onChange 
         }
       }
     } catch (error) {
-      console.error("좋아요 토글 실패", error);
+      if (isUnauthorizedApiError(error)) {
+        openAuthModal({ next: currentNextUrl() });
+        return;
+      }
+      console.error("레시피 좋아요 토글 실패:", error);
     }
   }
 
-  // onchange가 있으면 변경이 존재하므로 prop으로 받은 값을 사용하고, 없으면 로컬 상태를 사용
   const displayLiked = onChange ? liked : localLiked;
   const displayCount = onChange ? count : localCount;
 
   return (
     <button
       type="button"
-      aria-label={`Like ${displayCount}`}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300/60 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+      aria-label={`좋아요 ${displayCount}`}
+      className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-emerald-300/60 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
       onClick={handleClick}
     >
       <Heart
@@ -65,7 +72,7 @@ export default function RecipeCardLikeButton({ recipeId, liked, count, onChange 
           displayLiked ? "fill-red-400 text-red-400" : "text-red-400"
         }`}
       />
-      <span className="sr-only">Like {displayCount}</span>
+      <span className="sr-only">좋아요 {displayCount}</span>
     </button>
   );
 }

@@ -36,12 +36,10 @@ function normalizeParam(value: string | string[] | undefined): string | undefine
   return undefined;
 }
 
-export default async function ProfilePage(
-  props: {
-    params: Promise<{ id: string }>;
-    searchParams?: Promise<ProfileSearchParams>;
-  }
-) {
+export default async function ProfilePage(props: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<ProfileSearchParams>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const supabase = await getServerSupabase();
@@ -151,29 +149,33 @@ export default async function ProfilePage(
             value="recipe"
             className="mt-0 border border-amber-200 border-t-0 bg-amber-50 p-4"
           >
-            <RecipeTabContainer
-              activeTab={activeTab as "written" | "bookmark" | "like"}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-              me={another_user}
-            />
+            {activeSection === "recipe" ? (
+              <RecipeTabContainer
+                activeTab={activeTab as "written" | "bookmark" | "like"}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                search={search}
+                sort={sort}
+                view={view}
+                me={another_user}
+              />
+            ) : null}
           </TabsContent>
           <TabsContent
             value="combo"
             className="mt-0 border border-amber-200 border-t-0 bg-amber-50 p-4"
           >
-            <ComboTabContainer
-              activeTab={activeTab as "written" | "bookmark" | "like"}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-              me={another_user}
-            />
+            {activeSection === "combo" ? (
+              <ComboTabContainer
+                activeTab={activeTab as "written" | "bookmark" | "like"}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                search={search}
+                sort={sort}
+                view={view}
+                me={another_user}
+              />
+            ) : null}
           </TabsContent>
         </Tabs>
       </div>

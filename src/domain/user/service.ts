@@ -1,4 +1,5 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { isAuthSessionMissingError } from "@/lib/auth/errors";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -36,7 +37,7 @@ export async function getSelf(): Promise<UserRow | null> {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (error?.name === "AuthSessionMissingError") return null;
+  if (isAuthSessionMissingError(error)) return null;
   if (error) throw error;
   if (!user) return null;
   return repository.selectUserById(supabase, user.id);
