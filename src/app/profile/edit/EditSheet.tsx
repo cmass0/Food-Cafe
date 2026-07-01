@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { UserRow } from "@/domain/user/types";
+import { PencilLine } from "lucide-react";
 
 import DeleteAccount from "./ui/DeleteAccount";
 import EditEmail from "./ui/editemail";
@@ -27,7 +28,13 @@ export default function EditSheet({ userProfile }: Prps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline">프로필 수정</Button>
+        <Button
+          variant="outline"
+          className="h-12 gap-2 rounded-lg border-zinc-200 bg-white px-5 font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50"
+        >
+          <PencilLine className="h-4 w-4" aria-hidden="true" />
+          프로필 수정
+        </Button>
       </SheetTrigger>
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>

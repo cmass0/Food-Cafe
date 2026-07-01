@@ -44,6 +44,10 @@ function NavbarInner() {
   const { openAuthModal } = useAuthModal();
   const name = displayName || deriveDisplayName(user) || "내 프로필";
 
+  if (pathname?.startsWith("/profile")) {
+    return null;
+  }
+
   function isActivePath(href: string) {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";

@@ -36,8 +36,9 @@ export async function getSelf(): Promise<UserRow | null> {
     data: { user },
     error,
   } = await supabase.auth.getUser();
+  if (error?.name === "AuthSessionMissingError") return null;
   if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다");
+  if (!user) return null;
   return repository.selectUserById(supabase, user.id);
 }
 

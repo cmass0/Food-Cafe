@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import ProfileRecipeGrid from "./ProfileRecipeGrid";
 import ProfileRecipePagination from "./ProfileRecipepagenation";
+import type { ProfileSort, ProfileView } from "../../profile-types";
 
 export type ProfileRecipeType = "written" | "bookmark" | "like";
 
@@ -12,12 +13,22 @@ type Props = {
   page?: number;
   limit?: number;
   search?: string;
+  sort?: ProfileSort;
+  view?: ProfileView;
   id?: string;
 };
 
 
 
-export default async function ProfileRecipeTab({ type, page = 1, limit = 6, search, id }: Props) {
+export default async function ProfileRecipeTab({
+  type,
+  page = 1,
+  limit = 6,
+  search,
+  sort = "recent",
+  view = "grid",
+  id,
+}: Props) {
   const currentUid = id ?? null;
   if (!currentUid) {
     return notFound();
@@ -43,16 +54,19 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
         page: currentPage,
         limit: safeLimit,
         search: trimmedSearch,
+        sort,
       });
       return (
         <>
-          <ProfileRecipeGrid recipes={result.items} />
+          <ProfileRecipeGrid recipes={result.items} view={view} />
           <ProfileRecipePagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );
@@ -67,13 +81,15 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
 
       return (
         <>
-          <ProfileRecipeGrid recipes={result.items} />
+          <ProfileRecipeGrid recipes={result.items} view={view} />
           <ProfileRecipePagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );
@@ -87,13 +103,15 @@ export default async function ProfileRecipeTab({ type, page = 1, limit = 6, sear
       });
       return (
         <>
-          <ProfileRecipeGrid recipes={result.items} />
+          <ProfileRecipeGrid recipes={result.items} view={view} />
           <ProfileRecipePagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );

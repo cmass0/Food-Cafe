@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import ProfileComboGrid from "./ProfileComboGrid";
 import ProfileComboPagination from "./ProfileComboPagination";
+import type { ProfileSort, ProfileView } from "../../profile-types";
 
 export type ProfileComboType = "written" | "bookmark" | "like";
 
@@ -12,10 +13,20 @@ type Props = {
   page?: number;
   limit?: number;
   search?: string;
+  sort?: ProfileSort;
+  view?: ProfileView;
   id?: string;
 };
 
-export default async function ProfileComboTab({ type, page = 1, limit = 6, search, id }: Props) {
+export default async function ProfileComboTab({
+  type,
+  page = 1,
+  limit = 6,
+  search,
+  sort = "recent",
+  view = "grid",
+  id,
+}: Props) {
   const currentUid = id ?? null;
   if (!currentUid) {
     return notFound();
@@ -41,16 +52,19 @@ export default async function ProfileComboTab({ type, page = 1, limit = 6, searc
         page: currentPage,
         limit: safeLimit,
         search: trimmedSearch,
+        sort,
       });
       return (
         <>
-          <ProfileComboGrid combos={result.items} />
+          <ProfileComboGrid combos={result.items} view={view} />
           <ProfileComboPagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );
@@ -65,13 +79,15 @@ export default async function ProfileComboTab({ type, page = 1, limit = 6, searc
 
       return (
         <>
-          <ProfileComboGrid combos={result.items} />
+          <ProfileComboGrid combos={result.items} view={view} />
           <ProfileComboPagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );
@@ -85,13 +101,15 @@ export default async function ProfileComboTab({ type, page = 1, limit = 6, searc
       });
       return (
         <>
-          <ProfileComboGrid combos={result.items} />
+          <ProfileComboGrid combos={result.items} view={view} />
           <ProfileComboPagination
             type={type}
             page={currentPage}
             limit={safeLimit}
             total={result.total}
             search={trimmedSearch}
+            sort={sort}
+            view={view}
           />
         </>
       );

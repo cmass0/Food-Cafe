@@ -11,6 +11,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import ProfileSearchForm from "../ProfileSearchForm";
 import ComboTabContainer from "../profiletab/combo/ComboTabContainer";
 import RecipeTabContainer from "../profiletab/recipe/RecipeTabContainer";
+import {
+  normalizeProfileSection,
+  normalizeProfileSort,
+  normalizeProfileTab,
+  normalizeProfileView,
+} from "../profile-types";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +26,8 @@ type ProfileSearchParams = {
   search?: string | string[];
   email?: string | string[];
   section?: string | string[];
+  sort?: string | string[];
+  view?: string | string[];
 };
 
 function normalizeParam(value: string | string[] | undefined): string | undefined {
@@ -60,10 +68,10 @@ export default async function ProfilePage(
     isFollowing = await userFollowService.checkIsFollowing(supabase, viewer.id, another_user.id);
   }
 
-  const tabParam = normalizeParam(searchParams?.tab);
-  const activeTab = tabParam === "bookmark" || tabParam === "like" ? tabParam : "written";
-  const sectionParam = normalizeParam(searchParams?.section);
-  const activeSection = sectionParam === "combo" ? "combo" : "recipe";
+  const activeTab = normalizeProfileTab(normalizeParam(searchParams?.tab));
+  const activeSection = normalizeProfileSection(normalizeParam(searchParams?.section));
+  const sort = normalizeProfileSort(normalizeParam(searchParams?.sort));
+  const view = normalizeProfileView(normalizeParam(searchParams?.view));
   const pageParam = normalizeParam(searchParams?.page);
   const pageNum = pageParam ? Number(pageParam) : 1;
   const currentPage = Number.isFinite(pageNum) && pageNum > 0 ? Math.trunc(pageNum) : 1;
@@ -75,6 +83,8 @@ export default async function ProfilePage(
     const params = new URLSearchParams();
     params.set("section", section);
     params.set("tab", activeTab);
+    params.set("sort", sort);
+    params.set("view", view);
     if (search) {
       params.set("search", search);
     }
@@ -101,7 +111,14 @@ export default async function ProfilePage(
           </CardContent>
         </Card>
         <div className="flex items-center justify-between rounded-2xl border-1.5 px-1.5 pb-2 pt-2">
-          <ProfileSearchForm activeTab={activeTab} activeSection={activeSection} search={search} />
+          <ProfileSearchForm
+            activeTab={activeTab}
+            activeSection={activeSection}
+            search={search}
+            sort={sort}
+            view={view}
+            className="w-full max-w-md"
+          />
           <Tabs defaultValue="popular">
             <TabsList className="h-full">
               <TabsTrigger value="popular">인기순</TabsTrigger>
@@ -139,6 +156,8 @@ export default async function ProfilePage(
               currentPage={currentPage}
               pageSize={pageSize}
               search={search}
+              sort={sort}
+              view={view}
               me={another_user}
             />
           </TabsContent>
@@ -151,6 +170,8 @@ export default async function ProfilePage(
               currentPage={currentPage}
               pageSize={pageSize}
               search={search}
+              sort={sort}
+              view={view}
               me={another_user}
             />
           </TabsContent>
