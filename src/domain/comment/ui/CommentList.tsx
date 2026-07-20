@@ -3,7 +3,7 @@
 import { useAuth } from "@/app/auth/auth-context";
 import ComfirmModal from "@/lib/ui/comfirmmodal";
 import type { CommentDisplayItem } from "../types";
-import { TriangleAlert } from "lucide-react";
+import { MessageCircle, TriangleAlert } from "lucide-react";
 
 type CommentListProps = {
   items: CommentDisplayItem[];
@@ -22,22 +22,31 @@ export function CommentList({ items, loading, onDelete }: CommentListProps) {
 
   if (loading) {
     return (
-      <div className="rounded-lg border p-4 text-sm text-muted-foreground">불러오는 중...</div>
+      <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex min-h-24 items-center justify-center gap-2 border-b border-border/70 py-7 text-sm text-muted-foreground">
+        <MessageCircle className="h-4 w-4" />
+        아직 등록된 댓글이 없습니다.
+      </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-border/70">
       {items.map((item) => {
         const isDeleted = Boolean(item.deletedAt);
         return (
-          <div key={item.id} className="rounded-lg border p-4">
+          <div key={item.id} className="py-4 first:pt-0 last:pb-0">
             <div className="flex items-center justify-between gap-2">
-              <div>
+              <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold">{item.writerName || "익명"}</p>
-                <p className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {formatDate(item.updatedAt ?? item.createdAt)}
-                </p>
+                </span>
               </div>
               {!isDeleted && currentUserID === item.writerUid ? (
                 <ComfirmModal

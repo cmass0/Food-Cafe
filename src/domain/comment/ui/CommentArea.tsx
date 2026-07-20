@@ -29,6 +29,8 @@ export default async function CommentArea({
   const pageValue = searchParams?.[pageParam];
   const pageNumber = Number(pageValue);
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
+  const paginationQuery = { ...searchParams };
+  delete paginationQuery[pageParam];
 
   const supabase = await getServerSupabase();
   const { items, total } = await listComments(supabase, {
@@ -65,6 +67,7 @@ export default async function CommentArea({
         page={currentPage}
         pageItemSize={limit}
         total={total}
+        query={paginationQuery}
         pageParam={pageParam}
       />
     </section>
