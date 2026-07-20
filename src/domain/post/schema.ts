@@ -41,6 +41,7 @@ export const postUpdateSchema = z
 export const postListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
+  sort: z.enum(["recent", "likes"]).optional(),
   writerUid: z.string().uuid().optional(),
   type: z.string().trim().max(40).optional(),
   search: z.string().trim().max(200).optional(),

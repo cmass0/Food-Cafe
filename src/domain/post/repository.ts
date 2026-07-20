@@ -15,6 +15,7 @@ const POST_COLUMNS = [
   "type",
   "number",
   "view_count",
+  "like_count",
   "comment_count",
   "created_at",
   "updated_at",
@@ -42,10 +43,15 @@ export async function fetchPosts(
   const rangeEnd = safeOffset + safeLimit - 1;
   let query = (client as any)
     .from("posts")
-    .select(POST_COLUMNS, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: true })
-    .range(safeOffset, Math.max(rangeEnd, safeOffset));
+    .select(POST_COLUMNS, { count: "exact" });
+
+  if (params.sort === "likes") {
+    query = query.order("like_count", { ascending: false }).order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
+  }
+
+  query = query.range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);

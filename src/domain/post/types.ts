@@ -49,6 +49,7 @@ export interface Post {
   writerUid: string | null;
   number: number | null;
   viewCount: number;
+  likeCount: number;
   commentCount: number;
   type: string;
   createdAt: Date;
@@ -66,6 +67,7 @@ export type PostListResult = {
 export type PostListOptions = {
   limit?: number;
   page?: number;
+  sort?: "recent" | "likes";
   writerUid?: string;
   type?: string;
   search?: string;
@@ -75,6 +77,7 @@ export type PostListOptions = {
 export type FetchPostsParams = {
   limit: number;
   offset: number;
+  sort?: "recent" | "likes";
   writerUid?: string;
   type?: string;
   search?: string;
