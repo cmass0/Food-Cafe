@@ -7,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -63,14 +65,14 @@ export default function SearchForm<TField extends string>({
     >
       <div
         className={cn(
-          "flex w-full max-w-md overflow-hidden rounded-md border",
+          "flex h-12 w-full max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm",
           containerClassName
         )}
       >
         <Select value={searchField} onValueChange={(value) => setSearchField(value as TField)}>
           <SelectTrigger
             className={cn(
-              "w-32 rounded-none border-0 border-r px-3 py-2 text-sm",
+              "h-12 w-32 rounded-none border-0 border-r border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-800",
               selectTriggerClassName
             )}
           >
@@ -85,22 +87,24 @@ export default function SearchForm<TField extends string>({
           </SelectContent>
         </Select>
         <div className="flex flex-1 items-center gap-2 px-3">
-          <input
+          <Input
             value={searchText}
             placeholder={placeholder}
             className={cn(
-              "w-full border-0 text-sm outline-none placeholder:text-zinc-400",
+              "h-full w-full border-0 bg-transparent px-0 text-sm shadow-none outline-none placeholder:text-zinc-400 focus-visible:ring-0",
               inputClassName
             )}
             onChange={(e) => setSearchText(e.target.value)}
           />
-          <button
+          <Button
             type="submit"
-            className={cn("text-gray-500", submitClassName)}
+            variant="ghost"
+            size="icon"
+            className={cn("h-full w-9 shrink-0 rounded-none text-gray-500", submitClassName)}
             aria-label="검색"
           >
-            <Search className="h-4 w-4 cursor-pointer" />
-          </button>
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </form>

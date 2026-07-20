@@ -1,13 +1,22 @@
+import {
+  BookOpenText,
+  ChefHat,
+  Flame,
+  Grid2X2,
+  HelpCircle,
+  MessageCircle,
+  Sprout,
+  UtensilsCrossed,
+} from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
-import { Sprout } from "lucide-react";
 
 import * as postService from "@/domain/post/service";
 import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/domain/post/ui/PostList";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { cn } from "@/lib/utils";
+import PostCategorySelect from "./components/PostCategorySelect.client";
 import PostCreateButton from "./components/PostCreateButton";
 import PostSearchForm from "./components/PostSearchForm";
 
@@ -18,11 +27,11 @@ export const fetchCache = "force-no-store";
 const DEFAULT_LIMIT = 10;
 
 const POST_CATEGORIES = [
-  { value: "all", label: "전체" },
-  { value: "board", label: "자유" },
-  { value: "question", label: "질문" },
-  { value: "info", label: "정보" },
-  { value: "review", label: "후기" },
+  { value: "all", label: "전체", icon: Grid2X2 },
+  { value: "board", label: "자유게시판", icon: MessageCircle },
+  { value: "info", label: "레시피 팁", icon: UtensilsCrossed },
+  { value: "question", label: "질문&답변", icon: HelpCircle },
+  { value: "review", label: "후기", icon: BookOpenText },
 ] as const;
 
 type SearchParamValue = string | string[] | undefined;
@@ -85,13 +94,30 @@ export default async function PostsPage(props: PostsPageProps) {
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
   const activeType = type ?? "all";
 
-  const { items, total } = await postService.listPosts(supabase, {
-    page: currentPage,
-    limit,
-    writerUid: writerUid ?? undefined,
-    type: type ?? undefined,
-    ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
-  });
+  const [postList, popularPostList, categoryPostLists] = await Promise.all([
+    postService.listPosts(supabase, {
+      page: currentPage,
+      limit,
+      writerUid: writerUid ?? undefined,
+      type: type ?? undefined,
+      ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
+    }),
+    postService.listPosts(supabase, { page: 1, limit: 5, sort: "likes" }),
+    Promise.all(
+      POST_CATEGORIES.map((category) =>
+        postService.listPosts(supabase, {
+          page: 1,
+          limit: 1,
+          ...(category.value === "all" ? {} : { type: category.value }),
+        })
+      )
+    ),
+  ]);
+
+  const { items, total } = postList;
+  const categoryTotals = new Map(
+    POST_CATEGORIES.map((category, index) => [category.value, categoryPostLists[index]?.total ?? 0])
+  );
 
   const pageSize = limit > 0 ? limit : 1;
 
@@ -105,66 +131,138 @@ export default async function PostsPage(props: PostsPageProps) {
 
   return (
     <main className="min-h-[calc(100vh-68px)] bg-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col px-5 py-12 lg:px-8">
-        <section className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+      <div className="mx-auto w-full max-w-[1400px] px-5 py-12 lg:px-8 lg:py-14">
+        <section>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-black tracking-tight text-zinc-950">게시글 목록</h1>
-              <Sprout className="h-6 w-6 text-[#15933d]" />
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#dff3df] text-[#15933d] shadow-sm">
+                <MessageCircle className="h-6 w-6 fill-[#66c477] text-white" />
+              </span>
+              <h1 className="text-4xl font-black tracking-tight text-zinc-950">커뮤니티</h1>
             </div>
-            <p className="mt-3 text-base font-medium text-zinc-500">
-              다양한 이야기와 정보를 나눠보세요!
+            <p className="mt-3 text-base font-medium text-zinc-600">
+              레시피 팁부터 일상 이야기까지, 함께 나누고 소통해요!
             </p>
           </div>
-          <PostCreateButton />
         </section>
 
-        <section className="mt-9 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <nav
-            aria-label="게시글 유형"
-            className="flex w-fit rounded-full bg-zinc-100 p-1 text-sm font-bold text-zinc-500"
-          >
-            {POST_CATEGORIES.map((category) => {
-              const isActive = activeType === category.value;
-              return (
+        <div className="mt-8 grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div>
+            <section className="flex flex-col gap-5 2xl:flex-row 2xl:items-center 2xl:justify-between">
+              <PostCategorySelect
+                categories={POST_CATEGORIES.map(({ value, label }) => ({ value, label }))}
+                activeType={activeType}
+                search={searchQuery}
+                searchField={fieldParam}
+              />
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <PostSearchForm className="w-full sm:min-w-72" />
+                {/* 중복 기능 */}
+                {/* <PostCreateButton className="shrink-0" /> */}
+              </div>
+            </section>
+
+            <section className="mt-6">
+              <PostList
+                posts={items}
+                variant="community"
+                detailListContext={{ listPage: currentPage, listLimit: pageSize }}
+              />
+            </section>
+
+            <footer className="mt-7 flex justify-center pb-6">
+              <PaginationComponent
+                basePath="/posts"
+                page={currentPage}
+                pageItemSize={pageSize}
+                total={total}
+                query={paginationQuery}
+              />
+            </footer>
+          </div>
+
+          <aside className="hidden space-y-4 xl:block">
+            <section className="relative overflow-hidden rounded-2xl border border-[#d9efd9] bg-gradient-to-br from-[#e7f7e7] via-[#fbfef9] to-[#edf9e6] p-6 shadow-[0_12px_30px_rgba(73,161,84,0.08)]">
+              <Sprout className="absolute right-6 top-5 h-10 w-10 text-[#63bf62]" />
+              <ChefHat
+                className="absolute bottom-5 right-6 h-20 w-20 text-[#f5a646]"
+                strokeWidth={1.4}
+              />
+              <UtensilsCrossed
+                className="absolute bottom-4 right-24 h-10 w-10 rotate-[-20deg] text-[#67c779]"
+                strokeWidth={1.5}
+              />
+              <h2 className="text-lg font-black text-zinc-950">함께 나누는 공간</h2>
+              <p className="mt-2 max-w-[170px] text-sm leading-6 text-zinc-600">
+                요리에 대한 모든 이야기, 여러분의 소중한 경험을 공유해주세요!
+              </p>
+              <PostCreateButton className="relative mt-4 h-10 px-4 text-sm" />
+            </section>
+
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-black text-zinc-950">
+                  <Flame className="h-5 w-5 fill-orange-400 text-orange-500" /> 인기글
+                </h2>
                 <Link
-                  key={category.value}
-                  href={buildCategoryHref({
-                    type: category.value,
-                    search: searchQuery,
-                    searchField: fieldParam,
-                  })}
-                  prefetch={false}
-                  className={cn(
-                    "rounded-full px-5 py-2 transition",
-                    isActive
-                      ? "bg-[#15933d] text-white shadow-sm"
-                      : "text-zinc-600 hover:bg-white hover:text-zinc-900"
-                  )}
+                  href="/posts"
+                  className="text-xs font-medium text-zinc-500 hover:text-[#16883d]"
                 >
-                  {category.label}
+                  더보기 ›
                 </Link>
-              );
-            })}
-          </nav>
+              </div>
+              <ol className="mt-4 space-y-3">
+                {popularPostList.items.length > 0 ? (
+                  popularPostList.items.map((post, index) => (
+                    <li key={post.id} className="flex items-center gap-2">
+                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-xs font-bold text-[#16883d]">
+                        {index + 1}
+                      </span>
+                      <Link
+                        href={`/posts/${post.id}`}
+                        prefetch={false}
+                        className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-700 hover:text-[#16883d]"
+                      >
+                        {post.title}
+                      </Link>
+                      <span className="shrink-0 text-xs font-medium text-rose-500">
+                        ♥ {post.likeCount}
+                      </span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="py-3 text-center text-sm text-zinc-500">
+                    아직 인기글이 없습니다.
+                  </li>
+                )}
+              </ol>
+            </section>
 
-          <PostSearchForm className="lg:max-w-[420px] lg:justify-end" />
-        </section>
-
-        <section className="mt-7">
-          <PostList posts={items} />
-        </section>
-
-        <footer className="mt-7 flex flex-col items-center gap-4 pb-6">
-          <PaginationComponent
-            basePath="/posts"
-            page={currentPage}
-            pageItemSize={pageSize}
-            total={total}
-            query={paginationQuery}
-          />
-          <PostSearchForm className="max-w-[520px]" />
-        </footer>
+            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="text-base font-black text-zinc-950">카테고리</h2>
+              <ul className="mt-4 space-y-3">
+                {POST_CATEGORIES.slice(1).map((category) => {
+                  const CategoryIcon = category.icon;
+                  return (
+                    <li key={category.value}>
+                      <Link
+                        href={buildCategoryHref({ type: category.value })}
+                        className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-[#16883d]"
+                      >
+                        <CategoryIcon className="h-4 w-4 text-[#67b979]" />
+                        <span className="flex-1">{category.label}</span>
+                        <span className="text-zinc-500">
+                          ({categoryTotals.get(category.value) ?? 0})
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          </aside>
+        </div>
       </div>
     </main>
   );
