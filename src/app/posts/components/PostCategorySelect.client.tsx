@@ -18,27 +18,27 @@ type Category = {
 
 type PostCategorySelectProps = {
   categories: readonly Category[];
-  activeType: string;
+  activeCategory: string;
   search?: string;
   searchField?: PostSearchField;
 };
 
 export default function PostCategorySelect({
   categories,
-  activeType,
+  activeCategory,
   search,
   searchField,
 }: PostCategorySelectProps) {
   const router = useRouter();
-  const selectedValue = categories.some((category) => category.value === activeType)
-    ? activeType
+  const selectedValue = categories.some((category) => category.value === activeCategory)
+    ? activeCategory
     : "all";
 
-  function handleValueChange(type: string) {
+  function handleValueChange(category: string) {
     const params = new URLSearchParams();
 
-    if (type !== "all") {
-      params.set("type", type);
+    if (category !== "all") {
+      params.set("category", category);
     }
     if (search) {
       params.set("search", search);

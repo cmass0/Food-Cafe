@@ -4,6 +4,7 @@ import { Eye } from "lucide-react";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getPostCategoryOption } from "@/domain/post/category";
 import { cn } from "@/lib/utils";
 import type { Post } from "../types";
 
@@ -18,54 +19,6 @@ type PostListProps = {
   activePostId?: string;
 };
 
-type TypeStyle = {
-  label: string;
-  className: string;
-};
-
-const TYPE_STYLES: Record<string, TypeStyle> = {
-  board: {
-    label: "자유",
-    className: "bg-[#e2f5e5] text-[#248d3c]",
-  },
-  free: {
-    label: "자유",
-    className: "bg-[#e2f5e5] text-[#248d3c]",
-  },
-  자유: {
-    label: "자유",
-    className: "bg-[#e2f5e5] text-[#248d3c]",
-  },
-  question: {
-    label: "질문",
-    className: "bg-[#f2eaff] text-[#8359d1]",
-  },
-  qna: {
-    label: "질문",
-    className: "bg-[#f2eaff] text-[#8359d1]",
-  },
-  질문: {
-    label: "질문",
-    className: "bg-[#f2eaff] text-[#8359d1]",
-  },
-  info: {
-    label: "정보",
-    className: "bg-[#e3f5e9] text-[#2f9a54]",
-  },
-  정보: {
-    label: "정보",
-    className: "bg-[#e3f5e9] text-[#2f9a54]",
-  },
-  review: {
-    label: "후기",
-    className: "bg-[#fff0df] text-[#e98b31]",
-  },
-  후기: {
-    label: "후기",
-    className: "bg-[#fff0df] text-[#e98b31]",
-  },
-};
-
 function formatDate(date: Date) {
   const now = new Date();
   const sameYear = date.getFullYear() === now.getFullYear();
@@ -74,14 +27,6 @@ function formatDate(date: Date) {
   const day = `${date.getDate()}`.padStart(2, "0");
 
   return sameYear ? `${month}-${day}` : `${year}-${month}-${day}`;
-}
-
-function formatType(type: string): TypeStyle {
-  const normalized = type.trim();
-  return TYPE_STYLES[normalized] ?? TYPE_STYLES[normalized.toLowerCase()] ?? {
-    label: normalized || "자유",
-    className: "bg-zinc-100 text-zinc-600",
-  };
 }
 
 function initials(name: string) {
@@ -112,7 +57,6 @@ export default function PostList({
   const isBoardList = variant === "board";
   const isCommunityList = variant === "community";
   const isPlainTable = isBoardList || isCommunityList;
-  const showLikeColumn = isBoardList;
 
   if (posts.length === 0) {
     return (
@@ -171,17 +115,12 @@ export default function PostList({
               <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[84px]" : "w-[120px]")}>
                 조회수
               </th>
-              {showLikeColumn ? (
-                <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[78px]" : "w-[100px]")}>
-                  좋아요
-                </th>
-              ) : null}
             </tr>
           </thead>
           <tbody>
             {posts.map((post, index) => {
               const rowNumber = post.number ?? index + 1;
-              const type = formatType(post.type);
+              const category = getPostCategoryOption(post.category);
               const isActivePost = activePostId === post.id;
               const writerName = post.writerName || "익명";
               const writerContent = (
@@ -214,10 +153,10 @@ export default function PostList({
                         <span
                           className={cn(
                             "inline-flex min-w-[58px] justify-center rounded-full px-3 py-1 text-xs font-bold",
-                            type.className
+                            category.className
                           )}
                         >
-                          {type.label}
+                          {category.shortLabel}
                         </span>
                       ) : null}
                       <Link
@@ -254,10 +193,10 @@ export default function PostList({
                       <span
                         className={cn(
                           "inline-flex rounded-md px-2.5 py-1 text-xs font-bold",
-                          type.className
+                          category.className
                         )}
                       >
-                        {type.label}
+                        {category.shortLabel}
                       </span>
                     </td>
                   ) : null}
@@ -274,16 +213,6 @@ export default function PostList({
                       </span>
                     )}
                   </td>
-                  {showLikeColumn ? (
-                    <td
-                      className={cn(
-                        "px-5 text-center font-medium",
-                        post.likeCount > 0 ? "text-rose-500" : "text-zinc-700"
-                      )}
-                    >
-                      {post.likeCount}
-                    </td>
-                  ) : null}
                 </tr>
               );
             })}

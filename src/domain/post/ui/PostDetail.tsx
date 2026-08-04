@@ -4,9 +4,9 @@ import { ChevronRight, Home, ThumbsUp } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
+import { getPostCategoryLabel } from "@/domain/post/category";
 import { renderPostContentHtml } from "./PostContentHtml";
 import PostHeaderActions from "./PostHeaderActions.client";
-import { getPostBoardLabel } from "./postType";
 import type { Post } from "../types";
 
 function formatPostDate(date: Date) {
@@ -26,7 +26,7 @@ function initials(name: string) {
 
 export default function PostDetail({ post }: { post: Post }) {
   const contentHtml = post.contentHtml ? renderPostContentHtml(post.contentHtml) : null;
-  const boardLabel = getPostBoardLabel(post.type);
+  const boardLabel = getPostCategoryLabel(post.category);
 
   return (
     <article>

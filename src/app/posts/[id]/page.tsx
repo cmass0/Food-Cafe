@@ -5,7 +5,7 @@ import CommentArea from "@/domain/comment/ui/CommentArea";
 import * as postService from "@/domain/post/service";
 import PostDetail from "@/domain/post/ui/PostDetail";
 import PostList from "@/domain/post/ui/PostList";
-import { getPostBoardLabel } from "@/domain/post/ui/postType";
+import { getPostCategoryLabel } from "@/domain/post/category";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -55,7 +55,7 @@ export default async function PostDetailPage(
   let boardPosts = await postService.listPosts(supabase, {
     page: listPage,
     limit: listLimit,
-    type: post.type,
+    category: post.category,
   });
   const totalBoardPages = Math.max(1, Math.ceil(boardPosts.total / listLimit));
 
@@ -66,7 +66,7 @@ export default async function PostDetailPage(
     boardPosts = await postService.listPosts(supabase, {
       page: listPage,
       limit: listLimit,
-      type: post.type,
+      category: post.category,
     });
   }
 
@@ -101,10 +101,10 @@ export default async function PostDetailPage(
 
       <section className="mt-12 border-t border-border/70 pt-8">
         <h2 className="text-xl font-black tracking-tight text-zinc-950">
-          {getPostBoardLabel(post.type)} 목록
+          {getPostCategoryLabel(post.category)} 목록
         </h2>
         <div className="mt-5">
-          <PostBoardToolbar boardType={post.type} />
+          <PostBoardToolbar category={post.category} />
         </div>
         <PostList
           className="mt-5"

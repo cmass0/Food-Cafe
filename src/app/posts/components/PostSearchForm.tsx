@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type { PostSearchField } from "@/domain/post/types";
+import { normalizePostCategory } from "@/domain/post/category";
 import { cn } from "@/lib/utils";
 import SearchForm from "@/lib/searchForm/searchform";
 
@@ -22,7 +23,9 @@ export default function PostSearchForm({ className }: PostSearchFormProps) {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search");
   const fieldParam = (searchParams.get("searchField") as PostSearchField) ?? "title";
-  const typeParam = searchParams.get("type");
+  const categoryParam =
+    normalizePostCategory(searchParams.get("category")) ??
+    normalizePostCategory(searchParams.get("type"));
 
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>,
@@ -33,8 +36,8 @@ export default function PostSearchForm({ className }: PostSearchFormProps) {
     const trimmed = searchText.trim();
     const params = new URLSearchParams();
 
-    if (typeParam) {
-      params.set("type", typeParam);
+    if (categoryParam) {
+      params.set("category", categoryParam);
     }
     if (trimmed) {
       params.set("search", trimmed);

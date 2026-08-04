@@ -12,6 +12,10 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 import * as postService from "@/domain/post/service";
+import {
+  normalizePostCategory,
+  type PostCategory,
+} from "@/domain/post/category";
 import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/domain/post/ui/PostList";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
@@ -28,8 +32,8 @@ const DEFAULT_LIMIT = 10;
 
 const POST_CATEGORIES = [
   { value: "all", label: "전체", icon: Grid2X2 },
-  { value: "board", label: "자유게시판", icon: MessageCircle },
-  { value: "info", label: "레시피 팁", icon: UtensilsCrossed },
+  { value: "free", label: "자유게시판", icon: MessageCircle },
+  { value: "recipe_tip", label: "레시피 팁", icon: UtensilsCrossed },
   { value: "question", label: "질문&답변", icon: HelpCircle },
   { value: "review", label: "후기", icon: BookOpenText },
 ] as const;
@@ -41,6 +45,7 @@ type PostsPageProps = {
     page?: SearchParamValue;
     limit?: SearchParamValue;
     writerUid?: SearchParamValue;
+    category?: SearchParamValue;
     type?: SearchParamValue;
     search?: SearchParamValue;
     searchField?: SearchParamValue;
@@ -53,19 +58,17 @@ function firstValue(value: SearchParamValue): string | undefined {
 }
 
 function buildCategoryHref({
-  type,
+  category,
   search,
   searchField,
 }: {
-  type: string;
+  category: PostCategory;
   search?: string;
   searchField?: PostSearchField;
 }) {
   const params = new URLSearchParams();
 
-  if (type !== "all") {
-    params.set("type", type);
-  }
+  params.set("category", category);
   if (search) {
     params.set("search", search);
     params.set("searchField", searchField ?? "title");
@@ -86,20 +89,22 @@ export default async function PostsPage(props: PostsPageProps) {
   const limitNumber = Number(limitValue);
 
   const writerUid = firstValue(searchParams?.writerUid);
-  const type = firstValue(searchParams?.type);
+  const category =
+    normalizePostCategory(firstValue(searchParams?.category)) ??
+    normalizePostCategory(firstValue(searchParams?.type));
   const searchQuery = firstValue(searchParams?.search)?.trim();
   const fieldParam = (firstValue(searchParams?.searchField) as PostSearchField) ?? "title";
 
   const limit = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
-  const activeType = type ?? "all";
+  const activeCategory = category ?? "all";
 
   const [postList, popularPostList, categoryPostLists] = await Promise.all([
     postService.listPosts(supabase, {
       page: currentPage,
       limit,
       writerUid: writerUid ?? undefined,
-      type: type ?? undefined,
+      category,
       ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
     }),
     postService.listPosts(supabase, { page: 1, limit: 5, sort: "likes" }),
@@ -108,7 +113,7 @@ export default async function PostsPage(props: PostsPageProps) {
         postService.listPosts(supabase, {
           page: 1,
           limit: 1,
-          ...(category.value === "all" ? {} : { type: category.value }),
+          ...(category.value === "all" ? {} : { category: category.value }),
         })
       )
     ),
@@ -123,7 +128,7 @@ export default async function PostsPage(props: PostsPageProps) {
 
   const paginationQuery: Record<string, string> = {};
   if (writerUid) paginationQuery.writerUid = writerUid;
-  if (type) paginationQuery.type = type;
+  if (category) paginationQuery.category = category;
   if (searchQuery) {
     paginationQuery.search = searchQuery;
     paginationQuery.searchField = fieldParam;
@@ -151,7 +156,7 @@ export default async function PostsPage(props: PostsPageProps) {
             <section className="flex flex-col gap-5 2xl:flex-row 2xl:items-center 2xl:justify-between">
               <PostCategorySelect
                 categories={POST_CATEGORIES.map(({ value, label }) => ({ value, label }))}
-                activeType={activeType}
+                activeCategory={activeCategory}
                 search={searchQuery}
                 searchField={fieldParam}
               />
@@ -247,7 +252,9 @@ export default async function PostsPage(props: PostsPageProps) {
                   return (
                     <li key={category.value}>
                       <Link
-                        href={buildCategoryHref({ type: category.value })}
+                        href={buildCategoryHref({
+                          category: normalizePostCategory(category.value)!,
+                        })}
                         className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-[#16883d]"
                       >
                         <CategoryIcon className="h-4 w-4 text-[#67b979]" />

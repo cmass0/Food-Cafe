@@ -4,19 +4,22 @@ import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { PostCategory } from "@/domain/post/category";
 import PostCreateButton from "./PostCreateButton";
 
 type PostBoardToolbarProps = {
-  boardType: string;
+  category: PostCategory;
 };
 
-export default function PostBoardToolbar({ boardType }: PostBoardToolbarProps) {
+export default function PostBoardToolbar({ category }: PostBoardToolbarProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const params = new URLSearchParams({ type: boardType });
+    const params = new URLSearchParams({ category });
     const term = search.trim();
 
     if (term) {
@@ -33,20 +36,22 @@ export default function PostBoardToolbar({ boardType }: PostBoardToolbarProps) {
         <label htmlFor="board-post-search" className="sr-only">
           게시글 검색
         </label>
-        <input
+        <Input
           id="board-post-search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="게시글 내 검색"
-          className="h-10 w-full rounded-md border border-zinc-200 bg-white py-2 pl-4 pr-10 text-sm outline-none transition placeholder:text-zinc-400 focus:border-[#15933d] focus:ring-2 focus:ring-emerald-100"
+          className="h-10 bg-white pl-4 pr-10"
         />
-        <button
+        <Button
           type="submit"
+          variant="ghost"
+          size="icon"
           aria-label="게시글 검색"
-          className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-zinc-500 transition hover:text-[#16883d]"
+          className="absolute inset-y-0 right-0 h-10 w-10 text-zinc-500 hover:text-[#16883d]"
         >
           <Search className="h-4 w-4" />
-        </button>
+        </Button>
       </form>
       <PostCreateButton appearance="outline" />
     </div>
