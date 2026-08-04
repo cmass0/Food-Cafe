@@ -69,8 +69,13 @@ export default function SearchForm<TField extends string>({
           containerClassName
         )}
       >
-        <Select value={searchField} onValueChange={(value) => setSearchField(value as TField)}>
+        <Select
+          name="searchField"
+          value={searchField}
+          onValueChange={(value) => setSearchField(value as TField)}
+        >
           <SelectTrigger
+            aria-label="검색 범위"
             className={cn(
               "h-12 w-32 rounded-none border-0 border-r border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-800",
               selectTriggerClassName
@@ -88,6 +93,9 @@ export default function SearchForm<TField extends string>({
         </Select>
         <div className="flex flex-1 items-center gap-2 px-3">
           <Input
+            id="content-search-query"
+            name="search"
+            aria-label="검색어"
             value={searchText}
             placeholder={placeholder}
             className={cn(

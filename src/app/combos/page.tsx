@@ -16,6 +16,14 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listCombos } from "@/domain/combo/api";
@@ -594,30 +602,43 @@ function CombosPageInner() {
 
             <form
               onSubmit={handleSearchSubmit}
-              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm md:max-w-[520px]"
+              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm md:max-w-[470px]"
             >
-              <select
+              <Select
                 value={searchField}
-                onChange={(event) => setSearchField(event.target.value as ComboSearchField)}
-                className="w-36 border-0 border-r border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-800 outline-none"
-                aria-label="검색 범위"
+                onValueChange={(value) => setSearchField(value as ComboSearchField)}
               >
-                {SEARCH_FIELD_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  size="lg"
+                  aria-label="검색 범위"
+                  className="h-12 w-32 rounded-none border-0 border-r border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-800 shadow-none focus:ring-0"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SEARCH_FIELD_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-                <input
+                <Input
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="조합 검색..."
-                  className="min-w-0 flex-1 border-0 text-sm outline-none placeholder:text-zinc-400"
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-sm shadow-none outline-none placeholder:text-zinc-400 focus-visible:ring-0"
                 />
-                <button type="submit" aria-label="검색" className="text-zinc-500 hover:text-zinc-900">
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="검색"
+                  className="h-10 w-9 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
+                >
                   <Search className="h-5 w-5" />
-                </button>
+                </Button>
               </div>
             </form>
           </div>
