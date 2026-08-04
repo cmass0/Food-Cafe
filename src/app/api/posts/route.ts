@@ -1,5 +1,7 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
+import { normalizePostCategory } from "@/domain/post/category";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   internalError,
@@ -19,7 +21,9 @@ export async function GET(req: Request) {
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") ?? undefined;
-    const type = url.searchParams.get("type") ?? undefined;
+    const category =
+      normalizePostCategory(url.searchParams.get("category")) ??
+      normalizePostCategory(url.searchParams.get("type"));
     const search = url.searchParams.get("search") ?? undefined;
     const searchField = (url.searchParams.get("searchField") as PostSearchField) ?? undefined;
 
@@ -28,7 +32,7 @@ export async function GET(req: Request) {
       limit,
       page,
       writerUid,
-      type,
+      category,
       search,
       searchField,
     });
@@ -50,7 +54,10 @@ export async function POST(req: Request) {
       return error;
     }
     const body = await req.json();
-    const created = await postService.createPost(supabase, body, user.id);
+    const created = await postService.createPost(supabase, body, {
+      uid: user.id,
+      name: deriveDisplayName(user) ?? user.email ?? "user",
+    });
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {

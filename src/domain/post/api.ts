@@ -1,10 +1,11 @@
 import type { PostSearchField } from "./types";
+import type { PostCategory } from "./category";
 
 export async function listPosts(params?: {
   limit?: number;
   page?: number;
   writerUid?: string;
-  type?: string;
+  category?: PostCategory;
   search?: string;
   searchField?: PostSearchField;
 }) {
@@ -12,7 +13,7 @@ export async function listPosts(params?: {
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
-  if (params?.type) qs.set("type", params.type);
+  if (params?.category) qs.set("category", params.category);
   if (params?.search) qs.set("search", params.search);
   if (params?.searchField) qs.set("searchField", params.searchField);
 

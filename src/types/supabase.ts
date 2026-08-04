@@ -212,9 +212,10 @@ export type Database = {
       }
       posts: {
         Row: {
+          category: string
           comment_count: number
-          content_json: Json | null
           content_html: string | null
+          content_json: Json | null
           content_text: string | null
           created_at: string
           id: string
@@ -223,16 +224,16 @@ export type Database = {
           tags: string[]
           title: string
           tsv: unknown
-          type: string
           updated_at: string
           view_count: number
           writer_name: string
           writer_uid: string
         }
         Insert: {
+          category?: string
           comment_count?: number
-          content_json?: Json | null
           content_html?: string | null
+          content_json?: Json | null
           content_text?: string | null
           created_at?: string
           id?: string
@@ -241,16 +242,16 @@ export type Database = {
           tags?: string[]
           title: string
           tsv?: unknown
-          type?: string
           updated_at?: string
           view_count?: number
           writer_name?: string
           writer_uid: string
         }
         Update: {
+          category?: string
           comment_count?: number
-          content_json?: Json | null
           content_html?: string | null
+          content_json?: Json | null
           content_text?: string | null
           created_at?: string
           id?: string
@@ -259,7 +260,6 @@ export type Database = {
           tags?: string[]
           title?: string
           tsv?: unknown
-          type?: string
           updated_at?: string
           view_count?: number
           writer_name?: string
@@ -332,9 +332,9 @@ export type Database = {
       recipes: {
         Row: {
           bookmark_count: number
-          comment_count: number
           category: string | null
           chef_tip: string | null
+          comment_count: number
           created_at: string
           difficulty: string | null
           id: string
@@ -360,9 +360,9 @@ export type Database = {
         }
         Insert: {
           bookmark_count?: number
-          comment_count?: number
           category?: string | null
           chef_tip?: string | null
+          comment_count?: number
           created_at?: string
           difficulty?: string | null
           id?: string
@@ -388,9 +388,9 @@ export type Database = {
         }
         Update: {
           bookmark_count?: number
-          comment_count?: number
           category?: string | null
           chef_tip?: string | null
+          comment_count?: number
           created_at?: string
           difficulty?: string | null
           id?: string
@@ -552,10 +552,12 @@ export type Database = {
           bookmark_count: number
           category: string | null
           chef_tip: string | null
+          comment_count: number
           created_at: string
           difficulty: string | null
           id: string
           image: string | null
+          images: string[]
           ingredients: Json
           last_liked_at: string | null
           like_count: number
@@ -585,9 +587,10 @@ export type Database = {
       post_adjust_like: {
         Args: { p_delta: number; p_post_id: string }
         Returns: {
+          category: string
           comment_count: number
-          content_json: Json | null
           content_html: string | null
+          content_json: Json | null
           content_text: string | null
           created_at: string
           id: string
@@ -596,7 +599,6 @@ export type Database = {
           tags: string[]
           title: string
           tsv: unknown
-          type: string
           updated_at: string
           view_count: number
           writer_name: string
@@ -628,8 +630,8 @@ export type Database = {
       toggle_follow: {
         Args: { p_target_id: string }
         Returns: {
-          following: boolean
           follower_count: number
+          following: boolean
           following_count: number
         }[]
       }

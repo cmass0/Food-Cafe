@@ -13,11 +13,17 @@ import type {
   PostUpdateDB,
   PostUpdateInput,
 } from "./types";
-import { buildPostContentHtml } from "./ui/PostContentHtml";
+import { buildPostContentHtml, buildPostContentText } from "./ui/PostContentHtml";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
 const MAX_JSON_CHARS = 200_000;
+const RICH_CONTENT_PATTERN = /<(?:img|iframe)\b|class="youtube-link-card"/i;
+
+export type PostAuthor = {
+  uid: string;
+  name: string;
+};
 
 function mapRowToPost(row: PostRow): Post {
   return {
@@ -32,7 +38,7 @@ function mapRowToPost(row: PostRow): Post {
     viewCount: row.view_count ?? 0,
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
-    type: row.type ?? "board",
+    category: row.category as Post["category"],
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -51,7 +57,7 @@ export async function listPosts(
     offset,
     sort: parsed.sort,
     writerUid: parsed.writerUid,
-    type: parsed.type,
+    category: parsed.category,
     search: parsed.search,
     searchField: parsed.searchField,
   });
@@ -77,33 +83,27 @@ export async function getPost(client: SupabaseClient<Database>, id: string): Pro
 export async function createPost(
   client: SupabaseClient<Database>,
   input: PostCreateInput,
-  writerUid: string
+  author: PostAuthor
 ): Promise<Post> {
-  let contentJson = input.content_json;
+  const contentJson = parseContentJson(input.content_json);
+  const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
+  const contentHtml = buildPostContentHtml(parsed.content_json);
+  const contentText = buildPostContentText(parsed.content_json);
+  assertPostContentIsNotEmpty(contentText, contentHtml);
 
-  // 문자열로 들어오는 경우 처리
-  if (typeof contentJson === "string") {
-    // 크기 제한 검사
-    if (contentJson.length > MAX_JSON_CHARS) {
-      throw new Error("컨텐츠의 길이가 초과되었습니다.");
-    }
-    // 본문 비어있는지 검사
-    if (contentJson.trim() === "") {
-      throw new Error("내용을 입력해 주세요.");
-    }
-    try {
-      contentJson = JSON.parse(contentJson);
-    } catch {
-      throw new Error("유효하지 않은 형식입니다.");
-    }
+  const writerName = author.name.trim();
+  if (!author.uid || !writerName) {
+    throw new Error("작성자 정보를 확인할 수 없습니다.");
   }
-  const content_html = buildPostContentHtml(contentJson);
-  const parsed = postInsertSchema.parse({ ...input, content_html, content_json: contentJson });
+
   const payload: PostInsertDB = {
-    ...parsed,
-    content_text: parsed.content_text ?? null,
-    type: parsed.type ?? "board",
-    writer_uid: writerUid,
+    title: parsed.title,
+    category: parsed.category,
+    content_json: parsed.content_json,
+    content_html: contentHtml,
+    content_text: contentText,
+    writer_uid: author.uid,
+    writer_name: writerName.slice(0, 120),
   };
   const row = await repository.insertPostRecord(client, payload);
   return mapRowToPost(row);
@@ -115,38 +115,51 @@ export async function updatePost(
   writerUid: string,
   input: PostUpdateInput
 ): Promise<Post | null> {
-  let contentJson = input.content_json;
+  const contentJson =
+    input.content_json === undefined ? undefined : parseContentJson(input.content_json);
+  const parsed = postUpdateSchema.parse({
+    ...input,
+    ...(contentJson === undefined ? {} : { content_json: contentJson }),
+  });
+  const payload: PostUpdateDB = { ...parsed };
 
-  // 문자열로 들어오는 경우 처리
-  if (typeof contentJson === "string") {
-    // 크기 제한 검사
-    if (contentJson.length > MAX_JSON_CHARS) {
-      throw new Error("컨텐츠의 길이가 초과되었습니다.");
-    }
-    // 본문 비어있는지 검사
-    if (contentJson.trim() === "") {
-      throw new Error("내용을 입력해 주세요.");
-    }
-    try {
-      contentJson = JSON.parse(contentJson);
-    } catch {
-      throw new Error("유효하지 않은 형식입니다.");
-    }
+  if (contentJson !== undefined) {
+    const contentHtml = buildPostContentHtml(contentJson);
+    const contentText = buildPostContentText(contentJson);
+    assertPostContentIsNotEmpty(contentText, contentHtml);
+    payload.content_html = contentHtml;
+    payload.content_text = contentText;
   }
 
-  const payload: PostUpdateDB = postUpdateSchema.parse({
-    ...input,
-
-    ...(contentJson !== undefined
-      ? { content_json: contentJson, content_html: buildPostContentHtml(contentJson) }
-      : {}),
-  });
-
-  let row: PostRow | null = null;
-
-  row = await repository.updatePostRecordByOwner(client, id, writerUid, payload);
+  const row = await repository.updatePostRecordByOwner(client, id, writerUid, payload);
 
   return row ? mapRowToPost(row) : null;
+}
+
+function parseContentJson(contentJson: PostCreateInput["content_json"]) {
+  const serialized =
+    typeof contentJson === "string" ? contentJson : JSON.stringify(contentJson);
+
+  if (!serialized.trim()) {
+    throw new Error("내용을 입력해 주세요.");
+  }
+  if (serialized.length > MAX_JSON_CHARS) {
+    throw new Error("본문은 200KB 이하로 작성해 주세요.");
+  }
+
+  if (typeof contentJson !== "string") return contentJson;
+
+  try {
+    return JSON.parse(contentJson);
+  } catch {
+    throw new Error("유효하지 않은 게시글 형식입니다.");
+  }
+}
+
+function assertPostContentIsNotEmpty(contentText: string, contentHtml: string): void {
+  if (!contentText && !RICH_CONTENT_PATTERN.test(contentHtml)) {
+    throw new Error("내용을 입력해 주세요.");
+  }
 }
 
 export async function removePost(

@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHeadlessEditor } from "@lexical/headless";
 import { $generateHtmlFromNodes } from "@lexical/html";
-import type { SerializedEditorState } from "lexical";
+import { $getRoot, type SerializedEditorState } from "lexical";
 
 import sanitizeHtml from "sanitize-html";
 
@@ -153,4 +153,26 @@ export function buildPostContentHtml(contentJson: unknown): string {
   }
 
   return renderPostContentHtml(lexicalJsonToHtml(contentJson));
+}
+
+export function buildPostContentText(contentJson: unknown): string {
+  if (!isSerializedEditorState(contentJson)) {
+    throw new Error("유효하지 않은 형식입니다.");
+  }
+
+  ensureDom();
+  const editor = createHeadlessEditor({
+    nodes: nodesServer,
+    onError: (err) => {
+      throw err;
+    },
+  });
+  const state = editor.parseEditorState(JSON.stringify(contentJson));
+  editor.setEditorState(state);
+
+  let text = "";
+  editor.getEditorState().read(() => {
+    text = $getRoot().getTextContent().trim();
+  });
+  return text;
 }

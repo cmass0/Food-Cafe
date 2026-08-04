@@ -12,7 +12,7 @@ const POST_COLUMNS = [
   "content_text",
   "writer_uid",
   "writer_name",
-  "type",
+  "category",
   "number",
   "view_count",
   "like_count",
@@ -57,8 +57,8 @@ export async function fetchPosts(
     query = query.eq("writer_uid", params.writerUid);
   }
 
-  if (params.type) {
-    query = query.eq("type", params.type);
+  if (params.category) {
+    query = query.eq("category", params.category);
   }
 
   const rawSearch = params.search ?? "";

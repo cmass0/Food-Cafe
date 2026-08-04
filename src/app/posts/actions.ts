@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import * as postService from "@/domain/post/service";
+import { postCategorySchema } from "@/domain/post/schema";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { ZodError } from "zod";
 
 export type PostActionState = {
   ok: boolean;
@@ -18,6 +20,23 @@ const DEFAULT_ERROR = "요청 처리 과정에서 문제가 발생했습니다. 
 const IMAGE_BUCKET = "Food-Cafe";
 const PUBLIC_PREFIX = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${IMAGE_BUCKET}/`;
 const TEMP_PREFIX = `${PUBLIC_PREFIX}posts-temp/`;
+const USER_FACING_ERRORS = new Set([
+  "내용을 입력해 주세요.",
+  "본문은 200KB 이하로 작성해 주세요.",
+  "유효하지 않은 게시글 형식입니다.",
+  "유효하지 않은 형식입니다.",
+  "작성자 정보를 확인할 수 없습니다.",
+]);
+
+function getActionErrorMessage(error: unknown): string {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? "입력 내용을 확인해 주세요.";
+  }
+  if (error instanceof Error && USER_FACING_ERRORS.has(error.message)) {
+    return error.message;
+  }
+  return DEFAULT_ERROR;
+}
 
 // lexical 에디터의 contentJson 내 임시 이미지 경로를 영구 경로로 변경하는 함수
 // lexical이 dom같은 트리구조이므로 이미지 노드가 포함된 모든 노드를 재귀적으로 탐색
@@ -107,27 +126,20 @@ export async function createPostAction(
   if (typeof rawJson !== "string") {
     return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
   }
-  const contentText = formData.get("content_text");
-  // 의도치 않은 값 삽입 방지
-  if (typeof contentText !== "string") {
-    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
-  }
-
-  const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
+  const category = (formData.get("category") as string | null)?.trim() ?? "";
   const writerName = deriveDisplayName(user) ?? user.email ?? "user";
-
-  const payload = {
-    title,
-    content_json: rawJson,
-    content_text: contentText,
-    writer_name: writerName,
-    type: typeRaw || undefined,
-    writer_uid: user.id,
-  };
 
   let postId: string;
   try {
-    const post = await postService.createPost(supabase, payload, user.id);
+    const payload = {
+      title,
+      content_json: rawJson,
+      category: postCategorySchema.parse(category),
+    };
+    const post = await postService.createPost(supabase, payload, {
+      uid: user.id,
+      name: writerName,
+    });
     if (post.contentJson) {
       const contentJsonObj =
         typeof post.contentJson === "string" ? JSON.parse(post.contentJson) : post.contentJson;
@@ -142,7 +154,7 @@ export async function createPostAction(
     postId = post.id;
   } catch (err) {
     console.error("게시글 생성 실패", err);
-    return { ok: false, message: DEFAULT_ERROR };
+    return { ok: false, message: getActionErrorMessage(err) };
   }
 
   revalidatePath("/posts");
@@ -175,20 +187,14 @@ export async function updatePostAction(
   if (typeof rawJson !== "string") {
     return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
   }
-  const contentText = formData.get("content_text");
-  // 의도치 않은 값 삽입 방지
-  if (typeof contentText !== "string") {
-    return { ok: false, message: "유효하지 않은 게시글 내용입니다." };
-  }
   const title = (formData.get("title") as string | null)?.trim() || undefined;
-  const typeRaw = (formData.get("type") as string | null)?.trim() ?? "";
+  const category = (formData.get("category") as string | null)?.trim() ?? "";
 
   try {
     const payload = {
       title,
       content_json: rawJson,
-      content_text: contentText,
-      type: typeRaw || undefined,
+      category: postCategorySchema.parse(category),
     };
     const post = await postService.updatePost(supabase, id, user.id, payload);
 
@@ -197,7 +203,7 @@ export async function updatePostAction(
     }
   } catch (err) {
     console.error("게시글 수정 실패", err);
-    return { ok: false, message: DEFAULT_ERROR };
+    return { ok: false, message: getActionErrorMessage(err) };
   }
 
   revalidatePath("/posts");

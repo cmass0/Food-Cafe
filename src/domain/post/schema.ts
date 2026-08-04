@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Json } from "@/types/supabase";
+import { POST_CATEGORY_VALUES } from "./category";
 
 // 재귀적으로 Json 타입을 검증
 const jsonValueSchema: z.ZodType<Json> = z.lazy(() =>
@@ -15,24 +16,19 @@ const jsonValueSchema: z.ZodType<Json> = z.lazy(() =>
 );
 
 const postContentJsonSchema = z.union([z.record(jsonValueSchema), z.array(jsonValueSchema)]);
+export const postCategorySchema = z.enum(POST_CATEGORY_VALUES);
 
 export const postInsertSchema = z.object({
-  title: z.string().trim().min(1, "제목을 입력해 주세요.").max(150),
+  title: z.string().trim().min(1, "제목을 입력해 주세요.").max(150, "제목은 150자 이하로 입력해 주세요."),
   content_json: postContentJsonSchema,
-  content_html: z.string().nullable().optional(),
-  content_text: z.string().trim().optional(),
-  writer_name: z.string().trim().min(1, "작성자를 입력해 주세요.").max(120),
-  type: z.string().trim().max(40).optional(),
+  category: postCategorySchema,
 });
 
 export const postUpdateSchema = z
   .object({
     title: z.string().trim().min(1).max(150).optional(),
     content_json: postContentJsonSchema.optional(),
-    content_html: z.string().nullable().optional(),
-    content_text: z.string().trim().optional(),
-    writer_name: z.string().trim().min(1).max(120).optional(),
-    type: z.string().trim().max(40).optional(),
+    category: postCategorySchema.optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "수정할 항목을 한 가지 이상 입력해 주세요.",
@@ -43,7 +39,7 @@ export const postListOptionsSchema = z.object({
   page: z.number().int().min(1).optional(),
   sort: z.enum(["recent", "likes"]).optional(),
   writerUid: z.string().uuid().optional(),
-  type: z.string().trim().max(40).optional(),
+  category: postCategorySchema.optional(),
   search: z.string().trim().max(200).optional(),
   searchField: z.enum(["title", "writer", "contents", "title_contents"]).optional(),
 });
