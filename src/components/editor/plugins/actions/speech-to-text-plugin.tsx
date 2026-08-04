@@ -50,10 +50,6 @@ const VOICE_COMMANDS: Readonly<
   },
 }
 
-export const SUPPORT_SPEECH_RECOGNITION: boolean =
-  CAN_USE_DOM &&
-  ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-
 function SpeechToTextPluginImpl() {
   const [editor] = useLexicalComposerContext()
   const [isEnabled, setIsEnabled] = useState<boolean>(false)
@@ -149,6 +145,15 @@ function SpeechToTextPluginImpl() {
   )
 }
 
-export const SpeechToTextPlugin = SUPPORT_SPEECH_RECOGNITION
-  ? SpeechToTextPluginImpl
-  : () => null
+export function SpeechToTextPlugin() {
+  const [isSupported, setIsSupported] = useState(false)
+
+  useEffect(() => {
+    setIsSupported(
+      CAN_USE_DOM &&
+        ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+    )
+  }, [])
+
+  return isSupported ? <SpeechToTextPluginImpl /> : null
+}

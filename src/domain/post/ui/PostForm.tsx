@@ -1,19 +1,37 @@
 "use client";
 
-import { $getRoot, EditorState, type SerializedEditorState } from "lexical";
+import { $getRoot, type EditorState, type SerializedEditorState } from "lexical";
 import { TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { type FormEvent, useActionState, useEffect, useState } from "react";
 
 import type { PostActionState } from "@/app/posts/actions";
 import { Editor } from "@/components/blocks/editor-x/editor";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import {
+  isPostCategory,
+  POST_CATEGORY_OPTIONS,
+  type PostCategory,
+} from "@/domain/post/category";
 import ComfirmModal from "@/lib/ui/comfirmmodal";
-import { Json } from "@/types/supabase";
+import type { Json } from "@/types/supabase";
 
 type PostFormAction = (state: PostActionState, formData: FormData) => Promise<PostActionState>;
 
@@ -23,13 +41,24 @@ type PostFormProps = {
     id?: string;
     title?: string;
     contentJson?: Json;
-    type?: string;
+    category?: PostCategory;
   };
   submitLabel?: string;
   cancelHref?: string;
 };
 
 const initialState: PostActionState = { ok: true };
+const EMBED_NODE_TYPES = new Set(["image", "youtube", "video", "embed"]);
+
+function hasMeaningfulEditorContent(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasMeaningfulEditorContent);
+  if (!value || typeof value !== "object") return false;
+
+  const node = value as Record<string, unknown>;
+  if (typeof node.text === "string" && node.text.trim().length > 0) return true;
+  if (typeof node.type === "string" && EMBED_NODE_TYPES.has(node.type)) return true;
+  return Object.values(node).some(hasMeaningfulEditorContent);
+}
 
 export default function PostForm({
   action,
@@ -37,81 +66,56 @@ export default function PostForm({
   submitLabel = "등록",
   cancelHref,
 }: PostFormProps) {
-  const [state, formAction] = useFormState(action, initialState);
-  const [contentText, setContentText] = useState<string>("");
-  // const [contentHtml, setContentHtml] = useState<string>("");
+  const [state, formAction, pending] = useActionState(action, initialState);
+  const [title, setTitle] = useState(defaultValues?.title ?? "");
+  const [category, setCategory] = useState<PostCategory>(defaultValues?.category ?? "free");
+  const [contentLength, setContentLength] = useState(0);
   const [serializedState, setSerializedState] = useState<SerializedEditorState | undefined>(
     defaultValues?.contentJson as SerializedEditorState | undefined
   );
-  const { pending } = useFormStatus();
-  const [errorModalOpen, setErrorModalOpen] = useState(false);
-  const [errorModalMessage, setErrorModalMessage] = useState("");
+  const [clientError, setClientError] = useState("");
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const { openAuthModal } = useAuthModal();
   const router = useRouter();
 
-  // 로그인 모달 또는 오류 모달 처리
   useEffect(() => {
-    if (!state.ok && state.message) {
-      if (state.message === "로그인이 필요합니다.") {
-        openAuthModal();
-        return;
-      }
-      setErrorModalMessage(state.message);
-      setErrorModalOpen(true);
+    if (!state.ok && state.message === "로그인이 필요합니다.") {
+      openAuthModal();
     }
   }, [openAuthModal, state]);
 
-  // // serializedState가 변경될 때 contentHtml 업데이트
-  // useEffect(() => {
-  //   if (!serializedState) {
-  //     setContentHtml("");
-  //     return;
-  //   }
-  //   try {
-  //     setContentHtml(buildPostContentHtml(serializedState));
-  //   } catch {
-  //     setContentHtml("");
-  //   }
-  // }, [serializedState]);
-
-  // Editor 관련 핸들러
-  const handleSerializedChange = (editorState: SerializedEditorState) => {
-    setSerializedState(editorState);
-  };
-
-  // 게시글 본문에서 사용자 입력 텍스트만 추출
-  const handleEditorStateChange = (state: EditorState) => {
-    let text = "";
-    state.read(() => {
-      text = $getRoot().getTextContent();
+  function handleEditorStateChange(editorState: EditorState) {
+    editorState.read(() => {
+      setContentLength($getRoot().getTextContent().trim().length);
     });
-    setContentText(text.trim());
-  };
+  }
 
-  const handleCancelConfirm = () => {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    setClientError("");
+
+    if (!isPostCategory(category)) {
+      event.preventDefault();
+      setClientError("카테고리를 선택해 주세요.");
+      return;
+    }
+    if (!serializedState || !hasMeaningfulEditorContent(serializedState)) {
+      event.preventDefault();
+      setClientError("내용을 입력해 주세요.");
+    }
+  }
+
+  function handleCancelConfirm() {
     setCancelModalOpen(false);
     router.push(cancelHref ?? "/posts");
-  };
+  }
+
+  const serverError =
+    !state.ok && state.message !== "로그인이 필요합니다." ? state.message : undefined;
+  const errorMessage = clientError || serverError;
+  const isEditing = Boolean(defaultValues?.id);
 
   return (
     <>
-      <ComfirmModal
-        showTrigger={false}
-        open={errorModalOpen}
-        onOpenChange={setErrorModalOpen}
-        btnText=""
-        comfirmText={
-          <div className="flex items-center gap-2">
-            <TriangleAlert className="text-[#f55151]" />
-            오류가 발생했습니다
-          </div>
-        }
-        content={errorModalMessage}
-        comfirmtype="확인"
-        cancelText="닫기"
-        oncomfirm={() => setErrorModalOpen(false)}
-      />
       <ComfirmModal
         showTrigger={false}
         open={cancelModalOpen}
@@ -120,71 +124,111 @@ export default function PostForm({
         comfirmText="게시글 작성을 취소하시겠습니까?"
         content="작성 중인 내용은 저장되지 않습니다."
         comfirmtype="확인"
-        cancelText="닫기"
+        cancelText="계속 작성"
         oncomfirm={handleCancelConfirm}
       />
-      <form className="flex flex-col gap-6" action={formAction}>
+
+      <form className="space-y-5" action={formAction} onSubmit={handleSubmit}>
         {defaultValues?.id ? (
           <input type="hidden" name="id" defaultValue={defaultValues.id} />
         ) : null}
-        <div className="space-y-2">
-          <Label htmlFor="title" className="text-sm font-semibold">
-            제목
-          </Label>
-          <Input
-            id="title"
-            name="title"
-            type="text"
-            defaultValue={defaultValues?.title ?? ""}
-            required
-            maxLength={150}
-          />
-        </div>
+        <input type="hidden" name="category" value={category} />
+        <input
+          type="hidden"
+          name="content_json"
+          value={serializedState ? JSON.stringify(serializedState) : ""}
+        />
 
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold">내용</Label>
-          <Editor
-            editorSerializedState={serializedState}
-            onChange={handleEditorStateChange}
-            onSerializedChange={handleSerializedChange}
-          />
-          <input type="hidden" name="content_text" value={contentText} required />
-          {/* <input type="hidden" name="content_html" value={contentHtml} /> */}
-          <input
-            type="hidden"
-            name="content_json"
-            value={serializedState ? JSON.stringify(serializedState) : ""}
-          />
-        </div>
+        <Card className="border-zinc-200 shadow-sm">
+          <CardHeader className="border-b border-zinc-100">
+            <CardTitle>{isEditing ? "게시글 수정" : "게시글 작성"}</CardTitle>
+            <CardDescription>
+              카테고리를 선택하고 다른 사용자에게 도움이 되는 이야기를 남겨보세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <Label htmlFor="title" className="font-semibold">
+                  제목
+                </Label>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {title.length} / 150
+                </span>
+              </div>
+              <Input
+                id="title"
+                name="title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="제목을 입력해 주세요."
+                required
+                maxLength={150}
+                className="h-11"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="type" className="text-sm font-semibold">
-            타입
-          </Label>
-          <Input
-            id="type"
-            name="type"
-            type="text"
-            defaultValue={defaultValues?.type ?? "board"}
-            maxLength={40}
-          />
-          <p className="text-xs text-muted-foreground">
-            게시글 유형을 간단히 표시하세요. (예: board)
-          </p>
-        </div>
-        <div className="flex items-center justify-end gap-2">
-          <div className="flex gap-2">
-            <Button type="submit" disabled={pending}>
-              {pending ? "처리 중..." : "제출"}
-            </Button>
-            <Button
-              type="button"
-              className="bg-red-400 hover:bg-red-600"
-              onClick={() => setCancelModalOpen(true)}
-            >
-              취소
-            </Button>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="post-category" className="font-semibold">
+                카테고리
+              </Label>
+              <Select
+                value={category}
+                onValueChange={(value) => {
+                  if (isPostCategory(value)) setCategory(value);
+                }}
+              >
+                <SelectTrigger id="post-category" className="h-11 w-full sm:w-60">
+                  <SelectValue placeholder="카테고리 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {POST_CATEGORY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <Label className="font-semibold">내용</Label>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  텍스트 {contentLength.toLocaleString()}자
+                </span>
+              </div>
+              <Editor
+                editorSerializedState={serializedState}
+                onChange={handleEditorStateChange}
+                onSerializedChange={(editorState) => setSerializedState(editorState)}
+              />
+            </div>
+
+            {errorMessage ? (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+              >
+                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{errorMessage}</span>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={() => setCancelModalOpen(true)}
+          >
+            취소
+          </Button>
+          <Button type="submit" disabled={pending}>
+            {pending ? "처리 중..." : submitLabel}
+          </Button>
         </div>
       </form>
     </>

@@ -16,14 +16,14 @@ export default async function PostEditPage(props: { searchParams: Promise<{ id?:
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-10 md:px-8">
       <PostForm
         action={updatePostAction}
         defaultValues={{
           id: post.id,
           title: post.title ?? "",
           contentJson: post.contentJson,
-          type: post.type ?? "board",
+          category: post.category,
         }}
         submitLabel="수정"
         cancelHref="/posts"
