@@ -212,22 +212,32 @@ export async function insertRecipe(
 export async function updateRecipe(
   client: SupabaseClient<Database>,
   id: string,
+  writerUid: string,
   payload: RecipeUpdateDB
-): Promise<RecipeRow> {
+): Promise<RecipeRow | null> {
   const { data, error } = await client
     .from("recipes")
     .update(payload)
     .eq("id", id)
+    .eq("writer_uid", writerUid)
     .select("*")
-    .single();
+    .maybeSingle();
   throwIfError(error);
-  if (!data) {
-    throw new Error("레시피를 수정하지 못했습니다.");
-  }
   return data;
 }
 
-export async function deleteRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
-  const { error } = await client.from("recipes").delete().eq("id", id);
+export async function deleteRecipe(
+  client: SupabaseClient<Database>,
+  id: string,
+  writerUid: string
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("recipes")
+    .delete()
+    .eq("id", id)
+    .eq("writer_uid", writerUid)
+    .select("id")
+    .maybeSingle();
   throwIfError(error);
+  return Boolean(data);
 }

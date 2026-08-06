@@ -209,25 +209,32 @@ export async function insertCombo(
 export async function updateCombo(
   client: SupabaseClient<Database>,
   comboId: string,
+  writerUid: string,
   comboData: ComboUpdateRow
-): Promise<ComboRow> {
+): Promise<ComboRow | null> {
   const { data, error } = await client
     .from("combos")
     .update(comboData)
     .eq("id", comboId)
+    .eq("writer_uid", writerUid)
     .select("*")
-    .single();
+    .maybeSingle();
   throwIfError(error);
-  if (!data) {
-    throw new Error("레시피를 수정하는데 실패했습니다.");
-  }
   return data;
 }
 
 export async function deleteCombo(
   client: SupabaseClient<Database>,
-  comboId: string
-): Promise<void> {
-  const { error } = await client.from("combos").delete().eq("id", comboId);
+  comboId: string,
+  writerUid: string
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("combos")
+    .delete()
+    .eq("id", comboId)
+    .eq("writer_uid", writerUid)
+    .select("id")
+    .maybeSingle();
   throwIfError(error);
+  return Boolean(data);
 }

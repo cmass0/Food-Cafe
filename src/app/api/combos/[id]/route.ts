@@ -2,6 +2,7 @@ import { ComboUpdateSchema } from "@/domain/combo/schema";
 import * as comboService from "@/domain/combo/service";
 import { contentParams } from "@/lib/api/prams-type";
 import {
+  AuthErrorHelper,
   badRequest,
   internalError,
   isPostgrestError,
@@ -47,8 +48,12 @@ export async function PUT(req: Request, props: contentParams) {
       return validationError(parse.error);
     }
 
+    const { user, error } = await AuthErrorHelper();
+    if (error) return error;
+
     const comboId = params.id;
-    const updated = await comboService.updateCombo(supabase, comboId, parse.data);
+    const updated = await comboService.updateCombo(supabase, comboId, user.id, parse.data);
+    if (!updated) return notFound("수정할 수 있는 조합");
     return json({ data: updated });
   } catch (error) {
     if (isPostgrestError(error)) {
@@ -64,10 +69,14 @@ export async function DELETE(_: Request, props: contentParams) {
   const params = await props.params;
   const supabase = await getServerSupabase();
   try {
+    const { user, error } = await AuthErrorHelper();
+    if (error) return error;
+
     const combo = await comboService.getComboById(supabase, params.id);
     if (!combo) return notFound();
 
-    await comboService.removeCombo(supabase, params.id);
+    const deleted = await comboService.removeCombo(supabase, params.id, user.id);
+    if (!deleted) return notFound("삭제할 수 있는 조합");
 
     return json({ message: "레시피 조합이 삭제되었습니다." }, 200);
   } catch (error) {

@@ -217,14 +217,19 @@ export async function createCombo(
 export async function updateCombo(
   client: SupabaseClient<Database>,
   id: string,
+  writerUid: string,
   patch: ComboUpdateDb
-): Promise<Combos> {
+): Promise<Combos | null> {
   const parsed = ComboUpdateSchema.parse(patch);
 
-  const row = await repo.updateCombo(client, id, parsed);
-  return mapRowToCombination(row);
+  const row = await repo.updateCombo(client, id, writerUid, parsed);
+  return row ? mapRowToCombination(row) : null;
 }
 
-export async function removeCombo(client: SupabaseClient<Database>, id: string): Promise<void> {
-  await repo.deleteCombo(client, id);
+export async function removeCombo(
+  client: SupabaseClient<Database>,
+  id: string,
+  writerUid: string
+): Promise<boolean> {
+  return repo.deleteCombo(client, id, writerUid);
 }

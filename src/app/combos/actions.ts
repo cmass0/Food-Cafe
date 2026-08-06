@@ -1,12 +1,12 @@
 "use server";
 
+import * as comboService from "@/domain/combo/service";
+import type { ComboInsertDb, ComboUpdateDb } from "@/domain/combo/types";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import { requireAuthContext } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ZodError } from "zod";
-
-import * as comboService from "@/domain/combo/service";
-import type { ComboInsertDb, ComboUpdateDb } from "@/domain/combo/types";
-import { getServerSupabase } from "@/lib/supabase/server";
 
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
@@ -22,19 +22,12 @@ function handleError(error: unknown): never {
 export async function createComboAction(input: ComboInsertDb) {
   let comboId: string;
   try {
-    const supabase = await getServerSupabase();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error) {
-      throw new Error("알 수 없는 오류가 발생했습니다.");
-    }
-    if (!user) {
-      throw new Error("로그인이 필요합니다.");
-    }
-
-    const combo = await comboService.createCombo(supabase, input);
+    const { supabase, user } = await requireAuthContext();
+    const combo = await comboService.createCombo(supabase, {
+      ...input,
+      writer_uid: user.id,
+      writer_name: deriveDisplayName(user) ?? user.email ?? "user",
+    });
     comboId = combo.id;
   } catch (error) {
     handleError(error);
@@ -47,8 +40,9 @@ export async function createComboAction(input: ComboInsertDb) {
 
 export async function updateComboAction(id: string, patch: ComboUpdateDb) {
   try {
-    const supabase = await getServerSupabase();
-    const combo = await comboService.updateCombo(supabase, id, patch);
+    const { supabase, user } = await requireAuthContext();
+    const combo = await comboService.updateCombo(supabase, id, user.id, patch);
+    if (!combo) throw new Error("수정할 수 있는 조합을 찾지 못했습니다.");
     revalidatePath(`/combos/${id}`);
     revalidatePath("/combos");
     revalidatePath("/search");
@@ -60,8 +54,9 @@ export async function updateComboAction(id: string, patch: ComboUpdateDb) {
 
 export async function deleteComboAction(id: string) {
   try {
-    const supabase = await getServerSupabase();
-    await comboService.removeCombo(supabase, id);
+    const { supabase, user } = await requireAuthContext();
+    const deleted = await comboService.removeCombo(supabase, id, user.id);
+    if (!deleted) throw new Error("삭제할 수 있는 조합을 찾지 못했습니다.");
   } catch (error) {
     handleError(error);
   }

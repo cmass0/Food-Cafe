@@ -1,5 +1,5 @@
 import { getComboById } from "@/domain/combo/service";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { requireOwnedContent } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import UpdateComboForm from "../components/UpdateComboForm";
 
@@ -8,11 +8,9 @@ export default async function ComboEditPage(props: { searchParams: Promise<{ id?
   const id = searchParams?.id;
   if (!id) notFound();
 
-  const supabase = await getServerSupabase();
-  const combo = await getComboById(supabase, id);
-  if (!combo) {
-    notFound();
-  }
+  const next = `/combos/edit?id=${encodeURIComponent(id)}`;
+  const combo = await requireOwnedContent(next, (supabase) => getComboById(supabase, id));
+
   const defaultValues = {
     title: combo.title,
     summary: combo.summary || "",
@@ -24,6 +22,7 @@ export default async function ComboEditPage(props: { searchParams: Promise<{ id?
     steps: combo.steps || [],
     image: combo.image || null,
   };
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <UpdateComboForm comboId={combo.id} defaultValues={defaultValues} />

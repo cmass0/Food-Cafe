@@ -3,9 +3,9 @@
 import Image from "next/image";
 import * as React from "react";
 import { Github } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { normalizeReturnTo } from "@/lib/auth/return-to";
 import { cn } from "@/lib/utils";
 import { getBrowserSupabase } from "@/lib/supabase";
 
@@ -56,29 +56,30 @@ function getScope(provider: Provider) {
   return undefined;
 }
 
-function useOAuthSignIn() {
-  const searchParams = useSearchParams();
-
+function useOAuthSignIn(next: string) {
   return React.useCallback(
     async (provider: Provider) => {
       const supabase = getBrowserSupabase();
       const scopes = getScope(provider);
-      const next = searchParams?.get("next");
-      const url = new URL(location.href);
-      if (next && !url.searchParams.get("next")) url.searchParams.set("next", next);
-      const redirectTo = url.toString();
+      const callbackUrl = new URL("/auth/callback", location.origin);
+      callbackUrl.searchParams.set("next", normalizeReturnTo(next));
 
       await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo, scopes },
+        options: { redirectTo: callbackUrl.toString(), scopes },
       });
     },
-    [searchParams]
+    [next]
   );
 }
 
-function AuthButtonsInner({ className }: { className?: string }) {
-  const signIn = useOAuthSignIn();
+type AuthButtonsProps = {
+  className?: string;
+  next?: string;
+};
+
+export default function AuthButtons({ className, next = "/" }: AuthButtonsProps) {
+  const signIn = useOAuthSignIn(next);
   return (
     <div className={cn("grid gap-2", className)}>
       {AUTH_BUTTONS.map(
@@ -147,13 +148,5 @@ function AuthButtonsInner({ className }: { className?: string }) {
         }
       )}
     </div>
-  );
-}
-
-export default function AuthButtons({ className }: { className?: string }) {
-  return (
-    <React.Suspense fallback={<div className={cn("grid gap-2", className)} aria-hidden="true" />}>
-      <AuthButtonsInner className={className} />
-    </React.Suspense>
   );
 }

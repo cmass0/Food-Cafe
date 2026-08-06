@@ -50,11 +50,12 @@ export async function PUT(req: Request, props: contentParams) {
       return validationError(parsed.error);
     }
 
-    const { error } = await AuthErrorHelper();
+    const { user, error } = await AuthErrorHelper();
     if (error) return error;
 
     const supabase = await getServerSupabase();
-    const updated = await service.updateRecipe(supabase, params.id, parsed.data);
+    const updated = await service.updateRecipe(supabase, params.id, user.id, parsed.data);
+    if (!updated) return notFound("수정할 수 있는 레시피");
     return json({ data: updated });
   } catch (error) {
     if (isPostgrestError(error)) {
@@ -70,10 +71,14 @@ export async function DELETE(_: Request, props: contentParams) {
   const params = await props.params;
   const supabase = await getServerSupabase();
   try {
+    const { user, error } = await AuthErrorHelper();
+    if (error) return error;
+
     const existing = await service.getRecipeById(supabase, params.id);
     if (!existing) return notFound("레시피를 찾을 수 없습니다.");
 
-    await service.removeRecipe(supabase, params.id);
+    const deleted = await service.removeRecipe(supabase, params.id, user.id);
+    if (!deleted) return notFound("삭제할 수 있는 레시피");
 
     return json({ message: "레시피가 삭제되었습니다." }, 200);
   } catch (error) {

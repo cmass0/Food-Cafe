@@ -1,6 +1,7 @@
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
 import { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   badRequest,
@@ -71,7 +72,12 @@ export async function POST(req: Request) {
     const { user, error: authError } = await AuthErrorHelper();
     if (authError) return authError;
 
-    const recipe = await recipeService.createRecipe(supabase, parsed);
+    const recipe = await recipeService.createRecipe(supabase, {
+      ...parsed,
+      writer_uid: user.id,
+      writer_name: deriveDisplayName(user) ?? user.email ?? "user",
+      writer_email: user.email ?? undefined,
+    });
     return json({ data: recipe }, 201);
   } catch (error) {
     if (isPostgrestError(error)) {

@@ -280,7 +280,7 @@ export default function SignInSignUpView({
 
               <Separator className="my-4" />
               <div className="grid justify-center gap-3">
-                <AuthButtons />
+                <AuthButtons next={next} />
               </div>
 
               <div className="mt-4 flex flex-col items-center gap-2 text-xs text-muted-foreground/80">

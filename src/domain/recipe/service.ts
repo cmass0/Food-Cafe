@@ -233,13 +233,18 @@ export async function createRecipe(
 export async function updateRecipe(
   client: SupabaseClient<Database>,
   id: string,
+  writerUid: string,
   patch: RecipeUpdateDB
-): Promise<Recipe> {
+): Promise<Recipe | null> {
   const parsed = recipeUpdateSchema.parse(patch);
-  const row = await repo.updateRecipe(client, id, parsed);
-  return mapRowToRecipe(row);
+  const row = await repo.updateRecipe(client, id, writerUid, parsed);
+  return row ? mapRowToRecipe(row) : null;
 }
 
-export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<void> {
-  await repo.deleteRecipe(client, id);
+export async function removeRecipe(
+  client: SupabaseClient<Database>,
+  id: string,
+  writerUid: string
+): Promise<boolean> {
+  return repo.deleteRecipe(client, id, writerUid);
 }

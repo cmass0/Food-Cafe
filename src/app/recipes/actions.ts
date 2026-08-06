@@ -1,12 +1,12 @@
 "use server";
 
+import * as recipeService from "@/domain/recipe/service";
+import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
+import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import { requireAuthContext } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ZodError } from "zod";
-
-import * as recipeService from "@/domain/recipe/service";
-import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
-import { getServerSupabase } from "@/lib/supabase/server";
 
 function handleError(error: unknown): never {
   if (error instanceof ZodError) {
@@ -22,19 +22,13 @@ function handleError(error: unknown): never {
 export async function createRecipeAction(input: RecipeInsertDB) {
   let recipeId: string;
   try {
-    const supabase = await getServerSupabase();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (error) {
-      throw new Error("알 수 없는 오류가 발생했습니다.");
-    }
-    if (!user) {
-      throw new Error("로그인이 필요합니다.");
-    }
-
-    const recipe = await recipeService.createRecipe(supabase, input);
+    const { supabase, user } = await requireAuthContext();
+    const recipe = await recipeService.createRecipe(supabase, {
+      ...input,
+      writer_uid: user.id,
+      writer_name: deriveDisplayName(user) ?? user.email ?? "user",
+      writer_email: user.email ?? undefined,
+    });
     recipeId = recipe.id;
   } catch (error) {
     handleError(error);
@@ -47,8 +41,9 @@ export async function createRecipeAction(input: RecipeInsertDB) {
 
 export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
   try {
-    const supabase = await getServerSupabase();
-    const recipe = await recipeService.updateRecipe(supabase, id, patch);
+    const { supabase, user } = await requireAuthContext();
+    const recipe = await recipeService.updateRecipe(supabase, id, user.id, patch);
+    if (!recipe) throw new Error("수정할 수 있는 레시피를 찾지 못했습니다.");
     revalidatePath(`/recipes/${id}`);
     revalidatePath("/recipes");
     revalidatePath("/search");
@@ -60,8 +55,9 @@ export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
 
 export async function deleteRecipeAction(id: string) {
   try {
-    const supabase = await getServerSupabase();
-    await recipeService.removeRecipe(supabase, id);
+    const { supabase, user } = await requireAuthContext();
+    const deleted = await recipeService.removeRecipe(supabase, id, user.id);
+    if (!deleted) throw new Error("삭제할 수 있는 레시피를 찾지 못했습니다.");
   } catch (error) {
     handleError(error);
   }
