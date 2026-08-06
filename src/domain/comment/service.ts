@@ -112,18 +112,12 @@ export async function createComment(
 export async function updateComment(
   client: SupabaseClient<Database>,
   id: string,
+  writerUid: string,
   input: unknown
 ): Promise<Comment | null> {
-  const {
-    data: { user },
-    error,
-  } = await client.auth.getUser();
-  if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다");
-
   const parsed = commentUpdateSchema.parse(input);
   const payload = buildUpdatePayload(parsed);
-  const row = await repository.updateComment(client, id, payload);
+  const row = await repository.updateComment(client, id, writerUid, payload);
   if (!row) return null;
   return mapRowToComment(row);
 }
@@ -138,20 +132,15 @@ export type CommentDeleteResult = {
 
 export async function deleteComment(
   client: SupabaseClient<Database>,
-  id: string
-): Promise<CommentDeleteResult> {
-  const {
-    data: { user },
-    error,
-  } = await client.auth.getUser();
-  if (error) throw error;
-  if (!user) throw new Error("로그인이 필요합니다");
-
+  id: string,
+  writerUid: string
+): Promise<CommentDeleteResult | null> {
   // 부모 정보가 응답에 필요하므로 삭제 직전에 row를 한 번 조회
-  const target = await repository.selectCommentById(client, id);
-  if (!target) throw new Error("댓글을 찾을 수 없습니다.");
+  const target = await repository.selectCommentByOwner(client, id, writerUid);
+  if (!target) return null;
 
-  await repository.deleteComment(client, id);
+  const deleted = await repository.deleteComment(client, id, writerUid);
+  if (!deleted) return null;
   const parentCommentCount = await repository.selectParentCommentCount(
     client,
     target.parent_type,

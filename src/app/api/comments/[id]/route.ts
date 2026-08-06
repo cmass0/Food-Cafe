@@ -49,7 +49,7 @@ export async function PUT(req: Request, props: contentParams) {
   if (error) return error;
 
   try {
-    const updated = await commentService.updateComment(supabase, params.id, body);
+    const updated = await commentService.updateComment(supabase, params.id, user.id, body);
     if (!updated) {
       return notFound();
     }
@@ -74,7 +74,10 @@ export async function DELETE(_req: Request, props: contentParams) {
   const { user, error } = await AuthErrorHelper();
   if (error) return error;
   try {
-    const result = await commentService.deleteComment(supabase, params.id);
+    const result = await commentService.deleteComment(supabase, params.id, user.id);
+    if (!result) {
+      return notFound();
+    }
     // 갱신된 부모 카운트 + parent 정보 함께 응답 — 클라이언트가 setState로 즉시 갱신
     return json({ data: result }, 200);
   } catch (error) {

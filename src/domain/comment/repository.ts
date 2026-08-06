@@ -1,11 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import type {
-  CommentInsertRow,
-  CommentRow,
-  CommentUpdateRow,
-  FetchCommentsParams,
-} from "./types";
+import type { CommentInsertRow, CommentRow, CommentUpdateRow, FetchCommentsParams } from "./types";
 
 function mapRows(rows: CommentRow[]): CommentRow[] {
   return Array.isArray(rows) ? (rows as CommentRow[]) : [];
@@ -45,11 +40,7 @@ export async function selectCommentById(
   client: SupabaseClient<Database>,
   id: string
 ): Promise<CommentRow | null> {
-  const { data, error } = await client
-    .from("comments")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await client.from("comments").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   if (!data) {
     throw new Error("Comment not found.");
@@ -57,15 +48,26 @@ export async function selectCommentById(
   return data ?? null;
 }
 
+export async function selectCommentByOwner(
+  client: SupabaseClient<Database>,
+  id: string,
+  writerUid: string
+): Promise<CommentRow | null> {
+  const { data, error } = await client
+    .from("comments")
+    .select("*")
+    .eq("id", id)
+    .eq("writer_uid", writerUid)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? null;
+}
+
 export async function insertComment(
   client: SupabaseClient<Database>,
   payload: CommentInsertRow
 ): Promise<CommentRow> {
-  const { data, error } = await client
-    .from("comments")
-    .insert(payload)
-    .select("*")
-    .single();
+  const { data, error } = await client.from("comments").insert(payload).select("*").single();
   if (error) throw error;
   if (!data) {
     throw new Error("Failed to create comment.");
@@ -76,31 +78,35 @@ export async function insertComment(
 export async function updateComment(
   client: SupabaseClient<Database>,
   id: string,
+  writerUid: string,
   payload: Partial<CommentUpdateRow>
 ): Promise<CommentRow | null> {
   const { data, error } = await client
     .from("comments")
     .update(payload)
     .eq("id", id)
+    .eq("writer_uid", writerUid)
     .select("*")
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  if (!data) {
-    throw new Error("Failed to update comment.");
-  }
   return (data as CommentRow | null) ?? null;
 }
 
 export async function deleteComment(
   client: SupabaseClient<Database>,
-  id: string
-): Promise<void> {
+  id: string,
+  writerUid: string
+): Promise<boolean> {
   const deletedAt = new Date().toISOString();
-  const { error } = await client
+  const { data, error } = await client
     .from("comments")
     .update({ deleted_at: deletedAt })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("writer_uid", writerUid)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  return Boolean(data);
 }
 
 // 부모 entity의 최신 comment_count 조회
@@ -119,5 +125,3 @@ export async function selectParentCommentCount(
   if (error) throw error;
   return (data?.comment_count as number | undefined) ?? 0;
 }
-
-
