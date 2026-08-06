@@ -14,15 +14,23 @@ type AuthCtx = {
   displayName: string | null;
 };
 
+type AuthProviderProps = {
+  children: React.ReactNode;
+  initialSession?: Session | null;
+};
+
 const LOGIN_LIFETIME_MS = 60 * 60 * 1000;
 const LOGOUT_AT_KEY = "FC_LOGOUT_AT";
 const AuthContext = React.createContext<AuthCtx | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, initialSession = null }: AuthProviderProps) {
   const supabase = useMemo(() => getBrowserSupabase(), []);
-  const [session, setSession] = useState<Session | null>(null);
-  const [status, setStatus] = useState<AuthCtx["status"]>("loading");
+  const [session, setSession] = useState<Session | null>(initialSession);
+  const [status, setStatus] = useState<AuthCtx["status"]>(
+    initialSession ? "authenticated" : "loading"
+  );
   const [displayName, setDisplayName] = useState<string>("");
+
   useEffect(() => {
     let mounted = true;
 
@@ -71,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearTimeout(id);
   }, [status, session, supabase]);
+
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) {
       setDisplayName("");

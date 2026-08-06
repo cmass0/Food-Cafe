@@ -1,12 +1,17 @@
 "use client";
 import { AuthModalProvider } from "@/domain/auth/ui/AuthModalProvider";
+import type { Session } from "@supabase/supabase-js";
 import { AuthProvider } from "./auth/auth-context";
-import AuthFlowHandler from "./auth/flow-handler";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  initialSession,
+}: {
+  children: React.ReactNode;
+  initialSession: Session | null;
+}) {
   return (
-    <AuthProvider>
-      <AuthFlowHandler />
+    <AuthProvider initialSession={initialSession}>
       <AuthModalProvider>{children}</AuthModalProvider>
     </AuthProvider>
   );
