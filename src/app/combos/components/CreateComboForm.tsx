@@ -1,24 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
-import { createCombo } from "@/domain/combo/api";
-import { ComboFormSchema } from "@/domain/combo/schema";
+import type { ComboFormValues, ComboItems } from "@/domain/combo/types";
 import ComboForm from "@/domain/combo/ui/ComboForm";
 import { uploadBucketImage } from "@/lib/storage";
-import { z } from "zod";
+import { createComboAction } from "../actions";
+
+function normalizeStoredImage(image: unknown): string | null | undefined {
+  if (typeof image === "string") return image;
+  if (image === null) return null;
+  return undefined;
+}
 
 export default function CreateComboForm() {
-  const router = useRouter();
-  const { user, displayName } = useAuth();
+  const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  type ComboFormValues = z.input<typeof ComboFormSchema>;
 
   const handleSubmit = async (
     values: ComboFormValues,
@@ -56,39 +57,33 @@ export default function CreateComboForm() {
         throw new Error("이미지 를 가져오지 못했습니다.");
       }
 
-      const Insertvalues = (
-        await Promise.all(
-          (values.items ?? []).map(async (item) => {
-            if (item.type === "product" && item.image && item.image instanceof File) {
-              const { publicUrl } = await uploadBucketImage(
-                "combos",
-                user.id,
-                comboId,
-                item.image,
-                {
-                  contentType: item.image.type,
-                  upsert: false,
-                }
-              );
-              return {
-                ...item,
-                image: publicUrl ?? null,
-              };
-            }
-            return item;
-          })
-        )
-      ).filter(Boolean);
-      const created = await createCombo({
+      const insertItems: ComboItems[] = await Promise.all(
+        (values.items ?? []).map(async (item) => {
+          if (item.type === "product" && item.image instanceof File) {
+            const { publicUrl } = await uploadBucketImage("combos", user.id, comboId, item.image, {
+              contentType: item.image.type,
+              upsert: false,
+            });
+            return {
+              ...item,
+              image: publicUrl ?? null,
+            };
+          }
+
+          return {
+            ...item,
+            image: normalizeStoredImage(item.image),
+          };
+        })
+      );
+      await createComboAction({
         ...values,
-        writer_name: displayName,
-        writer_uid: user.id,
-        items: Insertvalues,
+        items: insertItems,
         id: comboId,
         image: finalUrl,
+        difficulty: values.difficulty ?? "",
+        time_minutes: values.time_minutes ?? 0,
       });
-
-      router.push(`/combos/${created.id}`);
     } catch (err) {
       console.error("조합 등록/로딩과정에서 오류가 발생했습니다.", err);
       setError("등록에 실패했습니다. 다시 시도해주세요.");

@@ -41,17 +41,6 @@ export async function fetchComboStatus(comboId: string): Promise<{
   return res.json();
 }
 
-export async function createCombo(body: unknown) {
-  const res = await fetch(`/api/combos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) await throwApiError(res);
-  const json = await res.json();
-  return json.data;
-}
-
 export async function updateCombo(id: string, body: unknown) {
   const res = await fetch(`/api/combos/${id}`, {
     method: "PUT",

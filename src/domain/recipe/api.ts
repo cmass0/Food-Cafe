@@ -16,7 +16,6 @@ export async function listRecipes(params?: {
   if (params?.search) qs.set("search", params.search);
   if (params?.searchField) qs.set("searchField", params.searchField);
   if (params?.sort) qs.set("sort", params.sort);
-  
 
   const res = await fetch(`/api/recipes${qs.size ? `?${qs.toString()}` : ""}`, {
     cache: "no-store",
@@ -25,17 +24,6 @@ export async function listRecipes(params?: {
   if (!res.ok) await throwApiError(res);
   const json = await res.json();
   return json.data as RecipeListResult;
-}
-
-export async function createRecipe(body: unknown): Promise<Recipe> {
-  const res = await fetch(`/api/recipes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) await throwApiError(res);
-  const json = await res.json();
-  return json.data;
 }
 
 export async function getRecipe(id: string): Promise<Recipe> {
@@ -65,7 +53,7 @@ export async function updateRecipe(id: string, body: unknown): Promise<Recipe> {
   return json.data;
 }
 
-export async function deleteRecipe(id: string){
+export async function deleteRecipe(id: string) {
   const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
   if (!res.ok && res.status !== 204) await throwApiError(res);
 }
