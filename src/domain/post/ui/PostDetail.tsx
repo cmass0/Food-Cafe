@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronRight, Home, ThumbsUp } from "lucide-react";
+import { ChevronRight, Home } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
 import { getPostCategoryLabel } from "@/domain/post/category";
+import PostLikeButton from "@/domain/post/post_like/ui/PostLikeButton";
 import { renderPostContentHtml } from "./PostContentHtml";
 import PostHeaderActions from "./PostHeaderActions.client";
 import type { Post } from "../types";
@@ -31,7 +32,10 @@ export default function PostDetail({ post }: { post: Post }) {
   return (
     <article>
       <header className="border-b border-border/80 pb-6">
-        <nav aria-label="경로" className="flex items-center gap-2 text-sm font-medium text-zinc-500">
+        <nav
+          aria-label="경로"
+          className="flex items-center gap-2 text-sm font-medium text-zinc-500"
+        >
           <Link href="/" className="rounded-sm p-0.5 hover:text-[#15933d]" aria-label="홈">
             <Home className="h-4 w-4" />
           </Link>
@@ -67,8 +71,6 @@ export default function PostDetail({ post }: { post: Post }) {
             <span>
               조회수 <ViewCount type="post" id={post.id} initialCount={post.viewCount} />
             </span>
-            <span className="hidden h-4 w-px bg-zinc-300 sm:block" />
-            <span>좋아요 {post.likeCount}</span>
           </div>
           <PostHeaderActions postId={post.id} postTitle={post.title} />
         </div>
@@ -84,9 +86,7 @@ export default function PostDetail({ post }: { post: Post }) {
       )}
 
       <div className="border-t border-border/80 py-5">
-        <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#16883d]">
-          <ThumbsUp className="h-5 w-5" /> 좋아요 {post.likeCount}
-        </span>
+        <PostLikeButton postId={post.id} initialCount={post.likeCount} />
       </div>
     </article>
   );

@@ -210,6 +210,39 @@ export type Database = {
         }
         Relationships: []
       }
+      post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           category: string
@@ -584,32 +617,12 @@ export type Database = {
         }
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
-      post_adjust_like: {
-        Args: { p_delta: number; p_post_id: string }
+      post_toggle_like: {
+        Args: { p_post_id: string }
         Returns: {
-          category: string
-          comment_count: number
-          content_html: string | null
-          content_json: Json | null
-          content_text: string | null
-          created_at: string
-          id: string
           like_count: number
-          number: number
-          tags: string[]
-          title: string
-          tsv: unknown
-          updated_at: string
-          view_count: number
-          writer_name: string
-          writer_uid: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "posts"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+          liked: boolean
+        }[]
       }
       recipe_toggle_like: {
         Args: { p_recipe_id: string }
