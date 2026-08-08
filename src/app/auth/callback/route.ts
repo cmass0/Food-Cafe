@@ -13,8 +13,14 @@ export async function GET(req: NextRequest) {
 
   const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
   const next = normalizeReturnTo(rawNext);
+  const code = req.nextUrl.searchParams.get("code");
+  if (!code) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
   const redirectUrl = new URL(next, req.url);
   const response = NextResponse.redirect(redirectUrl);
+  response.headers.set("Cache-Control", "private, no-store");
 
   const supabase = createServerClient<Database>(url, anon, {
     cookies: {
@@ -29,7 +35,7 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(req.nextUrl.toString());
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(new URL(`/`, req.url));
   }
