@@ -44,6 +44,7 @@ export interface Post {
   number: number | null;
   viewCount: number;
   likeCount: number;
+  bookmarkCount: number;
   commentCount: number;
   category: PostCategory;
   createdAt: Date;

@@ -210,6 +210,39 @@ export type Database = {
         }
         Relationships: []
       }
+      post_bookmarks: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -245,6 +278,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          bookmark_count: number
           category: string
           comment_count: number
           content_html: string | null
@@ -263,6 +297,7 @@ export type Database = {
           writer_uid: string
         }
         Insert: {
+          bookmark_count?: number
           category?: string
           comment_count?: number
           content_html?: string | null
@@ -281,6 +316,7 @@ export type Database = {
           writer_uid: string
         }
         Update: {
+          bookmark_count?: number
           category?: string
           comment_count?: number
           content_html?: string | null

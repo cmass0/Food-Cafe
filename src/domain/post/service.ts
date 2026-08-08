@@ -37,6 +37,7 @@ function mapRowToPost(row: PostRow): Post {
     number: row.number ?? null,
     viewCount: row.view_count ?? 0,
     likeCount: row.like_count ?? 0,
+    bookmarkCount: row.bookmark_count ?? 0,
     commentCount: row.comment_count ?? 0,
     category: row.category as Post["category"],
     createdAt: new Date(row.created_at),

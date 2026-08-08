@@ -16,6 +16,7 @@ const POST_COLUMNS = [
   "number",
   "view_count",
   "like_count",
+  "bookmark_count",
   "comment_count",
   "created_at",
   "updated_at",

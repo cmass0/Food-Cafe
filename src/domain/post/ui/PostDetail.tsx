@@ -72,7 +72,11 @@ export default function PostDetail({ post }: { post: Post }) {
               조회수 <ViewCount type="post" id={post.id} initialCount={post.viewCount} />
             </span>
           </div>
-          <PostHeaderActions postId={post.id} postTitle={post.title} />
+          <PostHeaderActions
+            postId={post.id}
+            postTitle={post.title}
+            initialBookmarkCount={post.bookmarkCount}
+          />
         </div>
       </header>
 
