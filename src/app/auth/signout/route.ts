@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   return response;
 }

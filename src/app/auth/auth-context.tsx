@@ -30,6 +30,9 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
     initialSession ? "authenticated" : "loading"
   );
   const [displayName, setDisplayName] = useState<string>("");
+  const user = session?.user ?? null;
+  const userId = user?.id ?? null;
+  const fallbackDisplayName = user ? (deriveDisplayName(user) ?? "") : "";
 
   useEffect(() => {
     let mounted = true;
@@ -55,7 +58,7 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
   }, [supabase]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session) return;
+    if (status !== "authenticated" || !userId) return;
 
     if (getRemember()) return;
 
@@ -69,8 +72,7 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
     const remaining = Math.max(0, logoutAt - Date.now());
     const id = window.setTimeout(async () => {
       try {
-        await supabase.auth.signOut({ scope: "global" });
-        await fetch("/auth/signout", { method: "POST" });
+        await supabase.auth.signOut({ scope: "local" });
       } finally {
         localStorage.removeItem(LOGOUT_AT_KEY);
         clearTimeout(id);
@@ -78,32 +80,30 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
     }, remaining);
 
     return () => clearTimeout(id);
-  }, [status, session, supabase]);
+  }, [status, supabase, userId]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user) {
+    if (status !== "authenticated" || !userId) {
       setDisplayName("");
       return;
     }
     // public.user 테이블에서 사용자정보를 가져옴(기존의 auth.users 대체 및 user정보에 대한 업데이트 및 랜더링은 public.user 테이블을 기준으로 변경)
     let cancelled = false;
-    const fallback = deriveDisplayName(session.user) ?? "";
     const fetchProfile = async () => {
       try {
-        const res = await getUser(session.user.id);
+        const res = await getUser(userId);
         const profile = res?.data;
         if (cancelled) return;
-        setDisplayName(profile?.display_name ?? fallback);
+        setDisplayName(profile?.display_name ?? fallbackDisplayName);
       } catch {
-        if (!cancelled) setDisplayName(fallback);
+        if (!cancelled) setDisplayName(fallbackDisplayName);
       }
     };
     fetchProfile();
     return () => {
       cancelled = true;
     };
-  }, [status, session]);
-  const user = session?.user ?? null;
+  }, [fallbackDisplayName, status, userId]);
 
   const value: AuthCtx = {
     user,
