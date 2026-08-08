@@ -29,31 +29,46 @@ export default function PostLikeButton({ postId, initialCount }: PostLikeButtonP
   const [isPending, startTransition] = React.useTransition();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const statusRequestVersion = React.useRef(0);
+  const statusAbortController = React.useRef<AbortController | null>(null);
+  const mutationPending = React.useRef(false);
 
   React.useEffect(() => {
     setLikeCount(initialCount);
   }, [initialCount]);
 
   React.useEffect(() => {
-    let active = true;
-
     if (!user?.id) {
+      statusRequestVersion.current += 1;
+      statusAbortController.current?.abort();
+      statusAbortController.current = null;
       setLiked(false);
       return;
     }
 
-    void fetchPostLikeStatus(postId)
+    const requestVersion = statusRequestVersion.current + 1;
+    const controller = new AbortController();
+    statusRequestVersion.current = requestVersion;
+    statusAbortController.current = controller;
+
+    void fetchPostLikeStatus(postId, controller.signal)
       .then((status) => {
-        if (active) setLiked(status.liked);
+        if (!controller.signal.aborted && statusRequestVersion.current === requestVersion) {
+          setLiked(status.liked);
+        }
       })
       .catch((error) => {
+        if (controller.signal.aborted) return;
         if (!isUnauthorizedApiError(error)) {
           console.error("게시글 좋아요 상태를 불러오지 못했습니다.", error);
         }
       });
 
     return () => {
-      active = false;
+      controller.abort();
+      if (statusAbortController.current === controller) {
+        statusAbortController.current = null;
+      }
     };
   }, [postId, user?.id]);
 
@@ -63,17 +78,36 @@ export default function PostLikeButton({ postId, initialCount }: PostLikeButtonP
       return;
     }
 
+    if (mutationPending.current) return;
+    mutationPending.current = true;
+
+    statusRequestVersion.current += 1;
+    statusAbortController.current?.abort();
+    statusAbortController.current = null;
+
+    const previousLiked = liked;
+    const previousLikeCount = likeCount;
+    const optimisticLiked = !previousLiked;
+
+    setLiked(optimisticLiked);
+    setLikeCount(Math.max(0, previousLikeCount + (optimisticLiked ? 1 : -1)));
+
     startTransition(async () => {
       try {
         const next = await togglePostLike(postId);
         setLiked(next.liked);
         setLikeCount(next.likeCount);
       } catch (error) {
+        setLiked(previousLiked);
+        setLikeCount(previousLikeCount);
+
         if (isUnauthorizedApiError(error)) {
           openAuthModal({ next: getReturnPath() });
           return;
         }
         console.error("게시글 좋아요 처리에 실패했습니다.", error);
+      } finally {
+        mutationPending.current = false;
       }
     });
   }

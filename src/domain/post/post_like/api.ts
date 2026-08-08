@@ -2,8 +2,14 @@ import { throwApiError } from "@/lib/domain/api/error";
 
 import type { PostLikeStatus, TogglePostLike } from "./types";
 
-export async function fetchPostLikeStatus(postId: string): Promise<PostLikeStatus> {
-  const response = await fetch(`/api/posts/${postId}/like`);
+export async function fetchPostLikeStatus(
+  postId: string,
+  signal?: AbortSignal
+): Promise<PostLikeStatus> {
+  const response = await fetch(`/api/posts/${postId}/like`, {
+    cache: "no-store",
+    signal,
+  });
   if (!response.ok) await throwApiError(response);
   return response.json();
 }
