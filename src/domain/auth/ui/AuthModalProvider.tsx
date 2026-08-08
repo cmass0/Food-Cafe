@@ -62,7 +62,11 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     openAuthModal({ next: normalizeReturnTo(url.searchParams.get("next")) });
     url.searchParams.delete("auth");
     url.searchParams.delete("next");
-    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`
+    );
   }, [openAuthModal]);
 
   return (
@@ -76,6 +80,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
             next={state.next}
             defaultMode={state.mode}
             onAuthSuccess={closeAuthModal}
+            onNavigateAway={closeAuthModal}
           />
         </DialogContent>
       </Dialog>

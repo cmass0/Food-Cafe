@@ -20,12 +20,14 @@ type SignInSignUpViewProps = {
   next?: string;
   defaultMode?: "signin" | "signup";
   onAuthSuccess?: (nextPath: string) => void;
+  onNavigateAway?: () => void;
 };
 
 export default function SignInSignUpView({
   next = "/",
   defaultMode = "signin",
   onAuthSuccess,
+  onNavigateAway,
 }: SignInSignUpViewProps) {
   const router = useRouter();
   const [mode, setMode] = React.useState<"signin" | "signup">(defaultMode);
@@ -210,8 +212,12 @@ export default function SignInSignUpView({
                         />
                         <Label htmlFor="remember">로그인 상태 유지</Label>
                       </div>
-                      <Link href="/reset-password" className="hover:underline">
-                        비밀번호 재설정
+                      <Link
+                        href="/reset-password"
+                        className="hover:underline"
+                        onClick={onNavigateAway}
+                      >
+                        비밀번호 찾기
                       </Link>
                     </div>
                   </form>
