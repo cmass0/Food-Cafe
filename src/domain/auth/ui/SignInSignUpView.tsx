@@ -20,6 +20,7 @@ import { getBrowserSupabase } from "@/lib/supabase";
 type SignInSignUpViewProps = {
   next?: string;
   defaultMode?: "signin" | "signup";
+  notice?: "password-reset";
   onAuthSuccess?: (nextPath: string) => void;
   onNavigateAway?: () => void;
 };
@@ -27,6 +28,7 @@ type SignInSignUpViewProps = {
 export default function SignInSignUpView({
   next = "/",
   defaultMode = "signin",
+  notice,
   onAuthSuccess,
   onNavigateAway,
 }: SignInSignUpViewProps) {
@@ -161,6 +163,15 @@ export default function SignInSignUpView({
                 </div>
               ) : null}
 
+              {notice === "password-reset" ? (
+                <div
+                  role="status"
+                  className="mx-6 -mt-2 mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700"
+                >
+                  비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.
+                </div>
+              ) : null}
+
               <Tabs
                 value={mode}
                 onValueChange={(value) => setMode(value as "signin" | "signup")}
@@ -212,7 +223,7 @@ export default function SignInSignUpView({
                         <Label htmlFor="remember">로그인 상태 유지</Label>
                       </div>
                       <Link
-                        href="/reset-password"
+                        href="/auth/recovery"
                         className="hover:underline"
                         onClick={onNavigateAway}
                       >

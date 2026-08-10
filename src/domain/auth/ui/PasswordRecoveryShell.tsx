@@ -65,7 +65,7 @@ export default function PasswordRecoveryShell({
           <div className="mt-8 text-left">{children}</div>
 
           <Link
-            href={step === "request" ? buildAuthModalPath("/") : "/reset-password"}
+            href={step === "request" ? buildAuthModalPath("/") : "/auth/recovery"}
             className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition hover:text-[#438e4d]"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />

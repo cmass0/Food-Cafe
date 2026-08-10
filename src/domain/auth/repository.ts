@@ -44,3 +44,31 @@ export async function changePassword(
 
   if (error) throw error;
 }
+
+// 가입 이메일로 비밀번호 복구 링크를 발송한다.
+export async function sendPasswordResetEmail(
+  client: ServerSupabase,
+  email: string,
+  redirectTo: string
+): Promise<void> {
+  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+
+  if (error) throw error;
+}
+
+// 복구 링크로 발급된 인증 세션에서 새 비밀번호를 설정한다.
+export async function updateRecoveredPassword(
+  client: ServerSupabase,
+  newPassword: string
+): Promise<void> {
+  const { error } = await client.auth.updateUser({ password: newPassword });
+
+  if (error) throw error;
+}
+
+// 복구가 끝난 브라우저의 세션을 종료해 새 비밀번호로 다시 로그인하게 한다.
+export async function signOutAfterRecovery(client: ServerSupabase): Promise<void> {
+  const { error } = await client.auth.signOut({ scope: "local" });
+
+  if (error && error.code !== "session_not_found") throw error;
+}

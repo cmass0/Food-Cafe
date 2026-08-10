@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
+import { completePasswordResetAction } from "@/app/auth/recovery/actions";
+import * as authService from "@/domain/auth/service";
 import PasswordRecoveryShell from "@/domain/auth/ui/PasswordRecoveryShell";
 import PasswordUpdateForm from "@/domain/auth/ui/PasswordUpdateForm";
 
@@ -8,7 +11,11 @@ export const metadata: Metadata = {
   description: "FoodCafe 계정에서 사용할 새 비밀번호를 설정하세요.",
 };
 
-export default function UpdatePasswordPage() {
+export default async function PasswordRecoveryResetPage() {
+  if (!(await authService.hasPasswordRecoverySession())) {
+    redirect("/auth/recovery?error=invalid-link");
+  }
+
   return (
     <PasswordRecoveryShell
       step="update"
@@ -17,11 +24,11 @@ export default function UpdatePasswordPage() {
         <>
           앞으로 사용할 새 비밀번호를 입력해 주세요.
           <br />
-          안전한 비밀번호로 변경한 뒤 다시 로그인해 주세요.
+          변경한 뒤 새 비밀번호로 다시 로그인해 주세요.
         </>
       }
     >
-      <PasswordUpdateForm />
+      <PasswordUpdateForm action={completePasswordResetAction} />
     </PasswordRecoveryShell>
   );
 }

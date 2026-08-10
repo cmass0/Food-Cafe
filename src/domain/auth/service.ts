@@ -1,16 +1,24 @@
 import "server-only";
 
+import { isAuthSessionMissingError } from "@/lib/auth/errors";
 import { requireAuthContext } from "@/lib/auth/session";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 import { PASSWORD_SECURITY_MESSAGE } from "./constants";
 import * as repository from "./repository";
-import { EmailChangeSchema, PasswordChangeSchema } from "./schema";
+import {
+  EmailChangeSchema,
+  PasswordChangeSchema,
+  PasswordResetCompleteSchema,
+  PasswordResetRequestSchema,
+} from "./schema";
 
 type AccountErrorCode =
   | "EMAIL_UNAVAILABLE"
   | "EMAIL_UNCHANGED"
   | "INVALID_CURRENT_PASSWORD"
   | "RATE_LIMITED"
+  | "RECOVERY_SESSION_REQUIRED"
   | "REAUTHENTICATION_REQUIRED"
   | "SAME_PASSWORD"
   | "SESSION_REQUIRED"
@@ -68,6 +76,13 @@ function translateAuthError(error: unknown): never {
     case "session_not_found":
     case "session_expired":
       throw new AccountError("SESSION_REQUIRED", "로그인이 필요합니다.");
+    case "otp_expired":
+    case "flow_state_expired":
+    case "bad_code_verifier":
+      throw new AccountError(
+        "RECOVERY_SESSION_REQUIRED",
+        "비밀번호 변경 링크가 만료되었거나 이미 사용되었습니다. 새 링크를 받아 주세요."
+      );
     default:
       throw error;
   }
@@ -123,6 +138,79 @@ export async function changePassword(input: unknown): Promise<void> {
 
   try {
     await repository.changePassword(supabase, parsed.currentPassword, parsed.newPassword);
+  } catch (error) {
+    translateAuthError(error);
+  }
+}
+
+function isRecoveryMethod(claims: unknown): boolean {
+  if (!claims || typeof claims !== "object" || !("amr" in claims)) return false;
+  const amr = claims.amr;
+  if (!Array.isArray(amr)) return false;
+
+  return amr.some(
+    (entry) =>
+      Boolean(entry) &&
+      typeof entry === "object" &&
+      "method" in entry &&
+      entry.method === "recovery"
+  );
+}
+
+function isMissingAccountError(error: unknown): boolean {
+  const code = getAuthErrorCode(error);
+  return code === "user_not_found" || code === "email_not_found";
+}
+
+export async function requestPasswordReset(input: unknown, redirectTo: string): Promise<void> {
+  const parsed = PasswordResetRequestSchema.parse(input);
+  const supabase = await getServerSupabase();
+
+  try {
+    await repository.sendPasswordResetEmail(supabase, parsed.email, redirectTo);
+  } catch (error) {
+    // 가입 여부가 외부에 노출되지 않도록 존재하지 않는 이메일도 성공 응답으로 통일한다.
+    if (isMissingAccountError(error)) return;
+    translateAuthError(error);
+  }
+}
+
+export async function hasPasswordRecoverySession(): Promise<boolean> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase.auth.getClaims();
+
+  if (isAuthSessionMissingError(error)) return false;
+  if (error) throw error;
+  return isRecoveryMethod(data?.claims);
+}
+
+async function requirePasswordRecoveryContext() {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase.auth.getClaims();
+
+  if (isAuthSessionMissingError(error)) {
+    throw new AccountError(
+      "RECOVERY_SESSION_REQUIRED",
+      "비밀번호 변경 링크가 만료되었거나 이미 사용되었습니다. 새 링크를 받아 주세요."
+    );
+  }
+  if (error) throw error;
+  if (!isRecoveryMethod(data?.claims)) {
+    throw new AccountError(
+      "RECOVERY_SESSION_REQUIRED",
+      "비밀번호 변경 링크가 만료되었거나 이미 사용되었습니다. 새 링크를 받아 주세요."
+    );
+  }
+  return supabase;
+}
+
+export async function completePasswordReset(input: unknown): Promise<void> {
+  const parsed = PasswordResetCompleteSchema.parse(input);
+  const supabase = await requirePasswordRecoveryContext();
+
+  try {
+    await repository.updateRecoveredPassword(supabase, parsed.newPassword);
+    await repository.signOutAfterRecovery(supabase);
   } catch (error) {
     translateAuthError(error);
   }

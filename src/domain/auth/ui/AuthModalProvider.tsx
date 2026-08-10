@@ -10,6 +10,7 @@ import { normalizeReturnTo } from "@/lib/auth/return-to";
 type AuthModalOptions = {
   next?: string;
   mode?: "signin" | "signup";
+  notice?: "password-reset";
 };
 
 type AuthModalContextValue = {
@@ -21,6 +22,7 @@ type AuthModalState = {
   open: boolean;
   next: string;
   mode: "signin" | "signup";
+  notice?: "password-reset";
 };
 
 const AuthModalContext = React.createContext<AuthModalContextValue | null>(null);
@@ -42,6 +44,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       open: true,
       next: normalizeReturnTo(options?.next ?? currentPath),
       mode: options?.mode ?? "signin",
+      notice: options?.notice,
     });
   }, []);
 
@@ -59,9 +62,14 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     const url = new URL(window.location.href);
     if (url.searchParams.get("auth") !== "login") return;
 
-    openAuthModal({ next: normalizeReturnTo(url.searchParams.get("next")) });
+    const notice = url.searchParams.get("notice");
+    openAuthModal({
+      next: normalizeReturnTo(url.searchParams.get("next")),
+      notice: notice === "password-reset" ? "password-reset" : undefined,
+    });
     url.searchParams.delete("auth");
     url.searchParams.delete("next");
+    url.searchParams.delete("notice");
     window.history.replaceState(
       window.history.state,
       "",
@@ -76,9 +84,10 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
         <DialogContent className="w-[92vw] p-0 sm:max-w-[400px]">
           <DialogTitle className="sr-only">로그인 또는 회원가입</DialogTitle>
           <SignInSignUpView
-            key={`${state.mode}:${state.next}`}
+            key={`${state.mode}:${state.next}:${state.notice ?? ""}`}
             next={state.next}
             defaultMode={state.mode}
+            notice={state.notice}
             onAuthSuccess={closeAuthModal}
             onNavigateAway={closeAuthModal}
           />

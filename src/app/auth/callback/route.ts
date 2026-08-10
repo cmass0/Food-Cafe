@@ -11,11 +11,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
+  const isRecoveryFlow = req.nextUrl.searchParams.get("flow") === "recovery";
+  const failurePath = isRecoveryFlow ? "/auth/recovery?error=invalid-link" : "/";
   const rawNext = req.nextUrl.searchParams.get("next") ?? "/";
   const next = normalizeReturnTo(rawNext);
   const code = req.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/", req.url));
+    const failedResponse = NextResponse.redirect(new URL(failurePath, req.url));
+    failedResponse.headers.set("Cache-Control", "private, no-store");
+    return failedResponse;
   }
 
   const redirectUrl = new URL(next, req.url);
@@ -37,7 +41,9 @@ export async function GET(req: NextRequest) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    return NextResponse.redirect(new URL(`/`, req.url));
+    const failedResponse = NextResponse.redirect(new URL(failurePath, req.url));
+    failedResponse.headers.set("Cache-Control", "private, no-store");
+    return failedResponse;
   }
 
   return response;

@@ -1,10 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import { ZodError } from "zod";
 
 import * as authService from "@/domain/auth/service";
 import type { AccountActionState } from "@/domain/auth/types";
+import { buildAuthCallbackUrl } from "@/lib/auth/callback-url";
 
 const DEFAULT_ERROR = "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
@@ -31,24 +31,6 @@ function getActionError(error: unknown): AccountActionState {
   return { status: "error", message: DEFAULT_ERROR };
 }
 
-async function getCallbackUrl(): Promise<string> {
-  const requestHeaders = await headers();
-  const rawOrigin = requestHeaders.get("origin");
-
-  if (!rawOrigin) {
-    throw new Error("요청 출처를 확인할 수 없습니다.");
-  }
-
-  const origin = new URL(rawOrigin);
-  if (origin.protocol !== "http:" && origin.protocol !== "https:") {
-    throw new Error("유효하지 않은 요청 출처입니다.");
-  }
-
-  const callbackUrl = new URL("/auth/callback", origin.origin);
-  callbackUrl.searchParams.set("next", "/profile");
-  return callbackUrl.toString();
-}
-
 export async function requestEmailChangeAction(
   _previousState: AccountActionState,
   formData: FormData
@@ -59,7 +41,7 @@ export async function requestEmailChangeAction(
         currentPassword: getTextValue(formData, "currentPassword"),
         newEmail: getTextValue(formData, "newEmail"),
       },
-      await getCallbackUrl()
+      await buildAuthCallbackUrl({ next: "/profile" })
     );
 
     return {

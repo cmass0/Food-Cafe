@@ -44,7 +44,7 @@ function NavbarInner() {
   const { openAuthModal } = useAuthModal();
   const name = displayName || deriveDisplayName(user) || "내 프로필";
 
-  if (pathname?.startsWith("/profile") || pathname?.startsWith("/reset-password")) {
+  if (pathname?.startsWith("/profile") || pathname?.startsWith("/auth/recovery")) {
     return null;
   }
 
