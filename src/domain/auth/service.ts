@@ -1,6 +1,13 @@
 import "server-only";
 
+import { cookies } from "next/headers";
+
 import { isAuthSessionMissingError } from "@/lib/auth/errors";
+import {
+  clearPasswordRecoveryCookie,
+  matchesPasswordRecoveryMarker,
+  PASSWORD_RECOVERY_COOKIE,
+} from "@/lib/auth/recovery-session";
 import { requireAuthContext } from "@/lib/auth/session";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -143,20 +150,6 @@ export async function changePassword(input: unknown): Promise<void> {
   }
 }
 
-function isRecoveryMethod(claims: unknown): boolean {
-  if (!claims || typeof claims !== "object" || !("amr" in claims)) return false;
-  const amr = claims.amr;
-  if (!Array.isArray(amr)) return false;
-
-  return amr.some(
-    (entry) =>
-      Boolean(entry) &&
-      typeof entry === "object" &&
-      "method" in entry &&
-      entry.method === "recovery"
-  );
-}
-
 function isMissingAccountError(error: unknown): boolean {
   const code = getAuthErrorCode(error);
   return code === "user_not_found" || code === "email_not_found";
@@ -176,41 +169,49 @@ export async function requestPasswordReset(input: unknown, redirectTo: string): 
 }
 
 export async function hasPasswordRecoverySession(): Promise<boolean> {
-  const supabase = await getServerSupabase();
-  const { data, error } = await supabase.auth.getClaims();
+  return Boolean(await getPasswordRecoveryContextOrNull());
+}
 
-  if (isAuthSessionMissingError(error)) return false;
-  if (error) throw error;
-  return isRecoveryMethod(data?.claims);
+async function getPasswordRecoveryContextOrNull() {
+  const supabase = await getServerSupabase();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (isAuthSessionMissingError(userError)) return null;
+  if (userError) throw userError;
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (isAuthSessionMissingError(sessionError)) return null;
+  if (sessionError) throw sessionError;
+
+  const session = sessionData.session;
+  if (!userData.user || !session || userData.user.id !== session.user.id) return null;
+
+  const cookieStore = await cookies();
+  const marker = cookieStore.get(PASSWORD_RECOVERY_COOKIE)?.value;
+  if (!matchesPasswordRecoveryMarker(marker, session)) return null;
+
+  return { cookieStore, supabase };
 }
 
 async function requirePasswordRecoveryContext() {
-  const supabase = await getServerSupabase();
-  const { data, error } = await supabase.auth.getClaims();
-
-  if (isAuthSessionMissingError(error)) {
+  const context = await getPasswordRecoveryContextOrNull();
+  if (!context) {
     throw new AccountError(
       "RECOVERY_SESSION_REQUIRED",
       "비밀번호 변경 링크가 만료되었거나 이미 사용되었습니다. 새 링크를 받아 주세요."
     );
   }
-  if (error) throw error;
-  if (!isRecoveryMethod(data?.claims)) {
-    throw new AccountError(
-      "RECOVERY_SESSION_REQUIRED",
-      "비밀번호 변경 링크가 만료되었거나 이미 사용되었습니다. 새 링크를 받아 주세요."
-    );
-  }
-  return supabase;
+  return context;
 }
 
 export async function completePasswordReset(input: unknown): Promise<void> {
   const parsed = PasswordResetCompleteSchema.parse(input);
-  const supabase = await requirePasswordRecoveryContext();
+  const { cookieStore, supabase } = await requirePasswordRecoveryContext();
 
   try {
     await repository.updateRecoveredPassword(supabase, parsed.newPassword);
     await repository.signOutAfterRecovery(supabase);
+    clearPasswordRecoveryCookie(cookieStore, process.env.NODE_ENV === "production");
   } catch (error) {
     translateAuthError(error);
   }
