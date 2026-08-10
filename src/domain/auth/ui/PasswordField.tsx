@@ -13,7 +13,7 @@ type PasswordFieldProps = {
   placeholder: string;
   autoComplete: "current-password" | "new-password";
   disabled?: boolean;
-  minLength?: number;
+  error?: string;
 };
 
 export default function PasswordField({
@@ -23,9 +23,10 @@ export default function PasswordField({
   placeholder,
   autoComplete,
   disabled = false,
-  minLength,
+  error,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
+  const errorId = `${id}-error`;
 
   return (
     <div className="grid gap-2">
@@ -38,8 +39,9 @@ export default function PasswordField({
           autoComplete={autoComplete}
           placeholder={placeholder}
           disabled={disabled}
-          minLength={minLength}
           required
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className="pr-11"
         />
         <button
@@ -57,6 +59,11 @@ export default function PasswordField({
           )}
         </button>
       </div>
+      {error ? (
+        <p id={errorId} role="alert" className="text-sm font-medium text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

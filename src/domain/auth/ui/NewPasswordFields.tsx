@@ -3,9 +3,14 @@ import PasswordField from "./PasswordField";
 type NewPasswordFieldsProps = {
   idPrefix: string;
   disabled?: boolean;
+  newPasswordError?: string;
 };
 
-export default function NewPasswordFields({ idPrefix, disabled = false }: NewPasswordFieldsProps) {
+export default function NewPasswordFields({
+  idPrefix,
+  disabled = false,
+  newPasswordError,
+}: NewPasswordFieldsProps) {
   return (
     <>
       <PasswordField
@@ -14,8 +19,8 @@ export default function NewPasswordFields({ idPrefix, disabled = false }: NewPas
         label="새 비밀번호"
         placeholder="새 비밀번호 입력"
         autoComplete="new-password"
-        minLength={6}
         disabled={disabled}
+        error={newPasswordError}
       />
       <PasswordField
         id={`${idPrefix}-confirm-password`}
@@ -23,7 +28,6 @@ export default function NewPasswordFields({ idPrefix, disabled = false }: NewPas
         label="새 비밀번호 확인"
         placeholder="새 비밀번호 다시 입력"
         autoComplete="new-password"
-        minLength={6}
         disabled={disabled}
       />
     </>

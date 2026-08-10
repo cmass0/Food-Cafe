@@ -85,15 +85,8 @@ export default function AccountSecurityForm({
   function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     setPasswordClientError("");
     const formData = new FormData(event.currentTarget);
-    const currentPassword = formData.get("currentPassword")?.toString() ?? "";
     const newPassword = formData.get("newPassword")?.toString() ?? "";
     const confirmPassword = formData.get("confirmPassword")?.toString() ?? "";
-
-    if (currentPassword === newPassword) {
-      event.preventDefault();
-      setPasswordClientError("현재 비밀번호와 다른 비밀번호를 입력해 주세요.");
-      return;
-    }
 
     if (newPassword !== confirmPassword) {
       event.preventDefault();
@@ -189,15 +182,21 @@ export default function AccountSecurityForm({
           autoComplete="current-password"
           disabled={passwordPending}
         />
-        <NewPasswordFields idPrefix="account" disabled={passwordPending} />
-
-        <p className="text-xs leading-5 text-zinc-500">
-          6자 이상이며 Supabase에 설정된 대·소문자, 숫자, 특수문자 조건을 충족해야 합니다.
-        </p>
+        <NewPasswordFields
+          idPrefix="account"
+          disabled={passwordPending}
+          newPasswordError={
+            !passwordPending &&
+            passwordState.status === "error" &&
+            passwordState.field === "newPassword"
+              ? passwordState.message
+              : undefined
+          }
+        />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <FormMessage
-            state={passwordState}
+            state={passwordState.field === "newPassword" ? initialState : passwordState}
             clientError={passwordClientError}
             pending={passwordPending}
           />

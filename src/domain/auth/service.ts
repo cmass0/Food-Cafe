@@ -2,6 +2,7 @@ import "server-only";
 
 import { requireAuthContext } from "@/lib/auth/session";
 
+import { PASSWORD_SECURITY_MESSAGE } from "./constants";
 import * as repository from "./repository";
 import { EmailChangeSchema, PasswordChangeSchema } from "./schema";
 
@@ -43,10 +44,7 @@ function translateAuthError(error: unknown): never {
     case "current_password_required":
       throw new AccountError("INVALID_CURRENT_PASSWORD", "현재 비밀번호가 올바르지 않습니다.");
     case "weak_password":
-      throw new AccountError(
-        "WEAK_PASSWORD",
-        "비밀번호 보안 조건을 충족하지 않습니다. 문자 조합을 다시 확인해 주세요."
-      );
+      throw new AccountError("WEAK_PASSWORD", PASSWORD_SECURITY_MESSAGE);
     case "email_exists":
     case "user_already_exists":
       throw new AccountError(

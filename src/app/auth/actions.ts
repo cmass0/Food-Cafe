@@ -22,7 +22,9 @@ function getActionError(error: unknown): AccountActionState {
   }
 
   if (error instanceof authService.AccountError) {
-    return { status: "error", message: error.message };
+    const field =
+      error.code === "WEAK_PASSWORD" || error.code === "SAME_PASSWORD" ? "newPassword" : undefined;
+    return { status: "error", message: error.message, field };
   }
 
   console.error("계정 정보 변경 실패", error);

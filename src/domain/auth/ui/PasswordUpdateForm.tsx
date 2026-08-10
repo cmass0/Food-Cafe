@@ -35,7 +35,6 @@ function PasswordField({
           type={visible ? "text" : "password"}
           autoComplete="new-password"
           placeholder={placeholder}
-          minLength={6}
           required
           className="h-12 rounded-lg border-zinc-300 bg-white px-4 pr-12 text-base shadow-none placeholder:text-zinc-400 focus-visible:border-[#438e4d] focus-visible:ring-[#438e4d]/20 md:text-sm"
         />
@@ -77,9 +76,6 @@ export default function PasswordUpdateForm() {
         visible={showPasswordConfirm}
         onVisibilityChange={() => setShowPasswordConfirm((visible) => !visible)}
       />
-      <p className="text-xs leading-5 text-zinc-500">
-        6자 이상이며 영문 대·소문자, 숫자, 특수문자를 포함해 주세요.
-      </p>
       <Button
         type="submit"
         className="mt-1 h-12 rounded-lg bg-[#438e4d] text-base font-bold text-white hover:bg-[#34783f]"

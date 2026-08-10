@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PASSWORD_SECURITY_MESSAGE } from "@/domain/auth/constants";
 import AuthButtons from "@/domain/user/ui/AuthButtons";
 import { setRemember } from "@/lib/auth/login-maintain";
 import { getBrowserSupabase } from "@/lib/supabase";
@@ -46,6 +47,7 @@ export default function SignInSignUpView({
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [signUpMessage, setSignUpMessage] = React.useState<string | null>(null);
   const [signUpError, setSignUpError] = React.useState<string | null>(null);
+  const [signUpPasswordError, setSignUpPasswordError] = React.useState<string | null>(null);
   const [isSigningUp, startSignUpTransition] = React.useTransition();
 
   const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => {
@@ -74,6 +76,7 @@ export default function SignInSignUpView({
   const handleSignUp = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSignUpError(null);
+    setSignUpPasswordError(null);
     setSignUpMessage(null);
 
     if (!displayName.trim()) {
@@ -109,12 +112,8 @@ export default function SignInSignUpView({
 
       if (error) {
         const msg = error.message.toLowerCase();
-        console.log("sign up error", { error, msg });
         if (error.code === "weak_password") {
-          // supabase 설정 on
-          setSignUpError(
-            "비밀번호는 최소 6자 이상 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
-          );
+          setSignUpPasswordError(PASSWORD_SECURITY_MESSAGE);
           return;
         }
         if (msg.includes("already registered") || msg.includes("already exists")) {
@@ -254,10 +253,24 @@ export default function SignInSignUpView({
                         type="password"
                         placeholder="비밀번호"
                         value={signUpPassword}
-                        onChange={(event) => setSignUpPassword(event.target.value)}
+                        onChange={(event) => {
+                          setSignUpPassword(event.target.value);
+                          setSignUpPasswordError(null);
+                        }}
                         autoComplete="new-password"
                         disabled={isSigningUp}
+                        aria-invalid={signUpPasswordError ? true : undefined}
+                        aria-describedby={signUpPasswordError ? "signup-password-error" : undefined}
                       />
+                      {signUpPasswordError ? (
+                        <p
+                          id="signup-password-error"
+                          role="alert"
+                          className="text-sm font-medium text-destructive"
+                        >
+                          {signUpPasswordError}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="signup-password-confirm">비밀번호 확인</Label>

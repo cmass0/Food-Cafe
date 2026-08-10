@@ -12,18 +12,10 @@ export const EmailChangeSchema = z.object({
 export const PasswordChangeSchema = z
   .object({
     currentPassword: z.string().min(1, "현재 비밀번호를 입력해 주세요."),
-    newPassword: z.string().min(6, "새 비밀번호는 6자 이상 입력해 주세요."),
+    newPassword: z.string().min(1, "새 비밀번호를 입력해 주세요."),
     confirmPassword: z.string().min(1, "새 비밀번호 확인을 입력해 주세요."),
   })
   .superRefine((value, context) => {
-    if (value.currentPassword === value.newPassword) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["newPassword"],
-        message: "현재 비밀번호와 다른 비밀번호를 입력해 주세요.",
-      });
-    }
-
     if (value.newPassword !== value.confirmPassword) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
