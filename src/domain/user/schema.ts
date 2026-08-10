@@ -9,6 +9,5 @@ export const UserUpdateSchema = z.object({
     .optional()
     .nullable(),
   photo_url: z.string().url("올바른 URL을 입력해 주세요.").optional().nullable(),
-  email: z.string().email("올바른 이메일 주소를 입력해 주세요.").optional(),
 });
 export type UserUpdateInput = z.infer<typeof UserUpdateSchema>;

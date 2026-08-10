@@ -24,10 +24,6 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
   if (parsed.photo_url !== undefined) {
     payload.photo_url = parsed.photo_url ?? null;
   }
-  if (parsed.email !== undefined) {
-    payload.email = parsed.email ?? null;
-  }
-
   return payload;
 }
 
@@ -55,11 +51,6 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
   const parsed = UserUpdateSchema.parse(input);
   if (typeof parsed.display_name === "string" && !parsed.display_name.trim()) {
     throw new Error("이름을 입력해 주세요.");
-  }
-
-  if (parsed.email && parsed.email !== user.email) {
-    const { error: emailError } = await supabase.auth.updateUser({ email: parsed.email });
-    if (emailError) throw emailError;
   }
 
   return repository.updateUserRecord(supabase, user.id, buildUpdatePayload(parsed));
@@ -91,7 +82,6 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
 export async function findUserByDisplayName(name: string): Promise<UserRow | null> {
   const supabase = await getServerSupabase();
   return repository.selectUserByDisplayName(supabase, name);
-  
 }
 
 export async function getUserById(id: string): Promise<UserRow | null> {

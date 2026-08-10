@@ -11,13 +11,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { changePasswordAction, requestEmailChangeAction } from "@/app/auth/actions";
+import AccountSecurityForm from "@/domain/auth/ui/AccountSecurityForm";
 import { UserRow } from "@/domain/user/types";
 import { PencilLine } from "lucide-react";
 
 import DeleteAccount from "./ui/DeleteAccount";
-import EditEmail from "./ui/editemail";
 import EditName from "./ui/editname";
-import EditPassword from "./ui/editpassword";
 import EditPhoto from "./ui/editphoto";
 
 type Props = {
@@ -60,8 +60,11 @@ export default function EditSheet({ userProfile }: Props) {
                 이메일과 비밀번호처럼 로그인에 사용하는 정보를 변경합니다.
               </p>
             </div>
-            <EditEmail userProfile={userProfile} />
-            <EditPassword />
+            <AccountSecurityForm
+              currentEmail={userProfile.email ?? ""}
+              emailAction={requestEmailChangeAction}
+              passwordAction={changePasswordAction}
+            />
           </section>
 
           <section className="grid gap-3 border-t pt-6">

@@ -4,19 +4,14 @@ import { revalidatePath } from "next/cache";
 
 import { UserUpdateSchema } from "@/domain/user/schema";
 import * as userService from "@/domain/user/service";
-import { requireAuth } from "@/lib/auth/session";
 
 export async function updateProfileAction(formData: FormData): Promise<void> {
-  await requireAuth();
-
   const rawPhotoUrl = formData.get("photo_url");
-  const photoUrl =
-    typeof rawPhotoUrl === "string" ? rawPhotoUrl.trim() : undefined;
+  const photoUrl = typeof rawPhotoUrl === "string" ? rawPhotoUrl.trim() : undefined;
 
   const payload = UserUpdateSchema.parse({
     display_name: formData.get("display_name")?.toString(),
     photo_url: photoUrl === "" ? null : photoUrl,
-    email: formData.get("email")?.toString(),
   });
 
   await userService.updateSelf(payload);
