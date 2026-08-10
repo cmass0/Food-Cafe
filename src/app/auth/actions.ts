@@ -53,13 +53,16 @@ export async function requestEmailChangeAction(
 ): Promise<AccountActionState> {
   try {
     await authService.requestEmailChange(
-      { newEmail: getTextValue(formData, "newEmail") },
+      {
+        currentPassword: getTextValue(formData, "currentPassword"),
+        newEmail: getTextValue(formData, "newEmail"),
+      },
       await getCallbackUrl()
     );
 
     return {
       status: "success",
-      message: "인증 메일을 보냈습니다. 현재 이메일과 새 이메일의 메일함을 확인해 주세요.",
+      message: "새 이메일로 인증 메일을 보냈습니다. 메일함을 확인해 주세요.",
     };
   } catch (error) {
     return getActionError(error);

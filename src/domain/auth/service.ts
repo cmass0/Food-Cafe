@@ -39,6 +39,8 @@ function translateAuthError(error: unknown): never {
       throw new AccountError("SAME_PASSWORD", "현재 비밀번호와 다른 비밀번호를 입력해 주세요.");
     case "reauthentication_not_valid":
     case "invalid_credentials":
+    case "current_password_mismatch":
+    case "current_password_required":
       throw new AccountError("INVALID_CURRENT_PASSWORD", "현재 비밀번호가 올바르지 않습니다.");
     case "weak_password":
       throw new AccountError(
@@ -101,8 +103,18 @@ export async function requestEmailChange(input: unknown, emailRedirectTo: string
   }
 
   try {
+    const verifiedUserId = await repository.verifyCurrentPassword(
+      supabase,
+      currentEmail,
+      parsed.currentPassword
+    );
+    if (verifiedUserId !== user.id) {
+      throw new AccountError("INVALID_CURRENT_PASSWORD", "현재 비밀번호가 올바르지 않습니다.");
+    }
+
     await repository.requestEmailChange(supabase, parsed.newEmail, emailRedirectTo);
   } catch (error) {
+    if (error instanceof AccountError) throw error;
     translateAuthError(error);
   }
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const EmailChangeSchema = z.object({
+  currentPassword: z.string().min(1, "현재 비밀번호를 입력해 주세요."),
   newEmail: z
     .string()
     .trim()

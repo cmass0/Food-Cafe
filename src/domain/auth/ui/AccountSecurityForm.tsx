@@ -65,11 +65,11 @@ export default function AccountSecurityForm({
 
   useEffect(() => {
     if (emailState.status === "success") emailFormRef.current?.reset();
-  }, [emailState]);
+  }, [emailState.status]);
 
   useEffect(() => {
     if (passwordState.status === "success") passwordFormRef.current?.reset();
-  }, [passwordState]);
+  }, [passwordState.status]);
 
   function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
     setEmailClientError("");
@@ -116,7 +116,7 @@ export default function AccountSecurityForm({
           <div>
             <h4 className="text-sm font-semibold text-zinc-900">이메일 변경</h4>
             <p className="mt-1 text-xs leading-5 text-zinc-500">
-              인증 메일 확인이 완료되면 로그인 이메일이 변경됩니다.
+              현재 비밀번호 확인 후 새 이메일로 인증 메일을 보냅니다.
             </p>
           </div>
         </div>
@@ -131,6 +131,15 @@ export default function AccountSecurityForm({
             className="bg-zinc-50 text-zinc-500"
           />
         </div>
+
+        <PasswordField
+          id="account-email-current-password"
+          name="currentPassword"
+          label="현재 비밀번호"
+          placeholder="현재 비밀번호 입력"
+          autoComplete="current-password"
+          disabled={emailPending || !currentEmail}
+        />
 
         <div className="grid gap-2">
           <Label htmlFor="new-email">새 이메일</Label>
