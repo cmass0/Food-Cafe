@@ -137,6 +137,57 @@ export async function updatePost(
   return row ? mapRowToPost(row) : null;
 }
 
+async function listEngagedPosts(
+  client: SupabaseClient<Database>,
+  relation: "post_bookmarks" | "post_likes",
+  userId: string,
+  options?: PostListOptions
+): Promise<PostListResult> {
+  const parsed = postListOptionsSchema.parse(options ?? {});
+  const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = resolveOffset(parsed.page, limit);
+  const { items: rows, total: rawTotal } = await repository.fetchPostsByEngagement(
+    client,
+    relation,
+    userId,
+    {
+      limit,
+      offset,
+      sort: parsed.sort,
+      search: parsed.search,
+      searchField: parsed.searchField,
+    }
+  );
+  const items = rows.map(mapRowToPost);
+  const total = Math.max(rawTotal, offset + items.length);
+
+  return {
+    items,
+    total,
+    limit,
+    hasMore: offset + items.length < total,
+    offset,
+  };
+}
+
+/** 로그인 사용자가 북마크한 게시글 목록을 반환한다. */
+export function listBookmarkedPosts(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: PostListOptions
+): Promise<PostListResult> {
+  return listEngagedPosts(client, "post_bookmarks", userId, options);
+}
+
+/** 로그인 사용자가 좋아요한 게시글 목록을 반환한다. */
+export function listLikedPosts(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options?: PostListOptions
+): Promise<PostListResult> {
+  return listEngagedPosts(client, "post_likes", userId, options);
+}
+
 function parseContentJson(contentJson: PostCreateInput["content_json"]) {
   const serialized =
     typeof contentJson === "string" ? contentJson : JSON.stringify(contentJson);

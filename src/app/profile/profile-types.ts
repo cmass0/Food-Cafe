@@ -1,10 +1,10 @@
-export type ProfileSection = "recipe" | "combo";
+export type ProfileSection = "recipe" | "combo" | "post";
 export type ProfileTab = "written" | "bookmark" | "like";
 export type ProfileSort = "recent" | "like" | "view";
 export type ProfileView = "grid" | "list";
 
 export function normalizeProfileSection(value: string | undefined): ProfileSection {
-  return value === "combo" ? "combo" : "recipe";
+  return value === "combo" || value === "post" ? value : "recipe";
 }
 
 export function normalizeProfileTab(value: string | undefined): ProfileTab {

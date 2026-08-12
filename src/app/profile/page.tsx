@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import AuthRequiredModal from "@/domain/auth/ui/AuthRequiredModal";
 import * as comboService from "@/domain/combo/service";
+import * as postService from "@/domain/post/service";
 import * as recipeService from "@/domain/recipe/service";
 import * as userService from "@/domain/user/service";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ import {
   Heart,
   List,
   LogOut,
+  MessagesSquare,
   Plus,
   UsersRound,
   UserRound,
@@ -26,6 +28,7 @@ import ProfileSearchForm from "./ProfileSearchForm";
 import ProfileSortSelect from "./ProfileSortSelect";
 import EditSheet from "./edit/EditSheet";
 import ComboTabContainer from "./profiletab/combo/ComboTabContainer";
+import PostTabContainer from "./profiletab/post/PostTabContainer";
 import RecipeTabContainer from "./profiletab/recipe/RecipeTabContainer";
 import {
   normalizeProfileSection,
@@ -126,15 +129,17 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
   const supabase = await getServerSupabase();
-  const [authUserResult, recipeSummary, comboSummary] = await Promise.all([
+  const [authUserResult, recipeSummary, comboSummary, postSummary] = await Promise.all([
     supabase.auth.getUser(),
     recipeService.listRecipes(supabase, { writerUid: me.id, page: 1, limit: 1 }),
     comboService.listCombos(supabase, { writerUid: me.id, page: 1, limit: 1 }),
+    postService.listPosts(supabase, { writerUid: me.id, page: 1, limit: 1 }),
   ]);
   if (authUserResult.error) throw authUserResult.error;
   const currentPhone = authUserResult.data.user?.phone ?? null;
   const recipeTotal = recipeSummary.total;
   const comboTotal = comboSummary.total;
+  const postTotal = postSummary.total;
 
   function buildHref(options: ProfileHrefOptions = {}) {
     const params = new URLSearchParams();
@@ -168,6 +173,13 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
       href: buildHref({ section: "combo", tab: "written" }),
       active: activeSection === "combo" && activeTab === "written",
       icon: BookOpenCheck,
+    },
+    {
+      label: "내 게시글",
+      count: postTotal,
+      href: buildHref({ section: "post", tab: "written" }),
+      active: activeSection === "post" && activeTab === "written",
+      icon: MessagesSquare,
     },
     {
       label: "북마크",
@@ -369,7 +381,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
               me={me}
               toolbar={toolbar}
             />
-          ) : (
+          ) : activeSection === "combo" ? (
             <ComboTabContainer
               activeTab={activeTab}
               currentPage={currentPage}
@@ -378,6 +390,17 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
               sort={sort}
               view={view}
               me={me}
+              toolbar={toolbar}
+            />
+          ) : (
+            <PostTabContainer
+              activeTab={activeTab}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              userId={me.id}
+              search={search}
+              sort={sort}
+              view={view}
               toolbar={toolbar}
             />
           )}

@@ -48,6 +48,8 @@ export async function fetchPosts(
 
   if (params.sort === "likes") {
     query = query.order("like_count", { ascending: false }).order("created_at", { ascending: false });
+  } else if (params.sort === "views") {
+    query = query.order("view_count", { ascending: false }).order("created_at", { ascending: false });
   } else {
     query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
   }
@@ -92,6 +94,77 @@ export async function fetchPosts(
   throwIfError(error);
   return {
     items: mapRows(data),
+    total: count ?? 0,
+  };
+}
+
+type PostEngagementRelation = "post_bookmarks" | "post_likes";
+
+/**
+ * 로그인 사용자의 게시글 북마크·좋아요 관계를 기준으로 게시글 목록을 조회한다.
+ * 관계 테이블의 RLS가 본인 행만 허용하므로 다른 사용자의 비공개 활동은 반환되지 않는다.
+ */
+export async function fetchPostsByEngagement(
+  client: SupabaseClient<Database>,
+  relation: PostEngagementRelation,
+  userId: string,
+  params: FetchPostsParams
+): Promise<FetchPostsResult> {
+  const safeLimit = Math.max(params.limit, 1);
+  const safeOffset = Math.max(params.offset, 0);
+  const rangeEnd = safeOffset + safeLimit - 1;
+  let query = (client as any)
+    .from(relation)
+    .select(`created_at, posts:post_id!inner(${POST_COLUMNS})`, { count: "exact" })
+    .eq("user_id", userId);
+
+  if (params.sort === "likes") {
+    query = query
+      .order("posts(like_count)", { ascending: false })
+      .order("created_at", { ascending: false });
+  } else if (params.sort === "views") {
+    query = query
+      .order("posts(view_count)", { ascending: false })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const rawSearch = params.search ?? "";
+  const search = normalizeSearchTerm(rawSearch);
+  if (rawSearch.trim().length > 0 && !search) {
+    return { items: [], total: 0 };
+  }
+  if (search) {
+    const searchPattern = `%${search}%`;
+    if (!params.searchField || params.searchField === "title") {
+      query = query.ilike("posts.title", searchPattern);
+    } else if (params.searchField === "writer") {
+      query = query.ilike("posts.writer_name", searchPattern);
+    } else if (params.searchField === "contents") {
+      query = query.ilike("posts.content_text", searchPattern);
+    } else if (params.searchField === "title_contents") {
+      query = query.or(
+        `title.ilike.${searchPattern},content_text.ilike.${searchPattern}`,
+        { referencedTable: "posts" }
+      );
+    }
+  }
+
+  const { data, error, count } = await query.range(
+    safeOffset,
+    Math.max(rangeEnd, safeOffset)
+  );
+  throwIfError(error);
+
+  const rows = Array.isArray(data)
+    ? data
+        .map((row) => row?.posts)
+        .filter((post): post is PostRow => Boolean(post))
+    : [];
+
+  return {
+    items: rows,
     total: count ?? 0,
   };
 }

@@ -67,7 +67,9 @@ export default async function ProfilePage(props: {
   }
 
   const activeTab = normalizeProfileTab(normalizeParam(searchParams?.tab));
-  const activeSection = normalizeProfileSection(normalizeParam(searchParams?.section));
+  const normalizedSection = normalizeProfileSection(normalizeParam(searchParams?.section));
+  // 게시글 활동은 현재 마이페이지 전용이다. 공개 프로필에서는 기존 공개 섹션만 허용한다.
+  const activeSection = normalizedSection === "post" ? "recipe" : normalizedSection;
   const sort = normalizeProfileSort(normalizeParam(searchParams?.sort));
   const view = normalizeProfileView(normalizeParam(searchParams?.view));
   const pageParam = normalizeParam(searchParams?.page);

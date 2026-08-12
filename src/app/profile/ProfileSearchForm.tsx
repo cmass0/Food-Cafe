@@ -19,6 +19,8 @@ export default function ProfileSearchForm({
   view,
   className,
 }: ProfileSearchFormProps) {
+  const placeholder = activeSection === "post" ? "게시글 검색..." : "레시피 검색...";
+
   return (
     <form method="get" className={cn("relative w-full", className)}>
       <input type="hidden" name="tab" value={activeTab} />
@@ -32,7 +34,7 @@ export default function ProfileSearchForm({
       <Input
         name="search"
         className="h-12 rounded-lg border-zinc-200 bg-white pl-11 pr-4 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:ring-emerald-600"
-        placeholder="레시피 검색..."
+        placeholder={placeholder}
         defaultValue={search ?? ""}
       />
     </form>

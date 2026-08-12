@@ -62,7 +62,7 @@ export type PostListResult = {
 export type PostListOptions = {
   limit?: number;
   page?: number;
-  sort?: "recent" | "likes";
+  sort?: "recent" | "likes" | "views";
   writerUid?: string;
   category?: PostCategory;
   search?: string;
@@ -72,7 +72,7 @@ export type PostListOptions = {
 export type FetchPostsParams = {
   limit: number;
   offset: number;
-  sort?: "recent" | "likes";
+  sort?: "recent" | "likes" | "views";
   writerUid?: string;
   category?: PostCategory;
   search?: string;
