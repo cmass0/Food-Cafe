@@ -227,7 +227,7 @@ export default function SignInSignUpView({
                         className="hover:underline"
                         onClick={onNavigateAway}
                       >
-                        비밀번호 찾기
+                        이메일/비밀번호 찾기
                       </Link>
                     </div>
                   </form>

@@ -6,15 +6,22 @@ import { type FormEvent, useActionState, useEffect, useRef, useState } from "rea
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { AccountActionState, AccountFormAction } from "@/domain/auth/types";
+import type {
+  AccountActionState,
+  AccountFormAction,
+  PhoneOtpFormAction,
+} from "@/domain/auth/types";
 
 import NewPasswordFields from "./NewPasswordFields";
 import PasswordField from "./PasswordField";
+import PhoneRegistrationForm from "./PhoneRegistrationForm";
 
 type AccountSecurityFormProps = {
   currentEmail: string;
+  currentPhone?: string | null;
   emailAction: AccountFormAction;
   passwordAction: AccountFormAction;
+  phoneAction: PhoneOtpFormAction;
 };
 
 const initialState: AccountActionState = { status: "idle" };
@@ -50,8 +57,10 @@ function FormMessage({
 
 export default function AccountSecurityForm({
   currentEmail,
+  currentPhone,
   emailAction,
   passwordAction,
+  phoneAction,
 }: AccountSecurityFormProps) {
   const [emailState, emailFormAction, emailPending] = useActionState(emailAction, initialState);
   const [passwordState, passwordFormAction, passwordPending] = useActionState(
@@ -155,6 +164,8 @@ export default function AccountSecurityForm({
           </Button>
         </div>
       </form>
+
+      <PhoneRegistrationForm action={phoneAction} currentPhone={currentPhone} />
 
       <form
         ref={passwordFormRef}

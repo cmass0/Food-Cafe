@@ -126,10 +126,13 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
   const supabase = await getServerSupabase();
-  const [recipeSummary, comboSummary] = await Promise.all([
+  const [authUserResult, recipeSummary, comboSummary] = await Promise.all([
+    supabase.auth.getUser(),
     recipeService.listRecipes(supabase, { writerUid: me.id, page: 1, limit: 1 }),
     comboService.listCombos(supabase, { writerUid: me.id, page: 1, limit: 1 }),
   ]);
+  if (authUserResult.error) throw authUserResult.error;
+  const currentPhone = authUserResult.data.user?.phone ?? null;
   const recipeTotal = recipeSummary.total;
   const comboTotal = comboSummary.total;
 
@@ -249,8 +252,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
           <div className="mt-8 grid gap-3 text-sm">
             <div className="flex items-center justify-between text-zinc-600">
               <span className="flex items-center gap-2">
-                <ChefHat className="h-4 w-4" aria-hidden="true" />
-                내 레시피
+                <ChefHat className="h-4 w-4" aria-hidden="true" />내 레시피
               </span>
               <span className="font-bold text-emerald-700">{recipeTotal}</span>
             </div>
@@ -352,7 +354,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
                   </span>
                 </div>
               </div>
-              <EditSheet userProfile={me} />
+              <EditSheet userProfile={me} currentPhone={currentPhone} />
             </div>
           </section>
 

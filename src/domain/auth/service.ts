@@ -18,17 +18,23 @@ import {
   PasswordChangeSchema,
   PasswordResetCompleteSchema,
   PasswordResetRequestSchema,
+  PhoneOtpRequestSchema,
+  PhoneOtpVerifySchema,
 } from "./schema";
 
 type AccountErrorCode =
   | "EMAIL_UNAVAILABLE"
   | "EMAIL_UNCHANGED"
   | "INVALID_CURRENT_PASSWORD"
+  | "INVALID_PHONE_OTP"
+  | "PHONE_UNAVAILABLE"
   | "RATE_LIMITED"
+  | "RECOVERY_EMAIL_NOT_FOUND"
   | "RECOVERY_SESSION_REQUIRED"
   | "REAUTHENTICATION_REQUIRED"
   | "SAME_PASSWORD"
   | "SESSION_REQUIRED"
+  | "SMS_UNAVAILABLE"
   | "SOCIAL_ACCOUNT"
   | "WEAK_PASSWORD";
 
@@ -155,6 +161,67 @@ function isMissingAccountError(error: unknown): boolean {
   return code === "user_not_found" || code === "email_not_found";
 }
 
+function isMissingPhoneAccountError(error: unknown): boolean {
+  const code = getAuthErrorCode(error);
+  return code === "user_not_found" || code === "invalid_credentials";
+}
+
+function translatePhoneAuthError(error: unknown): never {
+  const code = getAuthErrorCode(error);
+
+  switch (code) {
+    case "phone_exists":
+    case "user_already_exists":
+    case "identity_already_exists":
+      throw new AccountError(
+        "PHONE_UNAVAILABLE",
+        "이미 다른 계정에서 사용 중인 휴대폰 번호입니다."
+      );
+    case "otp_expired":
+    case "invalid_credentials":
+      throw new AccountError(
+        "INVALID_PHONE_OTP",
+        "인증번호가 올바르지 않거나 만료되었습니다. 새 인증번호를 받아 주세요."
+      );
+    case "over_sms_send_rate_limit":
+    case "over_request_rate_limit":
+      throw new AccountError(
+        "RATE_LIMITED",
+        "인증번호 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
+      );
+    case "phone_provider_disabled":
+    case "otp_disabled":
+    case "sms_send_failed":
+      throw new AccountError(
+        "SMS_UNAVAILABLE",
+        "문자 인증 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
+      );
+    case "session_not_found":
+    case "session_expired":
+      throw new AccountError("SESSION_REQUIRED", "로그인이 필요합니다.");
+    default:
+      throw error;
+  }
+}
+
+function maskEmail(email: string): string {
+  const separator = email.lastIndexOf("@");
+  if (separator <= 0 || separator === email.length - 1) {
+    throw new AccountError(
+      "RECOVERY_EMAIL_NOT_FOUND",
+      "이 휴대폰 번호로 찾을 수 있는 이메일 계정이 없습니다."
+    );
+  }
+
+  const localPart = email.slice(0, separator);
+  const domain = email.slice(separator + 1);
+  const visibleLength = localPart.length <= 2 ? 1 : 2;
+  const visible = localPart.slice(0, visibleLength);
+  const maskedLength = Math.max(localPart.length - visibleLength, 1);
+
+  return `${visible}${"*".repeat(maskedLength)}@${domain}`;
+}
+
 export async function requestPasswordReset(input: unknown, redirectTo: string): Promise<void> {
   const parsed = PasswordResetRequestSchema.parse(input);
   const supabase = await getServerSupabase();
@@ -214,5 +281,81 @@ export async function completePasswordReset(input: unknown): Promise<void> {
     clearPasswordRecoveryCookie(cookieStore, process.env.NODE_ENV === "production");
   } catch (error) {
     translateAuthError(error);
+  }
+}
+
+export async function requestPhoneRegistration(input: unknown): Promise<string> {
+  const parsed = PhoneOtpRequestSchema.parse(input);
+  const { supabase } = await requireAccountContext();
+
+  try {
+    await repository.requestPhoneChange(supabase, parsed.phone);
+    return parsed.phone;
+  } catch (error) {
+    translatePhoneAuthError(error);
+  }
+}
+
+export async function verifyPhoneRegistration(input: unknown): Promise<string> {
+  const parsed = PhoneOtpVerifySchema.parse(input);
+  const { supabase, user } = await requireAccountContext();
+
+  try {
+    const verifiedUser = await repository.verifyPhoneChange(supabase, parsed.phone, parsed.token);
+    if (verifiedUser.id !== user.id) {
+      throw new AccountError(
+        "PHONE_UNAVAILABLE",
+        "휴대폰 번호를 현재 계정에 연결하지 못했습니다. 새 인증번호를 받아 주세요."
+      );
+    }
+    return parsed.phone;
+  } catch (error) {
+    if (error instanceof AccountError) throw error;
+    translatePhoneAuthError(error);
+  }
+}
+
+export async function requestEmailRecoveryOtp(input: unknown): Promise<string> {
+  const parsed = PhoneOtpRequestSchema.parse(input);
+  const supabase = await getServerSupabase();
+
+  try {
+    await repository.requestEmailRecoveryOtp(supabase, parsed.phone);
+  } catch (error) {
+    // 전화번호 등록 여부를 요청 단계에서 노출하지 않고 동일한 응답을 반환한다.
+    if (!isMissingPhoneAccountError(error)) translatePhoneAuthError(error);
+  }
+
+  return parsed.phone;
+}
+
+export async function verifyEmailRecoveryOtp(input: unknown): Promise<string> {
+  const parsed = PhoneOtpVerifySchema.parse(input);
+  const supabase = await getServerSupabase();
+  let createdRecoverySession = false;
+
+  try {
+    const verifiedUser = await repository.verifyEmailRecoveryOtp(
+      supabase,
+      parsed.phone,
+      parsed.token
+    );
+    createdRecoverySession = true;
+    const email = verifiedUser.email?.trim();
+    if (!email) {
+      throw new AccountError(
+        "RECOVERY_EMAIL_NOT_FOUND",
+        "이 휴대폰 번호로 찾을 수 있는 이메일 계정이 없습니다."
+      );
+    }
+    return maskEmail(email);
+  } catch (error) {
+    if (error instanceof AccountError) throw error;
+    return translatePhoneAuthError(error);
+  } finally {
+    // 전화 OTP 검증이 만든 임시 로그인 세션을 이메일 조회 직후 제거한다.
+    if (createdRecoverySession) {
+      await repository.signOutAfterRecovery(supabase);
+    }
   }
 }

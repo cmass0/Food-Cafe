@@ -11,7 +11,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { changePasswordAction, requestEmailChangeAction } from "@/app/auth/actions";
+import {
+  changePasswordAction,
+  phoneRegistrationAction,
+  requestEmailChangeAction,
+} from "@/app/auth/actions";
 import AccountSecurityForm from "@/domain/auth/ui/AccountSecurityForm";
 import { UserRow } from "@/domain/user/types";
 import { PencilLine } from "lucide-react";
@@ -22,9 +26,10 @@ import EditPhoto from "./ui/editphoto";
 
 type Props = {
   userProfile: UserRow;
+  currentPhone?: string | null;
 };
 
-export default function EditSheet({ userProfile }: Props) {
+export default function EditSheet({ userProfile, currentPhone }: Props) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -62,8 +67,10 @@ export default function EditSheet({ userProfile }: Props) {
             </div>
             <AccountSecurityForm
               currentEmail={userProfile.email ?? ""}
+              currentPhone={currentPhone}
               emailAction={requestEmailChangeAction}
               passwordAction={changePasswordAction}
+              phoneAction={phoneRegistrationAction}
             />
           </section>
 

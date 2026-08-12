@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/supabase";
 
@@ -71,4 +71,50 @@ export async function signOutAfterRecovery(client: ServerSupabase): Promise<void
   const { error } = await client.auth.signOut({ scope: "local" });
 
   if (error && error.code !== "session_not_found") throw error;
+}
+
+// 로그인한 계정에 새 휴대폰 번호를 연결하고 Supabase Auth가 SMS OTP를 발송하게 한다.
+export async function requestPhoneChange(client: ServerSupabase, phone: string): Promise<void> {
+  const { error } = await client.auth.updateUser({ phone });
+
+  if (error) throw error;
+}
+
+// phone_change OTP를 검증해 인증된 전화번호를 현재 Auth 사용자에게 확정한다.
+export async function verifyPhoneChange(
+  client: ServerSupabase,
+  phone: string,
+  token: string
+): Promise<User> {
+  const { data, error } = await client.auth.verifyOtp({ phone, token, type: "phone_change" });
+
+  if (error) throw error;
+  if (!data.user) throw new Error("휴대폰 인증 결과에서 사용자를 확인할 수 없습니다.");
+  return data.user;
+}
+
+// 기존 전화번호 계정만 SMS OTP 로그인을 요청해 미등록 번호의 자동 가입을 차단한다.
+export async function requestEmailRecoveryOtp(
+  client: ServerSupabase,
+  phone: string
+): Promise<void> {
+  const { error } = await client.auth.signInWithOtp({
+    phone,
+    options: { shouldCreateUser: false },
+  });
+
+  if (error) throw error;
+}
+
+// 이메일 찾기용 SMS OTP를 검증하고 해당 Auth 사용자를 반환한다.
+export async function verifyEmailRecoveryOtp(
+  client: ServerSupabase,
+  phone: string,
+  token: string
+): Promise<User> {
+  const { data, error } = await client.auth.verifyOtp({ phone, token, type: "sms" });
+
+  if (error) throw error;
+  if (!data.user) throw new Error("휴대폰 인증 결과에서 사용자를 확인할 수 없습니다.");
+  return data.user;
 }

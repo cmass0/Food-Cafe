@@ -19,3 +19,17 @@ export type RecoveryFormAction = (
   previousState: RecoveryActionState,
   formData: FormData
 ) => Promise<RecoveryActionState>;
+
+export type PhoneOtpActionState = {
+  status: "idle" | "success" | "error";
+  step: "phone" | "otp" | "complete";
+  message?: string;
+  field?: "phone" | "token";
+  phone?: string;
+  maskedEmail?: string;
+};
+
+export type PhoneOtpFormAction = (
+  previousState: PhoneOtpActionState,
+  formData: FormData
+) => Promise<PhoneOtpActionState>;
