@@ -1,10 +1,12 @@
 import { throwApiError } from "@/lib/domain/api/error";
+import type { RecipeCategoryKey } from "./category";
 import type { Recipe, RecipeListResult, RecipeSearchField, RecipeSort } from "./types";
 
 export async function listRecipes(params?: {
   limit?: number;
   page?: number;
   writerUid?: string;
+  category?: RecipeCategoryKey;
   search?: string;
   searchField?: RecipeSearchField;
   sort?: RecipeSort;
@@ -13,6 +15,7 @@ export async function listRecipes(params?: {
   if (typeof params?.limit === "number") qs.set("limit", String(params.limit));
   if (typeof params?.page === "number") qs.set("page", String(params.page));
   if (params?.writerUid) qs.set("writerUid", params.writerUid);
+  if (params?.category) qs.set("category", params.category);
   if (params?.search) qs.set("search", params.search);
   if (params?.searchField) qs.set("searchField", params.searchField);
   if (params?.sort) qs.set("sort", params.sort);

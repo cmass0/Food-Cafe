@@ -7,18 +7,12 @@ export const dynamic = "force-dynamic";
 
 async function getRankingData() {
   const supabase = await getServerSupabase();
+  const [recipes, combos] = await Promise.all([
+    trendingService.listTrendingRecipes(supabase, 50),
+    trendingService.listTrendingCombos(supabase, 50),
+  ]);
 
-  try {
-    const [recipes, combos] = await Promise.all([
-      trendingService.listTrendingRecipes(supabase, 50),
-      trendingService.listTrendingCombos(supabase, 50),
-    ]);
-
-    return { recipes, combos };
-  } catch (error) {
-    console.error("[ranking] 최근 7일 랭킹 조회 실패", error);
-    return { recipes: [], combos: [] };
-  }
+  return { recipes, combos };
 }
 
 export default async function RankingPage() {
@@ -42,11 +36,17 @@ export default async function RankingPage() {
         </div>
 
         <TabsContent value="recipe">
-          <RankingGrid items={recipes} />
+          <RankingGrid
+            items={recipes}
+            emptyMessage="최근 7일 동안 참여가 발생한 레시피가 없습니다."
+          />
         </TabsContent>
 
         <TabsContent value="combo">
-          <RankingGrid items={combos} />
+          <RankingGrid
+            items={combos}
+            emptyMessage="최근 7일 동안 참여가 발생한 레시피 조합이 없습니다."
+          />
         </TabsContent>
       </Tabs>
     </main>

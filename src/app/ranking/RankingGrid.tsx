@@ -6,6 +6,7 @@ import Link from "next/link";
 
 type RankingGridProps = {
   items: TrendingContentItem[];
+  emptyMessage: string;
 };
 
 const rankBadges = [
@@ -14,13 +15,9 @@ const rankBadges = [
   { bg: "bg-orange-300", text: "text-orange-950", label: "3rd" },
 ];
 
-export default function RankingGrid({ items }: RankingGridProps) {
+export default function RankingGrid({ items, emptyMessage }: RankingGridProps) {
   if (!items.length) {
-    return (
-      <div className="py-10 text-center text-sm text-muted-foreground">
-        결과가 존재하지 않습니다.
-      </div>
-    );
+    return <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>;
   }
 
   return (

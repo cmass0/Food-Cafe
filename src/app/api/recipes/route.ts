@@ -1,6 +1,7 @@
+import { isRecipeCategoryKey } from "@/domain/recipe/category";
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
-import { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
+import type { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
@@ -29,6 +30,8 @@ export async function GET(req: Request) {
     const limit = Number.isFinite(limitParam) ? limitParam : undefined;
     const page = Number.isFinite(pageParam) ? pageParam : undefined;
     const writerUid = url.searchParams.get("writerUid") || undefined;
+    const categoryParam = url.searchParams.get("category");
+    const category = isRecipeCategoryKey(categoryParam) ? categoryParam : undefined;
     const search = url.searchParams.get("search") || undefined;
     const searchField = parseRecipeSearchField(url.searchParams.get("searchField"));
     const sortParam = url.searchParams.get("sort");
@@ -42,6 +45,7 @@ export async function GET(req: Request) {
       limit,
       page,
       writerUid,
+      category,
       search,
       searchField,
       sort,

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RECIPE_CATEGORIES } from "../../category";
 import { Info } from "lucide-react";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import { type UseFormReturn } from "react-hook-form";
@@ -47,7 +48,7 @@ export function BasicInfoFields({
     typeof currentMinutes === "number" && currentMinutes >= 60 ? "hours" : "minutes";
   const [timeUnit, setTimeUnit] = useState<"minutes" | "hours">(initialUnit);
   const currentDifficulty = getDifficultyMeta(form.watch("difficulty"));
-  
+
   const getDisplayValue = () => {
     if (typeof currentMinutes !== "number") return "";
     if (timeUnit === "minutes") return currentMinutes;
@@ -219,13 +220,11 @@ export function BasicInfoFields({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="한식">한식</SelectItem>
-                      <SelectItem value="중식">중식</SelectItem>
-                      <SelectItem value="일식">일식</SelectItem>
-                      <SelectItem value="양식">양식</SelectItem>
-                      <SelectItem value="분식">분식</SelectItem>
-                      <SelectItem value="디저트">디저트</SelectItem>
-                      <SelectItem value="기타">기타</SelectItem>
+                      {RECIPE_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

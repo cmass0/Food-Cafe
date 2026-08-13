@@ -1,5 +1,6 @@
 import type { Database } from "@/types/supabase";
 import { z } from "zod";
+import type { RecipeCategoryKey } from "./category";
 import { recipeFormSchema } from "./schema";
 
 //repo 용
@@ -42,6 +43,7 @@ export type RecipeListOptions = {
   page?: number;
 
   writerUid?: string;
+  category?: RecipeCategoryKey;
   search?: string;
   searchField?: RecipeSearchField;
   sort?: RecipeSort;
@@ -67,6 +69,7 @@ export type FetchRecipesParams = {
   offset: number;
 
   writerUid?: string;
+  category?: RecipeCategoryKey;
   search?: string;
   searchField?: RecipeSearchField;
   sort?: RecipeSort;

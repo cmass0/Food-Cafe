@@ -2,6 +2,7 @@ import type { Database } from "@/types/supabase";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 import { escapeArrayValue, normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
+import { getRecipeCategoryValues } from "./category";
 import type {
   FetchRecipesParams,
   FetchRecipesResult,
@@ -40,6 +41,9 @@ export async function fetchRecipes(
     query = query.eq("writer_uid", params.writerUid);
   }
 
+  if (params.category) {
+    query = query.in("category", [...getRecipeCategoryValues(params.category)]);
+  }
 
   // 검색 조건 분기
   const rawSearch = params.search ?? "";

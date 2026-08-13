@@ -19,6 +19,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
+import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
 import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type {
@@ -269,6 +270,9 @@ function RecipesPageInner() {
   const limitParam = searchParams.get("limit");
   const searchQuery = searchParams.get("search");
   const fieldParam = parseRecipeSearchField(searchParams.get("searchField"));
+  const categoryParam = searchParams.get("category");
+  const category = isRecipeCategoryKey(categoryParam) ? categoryParam : undefined;
+  const categoryLabel = category ? getRecipeCategoryLabel(category) : undefined;
 
   const [searchText, setSearchText] = useState(searchQuery ?? "");
   const [searchField, setSearchField] = useState<RecipeSearchField>(fieldParam);
@@ -293,6 +297,7 @@ function RecipesPageInner() {
           limit: safeLimit,
           page: safePage,
           sort,
+          category,
           ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
         });
         const items = (data?.items ?? []).map((item: Recipe) => ({
@@ -323,7 +328,7 @@ function RecipesPageInner() {
     return () => {
       mounted = false;
     };
-  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort]);
+  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort, category]);
 
   function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -338,6 +343,9 @@ function RecipesPageInner() {
     event.preventDefault();
     const trimmed = searchText.trim();
     const params = new URLSearchParams();
+    if (category) {
+      params.set("category", category);
+    }
     if (trimmed) {
       params.set("search", trimmed);
       params.set("searchField", searchField);
@@ -352,6 +360,9 @@ function RecipesPageInner() {
     paginationQuery.search = searchQuery;
     paginationQuery.searchField = fieldParam;
   }
+  if (category) {
+    paginationQuery.category = category;
+  }
 
   return (
     <main className="min-h-screen bg-white text-zinc-950">
@@ -359,7 +370,19 @@ function RecipesPageInner() {
         <section className="mb-10 space-y-6">
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-zinc-950">레시피</h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-black tracking-tight text-zinc-950">
+                  {categoryLabel ? `${categoryLabel} 레시피` : "레시피"}
+                </h1>
+                {category ? (
+                  <Link
+                    href="/recipes"
+                    className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    전체 보기
+                  </Link>
+                ) : null}
+              </div>
               <p className="mt-3 text-sm font-medium text-zinc-500">
                 다양한 레시피를 찾아보고, 나만의 레시피도 공유해보세요!
               </p>

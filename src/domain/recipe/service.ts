@@ -178,6 +178,7 @@ export async function listRecipes(
     limit,
     offset,
     writerUid: parsed.writerUid,
+    category: parsed.category,
     search: parsed.search,
     searchField: parsed.searchField,
     sort: parsed.sort,

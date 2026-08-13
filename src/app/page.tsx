@@ -72,16 +72,16 @@ const fallbackImages = [
 ];
 
 const categoryItems = [
-  { label: "전체", icon: Grid3X3, active: true },
-  { label: "한식", icon: Soup },
-  { label: "중식", icon: Beef },
-  { label: "일식", icon: Utensils },
-  { label: "양식", icon: Sandwich },
-  { label: "디저트", icon: CakeSlice },
-  { label: "샐러드", icon: Salad },
-  { label: "간식", icon: Cookie },
-  { label: "다이어트", icon: Leaf },
-];
+  { key: null, label: "전체", icon: Grid3X3 },
+  { key: "korean", label: "한식", icon: Soup },
+  { key: "chinese", label: "중식", icon: Beef },
+  { key: "japanese", label: "일식", icon: Utensils },
+  { key: "western", label: "양식", icon: Sandwich },
+  { key: "dessert", label: "디저트", icon: CakeSlice },
+  { key: "salad", label: "샐러드", icon: Salad },
+  { key: "snack", label: "간식", icon: Cookie },
+  { key: "diet", label: "다이어트", icon: Leaf },
+] as const;
 
 function fallbackImage(index: number): StaticImageData {
   return fallbackImages[index % fallbackImages.length] ?? breadImage;
@@ -374,19 +374,15 @@ export default async function Home() {
 
       <section className="mx-auto max-w-7xl px-5 py-6 lg:px-8">
         <div className="flex items-center gap-7 overflow-x-auto pb-2">
-          {categoryItems.map(({ label, icon: Icon, active }) => (
+          {categoryItems.map(({ key, label, icon: Icon }) => (
             <Link
               key={label}
-              href={
-                label === "전체"
-                  ? "/recipes"
-                  : `/recipes?search=${encodeURIComponent(label)}&searchField=tag_title`
-              }
+              href={key ? `/recipes?category=${key}` : "/recipes"}
               className="flex shrink-0 flex-col items-center gap-2"
             >
               <span
                 className={`grid h-12 w-12 place-items-center rounded-full ${
-                  active ? "bg-emerald-100 text-[#3f914b]" : "bg-[#f7f4ef] text-zinc-700"
+                  key === null ? "bg-emerald-100 text-[#3f914b]" : "bg-[#f7f4ef] text-zinc-700"
                 }`}
               >
                 <Icon className="h-5 w-5" />

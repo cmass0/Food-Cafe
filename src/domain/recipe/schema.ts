@@ -1,5 +1,6 @@
 ﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
+import { RECIPE_CATEGORY_KEYS } from "./category";
 
 const imageListSchema = z
   .array(z.string().trim().min(1).max(2048, "이미지 경로는 2048자 이하만 가능합니다."))
@@ -127,6 +128,7 @@ export const recipeListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
   writerUid: z.string().uuid().optional(),
+  category: z.enum(RECIPE_CATEGORY_KEYS).optional(),
   search: z.string().trim().max(200).optional(),
   searchField: z.enum(["tag", "title", "tag_title", "writer"]).optional(),
   sort: z.enum(["recent", "like", "view"]).optional(),
