@@ -47,14 +47,15 @@ export async function fetchPosts(
     .select(POST_COLUMNS, { count: "exact" });
 
   if (params.sort === "likes") {
-    query = query.order("like_count", { ascending: false }).order("created_at", { ascending: false });
+    query = query.order("like_count", { ascending: false });
   } else if (params.sort === "views") {
-    query = query.order("view_count", { ascending: false }).order("created_at", { ascending: false });
-  } else {
-    query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
+    query = query.order("view_count", { ascending: false });
   }
 
-  query = query.range(safeOffset, Math.max(rangeEnd, safeOffset));
+  query = query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
@@ -226,4 +227,3 @@ export async function deletePostRecord(
     .eq("writer_uid", ownerUid);
   throwIfError(error);
 }
-

@@ -1,6 +1,7 @@
 import { listCombos } from "@/domain/combo/service";
 import { listPosts } from "@/domain/post/service";
 import { listRecipes } from "@/domain/recipe/service";
+import { parseSearchSort, toContentSorts } from "@/features/search/sort";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import SearchControls from "./section/SearchControls";
@@ -9,7 +10,6 @@ import SearchResultPosts from "./section/resultPosts";
 import SearchResultRecipe from "./section/resultRecipe";
 
 type SearchParamValue = string | string[] | undefined;
-type SearchSort = "recent" | "like" | "view";
 type ViewMode = "grid" | "list";
 
 type Props = {
@@ -28,12 +28,6 @@ function firstValue(value: SearchParamValue): string | undefined {
 function parsePage(value: SearchParamValue): number {
   const page = Number(firstValue(value));
   return Number.isFinite(page) && page > 0 ? page : 1;
-}
-
-function parseSort(value: SearchParamValue): SearchSort {
-  const sort = firstValue(value);
-  if (sort === "like" || sort === "view") return sort;
-  return "recent";
 }
 
 function parseView(value: SearchParamValue): ViewMode {
@@ -57,9 +51,12 @@ export default async function SearchPage(props: Props) {
   const recipePage = parsePage(rawSearchParams.recipePage);
   const comboPage = parsePage(rawSearchParams.comboPage);
   const postPage = parsePage(rawSearchParams.postPage);
-  const sort = parseSort(rawSearchParams.sort);
+  const sort = parseSearchSort(firstValue(rawSearchParams.sort));
+  const contentSorts = toContentSorts(sort);
   const viewMode = parseView(rawSearchParams.view);
   const paginationQuery = normalizeQuery(rawSearchParams);
+  paginationQuery.sort = sort;
+  paginationQuery.view = viewMode;
 
   const supabase = await getServerSupabase();
 
@@ -69,20 +66,21 @@ export default async function SearchPage(props: Props) {
       page: recipePage,
       search: queryText,
       searchField: "tag_title",
-      sort,
+      sort: contentSorts.recipe,
     }),
     listCombos(supabase, {
       limit: COMBO_LIMIT,
       page: comboPage,
       search: queryText,
       searchField: "tag_title",
-      sort,
+      sort: contentSorts.combo,
     }),
     listPosts(supabase, {
       limit: POST_LIMIT,
       page: postPage,
       search: queryText,
       searchField: "title_contents",
+      sort: contentSorts.post,
     }),
   ]);
 

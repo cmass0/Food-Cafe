@@ -3,25 +3,15 @@
 import { Grid3X3, List } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { isSearchSort, SEARCH_SORT_OPTIONS, type SearchSort } from "@/features/search/sort";
 import { cn } from "@/lib/utils";
 
-type SearchSort = "recent" | "like" | "view";
 type ViewMode = "grid" | "list";
 
 type SearchControlsProps = {
   initialSort: SearchSort;
   initialView: ViewMode;
 };
-
-const SORT_OPTIONS: { value: SearchSort; label: string }[] = [
-  { value: "recent", label: "최신순" },
-  { value: "like", label: "좋아요순" },
-  { value: "view", label: "조회순" },
-];
-
-function isSort(value: string | null): value is SearchSort {
-  return value === "recent" || value === "like" || value === "view";
-}
 
 function isView(value: string | null): value is ViewMode {
   return value === "grid" || value === "list";
@@ -33,7 +23,7 @@ export default function SearchControls({ initialSort, initialView }: SearchContr
 
   const sortParam = searchParams.get("sort");
   const viewParam = searchParams.get("view");
-  const currentSort = isSort(sortParam) ? sortParam : initialSort;
+  const currentSort = isSearchSort(sortParam) ? sortParam : initialSort;
   const currentView = isView(viewParam) ? viewParam : initialView;
 
   function updateParam(key: "sort" | "view", value: SearchSort | ViewMode) {
@@ -59,7 +49,7 @@ export default function SearchControls({ initialSort, initialView }: SearchContr
         onChange={(event) => updateParam("sort", event.target.value as SearchSort)}
         className="h-11 rounded-lg border border-zinc-200 bg-white px-4 pr-10 text-sm font-bold text-zinc-900 shadow-sm outline-none transition focus:border-[#15933d] focus:ring-2 focus:ring-emerald-100"
       >
-        {SORT_OPTIONS.map((option) => (
+        {SEARCH_SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

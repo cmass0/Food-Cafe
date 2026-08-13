@@ -24,18 +24,16 @@ export async function fetchRecipes(
   const rangeEnd = safeOffset + safeLimit - 1;
   let query = client.from("recipes").select("*", { count: "exact" });
 
-  // 정렬 조건 분기
+  // 통합검색을 포함한 목록 정렬은 작성일과 ID까지 적용해 결과 순서를 고정한다.
   if (params.sort === "like") {
     query = query.order("like_count", { ascending: false });
-  }
-  if (params.sort === "view") {
+  } else if (params.sort === "view") {
     query = query.order("view_count", { ascending: false });
   }
-  if (params.sort === "recent") {
-    query = query.order("created_at", { ascending: false });
-  }
-  // 정렬 후 동일 값에 대한 2차 정렬
-  query = query.order("id").range(safeOffset, Math.max(rangeEnd, safeOffset));
+  query = query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (params.writerUid) {
     query = query.eq("writer_uid", params.writerUid);
