@@ -37,12 +37,10 @@ import sandwichImage from "@/assets/sandwich.jpeg";
 import soupImage from "@/assets/soup.jpeg";
 import chickenImage from "@/assets/spicy-braised-chicken.jpeg";
 import tteokImage from "@/assets/tteok-bokki.jpeg";
-import type { Combos } from "@/domain/combo/types";
-import * as comboService from "@/domain/combo/service";
-import type { Post } from "@/domain/post/types";
-import * as postService from "@/domain/post/service";
 import type { Recipe } from "@/domain/recipe/types";
 import * as recipeService from "@/domain/recipe/service";
+import * as trendingService from "@/features/trending/service";
+import type { TrendingContentItem, TrendingRecipeTag } from "@/features/trending/types";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +58,7 @@ type FeedItem = {
   views: number;
   likes: number;
   createdAt: Date;
+  recentParticipantCount: number;
 };
 
 const fallbackImages = [
@@ -124,66 +123,67 @@ function recipeToFeedItem(recipe: Recipe, index: number): FeedItem {
     views: recipe.viewCount ?? 0,
     likes: recipe.likeCount ?? 0,
     createdAt: recipe.createdAt,
+    recentParticipantCount: 0,
   };
 }
 
-function comboToFeedItem(combo: Combos, index: number): FeedItem {
+function trendingToFeedItem(item: TrendingContentItem, index: number): FeedItem {
+  const path =
+    item.resourceType === "recipe" ? "recipes" : item.resourceType === "combo" ? "combos" : "posts";
+  const defaultCategory =
+    item.resourceType === "recipe"
+      ? "레시피"
+      : item.resourceType === "combo"
+        ? "레시피 조합"
+        : "커뮤니티";
+
   return {
-    id: combo.id,
-    href: `/combos/${combo.id}`,
-    title: combo.title,
-    summary: combo.summary ?? "여러 레시피와 아이템을 조합한 추천 구성입니다.",
-    image: combo.image ?? fallbackImage(index + 2),
-    writerName: combo.writerName ?? "조합러",
-    category: combo.tags?.[0] ?? "레시피 조합",
-    views: combo.viewCount ?? 0,
-    likes: combo.likeCount ?? 0,
-    createdAt: combo.createdAt,
+    id: item.id,
+    href: `/${path}/${item.id}`,
+    title: item.title,
+    summary: item.summary ?? "최근 7일 동안 많은 참여를 받은 콘텐츠입니다.",
+    image: item.image ?? fallbackImage(index + 2),
+    writerName: item.writerName ?? "FoodCafe 사용자",
+    category: item.tags[0] ?? defaultCategory,
+    views: item.viewCount,
+    likes: item.likeCount,
+    createdAt: new Date(item.createdAt),
+    recentParticipantCount: item.recentParticipantCount,
   };
-}
-
-function postSummary(post: Post): string {
-  const text = post.contentText?.replace(/\s+/g, " ").trim();
-  if (text) return text.length > 76 ? `${text.slice(0, 76)}...` : text;
-  return "FoodCafe 커뮤니티에서 나누는 요리 이야기입니다.";
 }
 
 async function getHomeData() {
   try {
     const supabase = await getServerSupabase();
-    const [popularRecipes, recentRecipes, trendingCombos, communityPosts] = await Promise.all([
-      recipeService.listRecipes(supabase, { limit: 4, sort: "like" }),
-      recipeService.listRecipes(supabase, { limit: 4, sort: "recent" }),
-      comboService.listCombos(supabase, { limit: 5, sort: "view" }),
-      postService.listPosts(supabase, { limit: 4 }),
-    ]);
+    const [popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags] =
+      await Promise.all([
+        trendingService.listTrendingRecipes(supabase, 4),
+        recipeService.listRecipes(supabase, { limit: 4, sort: "recent" }),
+        trendingService.listTrendingCombos(supabase, 5),
+        trendingService.listTrendingPosts(supabase, 4),
+        trendingService.listTrendingRecipeTags(supabase, 6),
+      ]);
 
     return {
-      popularRecipes: popularRecipes.items,
+      popularRecipes,
       recentRecipes: recentRecipes.items,
-      trendingCombos: trendingCombos.items,
-      communityPosts: communityPosts.items,
+      trendingCombos,
+      communityPosts,
+      trendingTags,
     };
   } catch (error) {
     console.error("[home] Failed to load dashboard data", error);
     return {
-      popularRecipes: [] as Recipe[],
+      popularRecipes: [] as TrendingContentItem[],
       recentRecipes: [] as Recipe[],
-      trendingCombos: [] as Combos[],
-      communityPosts: [] as Post[],
+      trendingCombos: [] as TrendingContentItem[],
+      communityPosts: [] as TrendingContentItem[],
+      trendingTags: [] as TrendingRecipeTag[],
     };
   }
 }
 
-function SectionTitle({
-  icon,
-  title,
-  href,
-}: {
-  icon: ReactNode;
-  title: string;
-  href: string;
-}) {
+function SectionTitle({ icon, title, href }: { icon: ReactNode; title: string; href: string }) {
   return (
     <div className="mb-5 flex items-center justify-between">
       <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-zinc-900">
@@ -237,7 +237,9 @@ function RecipeCard({ item, index }: { item: FeedItem; index: number }) {
   );
 }
 
-function CommunityCard({ post }: { post: Post }) {
+function CommunityCard({ post }: { post: TrendingContentItem }) {
+  const writerName = post.writerName ?? "FoodCafe 사용자";
+
   return (
     <Link
       href={`/posts/${post.id}`}
@@ -247,19 +249,19 @@ function CommunityCard({ post }: { post: Post }) {
         {post.title}
       </h3>
       <p className="mt-3 line-clamp-2 min-h-10 text-xs leading-5 text-zinc-500">
-        {postSummary(post)}
+        {post.summary ?? "FoodCafe 커뮤니티에서 나누는 요리 이야기입니다."}
       </p>
       <div className="mt-4 flex items-center gap-2 text-xs text-zinc-500">
         <span className="grid h-5 w-5 place-items-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700">
-          {initials(post.writerName)}
+          {initials(writerName)}
         </span>
-        <span>{post.writerName}</span>
-        <span>{formatAge(post.createdAt)}</span>
+        <span>{writerName}</span>
+        <span>{formatAge(new Date(post.createdAt))}</span>
       </div>
       <div className="mt-4 flex gap-4 text-xs text-zinc-400">
         <span className="flex items-center gap-1">
           <MessageCircle className="h-3.5 w-3.5" />
-          {formatCount(post.commentCount)}
+          {formatCount(post.recentCommentCount)}
         </span>
         <span className="flex items-center gap-1">
           <Eye className="h-3.5 w-3.5" />
@@ -273,43 +275,55 @@ function CommunityCard({ post }: { post: Post }) {
 function TrendingPanel({ items }: { items: FeedItem[] }) {
   return (
     <aside className="rounded-lg bg-zinc-50 p-5">
-      <h2 className="mb-4 text-lg font-bold text-zinc-950">지금 뜨는 레시피</h2>
+      <h2 className="mb-4 text-lg font-bold text-zinc-950">지금 뜨는 레시피·조합</h2>
       <div className="space-y-4">
-        {items.map((item, index) => (
-          <Link key={item.id} href={item.href} className="flex items-center gap-3">
-            <span
-              className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm font-bold ${
-                index < 3 ? "bg-amber-100 text-amber-700" : "bg-white text-zinc-500"
-              }`}
-            >
-              {index + 1}
-            </span>
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-emerald-50">
-              <Image src={item.image} alt={item.title} fill sizes="48px" className="object-cover" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-1 text-sm font-bold text-zinc-900">{item.title}</p>
-              <p className="line-clamp-1 text-xs text-zinc-500">{item.category}</p>
-            </div>
-            <span className="text-xs font-bold text-red-500">▲ {Math.max(7, item.likes + index)}</span>
-          </Link>
-        ))}
+        {items.length > 0 ? (
+          items.map((item, index) => (
+            <Link key={item.id} href={item.href} className="flex items-center gap-3">
+              <span
+                className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm font-bold ${
+                  index < 3 ? "bg-amber-100 text-amber-700" : "bg-white text-zinc-500"
+                }`}
+              >
+                {index + 1}
+              </span>
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-emerald-50">
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-1 text-sm font-bold text-zinc-900">{item.title}</p>
+                <p className="line-clamp-1 text-xs text-zinc-500">{item.category}</p>
+              </div>
+              <span className="shrink-0 text-xs font-bold text-emerald-700">
+                참여 {item.recentParticipantCount}명
+              </span>
+            </Link>
+          ))
+        ) : (
+          <p className="py-6 text-center text-sm text-zinc-500">
+            최근 7일 동안 집계된 활동이 없습니다.
+          </p>
+        )}
       </div>
     </aside>
   );
 }
 
 export default async function Home() {
-  const { popularRecipes, recentRecipes, trendingCombos, communityPosts } = await getHomeData();
-  const popularItems = popularRecipes.map(recipeToFeedItem);
+  const { popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags } =
+    await getHomeData();
+  const popularItems = popularRecipes.map(trendingToFeedItem);
   const recentItems = recentRecipes.map(recipeToFeedItem);
-  const trendingItems = trendingCombos.map(comboToFeedItem);
-  const rankingItems = [...popularItems, ...trendingItems]
-    .sort((a, b) => b.views + b.likes - (a.views + a.likes))
-    .slice(0, 5);
-  const tagSources = [...popularRecipes.flatMap((recipe) => recipe.tags ?? []), ...trendingCombos.flatMap((combo) => combo.tags ?? [])];
-  const tags = Array.from(new Set(tagSources.filter(Boolean))).slice(0, 6);
-  const visibleTags = tags.length ? tags : ["간단요리", "다이어트", "집밥", "브런치", "베이킹", "한식"];
+  const rankingItems = trendingService
+    .sortTrendingItems([...popularRecipes, ...trendingCombos])
+    .slice(0, 5)
+    .map(trendingToFeedItem);
 
   return (
     <main className="bg-white text-zinc-950">
@@ -361,7 +375,15 @@ export default async function Home() {
       <section className="mx-auto max-w-7xl px-5 py-6 lg:px-8">
         <div className="flex items-center gap-7 overflow-x-auto pb-2">
           {categoryItems.map(({ label, icon: Icon, active }) => (
-            <Link key={label} href={label === "전체" ? "/recipes" : `/recipes?search=${encodeURIComponent(label)}&searchField=tag_title`} className="flex shrink-0 flex-col items-center gap-2">
+            <Link
+              key={label}
+              href={
+                label === "전체"
+                  ? "/recipes"
+                  : `/recipes?search=${encodeURIComponent(label)}&searchField=tag_title`
+              }
+              className="flex shrink-0 flex-col items-center gap-2"
+            >
               <span
                 className={`grid h-12 w-12 place-items-center rounded-full ${
                   active ? "bg-emerald-100 text-[#3f914b]" : "bg-[#f7f4ef] text-zinc-700"
@@ -378,16 +400,30 @@ export default async function Home() {
       <div className="mx-auto grid max-w-7xl gap-10 px-5 pb-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
         <div className="space-y-10">
           <section>
-            <SectionTitle icon={<Flame className="h-5 w-5 fill-orange-400 text-orange-500" />} title="인기 레시피" href="/recipes" />
+            <SectionTitle
+              icon={<Flame className="h-5 w-5 fill-orange-400 text-orange-500" />}
+              title="최근 7일 인기 레시피"
+              href="/ranking"
+            />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {popularItems.map((item, index) => (
-                <RecipeCard key={item.id} item={item} index={index} />
-              ))}
+              {popularItems.length > 0 ? (
+                popularItems.map((item, index) => (
+                  <RecipeCard key={item.id} item={item} index={index} />
+                ))
+              ) : (
+                <p className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500">
+                  최근 7일 동안 집계된 인기 레시피가 없습니다.
+                </p>
+              )}
             </div>
           </section>
 
           <section>
-            <SectionTitle icon={<Sparkles className="h-5 w-5 text-amber-500" />} title="새로 올라온 레시피" href="/recipes?sort=recent" />
+            <SectionTitle
+              icon={<Sparkles className="h-5 w-5 text-amber-500" />}
+              title="새로 올라온 레시피"
+              href="/recipes?sort=recent"
+            />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {recentItems.map((item, index) => (
                 <RecipeCard key={item.id} item={item} index={index + 4} />
@@ -396,11 +432,19 @@ export default async function Home() {
           </section>
 
           <section>
-            <SectionTitle icon={<MessageCircle className="h-5 w-5 fill-sky-100 text-sky-500" />} title="커뮤니티 인기 이야기" href="/posts" />
+            <SectionTitle
+              icon={<MessageCircle className="h-5 w-5 fill-sky-100 text-sky-500" />}
+              title="커뮤니티 인기 이야기"
+              href="/posts"
+            />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {communityPosts.map((post) => (
-                <CommunityCard key={post.id} post={post} />
-              ))}
+              {communityPosts.length > 0 ? (
+                communityPosts.map((post) => <CommunityCard key={post.id} post={post} />)
+              ) : (
+                <p className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500">
+                  최근 7일 동안 집계된 인기 이야기가 없습니다.
+                </p>
+              )}
             </div>
           </section>
 
@@ -410,21 +454,32 @@ export default async function Home() {
                 <Target className="h-5 w-5 text-red-500" />
                 이번 주 인기 태그
               </h2>
-              <Link href="/search" className="flex items-center gap-1 text-sm font-medium text-zinc-500">
+              <Link
+                href="/search"
+                className="flex items-center gap-1 text-sm font-medium text-zinc-500"
+              >
                 전체 태그 보기 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {visibleTags.map((tag, index) => (
-                <Link
-                  key={tag}
-                  href={`/search?query=${encodeURIComponent(tag)}`}
-                  className="rounded-full bg-[#f2f7f1] px-5 py-4 text-center transition hover:bg-emerald-100"
-                >
-                  <p className="text-sm font-bold text-zinc-900">#{tag}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{compactCount((index + 4) * 137)}개 레시피</p>
-                </Link>
-              ))}
+              {trendingTags.length > 0 ? (
+                trendingTags.map((tag) => (
+                  <Link
+                    key={tag.tag}
+                    href={`/search?query=${encodeURIComponent(tag.tag)}`}
+                    className="rounded-full bg-[#f2f7f1] px-5 py-4 text-center transition hover:bg-emerald-100"
+                  >
+                    <p className="text-sm font-bold text-zinc-900">#{tag.tag}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {compactCount(tag.totalRecipeCount)}개 레시피
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <p className="col-span-full rounded-full bg-zinc-50 px-5 py-4 text-center text-sm text-zinc-500">
+                  최근 7일 동안 집계된 인기 태그가 없습니다.
+                </p>
+              )}
             </div>
           </section>
         </div>
@@ -459,8 +514,12 @@ export default async function Home() {
               <Mail className="h-6 w-6" />
             </span>
             <div>
-              <h2 className="text-lg font-bold text-zinc-950">새로운 레시피와 유용한 요리 팁을 받아보세요!</h2>
-              <p className="text-sm text-zinc-500">FoodCafe의 미션 소식과 인기 레시피를 이메일로 받아보실 수 있습니다.</p>
+              <h2 className="text-lg font-bold text-zinc-950">
+                새로운 레시피와 유용한 요리 팁을 받아보세요!
+              </h2>
+              <p className="text-sm text-zinc-500">
+                FoodCafe의 미션 소식과 인기 레시피를 이메일로 받아보실 수 있습니다.
+              </p>
             </div>
           </div>
           <form className="flex w-full gap-2 md:w-[420px]">
@@ -468,7 +527,9 @@ export default async function Home() {
               className="h-11 flex-1 rounded-lg border border-zinc-200 bg-white px-4 text-sm outline-none placeholder:text-zinc-400"
               placeholder="이메일 주소를 입력하세요"
             />
-            <button className="h-11 rounded-lg bg-[#438e4d] px-6 text-sm font-bold text-white">구독하기</button>
+            <button className="h-11 rounded-lg bg-[#438e4d] px-6 text-sm font-bold text-white">
+              구독하기
+            </button>
           </form>
         </div>
       </section>
@@ -495,7 +556,10 @@ export default async function Home() {
             </div>
           </div>
           <FooterGroup title="서비스" items={["레시피", "커뮤니티", "이벤트", "인기 레시피"]} />
-          <FooterGroup title="고객지원" items={["공지사항", "자주 묻는 질문", "문의하기", "이용약관"]} />
+          <FooterGroup
+            title="고객지원"
+            items={["공지사항", "자주 묻는 질문", "문의하기", "이용약관"]}
+          />
           <FooterGroup title="회사정보" items={["회사소개", "브랜드스토리", "제휴문의"]} />
           <div>
             <h3 className="font-bold text-zinc-950">FoodCafe 앱</h3>

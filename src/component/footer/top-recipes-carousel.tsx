@@ -7,14 +7,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { TopCombo } from "@/domain/combo/combo_like/types";
-import { TopRecipe } from "@/domain/recipe/recipe_like/types";
-import { Eye, Heart } from "lucide-react";
+import type { TrendingContentItem } from "@/features/trending/types";
+import { Heart, Users } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 type TopRecipesCarouselProps = {
   label: string;
-  contents: TopRecipe[] | TopCombo[];
+  contents: TrendingContentItem[];
   maxCount?: number;
 };
 
@@ -30,7 +30,9 @@ export default function TopCarousel({ label, contents, maxCount }: TopRecipesCar
     <>
       {existContents ? (
         <div className="relative overflow-x-hidden">
-          <div className="mb-2 text-xs text-muted-foreground ">{label} {countLabel}</div>
+          <div className="mb-2 text-xs text-muted-foreground ">
+            {label} {countLabel}
+          </div>
           <Carousel
             opts={{ align: "start", dragFree: true, containScroll: "trimSnaps" }}
             className="relative w-full min-w-0 px-2 sm:px-4 md:px-6"
@@ -41,7 +43,10 @@ export default function TopCarousel({ label, contents, maxCount }: TopRecipesCar
                   key={content.id}
                   className="basis-[80%] sm:basis-[60%] md:basis-[45%] lg:basis-[30%] xl:basis-[220px]"
                 >
-                  <article className="relative flex flex-col overflow-hidden rounded-xl bg-card shadow-sm">
+                  <Link
+                    href={`/${content.resourceType === "recipe" ? "recipes" : content.resourceType === "combo" ? "combos" : "posts"}/${content.id}`}
+                    className="relative flex flex-col overflow-hidden rounded-xl bg-card shadow-sm"
+                  >
                     {rankBadges[index] ? (
                       <div
                         className={`absolute left-2 top-2 z-10 rounded-full border border-white/80 px-2.5 py-1 text-[11px] font-semibold shadow-md ${rankBadges[index].bg} ${rankBadges[index].text}`}
@@ -59,7 +64,7 @@ export default function TopCarousel({ label, contents, maxCount }: TopRecipesCar
                           fill
                           className="z-0 object-cover"
                           src={content.image}
-                          alt={content.summary || "레시피"}
+                          alt={content.title}
                           sizes="240px"
                         />
                       ) : (
@@ -78,15 +83,15 @@ export default function TopCarousel({ label, contents, maxCount }: TopRecipesCar
                       <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <Heart className="h-3 w-3 text-rose-500" />
-                          {content.likeCount}
+                          {content.recentLikeCount}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {content.viewCount}
+                          <Users className="h-3 w-3" />
+                          {content.recentParticipantCount}
                         </span>
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 </CarouselItem>
               ))}
             </CarouselContent>
@@ -103,7 +108,7 @@ export default function TopCarousel({ label, contents, maxCount }: TopRecipesCar
         </div>
       ) : (
         <div className="flex justify-center items-center text-sm py-10 font-bold text-muted-foreground">
-        {label} 정보가 없습니다.
+          {label} 정보가 없습니다.
         </div>
       )}
     </>

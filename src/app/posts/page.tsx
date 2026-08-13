@@ -12,12 +12,10 @@ import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 import * as postService from "@/domain/post/service";
-import {
-  normalizePostCategory,
-  type PostCategory,
-} from "@/domain/post/category";
+import { normalizePostCategory, type PostCategory } from "@/domain/post/category";
 import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/domain/post/ui/PostList";
+import * as trendingService from "@/features/trending/service";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import PostCategorySelect from "./components/PostCategorySelect.client";
@@ -107,7 +105,7 @@ export default async function PostsPage(props: PostsPageProps) {
       category,
       ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
     }),
-    postService.listPosts(supabase, { page: 1, limit: 5, sort: "likes" }),
+    trendingService.listTrendingPosts(supabase, 5),
     Promise.all(
       POST_CATEGORIES.map((category) =>
         postService.listPosts(supabase, {
@@ -208,7 +206,7 @@ export default async function PostsPage(props: PostsPageProps) {
             <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-base font-black text-zinc-950">
-                  <Flame className="h-5 w-5 fill-orange-400 text-orange-500" /> 인기글
+                  <Flame className="h-5 w-5 fill-orange-400 text-orange-500" /> 최근 7일 인기글
                 </h2>
                 <Link
                   href="/posts"
@@ -218,8 +216,8 @@ export default async function PostsPage(props: PostsPageProps) {
                 </Link>
               </div>
               <ol className="mt-4 space-y-3">
-                {popularPostList.items.length > 0 ? (
-                  popularPostList.items.map((post, index) => (
+                {popularPostList.length > 0 ? (
+                  popularPostList.map((post, index) => (
                     <li key={post.id} className="flex items-center gap-2">
                       <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-xs font-bold text-[#16883d]">
                         {index + 1}
@@ -232,7 +230,7 @@ export default async function PostsPage(props: PostsPageProps) {
                         {post.title}
                       </Link>
                       <span className="shrink-0 text-xs font-medium text-rose-500">
-                        ♥ {post.likeCount}
+                        활동 {post.recentActivityCount}
                       </span>
                     </li>
                   ))

@@ -1,17 +1,36 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EntireDailyTopCombos from "./combo/EntireDailyTopCombos";
-import EntireMonthlyTopCombos from "./combo/EntireMonthlyTopCombos";
-import EntireWeeklyTopCombos from "./combo/EntireWeeklyTopCombos";
-import EntireDailyTopRecipes from "./recipe/EntireDailyTopRecipes";
-import EntireMonthlyTopRecipes from "./recipe/EntireMonthlyTopRecipes";
-import EntireWeeklyTopRecipes from "./recipe/EntireWeeklyTopRecipes";
+import * as trendingService from "@/features/trending/service";
+import { getServerSupabase } from "@/lib/supabase/server";
+import RankingGrid from "./RankingGrid";
 
-export default function RankingPage() {
+export const dynamic = "force-dynamic";
+
+async function getRankingData() {
+  const supabase = await getServerSupabase();
+
+  try {
+    const [recipes, combos] = await Promise.all([
+      trendingService.listTrendingRecipes(supabase, 50),
+      trendingService.listTrendingCombos(supabase, 50),
+    ]);
+
+    return { recipes, combos };
+  } catch (error) {
+    console.error("[ranking] 최근 7일 랭킹 조회 실패", error);
+    return { recipes: [], combos: [] };
+  }
+}
+
+export default async function RankingPage() {
+  const { recipes, combos } = await getRankingData();
+
   return (
     <main className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">TOP 50</h1>
-        <p className="text-sm text-muted-foreground">월간 / 주간 / 일간 인기 목록입니다.</p>
+        <h1 className="text-2xl font-semibold">최근 7일 TOP 50</h1>
+        <p className="text-sm text-muted-foreground">
+          좋아요·북마크·댓글과 고유 참여자를 반영한 인기 목록입니다.
+        </p>
       </header>
 
       <Tabs defaultValue="recipe" className="w-full">
@@ -23,41 +42,11 @@ export default function RankingPage() {
         </div>
 
         <TabsContent value="recipe">
-          <Tabs defaultValue="monthly" className="w-full">
-            <TabsList className="mb-4 flex-row-reverse">
-              <TabsTrigger value="daily">일간</TabsTrigger>
-              <TabsTrigger value="weekly">주간</TabsTrigger>
-              <TabsTrigger value="monthly">월간</TabsTrigger>
-            </TabsList>
-            <TabsContent value="daily">
-              <EntireDailyTopRecipes />
-            </TabsContent>
-            <TabsContent value="weekly">
-              <EntireWeeklyTopRecipes />
-            </TabsContent>
-            <TabsContent value="monthly">
-              <EntireMonthlyTopRecipes />
-            </TabsContent>
-          </Tabs>
+          <RankingGrid items={recipes} />
         </TabsContent>
 
         <TabsContent value="combo">
-          <Tabs defaultValue="monthly" className="w-full">
-            <TabsList className="mb-4 flex-row-reverse">
-              <TabsTrigger value="daily">일간</TabsTrigger>
-              <TabsTrigger value="weekly">주간</TabsTrigger>
-              <TabsTrigger value="monthly">월간</TabsTrigger>
-            </TabsList>
-            <TabsContent value="daily">
-              <EntireDailyTopCombos />
-            </TabsContent>
-            <TabsContent value="weekly">
-              <EntireWeeklyTopCombos />
-            </TabsContent>
-            <TabsContent value="monthly">
-              <EntireMonthlyTopCombos />
-            </TabsContent>
-          </Tabs>
+          <RankingGrid items={combos} />
         </TabsContent>
       </Tabs>
     </main>

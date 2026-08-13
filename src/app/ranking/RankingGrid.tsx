@@ -1,21 +1,11 @@
 import { Card } from "@/components/ui/card";
-import { Eye, Heart } from "lucide-react";
+import type { TrendingContentItem } from "@/features/trending/types";
+import { Bookmark, Eye, Heart, MessageCircle, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-type RankingItem = {
-  id: string;
-  title: string;
-  image: string | null;
-  likeCount: number;
-  viewCount: number;
-  writerUid: string | null;
-  writerName: string | null;
-};
-
 type RankingGridProps = {
-  items: RankingItem[];
-  hrefPrefix: "recipes" | "combos";
+  items: TrendingContentItem[];
 };
 
 const rankBadges = [
@@ -24,7 +14,7 @@ const rankBadges = [
   { bg: "bg-orange-300", text: "text-orange-950", label: "3rd" },
 ];
 
-export default function RankingGrid({ items, hrefPrefix }: RankingGridProps) {
+export default function RankingGrid({ items }: RankingGridProps) {
   if (!items.length) {
     return (
       <div className="py-10 text-center text-sm text-muted-foreground">
@@ -37,7 +27,13 @@ export default function RankingGrid({ items, hrefPrefix }: RankingGridProps) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
       {items.map((item, index) => {
         const badge = rankBadges[index];
-        const detailHref = `/${hrefPrefix}/${item.id}`;
+        const detailPath =
+          item.resourceType === "recipe"
+            ? "recipes"
+            : item.resourceType === "combo"
+              ? "combos"
+              : "posts";
+        const detailHref = `/${detailPath}/${item.id}`;
         const profileHref = item.writerUid ? `/profile/${item.writerUid}` : null;
 
         return (
@@ -85,9 +81,25 @@ export default function RankingGrid({ items, hrefPrefix }: RankingGridProps) {
               ) : (
                 <p className="text-xs text-muted-foreground">{item.writerName ?? "Unknown"}</p>
               )}
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Heart className="h-3 w-3 fill-red-400 text-red-400" /> {item.likeCount}
-                <Eye className="h-3 w-3 text-muted-foreground" /> {item.viewCount}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Heart className="h-3 w-3 text-rose-500" /> {item.recentLikeCount}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Bookmark className="h-3 w-3 text-amber-500" /> {item.recentBookmarkCount}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3 text-sky-500" /> {item.recentCommentCount}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-3 w-3 text-emerald-600" /> {item.recentParticipantCount}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80">
+                <span>누적 좋아요 {item.likeCount}</span>
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="h-3 w-3" /> {item.viewCount}
+                </span>
               </div>
             </div>
           </Card>

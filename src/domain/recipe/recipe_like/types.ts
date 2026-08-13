@@ -22,27 +22,3 @@ export type ToggleLikeRecipe = {
   liked: boolean;
   likeCount: number;
 };
-
-export type TopRecipe = {
-  id: string;
-  title: string;
-  summary: string;
-  image: string | null;
-  likeCount: number;
-  viewCount: number;
-  writerUid: string | null;
-  writerName: string | null;
-};
-
-export type TopRecipeRow = {
-  created_at: string;
-  image: string;
-  like_count: number;
-  like_delta: number;
-  recipe_id: string;
-  summary: string;
-  title: string;
-  view_count: number;
-  writer_name: string;
-  writer_uid: string;
-};
