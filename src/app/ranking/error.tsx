@@ -12,7 +12,7 @@ type RankingErrorProps = {
 
 export default function RankingError({ error, reset }: RankingErrorProps) {
   useEffect(() => {
-    console.error("[ranking] 최근 7일 랭킹 조회 실패", error);
+    console.error("[ranking] 기간별 랭킹 조회 실패", error);
   }, [error]);
 
   return (

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/supabase";
+import { DEFAULT_TRENDING_PERIOD, type TrendingPeriod } from "./period";
 import * as repository from "./repository";
 import type {
   TrendingComboRow,
@@ -71,8 +72,8 @@ export function sortTrendingItems(items: TrendingContentItem[]): TrendingContent
     if (a.recentParticipantCount !== b.recentParticipantCount) {
       return b.recentParticipantCount - a.recentParticipantCount;
     }
-    if (a.lastActivityAt !== b.lastActivityAt) {
-      return b.lastActivityAt.localeCompare(a.lastActivityAt);
+    if (a.recentBookmarkCount !== b.recentBookmarkCount) {
+      return b.recentBookmarkCount - a.recentBookmarkCount;
     }
     return a.id.localeCompare(b.id);
   });
@@ -80,32 +81,36 @@ export function sortTrendingItems(items: TrendingContentItem[]): TrendingContent
 
 export async function listTrendingRecipes(
   client: SupabaseClient<Database>,
-  limit?: number
+  limit?: number,
+  period: TrendingPeriod = DEFAULT_TRENDING_PERIOD
 ): Promise<TrendingContentItem[]> {
-  const rows = await repository.selectTrendingRecipes(client, resolveLimit(limit));
-  return rows.map((row) => mapContentRow(row, "recipe"));
+  const rows = await repository.selectTrendingRecipes(client, resolveLimit(limit), period);
+  return sortTrendingItems(rows.map((row) => mapContentRow(row, "recipe")));
 }
 
 export async function listTrendingCombos(
   client: SupabaseClient<Database>,
-  limit?: number
+  limit?: number,
+  period: TrendingPeriod = DEFAULT_TRENDING_PERIOD
 ): Promise<TrendingContentItem[]> {
-  const rows = await repository.selectTrendingCombos(client, resolveLimit(limit));
-  return rows.map((row) => mapContentRow(row, "combo"));
+  const rows = await repository.selectTrendingCombos(client, resolveLimit(limit), period);
+  return sortTrendingItems(rows.map((row) => mapContentRow(row, "combo")));
 }
 
 export async function listTrendingPosts(
   client: SupabaseClient<Database>,
-  limit?: number
+  limit?: number,
+  period: TrendingPeriod = DEFAULT_TRENDING_PERIOD
 ): Promise<TrendingContentItem[]> {
-  const rows = await repository.selectTrendingPosts(client, resolveLimit(limit));
-  return rows.map((row) => mapContentRow(row, "post"));
+  const rows = await repository.selectTrendingPosts(client, resolveLimit(limit), period);
+  return sortTrendingItems(rows.map((row) => mapContentRow(row, "post")));
 }
 
 export async function listTrendingRecipeTags(
   client: SupabaseClient<Database>,
-  limit?: number
+  limit?: number,
+  period: TrendingPeriod = DEFAULT_TRENDING_PERIOD
 ): Promise<TrendingRecipeTag[]> {
-  const rows = await repository.selectTrendingRecipeTags(client, resolveLimit(limit));
+  const rows = await repository.selectTrendingRecipeTags(client, resolveLimit(limit), period);
   return rows.map(mapTagRow);
 }
