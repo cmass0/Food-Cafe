@@ -54,10 +54,12 @@ function recipeImages(recipe: Recipe) {
 
 export default function RecipeDetail({
   recipe,
-  isAuthor = false,
+  canEdit = false,
+  canDelete = false,
 }: {
   recipe: Recipe;
-  isAuthor?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const chips = uniqueChips(recipe);
   const images = recipeImages(recipe);
@@ -181,7 +183,9 @@ export default function RecipeDetail({
                 <Quote className="h-5 w-5" />
                 요약
               </div>
-              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">{recipe.summary}</p>
+              <p className="whitespace-pre-line text-sm leading-7 text-zinc-700">
+                {recipe.summary}
+              </p>
             </div>
           ) : null}
 
@@ -211,10 +215,10 @@ export default function RecipeDetail({
             <LikeBookmarkButton recipe={recipe} />
           </div>
 
-          {isAuthor ? (
+          {canEdit || canDelete ? (
             <div className="mt-5 flex gap-2">
-              <UpdateRecipeButton id={recipe.id} />
-              <DeleteRecipeButton recipeId={recipe.id} />
+              {canEdit ? <UpdateRecipeButton id={recipe.id} /> : null}
+              {canDelete ? <DeleteRecipeButton recipeId={recipe.id} /> : null}
             </div>
           ) : null}
         </div>
@@ -249,7 +253,10 @@ export default function RecipeDetail({
               const stepImage = images.length > 0 ? images[index % images.length] : null;
 
               return (
-                <li key={`${index}-${step.slice(0, 12)}`} className="grid gap-4 sm:grid-cols-[44px_1fr]">
+                <li
+                  key={`${index}-${step.slice(0, 12)}`}
+                  className="grid gap-4 sm:grid-cols-[44px_1fr]"
+                >
                   <div className="flex justify-center sm:block">
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
                       {index + 1}
@@ -273,7 +280,9 @@ export default function RecipeDetail({
                     </div>
                     <div>
                       <h3 className="font-black text-zinc-950">Step {index + 1}</h3>
-                      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600">{step}</p>
+                      <p className="mt-2 whitespace-pre-line text-sm leading-7 text-zinc-600">
+                        {step}
+                      </p>
                     </div>
                   </div>
                 </li>

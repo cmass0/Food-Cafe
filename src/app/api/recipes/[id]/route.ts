@@ -71,13 +71,13 @@ export async function DELETE(_: Request, props: contentParams) {
   const params = await props.params;
   const supabase = await getServerSupabase();
   try {
-    const { user, error } = await AuthErrorHelper();
+    const { error } = await AuthErrorHelper();
     if (error) return error;
 
     const existing = await service.getRecipeById(supabase, params.id);
     if (!existing) return notFound("레시피를 찾을 수 없습니다.");
 
-    const deleted = await service.removeRecipe(supabase, params.id, user.id);
+    const deleted = await service.removeRecipe(supabase, params.id);
     if (!deleted) return notFound("삭제할 수 있는 레시피");
 
     return json({ message: "레시피가 삭제되었습니다." }, 200);

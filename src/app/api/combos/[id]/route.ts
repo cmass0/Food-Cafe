@@ -69,13 +69,13 @@ export async function DELETE(_: Request, props: contentParams) {
   const params = await props.params;
   const supabase = await getServerSupabase();
   try {
-    const { user, error } = await AuthErrorHelper();
+    const { error } = await AuthErrorHelper();
     if (error) return error;
 
     const combo = await comboService.getComboById(supabase, params.id);
     if (!combo) return notFound();
 
-    const deleted = await comboService.removeCombo(supabase, params.id, user.id);
+    const deleted = await comboService.removeCombo(supabase, params.id);
     if (!deleted) return notFound("삭제할 수 있는 조합");
 
     return json({ message: "레시피 조합이 삭제되었습니다." }, 200);

@@ -54,8 +54,8 @@ export async function updateComboAction(id: string, patch: ComboUpdateDb) {
 
 export async function deleteComboAction(id: string) {
   try {
-    const { supabase, user } = await requireAuthContext();
-    const deleted = await comboService.removeCombo(supabase, id, user.id);
+    const { supabase } = await requireAuthContext();
+    const deleted = await comboService.removeCombo(supabase, id);
     if (!deleted) throw new Error("삭제할 수 있는 조합을 찾지 못했습니다.");
   } catch (error) {
     handleError(error);

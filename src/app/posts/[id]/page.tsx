@@ -7,6 +7,7 @@ import PostDetail from "@/domain/post/ui/PostDetail";
 import PostList from "@/domain/post/ui/PostList";
 import { getPostCategoryLabel } from "@/domain/post/category";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import DeleteButton from "./DeleteButton";
@@ -26,12 +27,10 @@ function positiveInteger(value: string | undefined, fallback: number, max: numbe
   return Math.min(Math.floor(parsed), max);
 }
 
-export default async function PostDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-    searchParams?: Promise<Record<string, string | string[] | undefined>>;
-  }
-) {
+export default async function PostDetailPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   noStore();
@@ -73,21 +72,21 @@ export default async function PostDetailPage(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthor = user?.id && post.writerUid ? user.id === post.writerUid : false;
+  const permissions = await getContentPermissions(supabase, user?.id, post.writerUid);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-9 md:px-8 md:py-10">
       <div className="mx-auto flex w-full flex-col">
         <PostDetail post={post} />
 
-        {isAuthor && (
+        {permissions.canEdit || permissions.canDelete ? (
           <section className="space-y-4 py-10">
             <div className=" flex gap-2.5 justify-end">
-              <UpdateButton id={post.id} />
-              <DeleteButton id={post.id} />
+              {permissions.canEdit ? <UpdateButton id={post.id} /> : null}
+              {permissions.canDelete ? <DeleteButton id={post.id} /> : null}
             </div>
           </section>
-        )}
+        ) : null}
 
         <CommentArea
           parentType="post"

@@ -68,11 +68,12 @@ export async function DELETE(_: Request, props: contentParams) {
   const params = await props.params;
   try {
     const supabase = await getServerSupabase();
-    const { user, error } = await AuthErrorHelper();
+    const { error } = await AuthErrorHelper();
     if (error) {
       return error;
     }
-    await postService.removePost(supabase, params.id, user.id);
+    const deleted = await postService.removePost(supabase, params.id);
+    if (!deleted) return notFound("삭제할 수 있는 게시글");
     return json({ message: "게시글이 삭제되었습니다." }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {

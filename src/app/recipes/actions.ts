@@ -55,8 +55,8 @@ export async function updateRecipeAction(id: string, patch: RecipeUpdateDB) {
 
 export async function deleteRecipeAction(id: string) {
   try {
-    const { supabase, user } = await requireAuthContext();
-    const deleted = await recipeService.removeRecipe(supabase, id, user.id);
+    const { supabase } = await requireAuthContext();
+    const deleted = await recipeService.removeRecipe(supabase, id);
     if (!deleted) throw new Error("삭제할 수 있는 레시피를 찾지 못했습니다.");
   } catch (error) {
     handleError(error);

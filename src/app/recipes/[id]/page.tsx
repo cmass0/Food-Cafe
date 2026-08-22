@@ -4,14 +4,13 @@ import { notFound } from "next/navigation";
 import CommentArea from "@/domain/comment/ui/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
+import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export default async function RecipeDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function RecipeDetailPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   noStore();
@@ -24,12 +23,12 @@ export default async function RecipeDetailPage(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthor = user?.id && recipe.writerUid ? user.id === recipe.writerUid : false;
+  const permissions = await getContentPermissions(supabase, user?.id, recipe.writerUid);
 
   return (
     <main className="bg-white pb-20 pt-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 lg:px-8">
-        <RecipeDetail recipe={recipe} isAuthor={isAuthor} />
+        <RecipeDetail recipe={recipe} {...permissions} />
 
         <CommentArea
           parentType="recipe"

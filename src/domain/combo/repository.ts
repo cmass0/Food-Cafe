@@ -223,14 +223,12 @@ export async function updateCombo(
 
 export async function deleteCombo(
   client: SupabaseClient<Database>,
-  comboId: string,
-  writerUid: string
+  comboId: string
 ): Promise<boolean> {
   const { data, error } = await client
     .from("combos")
     .delete()
     .eq("id", comboId)
-    .eq("writer_uid", writerUid)
     .select("id")
     .maybeSingle();
   throwIfError(error);

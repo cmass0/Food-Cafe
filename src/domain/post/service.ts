@@ -189,8 +189,7 @@ export function listLikedPosts(
 }
 
 function parseContentJson(contentJson: PostCreateInput["content_json"]) {
-  const serialized =
-    typeof contentJson === "string" ? contentJson : JSON.stringify(contentJson);
+  const serialized = typeof contentJson === "string" ? contentJson : JSON.stringify(contentJson);
 
   if (!serialized.trim()) {
     throw new Error("내용을 입력해 주세요.");
@@ -214,13 +213,7 @@ function assertPostContentIsNotEmpty(contentText: string, contentHtml: string): 
   }
 }
 
-export async function removePost(
-  client: SupabaseClient<Database>,
-  id: string,
-  writerUid: string
-): Promise<void> {
-  if (!writerUid) {
-    throw new Error("UNAUTHORIZED");
-  }
-  await repository.deletePostRecord(client, id, writerUid);
+export async function removePost(client: SupabaseClient<Database>, id: string): Promise<boolean> {
+  // 작성자/관리자 판정은 인증 사용자의 세션을 사용하는 RLS가 최종적으로 수행한다.
+  return repository.deletePostRecord(client, id);
 }

@@ -42,9 +42,7 @@ export async function fetchPosts(
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
-  let query = (client as any)
-    .from("posts")
-    .select(POST_COLUMNS, { count: "exact" });
+  let query = (client as any).from("posts").select(POST_COLUMNS, { count: "exact" });
 
   if (params.sort === "likes") {
     query = query.order("like_count", { ascending: false });
@@ -145,23 +143,17 @@ export async function fetchPostsByEngagement(
     } else if (params.searchField === "contents") {
       query = query.ilike("posts.content_text", searchPattern);
     } else if (params.searchField === "title_contents") {
-      query = query.or(
-        `title.ilike.${searchPattern},content_text.ilike.${searchPattern}`,
-        { referencedTable: "posts" }
-      );
+      query = query.or(`title.ilike.${searchPattern},content_text.ilike.${searchPattern}`, {
+        referencedTable: "posts",
+      });
     }
   }
 
-  const { data, error, count } = await query.range(
-    safeOffset,
-    Math.max(rangeEnd, safeOffset)
-  );
+  const { data, error, count } = await query.range(safeOffset, Math.max(rangeEnd, safeOffset));
   throwIfError(error);
 
   const rows = Array.isArray(data)
-    ? data
-        .map((row) => row?.posts)
-        .filter((post): post is PostRow => Boolean(post))
+    ? data.map((row) => row?.posts).filter((post): post is PostRow => Boolean(post))
     : [];
 
   return {
@@ -217,13 +209,14 @@ export async function updatePostRecordByOwner(
 
 export async function deletePostRecord(
   client: SupabaseClient<Database>,
-  id: string,
-  ownerUid: string
-): Promise<void> {
-  const { error } = await (client as any)
+  id: string
+): Promise<boolean> {
+  const { data, error } = await client
     .from("posts")
     .delete()
     .eq("id", id)
-    .eq("writer_uid", ownerUid);
+    .select("id")
+    .maybeSingle();
   throwIfError(error);
+  return Boolean(data);
 }

@@ -228,16 +228,11 @@ export async function updateRecipe(
   return data;
 }
 
-export async function deleteRecipe(
-  client: SupabaseClient<Database>,
-  id: string,
-  writerUid: string
-): Promise<boolean> {
+export async function deleteRecipe(client: SupabaseClient<Database>, id: string): Promise<boolean> {
   const { data, error } = await client
     .from("recipes")
     .delete()
     .eq("id", id)
-    .eq("writer_uid", writerUid)
     .select("id")
     .maybeSingle();
   throwIfError(error);

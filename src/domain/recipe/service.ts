@@ -242,10 +242,7 @@ export async function updateRecipe(
   return row ? mapRowToRecipe(row) : null;
 }
 
-export async function removeRecipe(
-  client: SupabaseClient<Database>,
-  id: string,
-  writerUid: string
-): Promise<boolean> {
-  return repo.deleteRecipe(client, id, writerUid);
+export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<boolean> {
+  // 작성자/관리자 판정은 인증 사용자의 세션을 사용하는 RLS가 최종적으로 수행한다.
+  return repo.deleteRecipe(client, id);
 }

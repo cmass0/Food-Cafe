@@ -228,7 +228,10 @@ export async function deletePostAction(id: string): Promise<PostActionState> {
   }
 
   try {
-    await postService.removePost(supabase, id, user.id);
+    const deleted = await postService.removePost(supabase, id);
+    if (!deleted) {
+      return { ok: false, message: "삭제할 수 있는 게시글을 찾지 못했습니다." };
+    }
   } catch (err) {
     console.error("게시글 삭제 실패", err);
     return { ok: false, message: DEFAULT_ERROR };

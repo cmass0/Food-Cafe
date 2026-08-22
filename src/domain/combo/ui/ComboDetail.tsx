@@ -49,10 +49,12 @@ function uniqueChips(combo: Combos) {
 
 export default function ComboDetail({
   combo,
-  isAuthor = false,
+  canEdit = false,
+  canDelete = false,
 }: {
   combo: Combos;
-  isAuthor?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const chips = uniqueChips(combo);
   const mainImage = combo.image ?? null;
@@ -183,10 +185,10 @@ export default function ComboDetail({
             <ComboLikeBookmarkButton combo={combo} />
           </div>
 
-          {isAuthor ? (
+          {canEdit || canDelete ? (
             <div className="mt-5 flex gap-2">
-              <ComboUpdateButton id={combo.id} />
-              <ComboDeleteButton id={combo.id} />
+              {canEdit ? <ComboUpdateButton id={combo.id} /> : null}
+              {canDelete ? <ComboDeleteButton id={combo.id} /> : null}
             </div>
           ) : null}
         </div>
@@ -337,7 +339,10 @@ export default function ComboDetail({
 
           <ol className="mt-6 space-y-4">
             {steps.map((step, index) => (
-              <li key={`${index}-${step.slice(0, 12)}`} className="grid gap-4 sm:grid-cols-[44px_1fr]">
+              <li
+                key={`${index}-${step.slice(0, 12)}`}
+                className="grid gap-4 sm:grid-cols-[44px_1fr]"
+              >
                 <div className="flex justify-center sm:block">
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
                     {index + 1}

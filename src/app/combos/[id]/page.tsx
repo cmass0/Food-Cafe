@@ -3,14 +3,13 @@ import { notFound } from "next/navigation";
 import ComboDetail from "@/domain/combo/ui/ComboDetail";
 import { getComboById } from "@/domain/combo/service";
 import CommentArea from "@/domain/comment/ui/CommentArea";
+import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export default async function ComboDetailPage(
-  props: {
-    params: Promise<{ id: string }>;
-    searchParams: Promise<Record<string, string | string[] | undefined>>;
-  }
-) {
+export default async function ComboDetailPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const comboId = params.id;
@@ -23,12 +22,12 @@ export default async function ComboDetailPage(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthor = user?.id && combo.writerUid ? user.id === combo.writerUid : false;
+  const permissions = await getContentPermissions(supabase, user?.id, combo.writerUid);
 
   return (
     <main className="bg-white pb-20 pt-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 lg:px-8">
-        <ComboDetail combo={combo} isAuthor={isAuthor} />
+        <ComboDetail combo={combo} {...permissions} />
 
         <CommentArea
           parentType="combo"
