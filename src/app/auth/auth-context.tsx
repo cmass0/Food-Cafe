@@ -4,10 +4,12 @@ import { getUser } from "@/domain/user/api";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { getRemember } from "@/lib/auth/login-maintain";
 import { getBrowserSupabase } from "@/lib/supabase";
+import type { BrowserSupabaseClient } from "@/lib/supabase/browser";
 import type { Session, User } from "@supabase/supabase-js";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type AuthCtx = {
+  supabase: BrowserSupabaseClient;
   user: User | null;
   session: Session | null;
   status: "loading" | "authenticated" | "anonymous";
@@ -24,7 +26,7 @@ const LOGOUT_AT_KEY = "FC_LOGOUT_AT";
 const AuthContext = React.createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children, initialSession = null }: AuthProviderProps) {
-  const supabase = useMemo(() => getBrowserSupabase(), []);
+  const [supabase] = useState(getBrowserSupabase);
   const [session, setSession] = useState<Session | null>(initialSession);
   const [status, setStatus] = useState<AuthCtx["status"]>(
     initialSession ? "authenticated" : "loading"
@@ -87,7 +89,7 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
       setDisplayName("");
       return;
     }
-    // public.user 테이블에서 사용자정보를 가져옴(기존의 auth.users 대체 및 user정보에 대한 업데이트 및 랜더링은 public.user 테이블을 기준으로 변경)
+    // 공개 프로필의 화면용 정보는 public.profiles를 기준으로 갱신한다.
     let cancelled = false;
     const fetchProfile = async () => {
       try {
@@ -106,6 +108,7 @@ export function AuthProvider({ children, initialSession = null }: AuthProviderPr
   }, [fallbackDisplayName, status, userId]);
 
   const value: AuthCtx = {
+    supabase,
     user,
     session,
     status,

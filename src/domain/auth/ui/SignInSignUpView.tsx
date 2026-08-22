@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PASSWORD_SECURITY_MESSAGE } from "@/domain/auth/constants";
 import AuthButtons from "@/domain/user/ui/AuthButtons";
 import { setRemember } from "@/lib/auth/login-maintain";
-import { getBrowserSupabase } from "@/lib/supabase";
+import { useAuth } from "@/app/auth/auth-context";
 
 type SignInSignUpViewProps = {
   next?: string;
@@ -33,6 +33,7 @@ export default function SignInSignUpView({
   onNavigateAway,
 }: SignInSignUpViewProps) {
   const router = useRouter();
+  const { supabase } = useAuth();
   const [mode, setMode] = React.useState<"signin" | "signup">(defaultMode);
 
   // Sign-in state
@@ -63,7 +64,6 @@ export default function SignInSignUpView({
     }
 
     startSignInTransition(async () => {
-      const supabase = getBrowserSupabase();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setSignInError(error.message);
@@ -95,7 +95,6 @@ export default function SignInSignUpView({
     }
 
     startSignUpTransition(async () => {
-      const supabase = getBrowserSupabase();
       const url = new URL("/auth/callback", location.origin);
       if (next) url.searchParams.set("next", next);
 

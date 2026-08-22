@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import SignInSignUpView from "@/domain/auth/ui/SignInSignUpView";
 import { AUTH_REQUIRED_EVENT } from "@/lib/api/client";
 import { normalizeReturnTo } from "@/lib/auth/return-to";
@@ -83,6 +83,9 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       <Dialog open={state.open} onOpenChange={(open) => !open && closeAuthModal()}>
         <DialogContent className="w-[92vw] p-0 sm:max-w-[400px]">
           <DialogTitle className="sr-only">로그인 또는 회원가입</DialogTitle>
+          <DialogDescription className="sr-only">
+            계속하려면 로그인하거나 새 계정을 만들어 주세요.
+          </DialogDescription>
           <SignInSignUpView
             key={`${state.mode}:${state.next}:${state.notice ?? ""}`}
             next={state.next}

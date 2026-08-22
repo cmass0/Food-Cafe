@@ -4,10 +4,10 @@ import Image from "next/image";
 import * as React from "react";
 import { Github } from "lucide-react";
 
+import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { normalizeReturnTo } from "@/lib/auth/return-to";
 import { cn } from "@/lib/utils";
-import { getBrowserSupabase } from "@/lib/supabase";
 
 type Provider = "google" | "github" | "kakao";
 
@@ -57,9 +57,9 @@ function getScope(provider: Provider) {
 }
 
 function useOAuthSignIn(next: string) {
+  const { supabase } = useAuth();
   return React.useCallback(
     async (provider: Provider) => {
-      const supabase = getBrowserSupabase();
       const scopes = getScope(provider);
       const callbackUrl = new URL("/auth/callback", location.origin);
       callbackUrl.searchParams.set("next", normalizeReturnTo(next));
@@ -69,7 +69,7 @@ function useOAuthSignIn(next: string) {
         options: { redirectTo: callbackUrl.toString(), scopes },
       });
     },
-    [next]
+    [next, supabase]
   );
 }
 
