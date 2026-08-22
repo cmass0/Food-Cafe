@@ -1,11 +1,11 @@
 import type { Tables, TablesInsert, TablesUpdate } from "@/types/supabase";
 
-export type UserRow = Tables<"users">;
-export type UserInsertDB = TablesInsert<"users">;
-export type UserUpdateDB = TablesUpdate<"users">;
+export type ProfileRow = Tables<"profiles">;
+export type ProfileInsertDB = TablesInsert<"profiles">;
+export type ProfileUpdateDB = TablesUpdate<"profiles">;
 
 export type UserListResult = {
-  items: UserRow[];
+  items: ProfileRow[];
   total: number;
   limit: number;
   offset: number;

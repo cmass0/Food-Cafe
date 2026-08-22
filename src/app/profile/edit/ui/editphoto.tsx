@@ -4,27 +4,27 @@ import { User } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserRow } from "@/domain/user/types";
+import type { ProfileRow } from "@/domain/user/types";
 import { uploadBucketImage } from "@/lib/storage";
-import { getBrowserSupabase } from "@/lib/supabase";
 
 import { updateProfileAction } from "../../actions";
 
 type Props = {
-  userProfile: UserRow;
+  userProfile: ProfileRow;
 };
 
 export default function EditPhoto({ userProfile }: Props) {
+  const { supabase } = useAuth();
   const [photoUrl, setPhotoUrl] = useState(userProfile.photo_url ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageSuccess, setImageSuccess] = useState<string | null>(null);
   const [imageSaving, setImageSaving] = useState(false);
-  const supabase = getBrowserSupabase();
 
   const handlePhotoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPhotoUrl(event.target.value);

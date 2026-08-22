@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,13 +8,13 @@ import ProfileFollowHeader from "@/domain/follow/ui/ProfileFollowHeader";
 import * as userService from "@/domain/user/service";
 
 import { getServerSupabase } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import ProfileSearchForm from "../ProfileSearchForm";
 import ComboTabContainer from "../profiletab/combo/ComboTabContainer";
 import RecipeTabContainer from "../profiletab/recipe/RecipeTabContainer";
 import {
   normalizeProfileSection,
   normalizeProfileSort,
-  normalizeProfileTab,
   normalizeProfileView,
 } from "../profile-types";
 
@@ -24,7 +24,6 @@ type ProfileSearchParams = {
   tab?: string | string[];
   page?: string | string[];
   search?: string | string[];
-  email?: string | string[];
   section?: string | string[];
   sort?: string | string[];
   view?: string | string[];
@@ -55,22 +54,23 @@ export default async function ProfilePage(props: {
     data: { user: viewer },
   } = await supabase.auth.getUser();
 
-  if (searchParams?.email === "changed") {
-    alert("이메일이 변경되었습니다. 변경된 이메일로 로그인해 주세요.");
-  }
-
   const isSelf = viewer?.id === another_user.id;
+  if (isSelf) redirect("/profile");
+
   let isFollowing = false;
 
-  if (viewer && !isSelf) {
+  if (viewer) {
     isFollowing = await userFollowService.checkIsFollowing(supabase, viewer.id, another_user.id);
   }
 
-  const activeTab = normalizeProfileTab(normalizeParam(searchParams?.tab));
+  const requestedTab = normalizeParam(searchParams?.tab);
+  const activeTab = "written" as const;
   const normalizedSection = normalizeProfileSection(normalizeParam(searchParams?.section));
   // 게시글 활동은 현재 마이페이지 전용이다. 공개 프로필에서는 기존 공개 섹션만 허용한다.
   const activeSection = normalizedSection === "post" ? "recipe" : normalizedSection;
-  const sort = normalizeProfileSort(normalizeParam(searchParams?.sort));
+  const requestedSort = normalizeParam(searchParams?.sort);
+  const normalizedSort = normalizeProfileSort(requestedSort);
+  const sort = normalizedSort === "like" ? "like" : "recent";
   const view = normalizeProfileView(normalizeParam(searchParams?.view));
   const pageParam = normalizeParam(searchParams?.page);
   const pageNum = pageParam ? Number(pageParam) : 1;
@@ -78,6 +78,21 @@ export default async function ProfilePage(props: {
   const searchParam = normalizeParam(searchParams?.search);
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
+
+  if (
+    (requestedTab && requestedTab !== activeTab) ||
+    normalizedSection === "post" ||
+    (requestedSort && requestedSort !== sort)
+  ) {
+    const canonicalParams = new URLSearchParams({
+      section: activeSection,
+      tab: activeTab,
+      sort,
+      view,
+    });
+    if (search) canonicalParams.set("search", search);
+    redirect(`/profile/${another_user.id}?${canonicalParams.toString()}`);
+  }
 
   function buildSectionHref(section: "recipe" | "combo") {
     const params = new URLSearchParams();
@@ -91,6 +106,16 @@ export default async function ProfilePage(props: {
     return `?${params.toString()}`;
   }
 
+  function buildSortHref(nextSort: "recent" | "like") {
+    const params = new URLSearchParams();
+    params.set("section", activeSection);
+    params.set("tab", activeTab);
+    params.set("sort", nextSort);
+    params.set("view", view);
+    if (search) params.set("search", search);
+    return `?${params.toString()}`;
+  }
+
   return (
     <main className="pt-[50px] pb-[50px]">
       <div className="mx-auto w-full max-w-5xl space-y-6 px-4 md:px-6">
@@ -100,13 +125,11 @@ export default async function ProfilePage(props: {
             <ProfileFollowHeader
               targetUserId={another_user.id}
               displayName={another_user.display_name ?? null}
-              email={another_user.email ?? null}
               photoUrl={another_user.photo_url ?? null}
               initialIsFollowing={isFollowing}
               initialFollowerCount={another_user?.follower_count ?? 0}
               initialFollowingCount={another_user?.following_count ?? 0}
-              canFollow={Boolean(viewer)}
-              showButton={!isSelf}
+              showButton
             />
           </CardContent>
         </Card>
@@ -119,14 +142,36 @@ export default async function ProfilePage(props: {
             view={view}
             className="w-full max-w-md"
           />
-          <Tabs defaultValue="popular">
-            <TabsList className="h-full">
-              <TabsTrigger value="popular">인기순</TabsTrigger>
-              <TabsTrigger value="recent">최신순</TabsTrigger>
-            </TabsList>
-            <TabsContent value="popular"></TabsContent>
-            <TabsContent value="recent"></TabsContent>
-          </Tabs>
+          <div
+            className="flex h-10 items-center rounded-md bg-muted p-1"
+            role="group"
+            aria-label="콘텐츠 정렬"
+          >
+            <Link
+              href={buildSortHref("like")}
+              aria-current={sort === "like" ? "page" : undefined}
+              className={cn(
+                "inline-flex h-8 items-center rounded-sm px-3 text-sm font-medium transition",
+                sort === "like"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              인기순
+            </Link>
+            <Link
+              href={buildSortHref("recent")}
+              aria-current={sort === "recent" ? "page" : undefined}
+              className={cn(
+                "inline-flex h-8 items-center rounded-sm px-3 text-sm font-medium transition",
+                sort === "recent"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              최신순
+            </Link>
+          </div>
         </div>
 
         <Tabs value={activeSection} className="w-full">
@@ -153,13 +198,14 @@ export default async function ProfilePage(props: {
           >
             {activeSection === "recipe" ? (
               <RecipeTabContainer
-                activeTab={activeTab as "written" | "bookmark" | "like"}
+                activeTab={activeTab}
                 currentPage={currentPage}
                 pageSize={pageSize}
                 search={search}
                 sort={sort}
                 view={view}
                 me={another_user}
+                showActivityTabs={false}
               />
             ) : null}
           </TabsContent>
@@ -169,13 +215,14 @@ export default async function ProfilePage(props: {
           >
             {activeSection === "combo" ? (
               <ComboTabContainer
-                activeTab={activeTab as "written" | "bookmark" | "like"}
+                activeTab={activeTab}
                 currentPage={currentPage}
                 pageSize={pageSize}
                 search={search}
                 sort={sort}
                 view={view}
                 me={another_user}
+                showActivityTabs={false}
               />
             ) : null}
           </TabsContent>

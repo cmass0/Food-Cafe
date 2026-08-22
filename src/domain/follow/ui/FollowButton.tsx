@@ -1,7 +1,10 @@
 "use client";
 
+import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
-import { toggleFollow } from "@/domain/follow/api";
+import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { fetchFollowStatus, toggleFollow } from "@/domain/follow/api";
+import { isUnauthorizedApiError } from "@/lib/api/client";
 import * as React from "react";
 
 type Props = {
@@ -9,48 +12,86 @@ type Props = {
   initialIsFollowing: boolean;
   // 카운트 표시를 같은 클라이언트 트리에서 관리하기 위해 콜백으로 위임
   // 응답에 카운트가 포함되므로 부모 상태에 그대로 반영하면 router.refresh() 불필요
-  onCountsChange?: (counts: { followerCount: number; followingCount: number }) => void;
-  canFollow?: boolean;
+  onFollowerCountChange?: (followerCount: number) => void;
   className?: string;
 };
+
+function getReturnPath() {
+  const current = new URL(window.location.href);
+  return `${current.pathname}${current.search}${current.hash}`;
+}
 
 export default function FollowButton({
   targetUserId,
   initialIsFollowing,
-  onCountsChange,
-  canFollow = true,
+  onFollowerCountChange,
   className,
 }: Props) {
   const [isFollowing, setIsFollowing] = React.useState(initialIsFollowing);
+  const [errorMessage, setErrorMessage] = React.useState("");
   const [isPending, startTransition] = React.useTransition();
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+
+  React.useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing, targetUserId]);
+
+  React.useEffect(() => {
+    if (!user?.id) {
+      setIsFollowing(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    void fetchFollowStatus(targetUserId, controller.signal)
+      .then((status) => {
+        if (!controller.signal.aborted) setIsFollowing(status.following);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || isUnauthorizedApiError(error)) return;
+        console.error("[follow] status failed", error);
+      });
+    return () => controller.abort();
+  }, [targetUserId, user?.id]);
 
   const handleToggle = React.useCallback(() => {
-    if (!canFollow || isPending) return;
+    if (!user) {
+      openAuthModal({ next: getReturnPath() });
+      return;
+    }
+    if (isPending) return;
+
+    setErrorMessage("");
 
     startTransition(async () => {
       try {
-        const { following, followerCount, followingCount } = await toggleFollow(targetUserId);
+        const { following, followerCount } = await toggleFollow(targetUserId);
         setIsFollowing(following);
-        // 부모(프로필 헤더)가 follower/following 카운트를 실시간으로 갱신할 수 있도록 전달
-        onCountsChange?.({ followerCount, followingCount });
+        onFollowerCountChange?.(followerCount);
       } catch (error) {
+        if (isUnauthorizedApiError(error)) {
+          openAuthModal({ next: getReturnPath() });
+          return;
+        }
         console.error("[follow] toggle failed:", error);
+        setErrorMessage("팔로우 상태를 변경하지 못했습니다.");
       }
     });
-  }, [canFollow, isPending, onCountsChange, targetUserId]);
+  }, [isPending, onFollowerCountChange, openAuthModal, targetUserId, user]);
 
   const buttonLabel = isFollowing ? "언팔로우" : "팔로우";
 
   return (
-    <div className="flex items-center">
-      <Button
-        type="button"
-        onClick={handleToggle}
-        className={className}
-        disabled={!canFollow || isPending}
-      >
-        {buttonLabel}
+    <div className="flex flex-col items-end gap-2">
+      <Button type="button" onClick={handleToggle} className={className} disabled={isPending}>
+        {isPending ? "처리 중..." : buttonLabel}
       </Button>
+      {errorMessage ? (
+        <p className="text-xs text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
     </div>
   );
 }

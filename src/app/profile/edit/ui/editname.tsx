@@ -3,23 +3,23 @@
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/auth/auth-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserRow } from "@/domain/user/types";
-import { getBrowserSupabase } from "@/lib/supabase";
+import type { ProfileRow } from "@/domain/user/types";
 
 import { updateProfileAction } from "../../actions";
 
 type Props = {
-  userProfile: UserRow;
+  userProfile: ProfileRow;
 };
 
 export default function EditName({ userProfile }: Props) {
+  const { supabase } = useAuth();
   const [displayName, setDisplayName] = useState(userProfile.display_name ?? "");
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSuccess, setNameSuccess] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
-  const supabase = getBrowserSupabase();
 
   const handleNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

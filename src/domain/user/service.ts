@@ -5,15 +5,13 @@ import { getServerSupabase } from "@/lib/supabase/server";
 
 import * as repository from "./repository";
 import { UserUpdateSchema, type UserUpdateInput } from "./schema";
-import type { UserListOptions, UserListResult, UserRow, UserUpdateDB } from "./types";
+import type { ProfileRow, ProfileUpdateDB, UserListOptions, UserListResult } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
-  const payload: UserUpdateDB = {
-    updated_at: new Date().toISOString(),
-  };
+function buildUpdatePayload(parsed: UserUpdateInput): ProfileUpdateDB {
+  const payload: ProfileUpdateDB = {};
 
   if (parsed.display_name !== undefined) {
     if (parsed.display_name !== null) {
@@ -27,7 +25,7 @@ function buildUpdatePayload(parsed: UserUpdateInput): UserUpdateDB {
   return payload;
 }
 
-export async function getSelf(): Promise<UserRow | null> {
+export async function getSelf(): Promise<ProfileRow | null> {
   const supabase = await getServerSupabase();
   const {
     data: { user },
@@ -36,10 +34,10 @@ export async function getSelf(): Promise<UserRow | null> {
   if (isAuthSessionMissingError(error)) return null;
   if (error) throw error;
   if (!user) return null;
-  return repository.selectUserById(supabase, user.id);
+  return repository.selectProfileById(supabase, user.id);
 }
 
-export async function updateSelf(input: unknown): Promise<UserRow> {
+export async function updateSelf(input: unknown): Promise<ProfileRow> {
   const supabase = await getServerSupabase();
   const {
     data: { user },
@@ -53,7 +51,7 @@ export async function updateSelf(input: unknown): Promise<UserRow> {
     throw new Error("이름을 입력해 주세요.");
   }
 
-  return repository.updateUserRecord(supabase, user.id, buildUpdatePayload(parsed));
+  return repository.updateProfileRecord(supabase, user.id, buildUpdatePayload(parsed));
 }
 
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
@@ -79,14 +77,14 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
   };
 }
 
-export async function findUserByDisplayName(name: string): Promise<UserRow | null> {
+export async function findUserByDisplayName(name: string): Promise<ProfileRow | null> {
   const supabase = await getServerSupabase();
-  return repository.selectUserByDisplayName(supabase, name);
+  return repository.selectProfileByDisplayName(supabase, name);
 }
 
-export async function getUserById(id: string): Promise<UserRow | null> {
+export async function getUserById(id: string): Promise<ProfileRow | null> {
   const supabase = await getServerSupabase();
-  return repository.selectUserById(supabase, id);
+  return repository.selectProfileById(supabase, id);
 }
 
 export async function deleteUserById(): Promise<void> {
@@ -100,16 +98,11 @@ export async function deleteUserById(): Promise<void> {
 
   const admin = getAdminSupabase();
 
-  // 1. public.users 레코드 삭제
-  //    DB FK가 모두 CASCADE로 설정되어 있어 recipes, combos, comments,
-  //    likes, bookmarks, follows 등 연관 데이터가 자동으로 함께 삭제됨
-  await repository.deleteUserRecord(supabase, user.id);
-
-  // 2. 스토리지에 저장된 프로필 사진 삭제
+  // 1. 인증 계정을 지우기 전에 관리자 권한으로 앱 데이터와 이미지를 정리한다.
+  await repository.deleteProfileRecord(admin, user.id);
   await repository.deleteUserAvatar(admin, user.id);
 
-  // 3. Supabase Auth 계정 삭제 — service role 필요
-  //    auth를 마지막에 삭제해야 앞 단계에서 세션 권한이 유지됨
+  // 2. Supabase Auth 계정 삭제 — service role 필요
   const { error: authDeleteError } = await admin.auth.admin.deleteUser(user.id);
   if (authDeleteError) throw authDeleteError;
 }

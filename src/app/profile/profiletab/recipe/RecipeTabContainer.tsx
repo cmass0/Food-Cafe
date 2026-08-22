@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { UserRow } from "@/domain/user/types";
+import type { ProfileRow } from "@/domain/user/types";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -13,8 +13,9 @@ type Props = {
   search?: string;
   sort?: ProfileSort;
   view?: ProfileView;
-  me: UserRow;
+  me: ProfileRow;
   toolbar?: ReactNode;
+  showActivityTabs?: boolean;
 };
 
 const tabTriggerClass =
@@ -29,6 +30,7 @@ export default function RecipeTabContainer({
   view = "grid",
   me,
   toolbar,
+  showActivityTabs = true,
 }: Props) {
   function buildTabHref(tab: string, searchValue?: string) {
     const params = new URLSearchParams();
@@ -49,12 +51,16 @@ export default function RecipeTabContainer({
           <TabsTrigger value="written" className={tabTriggerClass} asChild>
             <Link href={buildTabHref("written", search)}>작성 레시피</Link>
           </TabsTrigger>
-          <TabsTrigger value="bookmark" className={tabTriggerClass} asChild>
-            <Link href={buildTabHref("bookmark", search)}>북마크</Link>
-          </TabsTrigger>
-          <TabsTrigger value="like" className={tabTriggerClass} asChild>
-            <Link href={buildTabHref("like", search)}>좋아요</Link>
-          </TabsTrigger>
+          {showActivityTabs ? (
+            <>
+              <TabsTrigger value="bookmark" className={tabTriggerClass} asChild>
+                <Link href={buildTabHref("bookmark", search)}>북마크</Link>
+              </TabsTrigger>
+              <TabsTrigger value="like" className={tabTriggerClass} asChild>
+                <Link href={buildTabHref("like", search)}>좋아요</Link>
+              </TabsTrigger>
+            </>
+          ) : null}
         </TabsList>
         {toolbar}
         <TabsContent value="written" className="mt-8">
@@ -70,32 +76,36 @@ export default function RecipeTabContainer({
             />
           ) : null}
         </TabsContent>
-        <TabsContent value="bookmark" className="mt-8">
-          {activeTab === "bookmark" ? (
-            <ProfileRecipeTab
-              type="bookmark"
-              page={currentPage}
-              limit={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-              id={me.id}
-            />
-          ) : null}
-        </TabsContent>
-        <TabsContent value="like" className="mt-8">
-          {activeTab === "like" ? (
-            <ProfileRecipeTab
-              type="like"
-              page={currentPage}
-              limit={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-              id={me.id}
-            />
-          ) : null}
-        </TabsContent>
+        {showActivityTabs ? (
+          <>
+            <TabsContent value="bookmark" className="mt-8">
+              {activeTab === "bookmark" ? (
+                <ProfileRecipeTab
+                  type="bookmark"
+                  page={currentPage}
+                  limit={pageSize}
+                  search={search}
+                  sort={sort}
+                  view={view}
+                  id={me.id}
+                />
+              ) : null}
+            </TabsContent>
+            <TabsContent value="like" className="mt-8">
+              {activeTab === "like" ? (
+                <ProfileRecipeTab
+                  type="like"
+                  page={currentPage}
+                  limit={pageSize}
+                  search={search}
+                  sort={sort}
+                  view={view}
+                  id={me.id}
+                />
+              ) : null}
+            </TabsContent>
+          </>
+        ) : null}
       </Tabs>
     </div>
   );

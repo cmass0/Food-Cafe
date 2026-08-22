@@ -17,7 +17,7 @@ import {
   requestEmailChangeAction,
 } from "@/app/auth/actions";
 import AccountSecurityForm from "@/domain/auth/ui/AccountSecurityForm";
-import { UserRow } from "@/domain/user/types";
+import type { ProfileRow } from "@/domain/user/types";
 import { PencilLine } from "lucide-react";
 
 import DeleteAccount from "./ui/DeleteAccount";
@@ -25,11 +25,12 @@ import EditName from "./ui/editname";
 import EditPhoto from "./ui/editphoto";
 
 type Props = {
-  userProfile: UserRow;
+  userProfile: ProfileRow;
+  currentEmail: string;
   currentPhone?: string | null;
 };
 
-export default function EditSheet({ userProfile, currentPhone }: Props) {
+export default function EditSheet({ userProfile, currentEmail, currentPhone }: Props) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -66,7 +67,7 @@ export default function EditSheet({ userProfile, currentPhone }: Props) {
               </p>
             </div>
             <AccountSecurityForm
-              currentEmail={userProfile.email ?? ""}
+              currentEmail={currentEmail}
               currentPhone={currentPhone}
               emailAction={requestEmailChangeAction}
               passwordAction={changePasswordAction}

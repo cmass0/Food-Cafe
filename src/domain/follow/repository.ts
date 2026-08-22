@@ -1,26 +1,32 @@
-import { Database } from "@/types/supabase";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { FollowFetchParams, FollowingUserRow, FollowUserRow } from "./type";
+import type { Database } from "@/types/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { FollowFetchParams, FollowListItem } from "./type";
+
+const PUBLIC_PROFILE_COLUMNS = "id, display_name, photo_url";
 
 export async function followerList(
   client: SupabaseClient<Database>,
   userId: string,
   params: FollowFetchParams
-): Promise<{ items: FollowUserRow[]; total: number }> {
+): Promise<{ items: FollowListItem[]; total: number }> {
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
   const { data, error, count } = await client
     .from("user_follows")
-    .select("created_at, follower:users!user_follows_follower_id_fkey(*)", {
-      count: "exact",
-    })
+    .select(
+      `created_at, follower:profiles!user_follows_follower_id_fkey(${PUBLIC_PROFILE_COLUMNS})`,
+      { count: "exact" }
+    )
     .eq("following_id", userId)
     .order("created_at", { ascending: false })
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (error) throw error;
-  const items = (data ?? []).filter((row) => row.follower);
+  const items = (data ?? []).flatMap((row) =>
+    row.follower ? [{ followedAt: row.created_at, user: row.follower }] : []
+  );
   return { items, total: count ?? items.length };
 }
 
@@ -28,21 +34,24 @@ export async function followingList(
   client: SupabaseClient<Database>,
   userId: string,
   params: FollowFetchParams
-): Promise<{ items: FollowingUserRow[]; total: number }> {
+): Promise<{ items: FollowListItem[]; total: number }> {
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
   const { data, error, count } = await client
     .from("user_follows")
-    .select("created_at, following:users!user_follows_following_id_fkey(*)", {
-      count: "exact",
-    })
+    .select(
+      `created_at, following:profiles!user_follows_following_id_fkey(${PUBLIC_PROFILE_COLUMNS})`,
+      { count: "exact" }
+    )
     .eq("follower_id", userId)
     .order("created_at", { ascending: false })
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
 
   if (error) throw error;
-  const items = (data ?? []).filter((row) => Boolean(row.following));
+  const items = (data ?? []).flatMap((row) =>
+    row.following ? [{ followedAt: row.created_at, user: row.following }] : []
+  );
   return { items, total: count ?? items.length };
 }
 

@@ -136,6 +136,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
     postService.listPosts(supabase, { writerUid: me.id, page: 1, limit: 1 }),
   ]);
   if (authUserResult.error) throw authUserResult.error;
+  const currentEmail = authUserResult.data.user?.email ?? "";
   const currentPhone = authUserResult.data.user?.phone ?? null;
   const recipeTotal = recipeSummary.total;
   const comboTotal = comboSummary.total;
@@ -258,7 +259,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
             <h2 className="mt-4 max-w-full truncate text-2xl font-black text-zinc-950">
               {me.display_name ?? "-"}
             </h2>
-            <p className="mt-1 max-w-full truncate text-sm text-zinc-500">{me.email ?? "-"}</p>
+            <p className="mt-1 max-w-full truncate text-sm text-zinc-500">{currentEmail || "-"}</p>
           </div>
 
           <div className="mt-8 grid gap-3 text-sm">
@@ -350,7 +351,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
                 <h1 className="text-4xl font-black tracking-normal text-zinc-950">
                   {me.display_name ?? "-"}
                 </h1>
-                <p className="mt-4 text-base text-zinc-600">{me.email ?? "-"}</p>
+                <p className="mt-4 text-base text-zinc-600">{currentEmail || "-"}</p>
                 <p className="mt-4 text-base font-medium text-zinc-600">
                   요리를 좋아하는 foodcafe 멤버
                 </p>
@@ -366,7 +367,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
                   </span>
                 </div>
               </div>
-              <EditSheet userProfile={me} currentPhone={currentPhone} />
+              <EditSheet userProfile={me} currentEmail={currentEmail} currentPhone={currentPhone} />
             </div>
           </section>
 

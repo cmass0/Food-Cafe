@@ -1,13 +1,12 @@
-import { UserRow } from "../user/types";
+import type { ProfileRow } from "../user/types";
 
-export type FollowUserRow = {
-  created_at: string;
-  follower: UserRow | null;
-};
+export type FollowListType = "followers" | "following";
 
-export type FollowingUserRow = {
-  created_at: string;
-  following: UserRow | null;
+export type FollowProfile = Pick<ProfileRow, "id" | "display_name" | "photo_url">;
+
+export type FollowListItem = {
+  followedAt: string;
+  user: FollowProfile;
 };
 
 export type FollowListOptions = {
@@ -20,10 +19,14 @@ export type FollowFetchParams = {
   offset: number;
 };
 
-export type FollowListResult<T> = {
-  items: T[];
+export type FollowListResult = {
+  items: FollowListItem[];
   total: number;
   limit: number;
   offset: number;
   hasMore: boolean;
+};
+
+export type FollowListResponse = FollowListResult & {
+  type: FollowListType;
 };

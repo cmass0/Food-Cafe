@@ -1,11 +1,16 @@
 import { throwApiError } from "@/lib/domain/api/error";
 
+import type { FollowListResponse, FollowListType } from "./type";
+
 // 팔로우 토글 응답
 // 다른 카운터(Like/Bookmark) 응답과 동일한 구조 — 새 상태와 카운트를 함께 받음
 export type ToggleFollowResponse = {
   following: boolean;
   followerCount: number;
-  followingCount: number;
+};
+
+export type FollowStatusResponse = {
+  following: boolean;
 };
 
 // 팔로우/언팔로우 토글
@@ -20,5 +25,27 @@ export async function toggleFollow(targetUserId: string): Promise<ToggleFollowRe
     await throwApiError(res);
   }
 
+  return res.json();
+}
+
+export async function fetchFollowStatus(
+  targetUserId: string,
+  signal?: AbortSignal
+): Promise<FollowStatusResponse> {
+  const res = await fetch(`/api/follow/${targetUserId}`, { signal });
+  if (!res.ok) await throwApiError(res);
+  return res.json();
+}
+
+export async function fetchFollowList(
+  targetUserId: string,
+  type: FollowListType,
+  page: number,
+  limit: number,
+  signal?: AbortSignal
+): Promise<FollowListResponse> {
+  const params = new URLSearchParams({ type, page: String(page), limit: String(limit) });
+  const res = await fetch(`/api/follow/${targetUserId}/list?${params.toString()}`, { signal });
+  if (!res.ok) await throwApiError(res);
   return res.json();
 }

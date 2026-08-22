@@ -238,7 +238,21 @@ export type Database = {
             foreignKeyName: "post_bookmarks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -271,7 +285,21 @@ export type Database = {
             foreignKeyName: "post_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -336,6 +364,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          follower_count: number
+          following_count: number
+          id: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          follower_count?: number
+          following_count?: number
+          id: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          follower_count?: number
+          following_count?: number
+          id?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recipe_bookmarks: {
         Row: {
           created_at: string
@@ -393,7 +451,21 @@ export type Database = {
             foreignKeyName: "user_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -488,7 +560,21 @@ export type Database = {
             foreignKeyName: "recipes_writer_fk"
             columns: ["writer_uid"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_writer_fk"
+            columns: ["writer_uid"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_writer_fk"
+            columns: ["writer_uid"]
+            isOneToOne: false
+            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -514,7 +600,28 @@ export type Database = {
             foreignKeyName: "user_follows_follower_id_fkey"
             columns: ["follower_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -524,56 +631,77 @@ export type Database = {
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "users_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
+    }
+    Views: {
       users: {
         Row: {
-          created_at: string
-          display_name: string
-          email: string
-          follower_count: number
-          following_count: number
-          id: string
-          is_admin: boolean | null
-          last_sign_in_at: string | null
+          created_at: string | null
+          display_name: string | null
+          follower_count: number | null
+          following_count: number | null
+          id: string | null
           photo_url: string | null
-          provider: string | null
-          role: string
           updated_at: string | null
         }
         Insert: {
-          created_at: string
-          display_name: string
-          email: string
-          follower_count?: number
-          following_count?: number
-          id?: string
-          is_admin?: boolean | null
-          last_sign_in_at?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string | null
           photo_url?: string | null
-          provider?: string | null
-          role?: string
           updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          display_name?: string
-          email?: string
-          follower_count?: number
-          following_count?: number
-          id?: string
-          is_admin?: boolean | null
-          last_sign_in_at?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string | null
           photo_url?: string | null
-          provider?: string | null
-          role?: string
           updated_at?: string | null
         }
         Relationships: []
       }
-    }
-    Views: {
-      [_ in never]: never
+      users_public: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          follower_count: number | null
+          following_count: number | null
+          id: string | null
+          photo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       combo_toggle_like: {
@@ -585,6 +713,30 @@ export type Database = {
       }
       get_trending_combos_7d: {
         Args: { limit_size?: number }
+        Returns: {
+          bookmark_count: number
+          comment_count: number
+          created_at: string
+          id: string
+          image: string
+          last_activity_at: string
+          like_count: number
+          recent_activity_count: number
+          recent_bookmark_count: number
+          recent_comment_count: number
+          recent_like_count: number
+          recent_participant_count: number
+          summary: string
+          tags: string[]
+          title: string
+          trend_score: number
+          view_count: number
+          writer_name: string
+          writer_uid: string
+        }[]
+      }
+      get_trending_combos_by_period: {
+        Args: { limit_size?: number; period?: string }
         Returns: {
           bookmark_count: number
           comment_count: number
@@ -631,6 +783,30 @@ export type Database = {
           writer_uid: string
         }[]
       }
+      get_trending_posts_by_period: {
+        Args: { limit_size?: number; period?: string }
+        Returns: {
+          bookmark_count: number
+          comment_count: number
+          created_at: string
+          id: string
+          image: string
+          last_activity_at: string
+          like_count: number
+          recent_activity_count: number
+          recent_bookmark_count: number
+          recent_comment_count: number
+          recent_like_count: number
+          recent_participant_count: number
+          summary: string
+          tags: string[]
+          title: string
+          trend_score: number
+          view_count: number
+          writer_name: string
+          writer_uid: string
+        }[]
+      }
       get_trending_recipe_tags_7d: {
         Args: { limit_size?: number }
         Returns: {
@@ -646,8 +822,47 @@ export type Database = {
           trend_score: number
         }[]
       }
+      get_trending_recipe_tags_by_period: {
+        Args: { limit_size?: number; period?: string }
+        Returns: {
+          last_activity_at: string
+          recent_activity_count: number
+          recent_bookmark_count: number
+          recent_comment_count: number
+          recent_like_count: number
+          recent_participant_count: number
+          recent_recipe_count: number
+          tag: string
+          total_recipe_count: number
+          trend_score: number
+        }[]
+      }
       get_trending_recipes_7d: {
         Args: { limit_size?: number }
+        Returns: {
+          bookmark_count: number
+          comment_count: number
+          created_at: string
+          id: string
+          image: string
+          last_activity_at: string
+          like_count: number
+          recent_activity_count: number
+          recent_bookmark_count: number
+          recent_comment_count: number
+          recent_like_count: number
+          recent_participant_count: number
+          summary: string
+          tags: string[]
+          title: string
+          trend_score: number
+          view_count: number
+          writer_name: string
+          writer_uid: string
+        }[]
+      }
+      get_trending_recipes_by_period: {
+        Args: { limit_size?: number; period?: string }
         Returns: {
           bookmark_count: number
           comment_count: number
@@ -709,7 +924,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      is_admin: { Args: { uid: string }; Returns: boolean }
+      is_current_user_admin: { Args: never; Returns: boolean }
       post_toggle_like: {
         Args: { p_post_id: string }
         Returns: {

@@ -1,35 +1,36 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import type { FetchUsersParams, UserRow, UserUpdateDB } from "./types";
+import type { FetchUsersParams, ProfileRow, ProfileUpdateDB } from "./types";
 
+const PUBLIC_PROFILE_COLUMNS =
+  "id, display_name, photo_url, created_at, updated_at, follower_count, following_count";
 
-
-function mapRows(rows: UserRow[] | null | undefined): UserRow[] {
-  return Array.isArray(rows) ? (rows as UserRow[]) : [];
+function mapRows(rows: ProfileRow[] | null | undefined): ProfileRow[] {
+  return Array.isArray(rows) ? rows : [];
 }
 
 export type FetchUsersResult = {
-  items: UserRow[];
+  items: ProfileRow[];
   total: number;
 };
 
 export async function fetchUsers(
   client: SupabaseClient<Database>,
-  params: FetchUsersParams,
+  params: FetchUsersParams
 ): Promise<FetchUsersResult> {
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
-  let query = (client as any)
-    .from("users_public")
-    .select("id, display_name, photo_url, created_at", { count: "exact" })
+  let query = client
+    .from("profiles")
+    .select(PUBLIC_PROFILE_COLUMNS, { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .range(safeOffset, Math.max(rangeEnd, safeOffset));
- 
+
   if (params.username) {
-    const escaped = params.username.replace(/[%_]/g, m => `\\${m}`);
-    query = query.ilike("display_name",`%${escaped}%`);
+    const escaped = params.username.replace(/[%_]/g, (m) => `\\${m}`);
+    query = query.ilike("display_name", `%${escaped}%`);
   }
 
   const { data, error, count } = await query;
@@ -40,49 +41,52 @@ export async function fetchUsers(
   };
 }
 
-export async function selectUserById(
+export async function selectProfileById(
   client: SupabaseClient<Database>,
   id: string
-): Promise<UserRow | null> {
+): Promise<ProfileRow | null> {
   const { data, error } = await client
-    .from("users")
-    .select("*")
+    .from("profiles")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   return data ?? null;
 }
 
-export async function selectUserByDisplayName(
+export async function selectProfileByDisplayName(
   client: SupabaseClient<Database>,
   name: string
-): Promise<UserRow | null> {
+): Promise<ProfileRow | null> {
   const { data, error } = await client
-    .from("users")
-    .select("*")
+    .from("profiles")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .ilike("display_name", name)
-    .maybeSingle(); // 데이터가 존재하지 않을 수 있음 
+    .maybeSingle(); // 데이터가 존재하지 않을 수 있음
   if (error) throw error;
   return data ?? null;
 }
 
-export async function updateUserRecord(
+export async function updateProfileRecord(
   client: SupabaseClient<Database>,
   id: string,
-  payload: UserUpdateDB
-): Promise<UserRow> {
+  payload: ProfileUpdateDB
+): Promise<ProfileRow> {
   const { data, error } = await client
-    .from("users")
+    .from("profiles")
     .update(payload)
     .eq("id", id)
-    .select("*")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .single();
   if (error) throw error;
-  return data as UserRow;
+  return data;
 }
 
-export async function deleteUserRecord(client: SupabaseClient<Database>, id: string): Promise<void> {
-  const { error } = await client.from("users").delete().eq("id", id);
+export async function deleteProfileRecord(
+  client: SupabaseClient<Database>,
+  id: string
+): Promise<void> {
+  const { error } = await client.from("profiles").delete().eq("id", id);
   if (error) throw error;
 }
 
