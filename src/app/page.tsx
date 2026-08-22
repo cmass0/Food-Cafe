@@ -61,6 +61,8 @@ type FeedItem = {
   recentParticipantCount: number;
 };
 
+type HomeSectionResult<T> = { data: T; error: false } | { data: T; error: true };
+
 const fallbackImages = [
   chickenImage,
   pokeImage,
@@ -152,35 +154,67 @@ function trendingToFeedItem(item: TrendingContentItem, index: number): FeedItem 
   };
 }
 
-async function getHomeData() {
+async function loadHomeSection<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T
+): Promise<HomeSectionResult<T>> {
   try {
-    const supabase = await getServerSupabase();
-    const [popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags] =
-      await Promise.all([
-        trendingService.listTrendingRecipes(supabase, 4),
-        recipeService.listRecipes(supabase, { limit: 4, sort: "recent" }),
-        trendingService.listTrendingCombos(supabase, 5),
-        trendingService.listTrendingPosts(supabase, 4),
-        trendingService.listTrendingRecipeTags(supabase, 6),
-      ]);
-
-    return {
-      popularRecipes,
-      recentRecipes: recentRecipes.items,
-      trendingCombos,
-      communityPosts,
-      trendingTags,
-    };
+    return { data: await loader(), error: false } as const;
   } catch (error) {
-    console.error("[home] Failed to load dashboard data", error);
-    return {
-      popularRecipes: [] as TrendingContentItem[],
-      recentRecipes: [] as Recipe[],
-      trendingCombos: [] as TrendingContentItem[],
-      communityPosts: [] as TrendingContentItem[],
-      trendingTags: [] as TrendingRecipeTag[],
-    };
+    console.error(`[home] Failed to load ${label}`, error);
+    return { data: fallback, error: true } as const;
   }
+}
+
+async function getHomeData() {
+  const supabase = await getServerSupabase();
+  const [popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags] =
+    await Promise.all([
+      loadHomeSection(
+        "popular recipes",
+        () => trendingService.listTrendingRecipes(supabase, 4),
+        [] as TrendingContentItem[]
+      ),
+      loadHomeSection(
+        "recent recipes",
+        async () => (await recipeService.listRecipes(supabase, { limit: 4, sort: "recent" })).items,
+        [] as Recipe[]
+      ),
+      loadHomeSection(
+        "trending combos",
+        () => trendingService.listTrendingCombos(supabase, 5),
+        [] as TrendingContentItem[]
+      ),
+      loadHomeSection(
+        "community posts",
+        () => trendingService.listTrendingPosts(supabase, 4),
+        [] as TrendingContentItem[]
+      ),
+      loadHomeSection(
+        "trending recipe tags",
+        () => trendingService.listTrendingRecipeTags(supabase, 6),
+        [] as TrendingRecipeTag[]
+      ),
+    ]);
+
+  return { popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags };
+}
+
+function HomeSectionStatus({
+  error,
+  emptyMessage,
+  className,
+}: {
+  error: boolean;
+  emptyMessage: string;
+  className: string;
+}) {
+  return (
+    <p className={className} role={error ? "alert" : "status"}>
+      {error ? "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : emptyMessage}
+    </p>
+  );
 }
 
 function SectionTitle({ icon, title, href }: { icon: ReactNode; title: string; href: string }) {
@@ -272,11 +306,16 @@ function CommunityCard({ post }: { post: TrendingContentItem }) {
   );
 }
 
-function TrendingPanel({ items }: { items: FeedItem[] }) {
+function TrendingPanel({ items, hasError }: { items: FeedItem[]; hasError: boolean }) {
   return (
     <aside className="rounded-lg bg-zinc-50 p-5">
       <h2 className="mb-4 text-lg font-bold text-zinc-950">지금 뜨는 레시피·조합</h2>
       <div className="space-y-4">
+        {hasError && items.length > 0 ? (
+          <p className="text-xs text-amber-700" role="alert">
+            일부 순위 데이터를 불러오지 못했습니다.
+          </p>
+        ) : null}
         {items.length > 0 ? (
           items.map((item, index) => (
             <Link key={item.id} href={item.href} className="flex items-center gap-3">
@@ -306,9 +345,11 @@ function TrendingPanel({ items }: { items: FeedItem[] }) {
             </Link>
           ))
         ) : (
-          <p className="py-6 text-center text-sm text-zinc-500">
-            최근 7일 동안 집계된 활동이 없습니다.
-          </p>
+          <HomeSectionStatus
+            error={hasError}
+            emptyMessage="최근 7일 동안 집계된 활동이 없습니다."
+            className="py-6 text-center text-sm text-zinc-500"
+          />
         )}
       </div>
     </aside>
@@ -318,12 +359,13 @@ function TrendingPanel({ items }: { items: FeedItem[] }) {
 export default async function Home() {
   const { popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags } =
     await getHomeData();
-  const popularItems = popularRecipes.map(trendingToFeedItem);
-  const recentItems = recentRecipes.map(recipeToFeedItem);
+  const popularItems = popularRecipes.data.map(trendingToFeedItem);
+  const recentItems = recentRecipes.data.map(recipeToFeedItem);
   const rankingItems = trendingService
-    .sortTrendingItems([...popularRecipes, ...trendingCombos])
+    .sortTrendingItems([...popularRecipes.data, ...trendingCombos.data])
     .slice(0, 5)
     .map(trendingToFeedItem);
+  const rankingHasError = popularRecipes.error || trendingCombos.error;
 
   return (
     <main className="bg-white text-zinc-950">
@@ -402,14 +444,16 @@ export default async function Home() {
               href="/ranking"
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {popularItems.length > 0 ? (
+              {popularRecipes.error || popularItems.length === 0 ? (
+                <HomeSectionStatus
+                  error={popularRecipes.error}
+                  emptyMessage="최근 7일 동안 집계된 인기 레시피가 없습니다."
+                  className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500"
+                />
+              ) : (
                 popularItems.map((item, index) => (
                   <RecipeCard key={item.id} item={item} index={index} />
                 ))
-              ) : (
-                <p className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500">
-                  최근 7일 동안 집계된 인기 레시피가 없습니다.
-                </p>
               )}
             </div>
           </section>
@@ -421,9 +465,17 @@ export default async function Home() {
               href="/recipes?sort=recent"
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {recentItems.map((item, index) => (
-                <RecipeCard key={item.id} item={item} index={index + 4} />
-              ))}
+              {recentRecipes.error || recentItems.length === 0 ? (
+                <HomeSectionStatus
+                  error={recentRecipes.error}
+                  emptyMessage="아직 등록된 레시피가 없습니다."
+                  className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500"
+                />
+              ) : (
+                recentItems.map((item, index) => (
+                  <RecipeCard key={item.id} item={item} index={index + 4} />
+                ))
+              )}
             </div>
           </section>
 
@@ -434,12 +486,14 @@ export default async function Home() {
               href="/posts"
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {communityPosts.length > 0 ? (
-                communityPosts.map((post) => <CommunityCard key={post.id} post={post} />)
+              {communityPosts.error || communityPosts.data.length === 0 ? (
+                <HomeSectionStatus
+                  error={communityPosts.error}
+                  emptyMessage="최근 7일 동안 집계된 인기 이야기가 없습니다."
+                  className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500"
+                />
               ) : (
-                <p className="col-span-full rounded-lg bg-zinc-50 py-10 text-center text-sm text-zinc-500">
-                  최근 7일 동안 집계된 인기 이야기가 없습니다.
-                </p>
+                communityPosts.data.map((post) => <CommunityCard key={post.id} post={post} />)
               )}
             </div>
           </section>
@@ -458,8 +512,14 @@ export default async function Home() {
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {trendingTags.length > 0 ? (
-                trendingTags.map((tag) => (
+              {trendingTags.error || trendingTags.data.length === 0 ? (
+                <HomeSectionStatus
+                  error={trendingTags.error}
+                  emptyMessage="최근 7일 동안 집계된 인기 태그가 없습니다."
+                  className="col-span-full rounded-full bg-zinc-50 px-5 py-4 text-center text-sm text-zinc-500"
+                />
+              ) : (
+                trendingTags.data.map((tag) => (
                   <Link
                     key={tag.tag}
                     href={`/search?query=${encodeURIComponent(tag.tag)}`}
@@ -471,10 +531,6 @@ export default async function Home() {
                     </p>
                   </Link>
                 ))
-              ) : (
-                <p className="col-span-full rounded-full bg-zinc-50 px-5 py-4 text-center text-sm text-zinc-500">
-                  최근 7일 동안 집계된 인기 태그가 없습니다.
-                </p>
               )}
             </div>
           </section>
@@ -499,7 +555,7 @@ export default async function Home() {
               </div>
             </div>
           </section>
-          <TrendingPanel items={rankingItems} />
+          <TrendingPanel items={rankingItems} hasError={rankingHasError} />
         </div>
       </div>
 
