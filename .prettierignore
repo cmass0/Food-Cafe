@@ -1,0 +1,2 @@
+# Supabase CLI가 DB 스키마에서 자동 생성하는 타입 파일
+src/types/supabase.ts

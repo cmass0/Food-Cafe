@@ -43,7 +43,7 @@ export default function PostForm({
     undefined
   );
 
-  // Dedicated editor instance for converting between HTML and serialized Lexical state
+  // 에디터를 사용하여 HTML을 직렬화된 상태로 변환하고, 직렬화된 상태를 HTML로 변환하는 데 사용되는 변환용 에디터를 생성
   const conversionEditor = useMemo(
     () =>
       createEditor({
