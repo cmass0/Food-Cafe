@@ -3,18 +3,13 @@
 import { $getRoot, type EditorState, type SerializedEditorState } from "lexical";
 import { TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useActionState, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { useAuth } from "@/app/auth/auth-context";
 import type { PostActionState } from "@/app/posts/actions";
 import { Editor } from "@/components/blocks/editor-x/editor";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,11 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { isPostCategory, POST_CATEGORY_OPTIONS, type PostCategory } from "@/domain/post/category";
 import {
-  isPostCategory,
-  POST_CATEGORY_OPTIONS,
-  type PostCategory,
-} from "@/domain/post/category";
+  collectPendingImageSources,
+  replacePendingImageSources,
+} from "@/domain/post/ui/pendingPostImages";
+import { removeUploadedBucketImages, uploadBucketImage } from "@/lib/storage";
 import ComfirmModal from "@/lib/ui/comfirmmodal";
 import type { Json } from "@/types/supabase";
 
@@ -66,7 +62,8 @@ export default function PostForm({
   submitLabel = "등록",
   cancelHref,
 }: PostFormProps) {
-  const [state, formAction, pending] = useActionState(action, initialState);
+  const [state, setState] = useState(initialState);
+  const [pending, setPending] = useState(false);
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [category, setCategory] = useState<PostCategory>(defaultValues?.category ?? "free");
   const [contentLength, setContentLength] = useState(0);
@@ -75,8 +72,18 @@ export default function PostForm({
   );
   const [clientError, setClientError] = useState("");
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const pendingFilesRef = useRef(new Map<string, File>());
+  const previewUrlsRef = useRef(new Set<string>());
+  const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
   const router = useRouter();
+
+  useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
+    return () => {
+      for (const previewUrl of previewUrls) URL.revokeObjectURL(previewUrl);
+    };
+  }, []);
 
   useEffect(() => {
     if (!state.ok && state.message === "로그인이 필요합니다.") {
@@ -90,17 +97,86 @@ export default function PostForm({
     });
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const registerPendingImage = useCallback((file: File): string => {
+    const previewUrl = URL.createObjectURL(file);
+    pendingFilesRef.current.set(previewUrl, file);
+    previewUrlsRef.current.add(previewUrl);
+    return previewUrl;
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
     setClientError("");
 
     if (!isPostCategory(category)) {
-      event.preventDefault();
       setClientError("카테고리를 선택해 주세요.");
       return;
     }
     if (!serializedState || !hasMeaningfulEditorContent(serializedState)) {
-      event.preventDefault();
       setClientError("내용을 입력해 주세요.");
+      return;
+    }
+    if (!user) {
+      openAuthModal();
+      return;
+    }
+
+    const postId = defaultValues?.id ?? crypto.randomUUID();
+    const uploadedPaths: string[] = [];
+    let actionStarted = false;
+    setPending(true);
+
+    try {
+      const referencedPreviews = collectPendingImageSources(
+        serializedState,
+        pendingFilesRef.current
+      );
+      const uploadResults = await Promise.allSettled(
+        [...referencedPreviews].map(async (previewUrl) => {
+          const file = pendingFilesRef.current.get(previewUrl);
+          if (!file) throw new Error("선택한 이미지 파일을 찾지 못했습니다.");
+
+          const uploaded = await uploadBucketImage("posts", user.id, postId, file, {
+            upsert: false,
+            contentType: file.type || undefined,
+          });
+          return { path: uploaded.path, previewUrl };
+        })
+      );
+      const replacements = new Map<string, string>();
+      let uploadError: unknown;
+      for (const result of uploadResults) {
+        if (result.status === "rejected") {
+          uploadError ??= result.reason;
+          continue;
+        }
+        uploadedPaths.push(result.value.path);
+        replacements.set(result.value.previewUrl, result.value.path);
+      }
+      if (uploadError) throw uploadError;
+
+      const finalState = replacePendingImageSources(serializedState, replacements);
+      const formData = new FormData(form);
+      formData.set("id", postId);
+      formData.set("content_json", JSON.stringify(finalState));
+      formData.set("uploaded_paths", JSON.stringify(uploadedPaths));
+
+      actionStarted = true;
+      const nextState = await action(state, formData);
+      setState(nextState);
+    } catch (error) {
+      if (!actionStarted && uploadedPaths.length > 0) {
+        try {
+          await removeUploadedBucketImages(uploadedPaths);
+        } catch (rollbackError) {
+          console.error("게시글 이미지 업로드 롤백 실패", rollbackError);
+        }
+      }
+      console.error("게시글 제출 실패", error);
+      setClientError("이미지 업로드 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setPending(false);
     }
   }
 
@@ -128,7 +204,7 @@ export default function PostForm({
         oncomfirm={handleCancelConfirm}
       />
 
-      <form className="space-y-5" action={formAction} onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {defaultValues?.id ? (
           <input type="hidden" name="id" defaultValue={defaultValues.id} />
         ) : null}
@@ -202,6 +278,7 @@ export default function PostForm({
                 editorSerializedState={serializedState}
                 onChange={handleEditorStateChange}
                 onSerializedChange={(editorState) => setSerializedState(editorState)}
+                onImageFileSelect={registerPendingImage}
               />
             </div>
 

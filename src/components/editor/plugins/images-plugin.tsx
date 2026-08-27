@@ -29,7 +29,7 @@ import {
 } from "lexical";
 import { JSX, useEffect, useRef, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { usePendingImageRegistration } from "@/components/editor/context/pending-image-context";
 import {
   $createImageNode,
   $isImageNode,
@@ -42,7 +42,6 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { randomKey, uploadBucketImage } from "@/lib/storage";
 
 export type InsertImagePayload = Readonly<ImagePayload>;
 
@@ -98,8 +97,8 @@ export function InsertImageUriDialogBody({
   );
 }
 
-// 이미지 업로드 시 사용
-// supabase의 storage에 임시 경로 로직 구현 및 취소 or 업로드 확정 시 정식 경로 이동 로직 필요
+// 파일은 Storage에 즉시 올리지 않고 상위 게시글 폼에 보관한다.
+// 에디터에는 object URL 미리보기만 넣고 실제 업로드는 제출 직전에 수행한다.
 export function InsertImageUploadedDialogBody({
   onClick,
 }: {
@@ -108,30 +107,15 @@ export function InsertImageUploadedDialogBody({
   const [src, setSrc] = useState("");
   const [altText, setAltText] = useState("");
 
-  const { user } = useAuth();
-  const userId = user?.id ?? "";
-  const draftIdRef = useRef(randomKey("draft"));
+  const registerPendingImage = usePendingImageRegistration();
 
   const isDisabled = src === "";
 
-  const loadImage = async (files: FileList | null) => {
+  const loadImage = (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
-    if (!userId) return;
-
-    try {
-      const { publicUrl } = await uploadBucketImage(
-        "posts-temp",
-        userId,
-        draftIdRef.current,
-        file,
-        { contentType: file.type }
-      );
-      setSrc(publicUrl ?? "");
-    } catch (error) {
-      console.error("이미지 업로드 실패", error);
-      setSrc("");
-    }
+    if (!registerPendingImage) return;
+    setSrc(registerPendingImage(file));
   };
 
   return (
@@ -142,7 +126,7 @@ export function InsertImageUploadedDialogBody({
           id="image-upload"
           type="file"
           onChange={(e) => {
-            void loadImage(e.target.files);
+            loadImage(e.target.files);
           }}
           accept="image/*"
           data-test-id="image-modal-file-upload"
@@ -160,7 +144,7 @@ export function InsertImageUploadedDialogBody({
       </div>
       <Button
         type="submit"
-        disabled={isDisabled}
+        disabled={isDisabled || !registerPendingImage}
         onClick={() => onClick({ altText, src })}
         data-test-id="image-modal-file-upload-btn"
       >

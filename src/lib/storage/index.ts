@@ -1,59 +1,48 @@
-﻿import { getBrowserSupabase } from "../supabase";
+import { getBrowserSupabase } from "../supabase";
+import {
+  avatarImagePath,
+  contentImagePath,
+  fileExtension,
+  isManagedStoragePath,
+  randomKey,
+  STORAGE_BUCKET,
+  type UploadImageType,
+} from "./paths";
 
-const BUCKET = "Food-Cafe";
-
-export function sanitizeFilename(name: string): string {
-  const trimmed = name.trim().replace(/\s+/g, "-");
-  return trimmed.replace(/[\\/]+/g, "-");
-}
-
-export function fileExtension(name?: string | null): string {
-  if (!name) return "";
-  const idx = name.lastIndexOf(".");
-  return idx >= 0 ? name.slice(idx) : "";
-}
-
-export function randomKey(prefix?: string): string {
-  const rnd = Math.random().toString(36).slice(2, 10);
-  const ts = Date.now();
-  return prefix ? `${prefix}-${ts}-${rnd}` : `${ts}-${rnd}`;
-}
-
-export function ContentImagePath(
-  type: string,
-  userId: string,
-  contentid: string,
-  filename: string
-): string {
-  return `${type}/${userId}/${contentid}/${sanitizeFilename(filename)}`;
-}
-
-export function userAvatarPath(userId: string, filename: string): string {
-  return `avatars/${userId}/${sanitizeFilename(filename)}`;
-}
+export { fileExtension, randomKey, sanitizeFilename } from "./paths";
 
 // 이미지 업로드 공용 함수
 export async function uploadBucketImage(
-  type: string,
+  type: UploadImageType,
   userId: string,
-  contentid: string,
+  contentId: string,
   file: File | Blob,
-  opts?: { filename?: string; upsert?: boolean; contentType?: string; sign?: number }
-): Promise<{ path: string; publicUrl: string | null; signedUrl?: string | null }> {
-  const base = opts?.filename ?? `${randomKey("img")}${fileExtension((file as any)?.name)}`;
-  const path = ContentImagePath(type, userId, contentid, base);
+  opts?: { filename?: string; upsert?: boolean; contentType?: string }
+): Promise<{ path: string }> {
+  const base = opts?.filename ?? `${randomKey("img")}${fileExtension((file as File)?.name)}`;
+  const path =
+    type === "avatars"
+      ? avatarImagePath(userId, base)
+      : contentImagePath(type, userId, contentId, base);
   const client = getBrowserSupabase();
-  const { error } = await client.storage.from(BUCKET).upload(path, file, {
+  const { error } = await client.storage.from(STORAGE_BUCKET).upload(path, file, {
     cacheControl: "3600",
     upsert: Boolean(opts?.upsert),
     contentType: opts?.contentType,
   });
   if (error) throw error;
-  const { data } = client.storage.from(BUCKET).getPublicUrl(path);
-  let signedUrl: string | null | undefined = undefined;
-  if (opts?.sign) {
-    const res = await client.storage.from(BUCKET).createSignedUrl(path, opts.sign);
-    signedUrl = res.data?.signedUrl ?? null;
-  }
-  return { path, publicUrl: data.publicUrl ?? null, signedUrl };
+
+  // DB에는 공개 URL이 아니라 버킷 내부 상대 경로만 저장한다.
+  return { path };
+}
+
+// 서버 요청 전 일부 업로드만 성공한 경우의 빠른 롤백이다.
+// 네트워크 단절로 실패하면 서버의 주기적 고아 파일 정리가 최종 안전망이 된다.
+export async function removeUploadedBucketImages(paths: string[]): Promise<void> {
+  const safePaths = [...new Set(paths)].filter(isManagedStoragePath);
+  if (safePaths.length === 0) return;
+
+  const client = getBrowserSupabase();
+  const { error } = await client.storage.from(STORAGE_BUCKET).remove(safePaths);
+  if (error) throw error;
 }

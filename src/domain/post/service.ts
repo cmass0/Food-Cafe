@@ -1,6 +1,10 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { normalizeStoredImageReference } from "@/lib/storage/paths";
+import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import * as followService from "@/domain/follow/service";
+import { collectMentionTargetIds } from "./mentions";
 import * as repository from "./repository";
 import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
 import type {
@@ -86,8 +90,12 @@ export async function createPost(
   input: PostCreateInput,
   author: PostAuthor
 ): Promise<Post> {
-  const contentJson = parseContentJson(input.content_json);
+  const rawContentJson = parseContentJson(input.content_json);
+  assertNoPendingImageSources(rawContentJson);
+  const contentJson = normalizePostImageSources(rawContentJson);
   const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
+  const mentionTargetIds = collectMentionTargetIds(parsed.content_json);
+  await followService.assertMentionTargetsAreFollowed(client, author.uid, mentionTargetIds);
   const contentHtml = buildPostContentHtml(parsed.content_json);
   const contentText = buildPostContentText(parsed.content_json);
   assertPostContentIsNotEmpty(contentText, contentHtml);
@@ -98,6 +106,7 @@ export async function createPost(
   }
 
   const payload: PostInsertDB = {
+    ...(parsed.id ? { id: parsed.id } : {}),
     title: parsed.title,
     category: parsed.category,
     content_json: parsed.content_json,
@@ -118,23 +127,33 @@ export async function updatePost(
 ): Promise<Post | null> {
   const contentJson =
     input.content_json === undefined ? undefined : parseContentJson(input.content_json);
+  if (contentJson !== undefined) assertNoPendingImageSources(contentJson);
+  const storedContentJson =
+    contentJson === undefined ? undefined : normalizePostImageSources(contentJson);
   const parsed = postUpdateSchema.parse({
     ...input,
-    ...(contentJson === undefined ? {} : { content_json: contentJson }),
+    ...(storedContentJson === undefined ? {} : { content_json: storedContentJson }),
   });
   const payload: PostUpdateDB = { ...parsed };
 
-  if (contentJson !== undefined) {
-    const contentHtml = buildPostContentHtml(contentJson);
-    const contentText = buildPostContentText(contentJson);
+  if (storedContentJson !== undefined) {
+    const mentionTargetIds = collectMentionTargetIds(storedContentJson);
+    await followService.assertMentionTargetsAreFollowed(client, writerUid, mentionTargetIds);
+    const contentHtml = buildPostContentHtml(storedContentJson);
+    const contentText = buildPostContentText(storedContentJson);
     assertPostContentIsNotEmpty(contentText, contentHtml);
     payload.content_html = contentHtml;
     payload.content_text = contentText;
   }
 
   const row = await repository.updatePostRecordByOwner(client, id, writerUid, payload);
+  if (!row) return null;
 
-  return row ? mapRowToPost(row) : null;
+  const post = mapRowToPost(row);
+  if (storedContentJson !== undefined && row.writer_uid) {
+    await safePruneContentImages("posts", row.writer_uid, row.id, [storedContentJson]);
+  }
+  return post;
 }
 
 async function listEngagedPosts(
@@ -213,7 +232,43 @@ function assertPostContentIsNotEmpty(contentText: string, contentHtml: string): 
   }
 }
 
+/** 게시글 이미지 노드의 이전 공개 URL을 DB 저장용 상대 경로로 바꾼다. */
+function normalizePostImageSources(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizePostImageSources);
+  if (!value || typeof value !== "object") return value;
+
+  const node = value as Record<string, unknown>;
+  const normalized = Object.fromEntries(
+    Object.entries(node).map(([key, child]) => [key, normalizePostImageSources(child)])
+  );
+  if (node.type === "image" && typeof node.src === "string") {
+    normalized.src = normalizeStoredImageReference(node.src) ?? node.src;
+  }
+  return normalized;
+}
+
+function assertNoPendingImageSources(value: unknown): void {
+  if (Array.isArray(value)) {
+    for (const item of value) assertNoPendingImageSources(item);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+
+  const node = value as Record<string, unknown>;
+  if (node.type === "image" && typeof node.src === "string" && node.src.startsWith("blob:")) {
+    throw new Error("이미지 업로드가 완료되지 않았습니다.");
+  }
+  for (const item of Object.values(node)) assertNoPendingImageSources(item);
+}
+
 export async function removePost(client: SupabaseClient<Database>, id: string): Promise<boolean> {
   // 작성자/관리자 판정은 인증 사용자의 세션을 사용하는 RLS가 최종적으로 수행한다.
-  return repository.deletePostRecord(client, id);
+  const existing = await repository.selectPostById(client, id);
+  if (!existing) return false;
+
+  const deleted = await repository.deletePostRecord(client, id);
+  if (deleted && existing.writer_uid) {
+    await safeRemoveContentImages("posts", existing.writer_uid, existing.id);
+  }
+  return deleted;
 }

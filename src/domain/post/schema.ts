@@ -19,7 +19,12 @@ const postContentJsonSchema = z.union([z.record(jsonValueSchema), z.array(jsonVa
 export const postCategorySchema = z.enum(POST_CATEGORY_VALUES);
 
 export const postInsertSchema = z.object({
-  title: z.string().trim().min(1, "제목을 입력해 주세요.").max(150, "제목은 150자 이하로 입력해 주세요."),
+  id: z.string().uuid().optional(),
+  title: z
+    .string()
+    .trim()
+    .min(1, "제목을 입력해 주세요.")
+    .max(150, "제목은 150자 이하로 입력해 주세요."),
   content_json: postContentJsonSchema,
   category: postCategorySchema,
 });

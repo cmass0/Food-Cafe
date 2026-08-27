@@ -4,6 +4,7 @@ import type { PostCategory } from "./category";
 export type PostRow = Tables<"posts">;
 
 export type PostInsertDB = {
+  id?: string;
   title: string;
   content_json: Json;
   content_html: string;
@@ -14,6 +15,7 @@ export type PostInsertDB = {
 };
 
 export type PostCreateInput = {
+  id?: string;
   title: string;
   content_json: Json | string;
   category: PostCategory;

@@ -34,6 +34,7 @@ import {
 import { ContentEditable } from "@/components/editor/editor-ui/content-editable";
 import { ImageResizer } from "@/components/editor/editor-ui/image-resizer";
 import { $isImageNode } from "@/components/editor/nodes/image-node";
+import { resolveStorageImageUrl } from "@/lib/storage/paths";
 
 const imageCache = new Set();
 
@@ -98,6 +99,7 @@ function BrokenImage(): JSX.Element {
   return (
     <img
       src={""}
+      alt=""
       style={{
         height: 200,
         opacity: 0.2,
@@ -131,6 +133,7 @@ export default function ImageComponent({
   width: "inherit" | number;
   captionsEnabled: boolean;
 }): JSX.Element {
+  const displaySrc = resolveStorageImageUrl(src) ?? src;
   const imageRef = useRef<null | HTMLImageElement>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
@@ -344,7 +347,7 @@ export default function ImageComponent({
                   ? `${$isNodeSelection(selection) ? "draggable cursor-grab active:cursor-grabbing" : ""} focused ring-primary ring-2 ring-offset-2`
                   : null
               }`}
-              src={src}
+              src={displaySrc}
               altText={altText}
               imageRef={imageRef}
               width={width}

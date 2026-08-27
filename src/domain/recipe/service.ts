@@ -1,4 +1,5 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildBookmarkedSetRecipe } from "./recipe_bookmark/service";
@@ -16,6 +17,7 @@ import type {
   RecipeUpdateDB,
 } from "./types";
 import { isJson } from "@/lib/domain/service/jsoncheck";
+import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -76,6 +78,10 @@ export function toArraySteps(value: unknown): RecipeStep[] {
 
 // DB 행을 Recipe 도메인 객체로 변환
 function mapRowToRecipe(row: RecipeRow): Recipe {
+  const images = normaliseImageArray(row.images, row.image)
+    .map(resolveStorageImageUrl)
+    .filter((image): image is string => Boolean(image));
+
   return {
     id: row.id,
     title: row.title,
@@ -83,8 +89,8 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     chefTip: row.chef_tip ?? null,
     steps: toArraySteps(row.steps),
     ingredients: toArrayIngredient(row.ingredients),
-    image: row.image,
-    images: normaliseImageArray(row.images, row.image),
+    image: resolveStorageImageUrl(row.image),
+    images,
     category: row.category,
     tags: normaliseTextArray(row.tags),
     tools: row.tools ?? null,
@@ -227,7 +233,13 @@ export async function createRecipe(
   input: RecipeInsertDB
 ): Promise<Recipe> {
   const parsed = recipeInsertSchema.parse(input);
-  const row = await repo.insertRecipe(client, parsed);
+  const row = await repo.insertRecipe(client, {
+    ...parsed,
+    image: normalizeStoredImageReference(parsed.image),
+    images: parsed.images
+      ?.map(normalizeStoredImageReference)
+      .filter((image): image is string => Boolean(image)),
+  });
   return mapRowToRecipe(row);
 }
 
@@ -238,11 +250,35 @@ export async function updateRecipe(
   patch: RecipeUpdateDB
 ): Promise<Recipe | null> {
   const parsed = recipeUpdateSchema.parse(patch);
-  const row = await repo.updateRecipe(client, id, writerUid, parsed);
-  return row ? mapRowToRecipe(row) : null;
+  const storedPatch: RecipeUpdateDB = {
+    ...parsed,
+    ...(parsed.image === undefined ? {} : { image: normalizeStoredImageReference(parsed.image) }),
+    ...(parsed.images === undefined
+      ? {}
+      : {
+          images: parsed.images
+            .map(normalizeStoredImageReference)
+            .filter((image): image is string => Boolean(image)),
+        }),
+  };
+  const row = await repo.updateRecipe(client, id, writerUid, storedPatch);
+  if (!row) return null;
+
+  const recipe = mapRowToRecipe(row);
+  if (row.writer_uid && (patch.image !== undefined || patch.images !== undefined)) {
+    await safePruneContentImages("recipes", row.writer_uid, row.id, [row.image, row.images]);
+  }
+  return recipe;
 }
 
 export async function removeRecipe(client: SupabaseClient<Database>, id: string): Promise<boolean> {
   // 작성자/관리자 판정은 인증 사용자의 세션을 사용하는 RLS가 최종적으로 수행한다.
-  return repo.deleteRecipe(client, id);
+  const existing = await repo.selectRecipeById(client, id);
+  if (!existing) return false;
+
+  const deleted = await repo.deleteRecipe(client, id);
+  if (deleted && existing.writer_uid) {
+    await safeRemoveContentImages("recipes", existing.writer_uid, existing.id);
+  }
+  return deleted;
 }

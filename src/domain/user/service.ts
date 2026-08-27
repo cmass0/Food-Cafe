@@ -2,6 +2,8 @@
 import { isAuthSessionMissingError } from "@/lib/auth/errors";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { safePruneAvatarImages, safeRemoveAvatarImages } from "@/lib/storage/server";
+import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
 
 import * as repository from "./repository";
 import { UserUpdateSchema, type UserUpdateInput } from "./schema";
@@ -9,6 +11,15 @@ import type { ProfileRow, ProfileUpdateDB, UserListOptions, UserListResult } fro
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+
+function resolveProfileImage(profile: ProfileRow | null): ProfileRow | null {
+  return profile
+    ? {
+        ...profile,
+        photo_url: resolveStorageImageUrl(profile.photo_url),
+      }
+    : null;
+}
 
 function buildUpdatePayload(parsed: UserUpdateInput): ProfileUpdateDB {
   const payload: ProfileUpdateDB = {};
@@ -20,7 +31,7 @@ function buildUpdatePayload(parsed: UserUpdateInput): ProfileUpdateDB {
   }
 
   if (parsed.photo_url !== undefined) {
-    payload.photo_url = parsed.photo_url ?? null;
+    payload.photo_url = normalizeStoredImageReference(parsed.photo_url);
   }
   return payload;
 }
@@ -34,7 +45,7 @@ export async function getSelf(): Promise<ProfileRow | null> {
   if (isAuthSessionMissingError(error)) return null;
   if (error) throw error;
   if (!user) return null;
-  return repository.selectProfileById(supabase, user.id);
+  return resolveProfileImage(await repository.selectProfileById(supabase, user.id));
 }
 
 export async function updateSelf(input: unknown): Promise<ProfileRow> {
@@ -51,7 +62,15 @@ export async function updateSelf(input: unknown): Promise<ProfileRow> {
     throw new Error("이름을 입력해 주세요.");
   }
 
-  return repository.updateProfileRecord(supabase, user.id, buildUpdatePayload(parsed));
+  const profile = await repository.updateProfileRecord(
+    supabase,
+    user.id,
+    buildUpdatePayload(parsed)
+  );
+  if (parsed.photo_url !== undefined) {
+    await safePruneAvatarImages(user.id, profile.photo_url ?? null);
+  }
+  return resolveProfileImage(profile) as ProfileRow;
 }
 
 export async function listUsers(options?: UserListOptions): Promise<UserListResult> {
@@ -64,7 +83,7 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
     username: options?.username,
   });
 
-  const items = rows;
+  const items = rows.map((profile) => resolveProfileImage(profile) as ProfileRow);
   const total = Math.max(rawTotal, offset + items.length);
   const hasMore = offset + items.length < total;
 
@@ -79,12 +98,12 @@ export async function listUsers(options?: UserListOptions): Promise<UserListResu
 
 export async function findUserByDisplayName(name: string): Promise<ProfileRow | null> {
   const supabase = await getServerSupabase();
-  return repository.selectProfileByDisplayName(supabase, name);
+  return resolveProfileImage(await repository.selectProfileByDisplayName(supabase, name));
 }
 
 export async function getUserById(id: string): Promise<ProfileRow | null> {
   const supabase = await getServerSupabase();
-  return repository.selectProfileById(supabase, id);
+  return resolveProfileImage(await repository.selectProfileById(supabase, id));
 }
 
 export async function deleteUserById(): Promise<void> {
@@ -98,11 +117,11 @@ export async function deleteUserById(): Promise<void> {
 
   const admin = getAdminSupabase();
 
-  // 1. 인증 계정을 지우기 전에 관리자 권한으로 앱 데이터와 이미지를 정리한다.
-  await repository.deleteProfileRecord(admin, user.id);
-  await repository.deleteUserAvatar(admin, user.id);
-
-  // 2. Supabase Auth 계정 삭제 — service role 필요
+  // Auth 삭제가 실패하면 공개 프로필만 먼저 사라지는 부분 성공 상태가 생기지 않도록 인증 계정을 먼저 지운다.
+  // profiles.id는 auth.users(id)를 ON DELETE CASCADE로 참조하므로 프로필은 함께 삭제된다.
   const { error: authDeleteError } = await admin.auth.admin.deleteUser(user.id);
   if (authDeleteError) throw authDeleteError;
+
+  // Storage는 DB와 트랜잭션을 공유하지 않으므로 실패해도 탈퇴를 되돌리지 않고 주기 정리에 맡긴다.
+  await safeRemoveAvatarImages(user.id);
 }

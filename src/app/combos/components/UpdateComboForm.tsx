@@ -8,7 +8,7 @@ import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
 import { ComboFormSchema } from "@/domain/combo/schema";
 import type { ComboItems } from "@/domain/combo/types";
 import ComboForm from "@/domain/combo/ui/ComboForm";
-import { uploadBucketImage } from "@/lib/storage";
+import { removeUploadedBucketImages, uploadBucketImage } from "@/lib/storage";
 import { z } from "zod";
 import { updateComboAction } from "../actions";
 
@@ -45,73 +45,84 @@ export default function UpdateComboForm({
     setSubmitting(true);
     setError(null);
 
+    const uploadedPaths: string[] = [];
+    let actionStarted = false;
     try {
-      // File이면 업로드, string이면 기존 URL 그대로 사용
-      let finalUrl: string | null = null;
+      // File이면 새 상대 경로를, string이면 기존 이미지 참조를 사용한다.
+      let finalImageReference: string | null = null;
       if (imageFile instanceof File) {
-        const { publicUrl, signedUrl } = await uploadBucketImage(
-          "combos",
-          user.id,
-          comboId,
-          imageFile,
-          {
-            contentType: imageFile.type,
-            upsert: true,
-          }
-        );
-        finalUrl = publicUrl ?? signedUrl ?? null;
+        const { path } = await uploadBucketImage("combos", user.id, comboId, imageFile, {
+          contentType: imageFile.type,
+          upsert: false,
+        });
+        uploadedPaths.push(path);
+        finalImageReference = path;
       } else {
-        // 기존 string URL 그대로 사용
-        finalUrl = imageFile;
+        finalImageReference = imageFile;
       }
 
-      if (!finalUrl) {
+      if (!finalImageReference) {
         throw new Error("이미지를 가져오지 못했습니다.");
       }
 
-      const Insertvalues: ComboItems[] = (
-        await Promise.all(
-          (values.items ?? []).map(async (item) => {
-            if (item.type === "product" && item.image && item.image instanceof File) {
-              const { publicUrl } = await uploadBucketImage(
-                "combos",
-                user.id,
-                comboId,
-                item.image,
-                {
-                  contentType: item.image.type,
-                  upsert: true,
-                }
-              );
-              return {
-                ...item,
-                image: publicUrl ?? null,
-              } as ComboItems;
-            }
-            // 기존 string이나 null인 경우 그대로 반환
+      const itemResults = await Promise.allSettled(
+        (values.items ?? []).map(async (item) => {
+          if (item.type !== "product" || !(item.image instanceof File)) {
             return {
-              ...item,
-              image: typeof item.image === "string" ? item.image : null,
-            } as ComboItems;
-          })
-        )
-      ).filter(Boolean);
+              item: {
+                ...item,
+                image: typeof item.image === "string" ? item.image : null,
+              } as ComboItems,
+              path: null,
+            };
+          }
+          const uploaded = await uploadBucketImage("combos", user.id, comboId, item.image, {
+            contentType: item.image.type,
+            upsert: false,
+          });
+          return {
+            item: { ...item, image: uploaded.path } as ComboItems,
+            path: uploaded.path,
+          };
+        })
+      );
+      const insertValues: ComboItems[] = [];
+      let itemUploadError: unknown;
+      for (const result of itemResults) {
+        if (result.status === "rejected") {
+          itemUploadError ??= result.reason;
+          continue;
+        }
+        if (result.value.path) uploadedPaths.push(result.value.path);
+        insertValues.push(result.value.item);
+      }
+      if (itemUploadError) throw itemUploadError;
 
-      await updateComboAction(comboId, {
-        title: values.title,
-        summary: values.summary,
-        difficulty: values.difficulty,
-        time_minutes: values.time_minutes,
-        tags: values.tags,
-        tools: values.tools,
-        items: Insertvalues,
-        steps: values.steps,
-        image: finalUrl,
-      });
+      actionStarted = true;
+      await updateComboAction(
+        comboId,
+        {
+          title: values.title,
+          summary: values.summary,
+          difficulty: values.difficulty,
+          time_minutes: values.time_minutes,
+          tags: values.tags,
+          tools: values.tools,
+          items: insertValues,
+          steps: values.steps,
+          image: finalImageReference,
+        },
+        uploadedPaths
+      );
 
       router.refresh();
       router.push(`/combos/${comboId}`);
     } catch (err) {
+      if (!actionStarted && uploadedPaths.length > 0) {
+        await removeUploadedBucketImages(uploadedPaths).catch((rollbackError) => {
+          console.error("조합 이미지 롤백에 실패했습니다.", rollbackError);
+        });
+      }
       console.error("조합 수정/로딩과정에서 오류가 발생했습니다.", err);
       setError("수정에 실패했습니다. 다시 시도해주세요.");
     } finally {

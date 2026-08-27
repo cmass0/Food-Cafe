@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ProfileRow } from "@/domain/user/types";
 import { uploadBucketImage } from "@/lib/storage";
+import { resolveStorageImageUrl } from "@/lib/storage/paths";
 
 import { updateProfileAction } from "../../actions";
 
@@ -50,12 +51,14 @@ export default function EditPhoto({ userProfile }: Props) {
     setImageError(null);
     setImageSuccess(null);
 
-    let nextUrl = photoUrl.trim();
+    let nextStoredReference = photoUrl.trim();
+    let nextDisplayUrl = photoUrl.trim();
+    let uploadedPath = "";
 
     try {
       setImageSaving(true);
       if (imageFile) {
-        const { publicUrl, signedUrl } = await uploadBucketImage(
+        const { path } = await uploadBucketImage(
           "avatars",
           userProfile.id,
           userProfile.id,
@@ -65,28 +68,31 @@ export default function EditPhoto({ userProfile }: Props) {
             upsert: false,
           }
         );
-        const uploadedUrl = publicUrl ?? signedUrl ?? null;
+        const uploadedUrl = resolveStorageImageUrl(path);
         if (!uploadedUrl) {
           throw new Error("이미지 URL 생성에 실패했습니다.");
         }
-        nextUrl = uploadedUrl;
+        uploadedPath = path;
+        nextStoredReference = path;
+        nextDisplayUrl = uploadedUrl;
       }
 
-      if (!nextUrl) {
+      if (!nextStoredReference) {
         setImageError("이미지 URL을 입력하거나 파일을 선택해주세요.");
         return;
       }
 
       const formData = new FormData();
-      formData.set("photo_url", nextUrl);
+      formData.set("photo_url", nextStoredReference);
+      if (uploadedPath) formData.set("uploaded_path", uploadedPath);
       await updateProfileAction(formData);
       await supabase.auth.updateUser({
         data: {
-          avatar_url: nextUrl,
-          photo_url: nextUrl,
+          avatar_url: nextDisplayUrl,
+          photo_url: nextDisplayUrl,
         },
       });
-      setPhotoUrl(nextUrl);
+      setPhotoUrl(nextDisplayUrl);
       setImageFile(null);
       setImagePreview(null);
       setImageSuccess("프로필 이미지가 변경되었습니다.");

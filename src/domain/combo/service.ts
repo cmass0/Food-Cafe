@@ -1,8 +1,10 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { isJson } from "@/lib/domain/service/jsoncheck";
+import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
 import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
 import { buildLikedSetCombo } from "./combo_like/service";
 import * as repo from "./repository";
@@ -50,14 +52,14 @@ export function toArrayItems(value: unknown): ComboItems[] {
     if (item.type === "recipe") {
       const recipeid = typeof item.recipeid === "string" ? item.recipeid.trim() : "";
       const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      const image = typeof item.image === "string" ? item.image.trim() : null;
+      const image = resolveStorageImageUrl(item.image);
       const title = typeof item.title === "string" ? item.title.trim() : undefined;
       result.push({ type: "recipe", recipeid, summary, image, title });
     }
     if (item.type === "product") {
       const productName = typeof item.productName === "string" ? item.productName.trim() : "";
       const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      const image = typeof item.image === "string" ? item.image.trim() : null;
+      const image = resolveStorageImageUrl(item.image);
       result.push({ type: "product", productName: productName, summary, image });
     }
   }
@@ -76,7 +78,7 @@ function mapRowToCombination(row: ComboRow): Combos {
     difficulty: row.difficulty,
     timeMinutes: row.time_minutes,
     toolRequired: row.tools_required,
-    image: row.image,
+    image: resolveStorageImageUrl(row.image),
     likeCount: row.like_count,
     bookmarkCount: row.bookmark_count,
     viewCount: row.view_count,
@@ -86,6 +88,14 @@ function mapRowToCombination(row: ComboRow): Combos {
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
+}
+
+function normalizeStoredComboItems(items: ComboItems[] | null | undefined): ComboItems[] {
+  if (!items) return [];
+  return items.map((item) => ({
+    ...item,
+    image: normalizeStoredImageReference(item.image),
+  })) as ComboItems[];
 }
 
 export async function listCombos(
@@ -211,7 +221,11 @@ export async function createCombo(
 ): Promise<Combos> {
   const parsed = ComboInsertSchema.parse(input);
 
-  const row = await repo.insertCombo(client, parsed);
+  const row = await repo.insertCombo(client, {
+    ...parsed,
+    image: normalizeStoredImageReference(parsed.image),
+    items: normalizeStoredComboItems(parsed.items),
+  });
   return mapRowToCombination(row);
 }
 export async function updateCombo(
@@ -222,11 +236,29 @@ export async function updateCombo(
 ): Promise<Combos | null> {
   const parsed = ComboUpdateSchema.parse(patch);
 
-  const row = await repo.updateCombo(client, id, writerUid, parsed);
-  return row ? mapRowToCombination(row) : null;
+  const storedPatch = {
+    ...parsed,
+    ...(parsed.image === undefined ? {} : { image: normalizeStoredImageReference(parsed.image) }),
+    ...(parsed.items === undefined ? {} : { items: normalizeStoredComboItems(parsed.items) }),
+  };
+  const row = await repo.updateCombo(client, id, writerUid, storedPatch);
+  if (!row) return null;
+
+  const combo = mapRowToCombination(row);
+  if (row.writer_uid && (patch.image !== undefined || patch.items !== undefined)) {
+    await safePruneContentImages("combos", row.writer_uid, row.id, [row.image, row.items]);
+  }
+  return combo;
 }
 
 export async function removeCombo(client: SupabaseClient<Database>, id: string): Promise<boolean> {
   // 작성자/관리자 판정은 인증 사용자의 세션을 사용하는 RLS가 최종적으로 수행한다.
-  return repo.deleteCombo(client, id);
+  const existing = await repo.fetchComboById(client, id);
+  if (!existing) return false;
+
+  const deleted = await repo.deleteCombo(client, id);
+  if (deleted && existing.writer_uid) {
+    await safeRemoveContentImages("combos", existing.writer_uid, existing.id);
+  }
+  return deleted;
 }

@@ -84,15 +84,7 @@ export class ImageNode extends DecoratorNode<null> {
   }
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
-    const {
-      altText,
-      height,
-      width,
-      maxWidth,
-      caption,
-      src,
-      showCaption,
-    } = serializedNode;
+    const { altText, height, width, maxWidth, caption, src, showCaption } = serializedNode;
     return $createImageNode({
       altText,
       height,
@@ -192,21 +184,10 @@ export function $createImageNode({
   key,
 }: ImagePayload): ImageNode {
   return $applyNodeReplacement(
-    new ImageNode(
-      src,
-      altText,
-      maxWidth,
-      width,
-      height,
-      showCaption,
-      caption,
-      key
-    )
+    new ImageNode(src, altText, maxWidth, width, height, showCaption, caption, key)
   );
 }
 
-export function $isImageNode(
-  node: LexicalNode | null | undefined
-): node is ImageNode {
+export function $isImageNode(node: LexicalNode | null | undefined): node is ImageNode {
   return node instanceof ImageNode;
 }

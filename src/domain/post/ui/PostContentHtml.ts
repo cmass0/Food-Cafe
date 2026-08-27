@@ -8,6 +8,7 @@ import sanitizeHtml from "sanitize-html";
 
 import { nodesServer } from "@/components/blocks/editor-x/nodes.server";
 import { ensureDom } from "@/lib/dom-shim";
+import { resolveStorageImageUrl } from "@/lib/storage/paths";
 
 // SerializedEditorState 타입 가드
 function isSerializedEditorState(value: unknown): value is SerializedEditorState {
@@ -143,8 +144,22 @@ export function sanitizePostHtml(html: string): string {
   });
 }
 
+function resolvePostImageSources(html: string): string {
+  ensureDom();
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  for (const image of Array.from(container.querySelectorAll("img"))) {
+    const source = image.getAttribute("src");
+    const resolved = resolveStorageImageUrl(source);
+    if (resolved) image.setAttribute("src", resolved);
+  }
+
+  return container.innerHTML;
+}
+
 export function renderPostContentHtml(html: string): string {
-  return sanitizePostHtml(enhanceStandaloneYouTubeLinks(html));
+  return sanitizePostHtml(resolvePostImageSources(enhanceStandaloneYouTubeLinks(html)));
 }
 
 export function buildPostContentHtml(contentJson: unknown): string {
@@ -152,7 +167,8 @@ export function buildPostContentHtml(contentJson: unknown): string {
     throw new Error("유효하지 않은 형식입니다.");
   }
 
-  return renderPostContentHtml(lexicalJsonToHtml(contentJson));
+  // DB의 파생 HTML에도 상대 경로를 유지하고 실제 화면 렌더링 때만 공개 URL을 만든다.
+  return sanitizePostHtml(enhanceStandaloneYouTubeLinks(lexicalJsonToHtml(contentJson)));
 }
 
 export function buildPostContentText(contentJson: unknown): string {

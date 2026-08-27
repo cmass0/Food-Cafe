@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/supabase";
+import { resolveStorageImageUrl } from "@/lib/storage/paths";
 import { DEFAULT_TRENDING_PERIOD, type TrendingPeriod } from "./period";
 import * as repository from "./repository";
 import type {
@@ -32,7 +33,7 @@ function mapContentRow(
     id: row.id,
     title: row.title,
     summary: row.summary ?? null,
-    image: row.image ?? null,
+    image: resolveStorageImageUrl(row.image),
     tags: row.tags ?? [],
     likeCount: row.like_count,
     bookmarkCount: row.bookmark_count,
