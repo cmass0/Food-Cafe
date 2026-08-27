@@ -81,22 +81,3 @@ export async function updateProfileRecord(
   if (error) throw error;
   return data;
 }
-
-export async function deleteProfileRecord(
-  client: SupabaseClient<Database>,
-  id: string
-): Promise<void> {
-  const { error } = await client.from("profiles").delete().eq("id", id);
-  if (error) throw error;
-}
-
-// 회원탈퇴 시 스토리지에 저장된 프로필 사진 전부 삭제
-// avatars/{userId}/ 경로 하위 파일을 일괄 제거 (파일 없으면 무시)
-export async function deleteUserAvatar(client: SupabaseClient, userId: string): Promise<void> {
-  const BUCKET = "Food-Cafe";
-  const prefix = `avatars/${userId}`;
-  const { data: files } = await client.storage.from(BUCKET).list(prefix);
-  if (!files || files.length === 0) return;
-  const paths = files.map((f) => `${prefix}/${f.name}`);
-  await client.storage.from(BUCKET).remove(paths);
-}

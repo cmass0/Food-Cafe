@@ -2,32 +2,25 @@ import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
-  Apple,
   Beef,
   CakeSlice,
   ChefHat,
   ChevronRight,
   Cookie,
   Eye,
-  Facebook,
   Flame,
   Grid3X3,
   Heart,
-  Instagram,
   Leaf,
-  Mail,
   MessageCircle,
   PencilLine,
-  Play,
   Salad,
   Sandwich,
   Search,
   Soup,
   Sparkles,
   Target,
-  Twitter,
   Utensils,
-  Youtube,
 } from "lucide-react";
 
 import breadImage from "@/assets/bread.jpg";
@@ -559,35 +552,8 @@ export default async function Home() {
         </div>
       </div>
 
-      <section className="mx-auto max-w-7xl px-5 pb-8 lg:px-8">
-        <div className="flex flex-col gap-4 rounded-lg bg-[#edf6ef] p-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <span className="grid h-12 w-12 place-items-center rounded-lg bg-[#438e4d] text-white">
-              <Mail className="h-6 w-6" />
-            </span>
-            <div>
-              <h2 className="text-lg font-bold text-zinc-950">
-                새로운 레시피와 유용한 요리 팁을 받아보세요!
-              </h2>
-              <p className="text-sm text-zinc-500">
-                FoodCafe의 미션 소식과 인기 레시피를 이메일로 받아보실 수 있습니다.
-              </p>
-            </div>
-          </div>
-          <form className="flex w-full gap-2 md:w-[420px]">
-            <input
-              className="h-11 flex-1 rounded-lg border border-zinc-200 bg-white px-4 text-sm outline-none placeholder:text-zinc-400"
-              placeholder="이메일 주소를 입력하세요"
-            />
-            <button className="h-11 rounded-lg bg-[#438e4d] px-6 text-sm font-bold text-white">
-              구독하기
-            </button>
-          </form>
-        </div>
-      </section>
-
       <footer className="border-t border-zinc-200 bg-[#fbfbfb]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-10 md:grid-cols-[1.6fr_1fr_1fr_1fr_1.4fr] lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 md:flex-row md:items-end md:justify-between lg:px-8">
           <div>
             <Link href="/" className="flex items-center gap-2 text-2xl font-black text-zinc-950">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#438e4d] text-white">
@@ -600,51 +566,10 @@ export default async function Home() {
               <br />
               요리로 연결되는 따뜻한 커뮤니티
             </p>
-            <div className="mt-5 flex gap-4 text-zinc-500">
-              <Instagram className="h-4 w-4" />
-              <Youtube className="h-4 w-4" />
-              <Facebook className="h-4 w-4" />
-              <Twitter className="h-4 w-4" />
-            </div>
           </div>
-          <FooterGroup title="서비스" items={["레시피", "커뮤니티", "이벤트", "인기 레시피"]} />
-          <FooterGroup
-            title="고객지원"
-            items={["공지사항", "자주 묻는 질문", "문의하기", "이용약관"]}
-          />
-          <FooterGroup title="회사정보" items={["회사소개", "브랜드스토리", "제휴문의"]} />
-          <div>
-            <h3 className="font-bold text-zinc-950">FoodCafe 앱</h3>
-            <p className="mt-3 text-xs text-zinc-500">더 편하게 FoodCafe를 이용해보세요</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-bold">
-                <Apple className="h-4 w-4" />
-                App Store
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-bold">
-                <Play className="h-4 w-4" />
-                Google Play
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto max-w-7xl border-t border-zinc-200 px-5 py-5 text-center text-xs text-zinc-400 lg:px-8">
-          © 2026 FoodCafe. All rights reserved.
+          <p className="text-xs text-zinc-400">© 2026 FoodCafe. All rights reserved.</p>
         </div>
       </footer>
     </main>
-  );
-}
-
-function FooterGroup({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div>
-      <h3 className="font-bold text-zinc-950">{title}</h3>
-      <ul className="mt-3 space-y-2 text-sm text-zinc-500">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
   );
 }

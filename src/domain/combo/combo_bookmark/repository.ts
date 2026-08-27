@@ -1,21 +1,6 @@
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-export async function isBookmarked(
-  client: SupabaseClient<Database>,
-  userId: string,
-  recipeId: string
-): Promise<boolean> {
-  const { data, error } = await client
-    .from("recipe_bookmarks")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("parent_id", recipeId)
-    .maybeSingle();
-  if (error) throw error;
-  return Boolean(data);
-}
-
 export async function fetchBookmarkedComboIds(
   client: SupabaseClient<Database>,
   userId: string,
@@ -29,11 +14,4 @@ export async function fetchBookmarkedComboIds(
     .in("combo_id", comboIds);
   if (error) throw error;
   return new Set((data ?? []).map((d) => d.combo_id));
-}
-
-export async function toggleComboBookmark(client: SupabaseClient<Database>, id: string) {
-  return client.rpc("toggle_bookmark", {
-    p_type: "combo",
-    p_id: id,
-  });
 }
