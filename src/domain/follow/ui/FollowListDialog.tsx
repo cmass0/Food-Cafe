@@ -38,13 +38,18 @@ export default function FollowListDialog({ targetUserId, type, count }: Props) {
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState("");
   const requestController = React.useRef<AbortController | null>(null);
+  const loadingRef = React.useRef(false);
+  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const loadMoreSentinelRef = React.useRef<HTMLDivElement | null>(null);
   const label = type === "followers" ? "팔로워" : "팔로잉";
 
   const loadPage = React.useCallback(
     async (nextPage: number, replace: boolean) => {
-      requestController.current?.abort();
+      if (loadingRef.current) return;
+
       const controller = new AbortController();
       requestController.current = controller;
+      loadingRef.current = true;
       setLoading(true);
       setErrorMessage("");
 
@@ -70,15 +75,22 @@ export default function FollowListDialog({ targetUserId, type, count }: Props) {
         console.error(`[follow] ${type} list failed`, error);
         setErrorMessage("목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (requestController.current === controller) {
+          requestController.current = null;
+          loadingRef.current = false;
+          if (!controller.signal.aborted) setLoading(false);
+        }
       }
     },
     [targetUserId, type]
   );
 
   React.useEffect(() => {
+    requestController.current?.abort();
+    requestController.current = null;
+    loadingRef.current = false;
+
     if (!open) {
-      requestController.current?.abort();
       return;
     }
 
@@ -86,11 +98,44 @@ export default function FollowListDialog({ targetUserId, type, count }: Props) {
     setPage(1);
     setHasMore(false);
     void loadPage(1, true);
-    return () => requestController.current?.abort();
+    return () => {
+      requestController.current?.abort();
+      requestController.current = null;
+      loadingRef.current = false;
+    };
   }, [loadPage, open]);
 
+  React.useEffect(() => {
+    const root = scrollContainerRef.current;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!open || !root || !sentinel || !hasMore || loading || errorMessage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void loadPage(page + 1, false);
+      },
+      { root, rootMargin: "0px 0px 120px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [errorMessage, hasMore, loadPage, loading, open, page]);
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      requestController.current?.abort();
+      requestController.current = null;
+      loadingRef.current = false;
+      setItems([]);
+      setPage(1);
+      setHasMore(false);
+      setLoading(false);
+      setErrorMessage("");
+    }
+    setOpen(nextOpen);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button
           type="button"
@@ -106,7 +151,7 @@ export default function FollowListDialog({ targetUserId, type, count }: Props) {
           <DialogDescription>사용자를 선택하면 해당 프로필로 이동합니다.</DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] min-h-56 overflow-y-auto px-3 py-3">
+        <div ref={scrollContainerRef} className="max-h-[60vh] min-h-56 overflow-y-auto px-3 py-3">
           {loading && items.length === 0 ? (
             <div className="flex min-h-48 items-center justify-center text-zinc-500" role="status">
               <LoaderCircle className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
@@ -155,22 +200,37 @@ export default function FollowListDialog({ targetUserId, type, count }: Props) {
                 );
               })}
 
-              {hasMore ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mx-3 mt-3"
-                  disabled={loading}
-                  onClick={() => loadPage(page + 1, false)}
-                >
-                  {loading ? "불러오는 중..." : "더 보기"}
-                </Button>
-              ) : null}
-              {errorMessage ? (
-                <p className="px-3 py-2 text-center text-sm text-destructive" role="alert">
-                  {errorMessage}
-                </p>
-              ) : null}
+              <div
+                ref={loadMoreSentinelRef}
+                className="flex min-h-12 items-center justify-center px-3 py-2"
+                aria-live="polite"
+              >
+                {loading ? (
+                  <span className="flex items-center text-sm text-zinc-500" role="status">
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />더
+                    불러오는 중입니다.
+                  </span>
+                ) : errorMessage ? (
+                  <div className="text-center">
+                    <p className="text-sm text-destructive" role="alert">
+                      {errorMessage}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => loadPage(page + 1, false)}
+                    >
+                      다시 시도
+                    </Button>
+                  </div>
+                ) : hasMore ? (
+                  <span className="sr-only">목록의 다음 페이지를 불러옵니다.</span>
+                ) : (
+                  <span className="text-xs text-zinc-400">모든 사용자를 불러왔습니다.</span>
+                )}
+              </div>
             </div>
           )}
         </div>
