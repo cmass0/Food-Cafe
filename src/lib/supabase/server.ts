@@ -7,10 +7,12 @@ type ServerClient = SupabaseClient<Database>;
 
 export async function getServerSupabase(): Promise<ServerClient> {
   const cookieStore = await cookies();
-  const url = process.env.SUPABASE_URL!;
-  const anon = process.env.SUPABASE_ANON_KEY!;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   if (!url || !anon) {
-    throw new Error("[server] Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+    throw new Error(
+      "[server] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
   }
 
   return createServerClient<Database>(url, anon, {

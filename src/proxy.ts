@@ -13,9 +13,8 @@ function copyResponseCookies(source: NextResponse, target: NextResponse) {
 // 비로그인 사용자는 홈의 로그인 모달로 보내되, 로그인 뒤 돌아올 원래 경로(next)를 함께 보존한다.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey =
-    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("[proxy] Missing Supabase URL or anonymous key");
