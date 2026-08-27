@@ -1,622 +1,240 @@
-"use client"
+"use client";
 
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-import * as React from "react"
-import { JSX, useCallback, useEffect, useMemo, useState } from "react"
-import dynamic from "next/dynamic"
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext"
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   MenuOption,
-  MenuTextMatch,
+  type MenuTextMatch,
   useBasicTypeaheadTriggerMatch,
-} from "@lexical/react/LexicalTypeaheadMenuPlugin"
-import { TextNode } from "lexical"
-import { CircleUserRoundIcon } from "lucide-react"
-import { createPortal } from "react-dom"
+} from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { type TextNode } from "lexical";
+import { LoaderCircle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
-import { $createMentionNode } from "@/components/editor/nodes/mention-node"
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { $createMentionNode } from "@/components/editor/nodes/mention-node";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { fetchMentionCandidates } from "@/domain/follow/api";
+import type { MentionCandidate } from "@/domain/follow/type";
+
+class MentionTypeaheadOption extends MenuOption {
+  candidate: MentionCandidate;
+
+  constructor(candidate: MentionCandidate) {
+    super(candidate.id);
+    this.candidate = candidate;
+  }
+}
 
 const LexicalTypeaheadMenuPlugin = dynamic(
   () =>
     import("@lexical/react/LexicalTypeaheadMenuPlugin").then(
-      (mod) => mod.LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
+      (module) => module.LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
     ),
   { ssr: false }
-)
+);
 
-const PUNCTUATION =
-  "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;"
-const NAME = "\\b[A-Z][^\\s" + PUNCTUATION + "]"
-
-const DocumentMentionsRegex = {
-  NAME,
-  PUNCTUATION,
-}
-
-const PUNC = DocumentMentionsRegex.PUNCTUATION
-
-const TRIGGERS = ["@"].join("")
-
-// Chars we expect to see in a mention (non-space, non-punctuation).
-const VALID_CHARS = "[^" + TRIGGERS + PUNC + "\\s]"
-
-// Non-standard series of chars. Each series must be preceded and followed by
-// a valid char.
-const VALID_JOINS =
-  "(?:" +
-  "\\.[ |$]|" + // E.g. "r. " in "Mr. Smith"
-  " |" + // E.g. " " in "Josh Duck"
-  "[" +
-  PUNC +
-  "]|" + // E.g. "-' in "Salier-Hellendag"
-  ")"
-
-const LENGTH_LIMIT = 75
+const PUNCTUATION = "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
+const TRIGGERS = ["@"].join("");
+const VALID_CHARS = "[^" + TRIGGERS + PUNCTUATION + "\\s]";
+const VALID_JOINS = "(?:" + "\\.[ |$]|" + " |" + "[" + PUNCTUATION + "]|" + ")";
+const LENGTH_LIMIT = 75;
+const ALIAS_LENGTH_LIMIT = 50;
+const MENTION_PAGE_SIZE = 10;
+const LOOKUP_DELAY_MS = 250;
 
 const AtSignMentionsRegex = new RegExp(
-  "(^|\\s|\\()(" +
-    "[" +
-    TRIGGERS +
-    "]" +
-    "((?:" +
-    VALID_CHARS +
-    VALID_JOINS +
-    "){0," +
-    LENGTH_LIMIT +
-    "})" +
-    ")$"
-)
+  "(^|\\s|\\()([" + TRIGGERS + "]((?:" + VALID_CHARS + VALID_JOINS + "){0," + LENGTH_LIMIT + "}))$"
+);
 
-// 50 is the longest alias length limit.
-const ALIAS_LENGTH_LIMIT = 50
-
-// Regex used to match alias.
 const AtSignMentionsRegexAliasRegex = new RegExp(
-  "(^|\\s|\\()(" +
-    "[" +
-    TRIGGERS +
-    "]" +
-    "((?:" +
-    VALID_CHARS +
-    "){0," +
-    ALIAS_LENGTH_LIMIT +
-    "})" +
-    ")$"
-)
+  "(^|\\s|\\()([" + TRIGGERS + "]((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "}))$"
+);
 
-// At most, 5 suggestions are shown in the popup.
-const SUGGESTION_LIST_LENGTH_LIMIT = 5
+type MentionLookupStatus = "idle" | "loading" | "success" | "error";
 
-const mentionsCache = new Map()
-
-const dummyMentionsData = [
-  "Aayla Secura",
-  "Adi Gallia",
-  "Admiral Dodd Rancit",
-  "Admiral Firmus Piett",
-  "Admiral Gial Ackbar",
-  "Admiral Ozzel",
-  "Admiral Raddus",
-  "Admiral Terrinald Screed",
-  "Admiral Trench",
-  "Admiral U.O. Statura",
-  "Agen Kolar",
-  "Agent Kallus",
-  "Aiolin and Morit Astarte",
-  "Aks Moe",
-  "Almec",
-  "Alton Kastle",
-  "Amee",
-  "AP-5",
-  "Armitage Hux",
-  "Artoo",
-  "Arvel Crynyd",
-  "Asajj Ventress",
-  "Aurra Sing",
-  "AZI-3",
-  "Bala-Tik",
-  "Barada",
-  "Bargwill Tomder",
-  "Baron Papanoida",
-  "Barriss Offee",
-  "Baze Malbus",
-  "Bazine Netal",
-  "BB-8",
-  "BB-9E",
-  "Ben Quadinaros",
-  "Berch Teller",
-  "Beru Lars",
-  "Bib Fortuna",
-  "Biggs Darklighter",
-  "Black Krrsantan",
-  "Bo-Katan Kryze",
-  "Boba Fett",
-  "Bobbajo",
-  "Bodhi Rook",
-  "Borvo the Hutt",
-  "Boss Nass",
-  "Bossk",
-  "Breha Antilles-Organa",
-  "Bren Derlin",
-  "Brendol Hux",
-  "BT-1",
-  "C-3PO",
-  "C1-10P",
-  "Cad Bane",
-  "Caluan Ematt",
-  "Captain Gregor",
-  "Captain Phasma",
-  "Captain Quarsh Panaka",
-  "Captain Rex",
-  "Carlist Rieekan",
-  "Casca Panzoro",
-  "Cassian Andor",
-  "Cassio Tagge",
-  "Cham Syndulla",
-  "Che Amanwe Papanoida",
-  "Chewbacca",
-  "Chi Eekway Papanoida",
-  "Chief Chirpa",
-  "Chirrut Îmwe",
-  "Ciena Ree",
-  "Cin Drallig",
-  "Clegg Holdfast",
-  "Cliegg Lars",
-  "Coleman Kcaj",
-  "Coleman Trebor",
-  "Colonel Kaplan",
-  "Commander Bly",
-  "Commander Cody (CC-2224)",
-  "Commander Fil (CC-3714)",
-  "Commander Fox",
-  "Commander Gree",
-  "Commander Jet",
-  "Commander Wolffe",
-  "Conan Antonio Motti",
-  "Conder Kyl",
-  "Constable Zuvio",
-  "Cordé",
-  "Cpatain Typho",
-  "Crix Madine",
-  "Cut Lawquane",
-  "Dak Ralter",
-  "Dapp",
-  "Darth Bane",
-  "Darth Maul",
-  "Darth Tyranus",
-  "Daultay Dofine",
-  "Del Meeko",
-  "Delian Mors",
-  "Dengar",
-  "Depa Billaba",
-  "Derek Klivian",
-  "Dexter Jettster",
-  "Dineé Ellberger",
-  "DJ",
-  "Doctor Aphra",
-  "Doctor Evazan",
-  "Dogma",
-  "Dormé",
-  "Dr. Cylo",
-  "Droidbait",
-  "Droopy McCool",
-  "Dryden Vos",
-  "Dud Bolt",
-  "Ebe E. Endocott",
-  "Echuu Shen-Jon",
-  "Eeth Koth",
-  "Eighth Brother",
-  "Eirtaé",
-  "Eli Vanto",
-  "Ellé",
-  "Ello Asty",
-  "Embo",
-  "Eneb Ray",
-  "Enfys Nest",
-  "EV-9D9",
-  "Evaan Verlaine",
-  "Even Piell",
-  "Ezra Bridger",
-  "Faro Argyus",
-  "Feral",
-  "Fifth Brother",
-  "Finis Valorum",
-  "Finn",
-  "Fives",
-  "FN-1824",
-  "FN-2003",
-  "Fodesinbeed Annodue",
-  "Fulcrum",
-  "FX-7",
-  "GA-97",
-  "Galen Erso",
-  "Gallius Rax",
-  'Garazeb "Zeb" Orrelios',
-  "Gardulla the Hutt",
-  "Garrick Versio",
-  "Garven Dreis",
-  "Gavyn Sykes",
-  "Gideon Hask",
-  "Gizor Dellso",
-  "Gonk droid",
-  "Grand Inquisitor",
-  "Greeata Jendowanian",
-  "Greedo",
-  "Greer Sonnel",
-  "Grievous",
-  "Grummgar",
-  "Gungi",
-  "Hammerhead",
-  "Han Solo",
-  "Harter Kalonia",
-  "Has Obbit",
-  "Hera Syndulla",
-  "Hevy",
-  "Hondo Ohnaka",
-  "Huyang",
-  "Iden Versio",
-  "IG-88",
-  "Ima-Gun Di",
-  "Inquisitors",
-  "Inspector Thanoth",
-  "Jabba",
-  "Jacen Syndulla",
-  "Jan Dodonna",
-  "Jango Fett",
-  "Janus Greejatus",
-  "Jar Jar Binks",
-  "Jas Emari",
-  "Jaxxon",
-  "Jek Tono Porkins",
-  "Jeremoch Colton",
-  "Jira",
-  "Jobal Naberrie",
-  "Jocasta Nu",
-  "Joclad Danva",
-  "Joh Yowza",
-  "Jom Barell",
-  "Joph Seastriker",
-  "Jova Tarkin",
-  "Jubnuk",
-  "Jyn Erso",
-  "K-2SO",
-  "Kanan Jarrus",
-  "Karbin",
-  "Karina the Great",
-  "Kes Dameron",
-  "Ketsu Onyo",
-  "Ki-Adi-Mundi",
-  "King Katuunko",
-  "Kit Fisto",
-  "Kitster Banai",
-  "Klaatu",
-  "Klik-Klak",
-  "Korr Sella",
-  "Kylo Ren",
-  "L3-37",
-  "Lama Su",
-  "Lando Calrissian",
-  "Lanever Villecham",
-  "Leia Organa",
-  "Letta Turmond",
-  "Lieutenant Kaydel Ko Connix",
-  "Lieutenant Thire",
-  "Lobot",
-  "Logray",
-  "Lok Durd",
-  "Longo Two-Guns",
-  "Lor San Tekka",
-  "Lorth Needa",
-  "Lott Dod",
-  "Luke Skywalker",
-  "Lumat",
-  "Luminara Unduli",
-  "Lux Bonteri",
-  "Lyn Me",
-  "Lyra Erso",
-  "Mace Windu",
-  "Malakili",
-  "Mama the Hutt",
-  "Mars Guo",
-  "Mas Amedda",
-  "Mawhonic",
-  "Max Rebo",
-  "Maximilian Veers",
-  "Maz Kanata",
-  "ME-8D9",
-  "Meena Tills",
-  "Mercurial Swift",
-  "Mina Bonteri",
-  "Miraj Scintel",
-  "Mister Bones",
-  "Mod Terrik",
-  "Moden Canady",
-  "Mon Mothma",
-  "Moradmin Bast",
-  "Moralo Eval",
-  "Morley",
-  "Mother Talzin",
-  "Nahdar Vebb",
-  "Nahdonnis Praji",
-  "Nien Nunb",
-  "Niima the Hutt",
-  "Nines",
-  "Norra Wexley",
-  "Nute Gunray",
-  "Nuvo Vindi",
-  "Obi-Wan Kenobi",
-  "Odd Ball",
-  "Ody Mandrell",
-  "Omi",
-  "Onaconda Farr",
-  "Oola",
-  "OOM-9",
-  "Oppo Rancisis",
-  "Orn Free Taa",
-  "Oro Dassyne",
-  "Orrimarko",
-  "Osi Sobeck",
-  "Owen Lars",
-  "Pablo-Jill",
-  "Padmé Amidala",
-  "Pagetti Rook",
-  "Paige Tico",
-  "Paploo",
-  "Petty Officer Thanisson",
-  "Pharl McQuarrie",
-  "Plo Koon",
-  "Po Nudo",
-  "Poe Dameron",
-  "Poggle the Lesser",
-  "Pong Krell",
-  "Pooja Naberrie",
-  "PZ-4CO",
-  "Quarrie",
-  "Quay Tolsite",
-  "Queen Apailana",
-  "Queen Jamillia",
-  "Queen Neeyutnee",
-  "Qui-Gon Jinn",
-  "Quiggold",
-  "Quinlan Vos",
-  "R2-D2",
-  "R2-KT",
-  "R3-S6",
-  "R4-P17",
-  "R5-D4",
-  "RA-7",
-  "Rabé",
-  "Rako Hardeen",
-  "Ransolm Casterfo",
-  "Rappertunie",
-  "Ratts Tyerell",
-  "Raymus Antilles",
-  "Ree-Yees",
-  "Reeve Panzoro",
-  "Rey",
-  "Ric Olié",
-  "Riff Tamson",
-  "Riley",
-  "Rinnriyin Di",
-  "Rio Durant",
-  "Rogue Squadron",
-  "Romba",
-  "Roos Tarpals",
-  "Rose Tico",
-  "Rotta the Hutt",
-  "Rukh",
-  "Rune Haako",
-  "Rush Clovis",
-  "Ruwee Naberrie",
-  "Ryoo Naberrie",
-  "Sabé",
-  "Sabine Wren",
-  "Saché",
-  "Saelt-Marae",
-  "Saesee Tiin",
-  "Salacious B. Crumb",
-  "San Hill",
-  "Sana Starros",
-  "Sarco Plank",
-  "Sarkli",
-  "Satine Kryze",
-  "Savage Opress",
-  "Sebulba",
-  "Senator Organa",
-  "Sergeant Kreel",
-  "Seventh Sister",
-  "Shaak Ti",
-  "Shara Bey",
-  "Shmi Skywalker",
-  "Shu Mai",
-  "Sidon Ithano",
-  "Sifo-Dyas",
-  "Sim Aloo",
-  "Siniir Rath Velus",
-  "Sio Bibble",
-  "Sixth Brother",
-  "Slowen Lo",
-  "Sly Moore",
-  "Snaggletooth",
-  "Snap Wexley",
-  "Snoke",
-  "Sola Naberrie",
-  "Sora Bulq",
-  "Strono Tuggs",
-  "Sy Snootles",
-  "Tallissan Lintra",
-  "Tarfful",
-  "Tasu Leech",
-  "Taun We",
-  "TC-14",
-  "Tee Watt Kaa",
-  "Teebo",
-  "Teedo",
-  "Teemto Pagalies",
-  "Temiri Blagg",
-  "Tessek",
-  "Tey How",
-  "Thane Kyrell",
-  "The Bendu",
-  "The Smuggler",
-  "Thrawn",
-  "Tiaan Jerjerrod",
-  "Tion Medon",
-  "Tobias Beckett",
-  "Tulon Voidgazer",
-  "Tup",
-  "U9-C4",
-  "Unkar Plutt",
-  "Val Beckett",
-  "Vanden Willard",
-  "Vice Admiral Amilyn Holdo",
-  "Vober Dand",
-  "WAC-47",
-  "Wag Too",
-  "Wald",
-  "Walrus Man",
-  "Warok",
-  "Wat Tambor",
-  "Watto",
-  "Wedge Antilles",
-  "Wes Janson",
-  "Wicket W. Warrick",
-  "Wilhuff Tarkin",
-  "Wollivan",
-  "Wuher",
-  "Wullf Yularen",
-  "Xamuel Lennox",
-  "Yaddle",
-  "Yarael Poof",
-  "Yoda",
-  "Zam Wesell",
-  "Zev Senesca",
-  "Ziro the Hutt",
-  "Zuckuss",
-]
-
-const dummyLookupService = {
-  search(string: string, callback: (results: Array<string>) => void): void {
-    setTimeout(() => {
-      const results = dummyMentionsData.filter((mention) =>
-        mention.toLowerCase().includes(string.toLowerCase())
-      )
-      callback(results)
-    }, 500)
-  },
+function appendUniqueCandidates(
+  previous: MentionCandidate[],
+  next: MentionCandidate[]
+): MentionCandidate[] {
+  const knownIds = new Set(previous.map((candidate) => candidate.id));
+  return [...previous, ...next.filter((candidate) => !knownIds.has(candidate.id))];
 }
 
 function useMentionLookupService(mentionString: string | null) {
-  const [results, setResults] = useState<Array<string>>([])
+  const [items, setItems] = useState<MentionCandidate[]>([]);
+  const [status, setStatus] = useState<MentionLookupStatus>("idle");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const activeQueryRef = useRef("");
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const requestTokenRef = useRef(0);
+  const loadingRef = useRef(false);
 
-  useEffect(() => {
-    const cachedResults = mentionsCache.get(mentionString)
+  const loadPage = useCallback(async (query: string, nextPage: number, replace: boolean) => {
+    if (!query || loadingRef.current) return;
 
-    if (mentionString == null) {
-      setResults([])
-      return
-    }
+    const controller = new AbortController();
+    const requestToken = ++requestTokenRef.current;
+    requestControllerRef.current = controller;
+    loadingRef.current = true;
+    setStatus("loading");
 
-    if (cachedResults === null) {
-      return
-    } else if (cachedResults !== undefined) {
-      setResults(cachedResults)
-      return
-    }
+    try {
+      const response = await fetchMentionCandidates(
+        query,
+        nextPage,
+        MENTION_PAGE_SIZE,
+        controller.signal
+      );
+      if (
+        controller.signal.aborted ||
+        requestTokenRef.current !== requestToken ||
+        activeQueryRef.current !== query
+      ) {
+        return;
+      }
 
-    mentionsCache.set(mentionString, null)
-    dummyLookupService.search(mentionString, (newResults) => {
-      mentionsCache.set(mentionString, newResults)
-      setResults(newResults)
-    })
-  }, [mentionString])
-
-  return results
-}
-
-function checkForAtSignMentions(
-  text: string,
-  minMatchLength: number
-): MenuTextMatch | null {
-  let match = AtSignMentionsRegex.exec(text)
-
-  if (match === null) {
-    match = AtSignMentionsRegexAliasRegex.exec(text)
-  }
-  if (match !== null) {
-    // The strategy ignores leading whitespace but we need to know it's
-    // length to add it to the leadOffset
-
-    const maybeLeadingWhitespace = match[1] ?? ""
-    const replaceableString = match[2]
-    const matchingString = match[3]
-
-    if (!replaceableString || !matchingString) {
-      return null
-    }
-
-    if (matchingString.length >= minMatchLength) {
-      return {
-        leadOffset: match.index + maybeLeadingWhitespace.length,
-        matchingString,
-        replaceableString,
+      setItems((previous) =>
+        replace ? response.items : appendUniqueCandidates(previous, response.items)
+      );
+      setPage(nextPage);
+      setHasMore(response.hasMore);
+      setStatus("success");
+    } catch (error) {
+      if (controller.signal.aborted || requestTokenRef.current !== requestToken) return;
+      console.error("멘션 후보 조회 실패", error);
+      if (replace) setItems([]);
+      setStatus("error");
+    } finally {
+      if (requestTokenRef.current === requestToken) {
+        requestControllerRef.current = null;
+        loadingRef.current = false;
       }
     }
-  }
-  return null
+  }, []);
+
+  useEffect(() => {
+    const query = mentionString?.trim() ?? "";
+    activeQueryRef.current = query;
+    requestTokenRef.current += 1;
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+    loadingRef.current = false;
+    setItems([]);
+    setPage(1);
+    setHasMore(false);
+
+    if (!query) {
+      setStatus("idle");
+      return;
+    }
+
+    setStatus("loading");
+    const timer = window.setTimeout(() => {
+      void loadPage(query, 1, true);
+    }, LOOKUP_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+      requestTokenRef.current += 1;
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+      loadingRef.current = false;
+    };
+  }, [loadPage, mentionString]);
+
+  const loadMore = useCallback(() => {
+    const query = activeQueryRef.current;
+    if (!query || !hasMore || loadingRef.current) return;
+    void loadPage(query, page + 1, false);
+  }, [hasMore, loadPage, page]);
+
+  const retry = useCallback(() => {
+    const query = activeQueryRef.current;
+    if (!query || loadingRef.current) return;
+    const replace = items.length === 0;
+    void loadPage(query, replace ? 1 : page + 1, replace);
+  }, [items.length, loadPage, page]);
+
+  return { hasMore, items, loadMore, retry, status };
+}
+
+function checkForAtSignMentions(text: string, minMatchLength: number): MenuTextMatch | null {
+  let match = AtSignMentionsRegex.exec(text);
+  if (match === null) match = AtSignMentionsRegexAliasRegex.exec(text);
+  if (match === null) return null;
+
+  const maybeLeadingWhitespace = match[1] ?? "";
+  const replaceableString = match[2];
+  const matchingString = match[3];
+  if (!replaceableString || matchingString === undefined) return null;
+  if (matchingString.length < minMatchLength) return null;
+
+  return {
+    leadOffset: match.index + maybeLeadingWhitespace.length,
+    matchingString,
+    replaceableString,
+  };
 }
 
 function getPossibleQueryMatch(text: string): MenuTextMatch | null {
-  return checkForAtSignMentions(text, 1)
+  return checkForAtSignMentions(text, 1);
 }
 
-class MentionTypeaheadOption extends MenuOption {
-  name: string
-  picture: JSX.Element
+function profileInitial(displayName: string): string {
+  return displayName.trim().slice(0, 1).toUpperCase() || "U";
+}
 
-  constructor(name: string, picture: JSX.Element) {
-    super(name)
-    this.name = name
-    this.picture = picture
-  }
+function LookupMessage({ status, onRetry }: { status: MentionLookupStatus; onRetry: () => void }) {
+  const message =
+    status === "error"
+      ? "후보를 불러오지 못했습니다."
+      : status === "success"
+        ? "일치하는 팔로잉이 없습니다."
+        : "팔로잉을 검색하는 중입니다.";
+
+  return (
+    <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+      <p role={status === "error" ? "alert" : "status"}>{message}</p>
+      {status === "error" ? (
+        <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+          다시 시도
+        </Button>
+      ) : null}
+    </div>
+  );
 }
 
 export function MentionsPlugin(): JSX.Element | null {
-  const [editor] = useLexicalComposerContext()
-
-  const [queryString, setQueryString] = useState<string | null>(null)
-
-  const results = useMentionLookupService(queryString)
-
-  const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
-    minLength: 0,
-  })
+  const [editor] = useLexicalComposerContext();
+  const [queryString, setQueryString] = useState<string | null>(null);
+  const { hasMore, items, loadMore, retry, status } = useMentionLookupService(queryString);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+  const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", { minLength: 0 });
 
   const options = useMemo(
-    () =>
-      results
-        .map(
-          (result) =>
-            new MentionTypeaheadOption(
-              result,
-              <CircleUserRoundIcon className="size-4" />
-            )
-        )
-        .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
-    [results]
-  )
+    () => items.map((candidate) => new MentionTypeaheadOption(candidate)),
+    [items]
+  );
+
+  useEffect(() => {
+    const root = scrollContainerRef.current;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!root || !sentinel || !hasMore || status === "loading" || status === "error") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) loadMore();
+      },
+      { root, rootMargin: "0px 0px 80px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore, status]);
 
   const onSelectOption = useCallback(
     (
@@ -625,27 +243,23 @@ export function MentionsPlugin(): JSX.Element | null {
       closeMenu: () => void
     ) => {
       editor.update(() => {
-        const mentionNode = $createMentionNode(selectedOption.name)
-        if (nodeToReplace) {
-          nodeToReplace.replace(mentionNode)
-        }
-        mentionNode.select()
-        closeMenu()
-      })
+        const { id, display_name: displayName } = selectedOption.candidate;
+        const mentionNode = $createMentionNode(displayName, id);
+        if (nodeToReplace) nodeToReplace.replace(mentionNode);
+        mentionNode.select();
+        closeMenu();
+      });
     },
     [editor]
-  )
+  );
 
   const checkForMentionMatch = useCallback(
     (text: string) => {
-      const slashMatch = checkForSlashTriggerMatch(text, editor)
-      if (slashMatch !== null) {
-        return null
-      }
-      return getPossibleQueryMatch(text)
+      if (checkForSlashTriggerMatch(text, editor) !== null) return null;
+      return getPossibleQueryMatch(text);
     },
     [checkForSlashTriggerMatch, editor]
-  )
+  );
 
   return (
     <LexicalTypeaheadMenuPlugin
@@ -657,56 +271,76 @@ export function MentionsPlugin(): JSX.Element | null {
         anchorElementRef,
         { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
       ) => {
-        return anchorElementRef.current && results.length
-          ? createPortal(
-              <div className="fixed z-10 w-[200px] rounded-md shadow-md">
-                <Command
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowUp") {
-                      e.preventDefault()
-                      setHighlightedIndex(
-                        selectedIndex !== null
-                          ? (selectedIndex - 1 + options.length) %
-                              options.length
-                          : options.length - 1
-                      )
-                    } else if (e.key === "ArrowDown") {
-                      e.preventDefault()
-                      setHighlightedIndex(
-                        selectedIndex !== null
-                          ? (selectedIndex + 1) % options.length
-                          : 0
-                      )
-                    }
-                  }}
-                >
-                  <CommandList>
-                    <CommandGroup>
-                      {options.map((option, index) => (
-                        <CommandItem
-                          key={option.key}
-                          value={option.name}
-                          onSelect={() => {
-                            selectOptionAndCleanUp(option)
-                          }}
-                          className={`flex items-center gap-2 ${
-                            selectedIndex === index
-                              ? "bg-accent"
-                              : "!bg-transparent"
-                          }`}
-                        >
-                          {option.picture}
-                          {option.name}
-                        </CommandItem>
-                      ))}
+        if (!anchorElementRef.current || queryString === null) return null;
+
+        return createPortal(
+          <div className="fixed z-10 w-64 rounded-md shadow-md">
+            <Command shouldFilter={false}>
+              <CommandList ref={scrollContainerRef} aria-busy={status === "loading"}>
+                {options.length === 0 ? (
+                  <LookupMessage status={status} onRetry={retry} />
+                ) : (
+                  <>
+                    <CommandGroup heading="내 팔로잉">
+                      {options.map((option, index) => {
+                        const candidate = option.candidate;
+                        return (
+                          <CommandItem
+                            key={candidate.id}
+                            value={candidate.id}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                            onSelect={() => selectOptionAndCleanUp(option)}
+                            className={selectedIndex === index ? "bg-accent" : "!bg-transparent"}
+                          >
+                            <Avatar className="size-7 border border-zinc-200">
+                              {candidate.photo_url ? (
+                                <AvatarImage
+                                  src={candidate.photo_url}
+                                  alt={`${candidate.display_name} 프로필 이미지`}
+                                />
+                              ) : null}
+                              <AvatarFallback className="text-xs">
+                                {profileInitial(candidate.display_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="min-w-0 truncate">{candidate.display_name}</span>
+                          </CommandItem>
+                        );
+                      })}
                     </CommandGroup>
-                  </CommandList>
-                </Command>
-              </div>,
-              anchorElementRef.current
-            )
-          : null
+                    <div
+                      ref={loadMoreSentinelRef}
+                      className="flex min-h-10 items-center justify-center px-2 py-2"
+                      aria-live="polite"
+                    >
+                      {status === "loading" ? (
+                        <span
+                          className="flex items-center text-xs text-muted-foreground"
+                          role="status"
+                        >
+                          <LoaderCircle className="mr-2 size-3.5 animate-spin" aria-hidden="true" />
+                          더 불러오는 중입니다.
+                        </span>
+                      ) : status === "error" ? (
+                        <Button type="button" variant="ghost" size="sm" onClick={retry}>
+                          불러오기 재시도
+                        </Button>
+                      ) : hasMore ? (
+                        <span className="sr-only">다음 멘션 후보를 불러옵니다.</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          모든 검색 결과를 불러왔습니다.
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </div>,
+          anchorElementRef.current
+        );
       }}
     />
-  )
+  );
 }

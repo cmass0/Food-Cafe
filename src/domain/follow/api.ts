@@ -1,6 +1,6 @@
 import { throwApiError } from "@/lib/domain/api/error";
 
-import type { FollowListResponse, FollowListType } from "./type";
+import type { FollowListResponse, FollowListType, MentionCandidateResponse } from "./type";
 
 // 팔로우 토글 응답
 // 다른 카운터(Like/Bookmark) 응답과 동일한 구조 — 새 상태와 카운트를 함께 받음
@@ -46,6 +46,22 @@ export async function fetchFollowList(
 ): Promise<FollowListResponse> {
   const params = new URLSearchParams({ type, page: String(page), limit: String(limit) });
   const res = await fetch(`/api/follow/${targetUserId}/list?${params.toString()}`, { signal });
+  if (!res.ok) await throwApiError(res);
+  return res.json();
+}
+
+export async function fetchMentionCandidates(
+  query: string,
+  page: number,
+  limit: number,
+  signal?: AbortSignal
+): Promise<MentionCandidateResponse> {
+  const params = new URLSearchParams({
+    q: query,
+    page: String(page),
+    limit: String(limit),
+  });
+  const res = await fetch(`/api/mentions/candidates?${params.toString()}`, { signal });
   if (!res.ok) await throwApiError(res);
   return res.json();
 }

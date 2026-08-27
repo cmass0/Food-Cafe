@@ -30,3 +30,15 @@ export type FollowListResult = {
 export type FollowListResponse = FollowListResult & {
   type: FollowListType;
 };
+
+export type MentionCandidate = FollowProfile;
+
+export type MentionCandidateResult = {
+  items: MentionCandidate[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+};
+
+export type MentionCandidateResponse = MentionCandidateResult;
