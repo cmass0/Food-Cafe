@@ -52,8 +52,8 @@ const SHARE_ERROR_CONTENT: Record<ShareErrorKind, { title: string; description: 
     description: "공유 기능을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
   },
   "share-failed": {
-    title: "카카오톡 공유에 실패했습니다",
-    description: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    title: "카카오톡 공유를 시작하지 못했습니다",
+    description: "공유 화면을 열지 못했습니다. 잠시 후 다시 시도해 주세요.",
   },
 };
 

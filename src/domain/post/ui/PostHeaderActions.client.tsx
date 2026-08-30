@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Check, Share2 } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import * as React from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
@@ -13,7 +13,6 @@ import { isUnauthorizedApiError } from "@/lib/api/client";
 
 type PostHeaderActionsProps = {
   postId: string;
-  postTitle: string;
   initialBookmarkCount: number;
 };
 
@@ -28,12 +27,10 @@ function formatCount(value: number) {
 
 export default function PostHeaderActions({
   postId,
-  postTitle,
   initialBookmarkCount,
 }: PostHeaderActionsProps) {
   const [bookmarked, setBookmarked] = React.useState(false);
   const [bookmarkCount, setBookmarkCount] = React.useState(initialBookmarkCount);
-  const [shared, setShared] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
@@ -122,24 +119,6 @@ export default function PostHeaderActions({
     });
   }
 
-  async function sharePost() {
-    const url = window.location.href;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: postTitle, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setShared(true);
-        window.setTimeout(() => setShared(false), 1800);
-      }
-    } catch (error) {
-      if ((error as DOMException).name !== "AbortError") {
-        console.error("게시글 공유에 실패했습니다.", error);
-      }
-    }
-  }
-
   return (
     <div className="flex items-center gap-1 text-sm font-medium text-zinc-700">
       <button
@@ -154,18 +133,6 @@ export default function PostHeaderActions({
           className={`h-4 w-4 ${bookmarked ? "fill-[#15933d] text-[#15933d]" : ""}`}
         />
         북마크 {formatCount(bookmarkCount)}
-      </button>
-      <button
-        type="button"
-        onClick={sharePost}
-        className="inline-flex h-9 items-center gap-2 rounded-md px-2.5 transition hover:bg-zinc-100"
-      >
-        {shared ? (
-          <Check className="h-4 w-4 text-[#15933d]" />
-        ) : (
-          <Share2 className="h-4 w-4" />
-        )}
-        {shared ? "복사됨" : "공유"}
       </button>
     </div>
   );

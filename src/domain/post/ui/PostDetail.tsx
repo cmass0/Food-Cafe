@@ -74,7 +74,6 @@ export default function PostDetail({ post }: { post: Post }) {
           </div>
           <PostHeaderActions
             postId={post.id}
-            postTitle={post.title}
             initialBookmarkCount={post.bookmarkCount}
           />
         </div>
