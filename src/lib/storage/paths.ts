@@ -1,9 +1,21 @@
-const DEFAULT_STORAGE_BUCKET = "Food-Cafe";
 
-// 버킷 이름은 한 곳에서만 관리한다. 환경변수를 아직 설정하지 않은 기존 환경은
-// 현재 버킷을 그대로 사용하고, 배포 환경별 버킷은 환경변수로 덮어쓸 수 있다.
-export const STORAGE_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET?.trim() || DEFAULT_STORAGE_BUCKET;
+// 임의의 대체 버킷을 사용하지 않고, 배포 환경에 설정된 실제 버킷만 사용한다.
+const configuredStorageBucket =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET?.trim();
+
+// 이미지 URL을 만들 때는 설정 누락을 null로 전달해 화면이 fallback UI를 선택하게 한다.
+export function getStorageBucket(): string | null {
+  return configuredStorageBucket || null;
+}
+
+// 업로드·삭제·정리 작업은 버킷이 필수이므로 잘못된 버킷으로 요청하기 전에 중단한다.
+export function requireStorageBucket(): string {
+  const bucket = getStorageBucket();
+  if (!bucket) {
+    throw new Error("[storage] NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET 환경변수가 필요합니다.");
+  }
+  return bucket;
+}
 
 export const CONTENT_IMAGE_TYPES = ["recipes", "combos", "posts"] as const;
 export type ContentImageType = (typeof CONTENT_IMAGE_TYPES)[number];
@@ -80,9 +92,13 @@ function projectUrl(): string | null {
 
 function publicObjectPrefix(): string | null {
   const baseUrl = projectUrl();
-  return baseUrl
-    ? `${baseUrl}/storage/v1/object/public/${encodeURIComponent(STORAGE_BUCKET)}/`
-    : null;
+  const bucket = getStorageBucket();
+
+  if (!baseUrl || !bucket) {
+    return null;
+  }
+
+  return `${baseUrl}/storage/v1/object/public/${encodeURIComponent(bucket)}/`;
 }
 
 function decodeStoragePath(value: string): string | null {

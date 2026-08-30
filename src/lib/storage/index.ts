@@ -5,7 +5,7 @@ import {
   fileExtension,
   isManagedStoragePath,
   randomKey,
-  STORAGE_BUCKET,
+  requireStorageBucket,
   type UploadImageType,
 } from "./paths";
 
@@ -24,8 +24,9 @@ export async function uploadBucketImage(
     type === "avatars"
       ? avatarImagePath(userId, base)
       : contentImagePath(type, userId, contentId, base);
+  const bucket = requireStorageBucket();
   const client = getBrowserSupabase();
-  const { error } = await client.storage.from(STORAGE_BUCKET).upload(path, file, {
+  const { error } = await client.storage.from(bucket).upload(path, file, {
     cacheControl: "3600",
     upsert: Boolean(opts?.upsert),
     contentType: opts?.contentType,
@@ -42,7 +43,8 @@ export async function removeUploadedBucketImages(paths: string[]): Promise<void>
   const safePaths = [...new Set(paths)].filter(isManagedStoragePath);
   if (safePaths.length === 0) return;
 
+  const bucket = requireStorageBucket();
   const client = getBrowserSupabase();
-  const { error } = await client.storage.from(STORAGE_BUCKET).remove(safePaths);
+  const { error } = await client.storage.from(bucket).remove(safePaths);
   if (error) throw error;
 }

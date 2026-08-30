@@ -8,7 +8,7 @@ import {
   isManagedStoragePath,
   isOwnedStoragePath,
   managedStoragePathFromValue,
-  STORAGE_BUCKET,
+  requireStorageBucket,
   storagePrefix,
   type ContentImageType,
 } from "./paths";
@@ -31,11 +31,12 @@ export async function listStorageFilesRecursive(
   prefix: string
 ): Promise<StorageFile[]> {
   const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, "");
+  const bucket = requireStorageBucket();
   const files: StorageFile[] = [];
   let offset = 0;
 
   while (true) {
-    const { data, error } = await client.storage.from(STORAGE_BUCKET).list(normalizedPrefix, {
+    const { data, error } = await client.storage.from(bucket).list(normalizedPrefix, {
       limit: LIST_PAGE_SIZE,
       offset,
       sortBy: { column: "name", order: "asc" },
@@ -64,11 +65,14 @@ export async function removeStoragePaths(
   paths: Iterable<string>
 ): Promise<number> {
   const safePaths = [...new Set(paths)].filter(isManagedStoragePath);
+  if (safePaths.length === 0) return 0;
+
+  const bucket = requireStorageBucket();
   let removed = 0;
 
   for (let index = 0; index < safePaths.length; index += REMOVE_BATCH_SIZE) {
     const batch = safePaths.slice(index, index + REMOVE_BATCH_SIZE);
-    const { error } = await client.storage.from(STORAGE_BUCKET).remove(batch);
+    const { error } = await client.storage.from(bucket).remove(batch);
     if (error) throw error;
     removed += batch.length;
   }
