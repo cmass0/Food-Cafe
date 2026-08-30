@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Clock3,
   Lightbulb,
+  Link2,
   MoreHorizontal,
   Quote,
   Sprout,
@@ -16,6 +17,7 @@ import DeleteRecipeButton from "@/app/recipes/components/DeleteRecipeButton";
 import UpdateRecipeButton from "@/app/recipes/components/UpdateRecipeButton";
 import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
 import ViewCount from "@/domain/view/ui/ViewCount.client";
+import { CopyClipButton } from "@/lib/shareButton/copycliep";
 import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
 import type { Recipe } from "../types";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
@@ -329,6 +331,13 @@ export default function RecipeDetail({
             </span>
             카카오톡으로 공유
           </KakaoShareButton>
+          <CopyClipButton
+            currentUrl={currentUrl}
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+          >
+            <Link2 className="h-5 w-5" />
+            URL 복사
+          </CopyClipButton>
         </div>
       </section>
     </article>
