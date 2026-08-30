@@ -711,56 +711,8 @@ export type Database = {
           liked: boolean
         }[]
       }
-      get_trending_combos_7d: {
-        Args: { limit_size?: number }
-        Returns: {
-          bookmark_count: number
-          comment_count: number
-          created_at: string
-          id: string
-          image: string
-          last_activity_at: string
-          like_count: number
-          recent_activity_count: number
-          recent_bookmark_count: number
-          recent_comment_count: number
-          recent_like_count: number
-          recent_participant_count: number
-          summary: string
-          tags: string[]
-          title: string
-          trend_score: number
-          view_count: number
-          writer_name: string
-          writer_uid: string
-        }[]
-      }
       get_trending_combos_by_period: {
         Args: { limit_size?: number; period?: string }
-        Returns: {
-          bookmark_count: number
-          comment_count: number
-          created_at: string
-          id: string
-          image: string
-          last_activity_at: string
-          like_count: number
-          recent_activity_count: number
-          recent_bookmark_count: number
-          recent_comment_count: number
-          recent_like_count: number
-          recent_participant_count: number
-          summary: string
-          tags: string[]
-          title: string
-          trend_score: number
-          view_count: number
-          writer_name: string
-          writer_uid: string
-        }[]
-      }
-      get_trending_posts_7d: {
-        Args: { limit_size?: number }
         Returns: {
           bookmark_count: number
           comment_count: number
@@ -807,21 +759,6 @@ export type Database = {
           writer_uid: string
         }[]
       }
-      get_trending_recipe_tags_7d: {
-        Args: { limit_size?: number }
-        Returns: {
-          last_activity_at: string
-          recent_activity_count: number
-          recent_bookmark_count: number
-          recent_comment_count: number
-          recent_like_count: number
-          recent_participant_count: number
-          recent_recipe_count: number
-          tag: string
-          total_recipe_count: number
-          trend_score: number
-        }[]
-      }
       get_trending_recipe_tags_by_period: {
         Args: { limit_size?: number; period?: string }
         Returns: {
@@ -835,30 +772,6 @@ export type Database = {
           tag: string
           total_recipe_count: number
           trend_score: number
-        }[]
-      }
-      get_trending_recipes_7d: {
-        Args: { limit_size?: number }
-        Returns: {
-          bookmark_count: number
-          comment_count: number
-          created_at: string
-          id: string
-          image: string
-          last_activity_at: string
-          like_count: number
-          recent_activity_count: number
-          recent_bookmark_count: number
-          recent_comment_count: number
-          recent_like_count: number
-          recent_participant_count: number
-          summary: string
-          tags: string[]
-          title: string
-          trend_score: number
-          view_count: number
-          writer_name: string
-          writer_uid: string
         }[]
       }
       get_trending_recipes_by_period: {
