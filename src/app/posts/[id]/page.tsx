@@ -1,5 +1,6 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 
 import CommentArea from "@/domain/comment/ui/CommentArea";
 import * as postService from "@/domain/post/service";
@@ -33,9 +34,14 @@ export default async function PostDetailPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const params = await props.params;
+  const idResult = z.string().uuid().safeParse(params.id);
+  if (!idResult.success) {
+    notFound();
+  }
+
   noStore();
   const supabase = await getServerSupabase();
-  const post = await postService.getPost(supabase, params.id);
+  const post = await postService.getPost(supabase, idResult.data);
   if (!post) {
     notFound();
   }

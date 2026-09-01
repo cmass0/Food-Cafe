@@ -1,7 +1,0 @@
-.loading {
-  text-align: center;
-  animation: loading 1s ease-in-out infinite;
-  font-weight: bold;
-  font-size: 24px;
-  color: rgb(128, 103, 103);
-}
