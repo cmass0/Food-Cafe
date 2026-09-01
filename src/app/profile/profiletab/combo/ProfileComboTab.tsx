@@ -1,3 +1,4 @@
+import SectionErrorState from "@/components/status/SectionErrorState";
 import { listBookmarkedCombos, listCombos, listLikedCombos } from "@/domain/combo/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -116,6 +117,6 @@ export default async function ProfileComboTab({
     }
   } catch (error) {
     console.error("[profile.combo.tab] fetch error:", error);
-    return <div className="text-sm text-destructive">조합을 불러오지 못했습니다.</div>;
+    return <SectionErrorState title="조합을 불러오지 못했습니다." />;
   }
 }

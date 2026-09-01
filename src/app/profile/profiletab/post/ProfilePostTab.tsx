@@ -1,3 +1,4 @@
+import SectionErrorState from "@/components/status/SectionErrorState";
 import {
   listBookmarkedPosts,
   listLikedPosts,
@@ -69,6 +70,6 @@ export default async function ProfilePostTab({
     );
   } catch (error) {
     console.error("[profile.post] fetch error:", error);
-    return <div className="text-sm text-destructive">게시글을 불러오지 못했습니다.</div>;
+    return <SectionErrorState title="게시글을 불러오지 못했습니다." />;
   }
 }

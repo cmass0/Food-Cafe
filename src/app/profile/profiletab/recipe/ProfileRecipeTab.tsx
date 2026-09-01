@@ -1,3 +1,4 @@
+import SectionErrorState from "@/components/status/SectionErrorState";
 import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/domain/recipe/service";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -118,6 +119,6 @@ export default async function ProfileRecipeTab({
     }
   } catch (error) {
     console.error("[profile.tab] fetch error:", error);
-    return <div className="text-sm text-destructive">레시피를 불러오지 못했습니다.</div>;
+    return <SectionErrorState title="레시피를 불러오지 못했습니다." />;
   }
 }

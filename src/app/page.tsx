@@ -30,6 +30,7 @@ import sandwichImage from "@/assets/sandwich.jpeg";
 import soupImage from "@/assets/soup.jpeg";
 import chickenImage from "@/assets/spicy-braised-chicken.jpeg";
 import tteokImage from "@/assets/tteok-bokki.jpeg";
+import SectionErrorState from "@/components/status/SectionErrorState";
 import type { Recipe } from "@/domain/recipe/types";
 import * as recipeService from "@/domain/recipe/service";
 import * as trendingService from "@/features/trending/service";
@@ -203,9 +204,19 @@ function HomeSectionStatus({
   emptyMessage: string;
   className: string;
 }) {
+  if (error) {
+    return (
+      <SectionErrorState
+        title="데이터를 불러오지 못했습니다."
+        compact
+        className={className}
+      />
+    );
+  }
+
   return (
-    <p className={className} role={error ? "alert" : "status"}>
-      {error ? "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." : emptyMessage}
+    <p className={className} role="status">
+      {emptyMessage}
     </p>
   );
 }
@@ -305,9 +316,10 @@ function TrendingPanel({ items, hasError }: { items: FeedItem[]; hasError: boole
       <h2 className="mb-4 text-lg font-bold text-zinc-950">지금 뜨는 레시피·조합</h2>
       <div className="space-y-4">
         {hasError && items.length > 0 ? (
-          <p className="text-xs text-amber-700" role="alert">
-            일부 순위 데이터를 불러오지 못했습니다.
-          </p>
+          <SectionErrorState
+            title="일부 순위 데이터를 불러오지 못했습니다."
+            compact
+          />
         ) : null}
         {items.length > 0 ? (
           items.map((item, index) => (

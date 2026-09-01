@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
+import SectionErrorState from "@/components/status/SectionErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -428,6 +429,8 @@ function CombosPageInner() {
   const [activeComboId, setActiveComboId] = useState<string | null>(null);
   const [combos, setCombos] = useState<Combos[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [pageMeta, setPageMeta] = useState<Pick<ComboListResult, "limit" | "offset" | "total">>({
     limit: requestedPageSize,
     offset: 0,
@@ -447,6 +450,7 @@ function CombosPageInner() {
 
     async function fetchCombos() {
       setLoading(true);
+      setLoadError(false);
       try {
         const data = await listCombos({
           limit: requestedPageSize,
@@ -486,6 +490,7 @@ function CombosPageInner() {
       } catch (error) {
         console.error("조합 목록을 불러오지 못했습니다.", error);
         if (mounted) {
+          setLoadError(true);
           setCombos([]);
           setPageMeta({ limit: requestedPageSize, offset: 0, total: 0 });
         }
@@ -498,7 +503,7 @@ function CombosPageInner() {
     return () => {
       mounted = false;
     };
-  }, [requestedPageSize, currentPage, searchQuery, fieldParam, user?.id, sort]);
+  }, [requestedPageSize, currentPage, searchQuery, fieldParam, user?.id, sort, reloadKey]);
 
   useEffect(() => {
     if (combos.length === 0) {
@@ -655,6 +660,11 @@ function CombosPageInner() {
                   />
                 ))}
               </div>
+            ) : loadError ? (
+              <SectionErrorState
+                title="조합 목록을 불러오지 못했습니다."
+                onRetry={() => setReloadKey((current) => current + 1)}
+              />
             ) : combos.length ? (
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {combos.map((combo) => (

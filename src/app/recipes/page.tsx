@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
+import SectionErrorState from "@/components/status/SectionErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -219,7 +220,17 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
   );
 }
 
-function RecipesGrid({ recipes, loading }: { recipes: Recipe[]; loading: boolean }) {
+function RecipesGrid({
+  recipes,
+  loading,
+  loadError,
+  onRetry,
+}: {
+  recipes: Recipe[];
+  loading: boolean;
+  loadError: boolean;
+  onRetry: () => void;
+}) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -230,6 +241,15 @@ function RecipesGrid({ recipes, loading }: { recipes: Recipe[]; loading: boolean
           />
         ))}
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <SectionErrorState
+        title="레시피 목록을 불러오지 못했습니다."
+        onRetry={onRetry}
+      />
     );
   }
 
@@ -255,6 +275,8 @@ function RecipesPageInner() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [sort, setSort] = useState<RecipeSort>("recent");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [pageMeta, setPageMeta] = useState<Pick<RecipeListResult, "limit" | "offset" | "total">>({
     limit: DEFAULT_LIMIT,
     offset: 0,
@@ -292,6 +314,7 @@ function RecipesPageInner() {
 
     async function fetchRecipes() {
       setLoading(true);
+      setLoadError(false);
       try {
         const data = await listRecipes({
           limit: safeLimit,
@@ -316,6 +339,7 @@ function RecipesPageInner() {
       } catch (error) {
         console.error("레시피 목록을 불러오지 못했습니다.", error);
         if (mounted) {
+          setLoadError(true);
           setRecipes([]);
           setPageMeta({ limit: safeLimit, offset: 0, total: 0 });
         }
@@ -328,7 +352,7 @@ function RecipesPageInner() {
     return () => {
       mounted = false;
     };
-  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort, category]);
+  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort, category, reloadKey]);
 
   function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -459,7 +483,12 @@ function RecipesPageInner() {
           </div>
         </section>
 
-        <RecipesGrid recipes={recipes} loading={loading} />
+        <RecipesGrid
+          recipes={recipes}
+          loading={loading}
+          loadError={loadError}
+          onRetry={() => setReloadKey((current) => current + 1)}
+        />
 
         <footer className="mt-10 flex justify-center">
           <PaginationComponent

@@ -1,0 +1,77 @@
+"use client";
+
+import { AlertTriangle, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type SectionErrorStateProps = {
+  title: string;
+  description?: string;
+  className?: string;
+  compact?: boolean;
+  onRetry?: () => void;
+};
+
+export default function SectionErrorState({
+  title,
+  description = "잠시 후 다시 시도해 주세요.",
+  className,
+  compact = false,
+  onRetry,
+}: SectionErrorStateProps) {
+  const router = useRouter();
+  const [isRefreshing, startTransition] = useTransition();
+
+  function handleRetry() {
+    if (onRetry) {
+      onRetry();
+      return;
+    }
+
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex rounded-lg border border-destructive/20 bg-destructive/5 px-5 text-destructive",
+        compact
+          ? "items-center justify-between gap-4 py-3 text-left"
+          : "min-h-[180px] flex-col items-center justify-center py-10 text-center",
+        className
+      )}
+      role="alert"
+    >
+      <div
+        className={cn("flex min-w-0", compact ? "items-center gap-3" : "flex-col items-center")}
+      >
+        <AlertTriangle
+          className={cn("shrink-0", compact ? "size-5" : "mb-3 size-8")}
+          aria-hidden="true"
+        />
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className={cn("text-sm text-muted-foreground", compact ? "mt-0.5" : "mt-2")}>
+            {description}
+          </p>
+        </div>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={cn("gap-2", compact ? "shrink-0" : "mt-5")}
+        onClick={handleRetry}
+        disabled={isRefreshing}
+      >
+        <RotateCcw className={cn("size-4", isRefreshing && "animate-spin")} aria-hidden="true" />
+        {isRefreshing ? "불러오는 중" : "다시 시도"}
+      </Button>
+    </div>
+  );
+}
