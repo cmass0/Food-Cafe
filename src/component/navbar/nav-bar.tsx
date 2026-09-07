@@ -3,7 +3,7 @@
 import { ChefHat, CircleUserRound, LogIn, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -37,6 +38,8 @@ const NAV_ITEMS = [
 function NavbarInner() {
   const [searchText, setSearchText] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const pendingAuthNext = useRef<string | null>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,6 +68,12 @@ function NavbarInner() {
   function handleOpenAuth() {
     const params = searchParams.toString();
     const next = pathname ? (params ? `${pathname}?${params}` : pathname) : "/";
+    if (isSheetOpen) {
+      // 메뉴가 닫힌 뒤 로그인 모달을 열도록 복귀 경로만 보관합니다.
+      pendingAuthNext.current = next;
+      setIsSheetOpen(false);
+      return;
+    }
     openAuthModal({ next });
   }
 
@@ -89,8 +98,8 @@ function NavbarInner() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "transition hover:text-[#438e4d]",
-                    active ? "text-[#438e4d]" : "text-zinc-700"
+                    "transition hover:text-[#34783f]",
+                    active ? "text-[#34783f]" : "text-zinc-700"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -107,7 +116,8 @@ function NavbarInner() {
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               placeholder="레시피, 재료, 닉네임 검색..."
-              className="h-10 rounded-full border-0 bg-zinc-100 pl-5 pr-11 text-sm shadow-none placeholder:text-zinc-400 focus-visible:ring-[#438e4d]"
+              aria-label="사이트 검색어"
+              className="h-10 rounded-full border-0 bg-zinc-100 pl-5 pr-11 text-sm shadow-none placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-[#438e4d]/40"
             />
             <button
               type="submit"
@@ -142,7 +152,7 @@ function NavbarInner() {
           ) : (
             <Button
               onClick={handleOpenAuth}
-              className="h-10 rounded-lg bg-[#438e4d] px-6 text-sm font-bold text-white hover:bg-[#34783f]"
+              className="h-10 rounded-lg bg-[#34783f] px-6 text-sm font-bold text-white hover:bg-[#2f6f39]"
             >
               로그인
             </Button>
@@ -151,13 +161,35 @@ function NavbarInner() {
 
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden" aria-label="메뉴 열기">
+            <Button
+              ref={menuTriggerRef}
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 lg:hidden"
+              aria-label="메뉴 열기"
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] bg-white">
-            <SheetHeader className="text-left">
+          <SheetContent
+            side="right"
+            closeLabel="메뉴 닫기"
+            className="w-[300px] bg-white"
+            onCloseAutoFocus={(event) => {
+              const next = pendingAuthNext.current;
+              if (next === null) return;
+              pendingAuthNext.current = null;
+              // 메뉴 닫힘이 완료된 시점에 전환해 두 모달의 포커스 충돌을 방지합니다.
+              event.preventDefault();
+              menuTriggerRef.current?.focus();
+              openAuthModal({ next });
+            }}
+          >
+            <SheetHeader className="pr-12 text-left">
               <SheetTitle>FoodCafe</SheetTitle>
+              <SheetDescription className="sr-only">
+                사이트 검색, 주요 페이지 이동 및 로그인을 할 수 있는 메뉴입니다.
+              </SheetDescription>
             </SheetHeader>
             <div className="mt-6 space-y-6">
               <form onSubmit={handleSearchSubmit} className="relative">
@@ -165,24 +197,25 @@ function NavbarInner() {
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="레시피 검색"
-                  className="h-10 rounded-lg pl-4 pr-10"
+                  aria-label="사이트 검색어"
+                  className="h-11 rounded-lg pl-4 pr-12 focus-visible:border-[#438e4d] focus-visible:ring-2 focus-visible:ring-[#438e4d]/30"
                 />
                 <button
                   type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute right-0 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="검색"
                 >
                   <Search className="h-4 w-4" />
                 </button>
               </form>
-              <nav className="flex flex-col gap-2">
+              <nav className="flex flex-col gap-2" aria-label="모바일 주요 메뉴">
                 {NAV_ITEMS.map((item) => (
                   <SheetClose asChild key={item.href}>
                     <Link
                       href={item.href}
                       className={cn(
                         "rounded-lg px-3 py-2 text-sm font-bold",
-                        isActivePath(item.href) ? "bg-emerald-50 text-[#438e4d]" : "text-zinc-700"
+                        isActivePath(item.href) ? "bg-emerald-50 text-[#34783f]" : "text-zinc-700"
                       )}
                     >
                       {item.label}
@@ -191,13 +224,13 @@ function NavbarInner() {
                 ))}
               </nav>
               {user ? (
-                <div className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-[#438e4d]">
+                <div className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-[#34783f]">
                   {name}
                 </div>
               ) : (
                 <Button
                   onClick={handleOpenAuth}
-                  className="w-full rounded-lg bg-[#438e4d] text-white"
+                  className="w-full rounded-lg bg-[#34783f] text-white hover:bg-[#2f6f39]"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
                   로그인

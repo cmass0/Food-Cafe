@@ -74,11 +74,11 @@ export default function ComboDetail({
   return (
     <article className="space-y-10">
       <nav className="flex items-center gap-2 text-sm font-medium text-zinc-500">
-        <Link href="/" className="transition hover:text-[#15933d]">
+        <Link href="/" className="transition hover:text-[#34783f]">
           홈
         </Link>
         <ChevronRight className="h-4 w-4" />
-        <Link href="/combos" className="transition hover:text-[#15933d]">
+        <Link href="/combos" className="transition hover:text-[#34783f]">
           조합
         </Link>
         <ChevronRight className="h-4 w-4" />
@@ -344,7 +344,7 @@ export default function ComboDetail({
                 className="grid gap-4 sm:grid-cols-[44px_1fr]"
               >
                 <div className="flex justify-center sm:block">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#15933d] text-sm font-black text-white">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#34783f] text-sm font-black text-white">
                     {index + 1}
                   </span>
                 </div>

@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Bookmark,
-  ChevronRight,
-  Clock3,
-  Eye,
-  Heart,
-  Plus,
-  Search,
-} from "lucide-react";
+import { Bookmark, ChevronRight, Clock3, Eye, Heart, Plus, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -144,27 +136,35 @@ function ComboActionButtons({
     }
   }
 
-  const buttonClass = compact
+  const buttonSurfaceClass = compact
     ? "grid h-8 w-8 place-items-center rounded-full bg-white text-zinc-500 shadow-sm transition hover:text-[#438e4d]"
     : "grid h-9 w-9 place-items-center rounded-full bg-white/95 text-zinc-500 shadow-sm transition hover:bg-white";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center">
       <button
         type="button"
         aria-label={`저장 ${formatCount(stats.bookmarkCount)}`}
         onClick={handleBookmark}
-        className={buttonClass}
+        className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
       >
-        <Bookmark className={`h-4 w-4 ${stats.bookmarked ? "fill-amber-400 text-amber-400" : ""}`} />
+        <span className={buttonSurfaceClass}>
+          <Bookmark
+            className={`h-4 w-4 ${stats.bookmarked ? "fill-amber-400 text-amber-400" : ""}`}
+          />
+        </span>
       </button>
       <button
         type="button"
         aria-label={`좋아요 ${formatCount(stats.likeCount)}`}
         onClick={handleLike}
-        className={buttonClass}
+        className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
       >
-        <Heart className={`h-4 w-4 ${stats.liked ? "fill-red-400 text-red-400" : "text-red-500"}`} />
+        <span className={buttonSurfaceClass}>
+          <Heart
+            className={`h-4 w-4 ${stats.liked ? "fill-red-400 text-red-400" : "text-red-500"}`}
+          />
+        </span>
       </button>
     </div>
   );
@@ -254,12 +254,7 @@ function ComboGridCard({
               {formatCount(combo.viewCount)}
             </span>
           </div>
-          <ComboActionButtons
-            combo={combo}
-            stats={stats}
-            onStatsChange={onStatsChange}
-            compact
-          />
+          <ComboActionButtons combo={combo} stats={stats} onStatsChange={onStatsChange} compact />
         </div>
       </div>
     </article>
@@ -401,7 +396,10 @@ function ComboPreviewPanel({
           </div>
         </div>
 
-        <Button asChild className="mt-auto h-12 w-full rounded-lg bg-[#2e9a48] font-bold text-white hover:bg-[#247d3a]">
+        <Button
+          asChild
+          className="mt-auto h-12 w-full rounded-lg bg-[#2e9a48] font-bold text-white hover:bg-[#247d3a]"
+        >
           <Link href={`/combos/${combo.id}`}>상세보기</Link>
         </Button>
       </div>
@@ -564,6 +562,7 @@ function CombosPageInner() {
   }
 
   const pageSize = pageMeta.limit > 0 ? pageMeta.limit : requestedPageSize;
+  const showPreview = !loading && !loadError && activeCombo !== null;
   const paginationQuery: Record<string, string> = {};
   if (searchQuery) {
     paginationQuery.search = searchQuery;
@@ -597,7 +596,7 @@ function CombosPageInner() {
                   <TabsTrigger
                     key={option.value}
                     value={option.value}
-                    className="h-9 rounded-full px-5 text-sm font-bold text-zinc-500 data-[state=active]:bg-[#3f914b] data-[state=active]:text-white data-[state=active]:shadow-none"
+                    className="h-9 rounded-full px-5 text-sm font-bold text-zinc-500 data-[state=active]:bg-[#34783f] data-[state=active]:text-white data-[state=active]:shadow-none"
                   >
                     {option.label}
                   </TabsTrigger>
@@ -607,7 +606,7 @@ function CombosPageInner() {
 
             <form
               onSubmit={handleSearchSubmit}
-              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm md:max-w-[470px]"
+              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition focus-within:border-[#438e4d] focus-within:ring-2 focus-within:ring-[#438e4d]/30 md:max-w-[470px]"
             >
               <Select
                 value={searchField}
@@ -640,7 +639,7 @@ function CombosPageInner() {
                   variant="ghost"
                   size="icon"
                   aria-label="검색"
-                  className="h-10 w-9 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
+                  className="h-11 w-11 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
                 >
                   <Search className="h-5 w-5" />
                 </Button>
@@ -649,7 +648,13 @@ function CombosPageInner() {
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch">
+        <div
+          className={
+            showPreview
+              ? "grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch"
+              : "grid gap-8"
+          }
+        >
           <section className="flex flex-col gap-7">
             {loading ? (
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -681,26 +686,32 @@ function CombosPageInner() {
             ) : (
               <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center">
                 <p className="text-sm font-semibold text-zinc-700">조건에 맞는 조합이 없습니다.</p>
-                <p className="mt-2 text-sm text-zinc-500">검색어를 바꾸거나 새 조합을 만들어보세요.</p>
+                <p className="mt-2 text-sm text-zinc-500">
+                  검색어를 바꾸거나 새 조합을 만들어보세요.
+                </p>
               </div>
             )}
 
-            <div className="flex justify-center">
-              <PaginationComponent
-                basePath="/combos"
-                page={currentPage}
-                pageItemSize={pageSize}
-                total={pageMeta.total}
-                query={paginationQuery}
-              />
-            </div>
+            {!loading && !loadError && pageMeta.total > 0 ? (
+              <div className="flex justify-center">
+                <PaginationComponent
+                  basePath="/combos"
+                  page={currentPage}
+                  pageItemSize={pageSize}
+                  total={pageMeta.total}
+                  query={paginationQuery}
+                />
+              </div>
+            ) : null}
           </section>
 
-          <ComboPreviewPanel
-            combo={activeCombo}
-            stats={activeCombo ? getStats(activeCombo) : null}
-            onStatsChange={updateComboStats}
-          />
+          {showPreview ? (
+            <ComboPreviewPanel
+              combo={activeCombo}
+              stats={getStats(activeCombo)}
+              onStatsChange={updateComboStats}
+            />
+          ) : null}
         </div>
       </div>
     </main>

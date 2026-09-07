@@ -65,7 +65,7 @@ export default function SearchForm<TField extends string>({
     >
       <div
         className={cn(
-          "flex h-12 w-full max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm",
+          "flex h-12 w-full max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition focus-within:border-[#438e4d] focus-within:ring-2 focus-within:ring-[#438e4d]/30",
           containerClassName
         )}
       >
@@ -108,7 +108,7 @@ export default function SearchForm<TField extends string>({
             type="submit"
             variant="ghost"
             size="icon"
-            className={cn("h-full w-9 shrink-0 rounded-none text-gray-500", submitClassName)}
+            className={cn("h-full w-11 shrink-0 rounded-none text-gray-500", submitClassName)}
             aria-label="검색"
           >
             <Search className="h-4 w-4" />

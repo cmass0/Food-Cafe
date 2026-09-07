@@ -41,14 +41,17 @@ export default function SectionErrorState({
       className={cn(
         "flex rounded-lg border border-destructive/20 bg-destructive/5 px-5 text-destructive",
         compact
-          ? "items-center justify-between gap-4 py-3 text-left"
+          ? "flex-col items-stretch gap-3 py-3 text-left sm:flex-row sm:items-center sm:justify-between"
           : "min-h-[180px] flex-col items-center justify-center py-10 text-center",
         className
       )}
       role="alert"
     >
       <div
-        className={cn("flex min-w-0", compact ? "items-center gap-3" : "flex-col items-center")}
+        className={cn(
+          "flex min-w-0",
+          compact ? "items-start gap-3 sm:items-center" : "flex-col items-center"
+        )}
       >
         <AlertTriangle
           className={cn("shrink-0", compact ? "size-5" : "mb-3 size-8")}
@@ -65,7 +68,7 @@ export default function SectionErrorState({
         type="button"
         variant="outline"
         size="sm"
-        className={cn("gap-2", compact ? "shrink-0" : "mt-5")}
+        className={cn("gap-2", compact ? "w-full sm:w-auto sm:shrink-0" : "mt-5")}
         onClick={handleRetry}
         disabled={isRefreshing}
       >

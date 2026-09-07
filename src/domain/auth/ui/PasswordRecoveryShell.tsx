@@ -66,7 +66,7 @@ export default function PasswordRecoveryShell({
 
           <Link
             href={step === "request" ? buildAuthModalPath("/") : "/auth/recovery"}
-            className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition hover:text-[#438e4d]"
+            className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition hover:text-[#34783f]"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             {step === "request" ? "로그인으로 돌아가기" : "변경 링크 다시 받기"}

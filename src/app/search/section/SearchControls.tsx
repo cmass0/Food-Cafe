@@ -63,7 +63,7 @@ export default function SearchControls({ initialSort, initialView }: SearchContr
           aria-pressed={currentView === "grid"}
           onClick={() => updateParam("view", "grid")}
           className={cn(
-            "grid h-10 w-10 place-items-center rounded-md text-zinc-500 transition",
+            "grid h-11 w-11 place-items-center rounded-md text-zinc-500 transition",
             currentView === "grid" ? "bg-white text-[#15933d] shadow-sm" : "hover:text-zinc-900"
           )}
         >
@@ -75,7 +75,7 @@ export default function SearchControls({ initialSort, initialView }: SearchContr
           aria-pressed={currentView === "list"}
           onClick={() => updateParam("view", "list")}
           className={cn(
-            "grid h-10 w-10 place-items-center rounded-md text-zinc-500 transition",
+            "grid h-11 w-11 place-items-center rounded-md text-zinc-500 transition",
             currentView === "list" ? "bg-white text-[#15933d] shadow-sm" : "hover:text-zinc-900"
           )}
         >

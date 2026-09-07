@@ -36,11 +36,11 @@ export default function PostDetail({ post }: { post: Post }) {
           aria-label="경로"
           className="flex items-center gap-2 text-sm font-medium text-zinc-500"
         >
-          <Link href="/" className="rounded-sm p-0.5 hover:text-[#15933d]" aria-label="홈">
+          <Link href="/" className="rounded-sm p-0.5 hover:text-[#34783f]" aria-label="홈">
             <Home className="h-4 w-4" />
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-          <Link href="/posts" className="hover:text-[#15933d]">
+          <Link href="/posts" className="hover:text-[#34783f]">
             커뮤니티
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />

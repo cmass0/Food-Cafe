@@ -392,11 +392,11 @@ export default async function Home() {
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <input
                   name="query"
-                  className="h-11 w-full rounded-lg border border-zinc-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-zinc-400 focus:border-[#4b9855]"
+                  className="h-11 w-full rounded-lg border border-zinc-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-zinc-400 focus-visible:border-[#438e4d] focus-visible:ring-2 focus-visible:ring-[#438e4d]/30"
                   placeholder="오늘 뭐 먹지? 레시피를 검색해보세요!"
                 />
               </label>
-              <button className="h-11 rounded-lg bg-[#438e4d] px-8 text-sm font-bold text-white transition hover:bg-[#34783f]">
+              <button className="h-11 rounded-lg bg-[#34783f] px-8 text-sm font-bold text-white transition hover:bg-[#2f6f39]">
                 검색
               </button>
             </form>
@@ -429,7 +429,7 @@ export default async function Home() {
             >
               <span
                 className={`grid h-12 w-12 place-items-center rounded-full ${
-                  key === null ? "bg-emerald-100 text-[#3f914b]" : "bg-[#f7f4ef] text-zinc-700"
+                  key === null ? "bg-emerald-100 text-[#34783f]" : "bg-[#f7f4ef] text-zinc-700"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -549,16 +549,11 @@ export default async function Home() {
             </p>
             <Link
               href="/recipes/new"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#438e4d] px-4 py-3 text-sm font-bold text-white"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#34783f] px-4 py-3 text-sm font-bold text-white hover:bg-[#2f6f39]"
             >
               <PencilLine className="h-4 w-4" />
               레시피 등록하기
             </Link>
-            <div className="mt-5 flex justify-end">
-              <div className="grid h-24 w-24 place-items-center rounded-lg bg-white/80 text-[#438e4d] shadow-sm">
-                <ChefHat className="h-12 w-12" />
-              </div>
-            </div>
           </section>
           <TrendingPanel items={rankingItems} hasError={rankingHasError} />
         </div>

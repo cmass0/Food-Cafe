@@ -31,7 +31,7 @@ export function CommentForm({ content, submitting, error, onChange, onSubmit }: 
         <Button
           onClick={onSubmit}
           disabled={submitting || !content.trim()}
-          className="bg-[#15933d] px-5 font-bold text-white hover:bg-[#0d7d31]"
+          className="bg-[#34783f] px-5 font-bold text-white hover:bg-[#2f6f39]"
         >
           {submitting ? "작성 중..." : "댓글 작성"}
         </Button>

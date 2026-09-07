@@ -42,20 +42,24 @@ export default function PasswordField({
           required
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          className="pr-11"
+          className="pr-12"
         />
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
           disabled={disabled}
-          className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/30 disabled:pointer-events-none disabled:opacity-50"
+          className="group absolute right-0 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-md text-zinc-400 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/30 disabled:pointer-events-none disabled:opacity-50"
           aria-label={`${label} ${visible ? "숨기기" : "보기"}`}
           aria-pressed={visible}
         >
           {visible ? (
-            <EyeOff className="h-4 w-4" aria-hidden="true" />
+            <span className="grid h-8 w-8 place-items-center rounded-md transition group-hover:bg-zinc-100 group-hover:text-zinc-700">
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
+            </span>
           ) : (
-            <Eye className="h-4 w-4" aria-hidden="true" />
+            <span className="grid h-8 w-8 place-items-center rounded-md transition group-hover:bg-zinc-100 group-hover:text-zinc-700">
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            </span>
           )}
         </button>
       </div>

@@ -68,7 +68,7 @@ function PostResultCard({ post, viewMode }: { post: Post; viewMode: ViewMode }) 
         <Link
           href={post.writerUid ? `/profile/${post.writerUid}` : "/posts"}
           prefetch={false}
-          className="min-w-0 truncate transition hover:text-[#15933d]"
+          className="min-w-0 truncate transition hover:text-[#34783f]"
         >
           {post.writerName}
         </Link>
@@ -105,12 +105,12 @@ export default function SearchResultPosts({ posts, searchParams, queryText, view
             <MessageCircle className="h-4 w-4" />
           </span>
           <h2 className="text-xl font-black tracking-tight text-zinc-950">커뮤니티</h2>
-          <span className="text-base font-black text-[#15933d]">{formatCount(posts.total)}</span>
+          <span className="text-base font-black text-[#34783f]">{formatCount(posts.total)}</span>
         </div>
         <Link
           href={buildMoreHref(queryText)}
           prefetch={false}
-          className="text-sm font-bold text-zinc-500 transition hover:text-[#15933d]"
+          className="text-sm font-bold text-zinc-500 transition hover:text-[#34783f]"
         >
           더보기
         </Link>
@@ -130,7 +130,7 @@ export default function SearchResultPosts({ posts, searchParams, queryText, view
       )}
 
       {posts.total > 0 ? (
-        <div className="mt-5">
+        <div className="-mx-5 mt-5 sm:mx-0">
           <PaginationComponent
             basePath="/search"
             page={currentPage}

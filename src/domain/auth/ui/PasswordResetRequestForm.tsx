@@ -90,7 +90,7 @@ export default function PasswordResetRequestForm({
       <Button
         type={hasSent ? "button" : "submit"}
         disabled={pending || hasSent}
-        className="h-12 rounded-lg bg-[#438e4d] text-base font-bold text-white hover:bg-[#34783f]"
+        className="h-12 rounded-lg bg-[#34783f] text-base font-bold text-white hover:bg-[#2f6f39]"
       >
         {hasSent ? "변경 링크 전송 완료" : pending ? "변경 링크 전송 중..." : "변경 링크 전송하기"}
       </Button>
@@ -99,7 +99,7 @@ export default function PasswordResetRequestForm({
           type="submit"
           variant="ghost"
           disabled={pending || !canResend}
-          className="-mt-2 h-auto py-2 text-sm font-semibold text-zinc-500 hover:bg-transparent hover:text-[#438e4d]"
+          className="-mt-2 h-auto py-2 text-sm font-semibold text-zinc-500 hover:bg-transparent hover:text-[#34783f]"
         >
           {pending
             ? "다시 전송 중..."

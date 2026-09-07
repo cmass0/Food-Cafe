@@ -157,18 +157,22 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
           type="button"
           aria-label={`북마크 ${formatCount(bookmarkCount)}`}
           onClick={handleBookmark}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-[#438e4d] shadow-sm transition hover:bg-white"
+          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
         >
-          <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-[#438e4d]" : ""}`} />
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
+            <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-[#438e4d]" : ""}`} />
+          </span>
         </button>
 
         <button
           type="button"
           aria-label={`좋아요 ${formatCount(likeCount)}`}
           onClick={handleLike}
-          className="absolute bottom-4 right-4 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-500 shadow-sm transition hover:bg-white"
+          className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
         >
-          <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
+            <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
+          </span>
         </button>
       </div>
 
@@ -210,7 +214,7 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
           </div>
           <Link
             href={`/recipes?search=${encodeURIComponent(tag)}&searchField=tag_title`}
-            className="rounded-full bg-emerald-50 px-3 py-1 font-bold text-[#438e4d] transition hover:bg-emerald-100"
+            className="rounded-full bg-emerald-50 px-3 py-1 font-bold text-[#34783f] transition hover:bg-emerald-100"
           >
             #{tag}
           </Link>
@@ -245,12 +249,7 @@ function RecipesGrid({
   }
 
   if (loadError) {
-    return (
-      <SectionErrorState
-        title="레시피 목록을 불러오지 못했습니다."
-        onRetry={onRetry}
-      />
-    );
+    return <SectionErrorState title="레시피 목록을 불러오지 못했습니다." onRetry={onRetry} />;
   }
 
   if (!recipes.length) {
@@ -412,7 +411,7 @@ function RecipesPageInner() {
               </p>
             </div>
             <Button
-              className="h-12 rounded-full bg-[#16a34a] px-7 text-base font-bold text-white shadow-sm hover:bg-[#138a3f]"
+              className="h-12 rounded-full bg-[#34783f] px-7 text-base font-bold text-white shadow-sm hover:bg-[#2f6f39]"
               onClick={handleShare}
             >
               <Plus className="mr-2 h-5 w-5" />
@@ -431,7 +430,7 @@ function RecipesPageInner() {
                   <TabsTrigger
                     key={key}
                     value={key}
-                    className="h-9 rounded-full px-5 text-sm font-bold text-zinc-500 data-[state=active]:bg-[#3f914b] data-[state=active]:text-white data-[state=active]:shadow-none"
+                    className="h-9 rounded-full px-5 text-sm font-bold text-zinc-500 data-[state=active]:bg-[#34783f] data-[state=active]:text-white data-[state=active]:shadow-none"
                   >
                     {title}
                   </TabsTrigger>
@@ -441,7 +440,7 @@ function RecipesPageInner() {
 
             <form
               onSubmit={handleSearchSubmit}
-              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm md:max-w-[470px]"
+              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition focus-within:border-[#438e4d] focus-within:ring-2 focus-within:ring-[#438e4d]/30 md:max-w-[470px]"
             >
               <Select
                 value={searchField}
@@ -474,7 +473,7 @@ function RecipesPageInner() {
                   variant="ghost"
                   size="icon"
                   aria-label="검색"
-                  className="h-10 w-9 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
+                  className="h-11 w-11 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
                 >
                   <Search className="h-5 w-5" />
                 </Button>
@@ -490,15 +489,17 @@ function RecipesPageInner() {
           onRetry={() => setReloadKey((current) => current + 1)}
         />
 
-        <footer className="mt-10 flex justify-center">
-          <PaginationComponent
-            basePath="/recipes"
-            page={currentPage}
-            pageItemSize={pageSize}
-            total={pageMeta.total}
-            query={paginationQuery}
-          />
-        </footer>
+        {!loading && !loadError && pageMeta.total > 0 ? (
+          <footer className="mt-10 flex justify-center">
+            <PaginationComponent
+              basePath="/recipes"
+              page={currentPage}
+              pageItemSize={pageSize}
+              total={pageMeta.total}
+              query={paginationQuery}
+            />
+          </footer>
+        ) : null}
       </div>
     </main>
   );

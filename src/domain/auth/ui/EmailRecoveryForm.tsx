@@ -46,7 +46,7 @@ export default function EmailRecoveryForm({ action }: EmailRecoveryFormProps) {
           <p className="mt-2 break-all text-xl font-black text-zinc-950">{state.maskedEmail}</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Button asChild className="h-11 bg-[#438e4d] hover:bg-[#34783f]">
+          <Button asChild className="h-11 bg-[#34783f] hover:bg-[#2f6f39]">
             <Link href={buildAuthModalPath("/")}>로그인하기</Link>
           </Button>
           <Button asChild variant="outline" className="h-11">
@@ -111,7 +111,7 @@ export default function EmailRecoveryForm({ action }: EmailRecoveryFormProps) {
             name="intent"
             value="verify"
             disabled={pending}
-            className="h-12 bg-[#438e4d] text-base font-bold hover:bg-[#34783f]"
+            className="h-12 bg-[#34783f] text-base font-bold hover:bg-[#2f6f39]"
           >
             {pending ? "인증번호 확인 중..." : "인증하고 이메일 찾기"}
           </Button>
@@ -124,7 +124,7 @@ export default function EmailRecoveryForm({ action }: EmailRecoveryFormProps) {
             value="request"
             variant="ghost"
             disabled={pending || resendCooldown > 0}
-            className="h-auto w-full py-2 text-sm font-semibold text-zinc-500 hover:bg-transparent hover:text-[#438e4d]"
+            className="h-auto w-full py-2 text-sm font-semibold text-zinc-500 hover:bg-transparent hover:text-[#34783f]"
           >
             {resendCooldown > 0 ? `인증번호 다시 받기 (${resendCooldown}초)` : "인증번호 다시 받기"}
           </Button>
@@ -167,7 +167,7 @@ export default function EmailRecoveryForm({ action }: EmailRecoveryFormProps) {
         name="intent"
         value="request"
         disabled={pending}
-        className="h-12 bg-[#438e4d] text-base font-bold hover:bg-[#34783f]"
+        className="h-12 bg-[#34783f] text-base font-bold hover:bg-[#2f6f39]"
       >
         {pending ? "인증번호 전송 중..." : "인증번호 받기"}
       </Button>

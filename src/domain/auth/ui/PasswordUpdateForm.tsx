@@ -50,7 +50,7 @@ export default function PasswordUpdateForm({ action }: PasswordUpdateFormProps) 
       <Button
         type="submit"
         disabled={pending}
-        className="mt-1 h-12 rounded-lg bg-[#438e4d] text-base font-bold text-white hover:bg-[#34783f]"
+        className="mt-1 h-12 rounded-lg bg-[#34783f] text-base font-bold text-white hover:bg-[#2f6f39]"
       >
         {pending ? "비밀번호 변경 중..." : "비밀번호 변경하기"}
       </Button>

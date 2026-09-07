@@ -10,7 +10,7 @@ type GlobalErrorProps = {
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="ko">
-      <body>
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <PageErrorScreen
           error={error}
           reset={reset}

@@ -212,7 +212,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
           <Link
             href={buildHref({ view: "grid" })}
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-md transition",
+              "flex h-11 w-11 items-center justify-center rounded-md transition",
               view === "grid"
                 ? "bg-white text-emerald-700 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-900"
@@ -224,7 +224,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
           <Link
             href={buildHref({ view: "list" })}
             className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-md transition",
+              "flex h-11 w-11 items-center justify-center rounded-md transition",
               view === "list"
                 ? "bg-white text-emerald-700 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-900"

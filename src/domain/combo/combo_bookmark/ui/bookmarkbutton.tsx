@@ -59,14 +59,17 @@ export default function ComboCardBookmarkButton({ comboId, marked, count, onChan
     <button
       type="button"
       aria-label={`북마크 ${displayMarked ? "해제" : "추가"} (현재 ${count})`}
-      className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-emerald-300/60 text-emerald-100 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-50 disabled:cursor-not-allowed disabled:opacity-70"
+      className="group inline-grid h-11 w-11 cursor-pointer place-items-center rounded-full text-emerald-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-900 disabled:cursor-not-allowed disabled:opacity-70"
       onClick={handleClick}
     >
-      <Bookmark
-        className={`h-4 w-4 transition-colors ${
-          displayMarked ? "fill-yellow-400 text-yellow-400" : "text-yellow-400"
-        }`}
-      />
+      <span className="grid h-8 w-8 place-items-center rounded-full border border-emerald-300/60 shadow-sm transition group-hover:border-emerald-200 group-hover:bg-emerald-500/20 group-hover:text-emerald-50">
+        <Bookmark
+          className={`h-4 w-4 transition-colors ${
+            displayMarked ? "fill-yellow-400 text-yellow-400" : "text-yellow-400"
+          }`}
+          aria-hidden="true"
+        />
+      </span>
       <span className="sr-only">북마크 {count}</span>
     </button>
   );

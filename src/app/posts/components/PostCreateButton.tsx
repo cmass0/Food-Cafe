@@ -38,7 +38,7 @@ export default function PostCreateButton({
       className={cn(
         "h-10 rounded-lg px-5 text-sm font-bold",
         appearance === "solid"
-          ? "bg-[#15933d] text-white shadow-sm hover:bg-[#0d7d31]"
+          ? "bg-[#34783f] text-white shadow-sm hover:bg-[#2f6f39]"
           : "border-[#15933d] bg-white text-[#16883d] hover:border-[#0d7d31] hover:bg-emerald-50 hover:text-[#0d7d31]",
         className
       )}

@@ -150,7 +150,7 @@ export default async function PostsPage(props: PostsPageProps) {
         </section>
 
         <div className="mt-8 grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <div>
+          <div className="min-w-0">
             <section className="flex flex-col gap-5 2xl:flex-row 2xl:items-center 2xl:justify-between">
               <PostCategorySelect
                 categories={POST_CATEGORIES.map(({ value, label }) => ({ value, label }))}

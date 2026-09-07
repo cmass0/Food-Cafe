@@ -127,7 +127,7 @@ export default function PostHeaderActions({
         disabled={isPending}
         aria-pressed={bookmarked}
         aria-label={`북마크 ${formatCount(bookmarkCount)}`}
-        className="inline-flex h-9 items-center gap-2 rounded-md px-2.5 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex h-11 items-center gap-2 rounded-md px-2.5 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
       >
         <Bookmark
           className={`h-4 w-4 ${bookmarked ? "fill-[#15933d] text-[#15933d]" : ""}`}

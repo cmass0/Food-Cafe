@@ -43,15 +43,15 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
   return (
     <article
       className={cn(
-        "group overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md",
-        viewMode === "list" && "grid md:grid-cols-[260px_1fr]"
+        "group min-w-0 bg-white md:overflow-hidden md:rounded-lg md:border md:border-zinc-200 md:shadow-sm md:transition-[transform,box-shadow] md:hover:-translate-y-0.5 md:hover:shadow-md",
+        viewMode === "list" && "md:grid md:grid-cols-[260px_1fr]"
       )}
     >
       <Link
         href={`/recipes/${recipe.id}`}
         prefetch={false}
         className={cn(
-          "relative block aspect-[16/9] overflow-hidden bg-emerald-50",
+          "relative block aspect-square overflow-hidden rounded-lg bg-emerald-50 md:aspect-[16/9] md:rounded-none",
           viewMode === "list" && "md:aspect-auto md:min-h-[172px]"
         )}
         aria-label={`${recipe.title} 상세 보기`}
@@ -63,8 +63,8 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
             fill
             sizes={
               viewMode === "list"
-                ? "(max-width: 768px) 100vw, 260px"
-                : "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                ? "(max-width: 767px) 50vw, 260px"
+                : "(max-width: 767px) 50vw, (max-width: 1280px) 50vw, 25vw"
             }
             className="object-cover transition duration-300 group-hover:scale-105"
           />
@@ -75,14 +75,14 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
         )}
       </Link>
 
-      <div className="flex min-w-0 flex-col gap-3 p-4">
+      <div className="flex min-w-0 flex-col gap-1.5 pt-2 md:gap-3 md:p-4">
         <div className="min-w-0">
           <Link href={`/recipes/${recipe.id}`} prefetch={false}>
-            <h3 className="line-clamp-1 text-base font-black tracking-tight text-zinc-950">
+            <h3 className="truncate text-sm font-bold tracking-tight text-zinc-950 md:text-base md:font-black">
               {recipe.title}
             </h3>
           </Link>
-          <p className="mt-2 line-clamp-1 text-sm font-medium text-zinc-500">
+          <p className="mt-1 truncate text-xs font-medium text-zinc-500 md:mt-2 md:text-sm">
             {recipe.summary || "설명이 준비되지 않았어요"}
           </p>
         </div>
@@ -90,19 +90,20 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
         <Link
           href={`/recipes?search=${encodeURIComponent(tag)}&searchField=tag_title`}
           prefetch={false}
-          className="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-[#438e4d] transition hover:bg-emerald-100"
+          className="hidden w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-[#34783f] transition hover:bg-emerald-100 md:block"
         >
           #{tag}
         </Link>
 
         <div className="mt-auto flex items-center justify-between gap-3 text-xs font-medium text-zinc-500">
-          <span className="min-w-0 truncate">{writerLabel(recipe)}</span>
+          <span className="hidden min-w-0 truncate md:inline">{writerLabel(recipe)}</span>
           <span className="flex shrink-0 items-center gap-4">
             <span className="inline-flex items-center gap-1">
-              <Heart className="h-4 w-4" />
+              <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
+              <span className="sr-only">좋아요 </span>
               {formatCount(recipe.likeCount)}
             </span>
-            <span className="inline-flex items-center gap-1">
+            <span className="hidden items-center gap-1 md:inline-flex">
               <Eye className="h-4 w-4" />
               {formatCount(recipe.viewCount)}
             </span>
@@ -123,25 +124,25 @@ export default function SearchResultRecipe({
   const currentPage = Number(searchParams.recipePage) || 1;
   const gridClass =
     viewMode === "list"
-      ? "grid grid-cols-1 gap-4"
-      : "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4";
+      ? "grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-1 md:gap-4"
+      : "grid grid-cols-2 gap-x-3 gap-y-5 md:gap-4 xl:grid-cols-4";
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
       <header className="mb-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-6 w-6 place-items-center rounded-md bg-emerald-50 text-[#15933d]">
+          <span className="grid h-6 w-6 place-items-center rounded-md bg-emerald-50 text-[#34783f]">
             <ChefHat className="h-4 w-4" />
           </span>
           <h2 className="text-xl font-black tracking-tight text-zinc-950">레시피</h2>
-          <span className="text-base font-black text-[#15933d]">
+          <span className="text-base font-black text-[#34783f]">
             {formatCount(recipes.total)}
           </span>
         </div>
         <Link
           href={buildMoreHref(queryText)}
           prefetch={false}
-          className="text-sm font-bold text-zinc-500 transition hover:text-[#15933d]"
+          className="text-sm font-bold text-zinc-500 transition hover:text-[#34783f]"
         >
           더보기
         </Link>
@@ -161,7 +162,7 @@ export default function SearchResultRecipe({
       )}
 
       {recipes.total > 0 ? (
-        <div className="mt-5">
+        <div className="-mx-5 mt-5 sm:mx-0">
           <PaginationComponent
             basePath="/search"
             page={currentPage}

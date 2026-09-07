@@ -86,7 +86,9 @@ export default function PostList({
         <table
           className={cn(
             "w-full border-collapse text-sm",
-            isCommunityList ? "min-w-[860px]" : "min-w-[880px]"
+            isCommunityList
+              ? "table-fixed lg:min-w-[860px] lg:table-auto"
+              : "min-w-[880px]"
           )}
         >
           <thead
@@ -99,20 +101,53 @@ export default function PostList({
             )}
           >
             <tr className="h-12 border-b border-zinc-200">
-              <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[76px]" : "w-[110px]")}>
+              <th
+                className={cn(
+                  "text-center font-semibold",
+                  isCommunityList
+                    ? "w-14 px-2 sm:w-16 sm:px-3 lg:w-[76px] lg:px-5"
+                    : "w-[110px] px-5"
+                )}
+              >
                 번호
               </th>
-              <th className="px-5 text-left font-semibold">제목</th>
-              <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[120px]" : "w-[180px]")}>
+              <th
+                className={cn(
+                  "text-left font-semibold",
+                  isCommunityList ? "px-3 sm:px-4 lg:px-5" : "px-5"
+                )}
+              >
+                제목
+              </th>
+              <th
+                className={cn(
+                  "px-5 text-center font-semibold",
+                  isCommunityList ? "hidden w-[120px] lg:table-cell" : "w-[180px]"
+                )}
+              >
                 작성자
               </th>
               {isCommunityList ? (
-                <th className="w-[116px] px-4 text-center font-semibold">카테고리</th>
+                <th className="hidden w-[116px] px-4 text-center font-semibold lg:table-cell">
+                  카테고리
+                </th>
               ) : null}
-              <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[112px]" : "w-[140px]")}>
+              <th
+                className={cn(
+                  "px-5 text-center font-semibold",
+                  isCommunityList ? "hidden w-[112px] lg:table-cell" : "w-[140px]"
+                )}
+              >
                 작성일
               </th>
-              <th className={cn("px-5 text-center font-semibold", isCommunityList ? "w-[84px]" : "w-[120px]")}>
+              <th
+                className={cn(
+                  "text-center font-semibold",
+                  isCommunityList
+                    ? "w-16 px-2 sm:w-[72px] sm:px-3 lg:w-[84px] lg:px-5"
+                    : "w-[120px] px-5"
+                )}
+              >
                 조회수
               </th>
             </tr>
@@ -146,8 +181,15 @@ export default function PostList({
                         : "hover:bg-emerald-50/40"
                   )}
                 >
-                  <td className="px-5 text-center font-medium text-zinc-700">{rowNumber}</td>
-                  <td className="px-5">
+                  <td
+                    className={cn(
+                      "text-center font-medium text-zinc-700",
+                      isCommunityList ? "px-2 sm:px-3 lg:px-5" : "px-5"
+                    )}
+                  >
+                    {rowNumber}
+                  </td>
+                  <td className={isCommunityList ? "px-3 sm:px-4 lg:px-5" : "px-5"}>
                     <div className={cn("flex min-w-0 items-center", isPlainTable ? "" : "gap-7")}>
                       {!isPlainTable ? (
                         <span
@@ -169,7 +211,13 @@ export default function PostList({
                       </Link>
                     </div>
                   </td>
-                  <td className={cn("px-5", isPlainTable ? "text-center" : "text-left")}>
+                  <td
+                    className={cn(
+                      "px-5",
+                      isPlainTable ? "text-center" : "text-left",
+                      isCommunityList ? "hidden lg:table-cell" : ""
+                    )}
+                  >
                     {isPlainTable ? (
                       <span className="inline-block max-w-full truncate text-sm font-medium text-zinc-700">
                         {writerName}
@@ -189,7 +237,7 @@ export default function PostList({
                     )}
                   </td>
                   {isCommunityList ? (
-                    <td className="px-4 text-center">
+                    <td className="hidden px-4 text-center lg:table-cell">
                       <span
                         className={cn(
                           "inline-flex rounded-md px-2.5 py-1 text-xs font-bold",
@@ -200,12 +248,19 @@ export default function PostList({
                       </span>
                     </td>
                   ) : null}
-                  <td className="px-5 text-center font-semibold text-zinc-700">
+                  <td
+                    className={cn(
+                      "px-5 text-center font-semibold text-zinc-700",
+                      isCommunityList ? "hidden lg:table-cell" : ""
+                    )}
+                  >
                     {formatDate(post.createdAt)}
                   </td>
-                  <td className="px-5">
+                  <td className={isCommunityList ? "px-2 sm:px-3 lg:px-5" : "px-5"}>
                     {isPlainTable ? (
-                      <span className="block text-center text-zinc-700">{post.viewCount}</span>
+                      <span className="block text-center tabular-nums text-zinc-700">
+                        {post.viewCount}
+                      </span>
                     ) : (
                       <span className="mx-auto flex w-fit items-center gap-3 text-zinc-600">
                         <Eye className="h-4 w-4" />

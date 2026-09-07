@@ -96,7 +96,7 @@ export default async function SearchPage(props: Props) {
               <h1 className="text-2xl font-black tracking-tight text-zinc-950 md:text-3xl">
                 &apos;{displayQuery}&apos; 검색 결과
               </h1>
-              <span className="pb-1 text-sm font-black text-[#15933d] md:text-base">
+              <span className="pb-1 text-sm font-black text-[#34783f] md:text-base">
                 총 {totalCount.toLocaleString("ko-KR")}건
               </span>
             </div>
