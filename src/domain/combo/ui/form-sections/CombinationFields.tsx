@@ -1,6 +1,6 @@
 ﻿"use client";
 import { Button } from "@/components/ui/button";
-import { FormField, FormItem } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getRecipe } from "@/domain/recipe/api";
@@ -26,22 +26,22 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     if (!id) return null;
     form.setValue(`items.${index}.recipeid`, id, {
       shouldDirty: true,
-      shouldValidate: true,
+      shouldValidate: form.formState.submitCount > 0,
     });
     const req = await getRecipe(id);
     if (!req) return null;
 
     form.setValue(`items.${index}.image`, req.image ?? null, {
       shouldDirty: true,
-      shouldValidate: true,
+      shouldValidate: form.formState.submitCount > 0,
     });
     form.setValue(`items.${index}.title`, req.title ?? undefined, {
       shouldDirty: true,
-      shouldValidate: true,
+      shouldValidate: form.formState.submitCount > 0,
     });
     form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
       shouldDirty: true,
-      shouldValidate: true,
+      shouldValidate: form.formState.submitCount > 0,
     });
     setRecipeRef((prev) => ({ ...prev, [id]: req }));
   };
@@ -57,7 +57,10 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     if (file) {
       const url = URL.createObjectURL(file);
       setImagePreview((prev) => ({ ...prev, [itemId]: url }));
-      form.setValue(`items.${index}.image`, file, { shouldDirty: true, shouldValidate: true });
+      form.setValue(`items.${index}.image`, file, {
+        shouldDirty: true,
+        shouldValidate: form.formState.submitCount > 0,
+      });
     }
   };
 
@@ -66,7 +69,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       <FormField
         control={form.control}
         name="items"
-        render={({ field }) => (
+        render={() => (
           <FormItem>
             <div className="flex items-center space-x-4">
               <Tabs defaultValue={tabValue}>
@@ -124,14 +127,50 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                         return (
                           <FormItem className="flex flex-col md:flex-row justify-between w-full pt-4 pb-4 ">
                             <div className="space-y-5">
-                              <Input
-                                type="file"
-                                onChange={(e) => handleFileChange(e, item.id, index)}
-                              ></Input>
-                              <Input placeholder="제품명" {...field} />
-                              <Input
-                                placeholder="요약"
-                                {...form.register(`items.${index}.summary`)}
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.image`}
+                                render={({ field: imageField }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input
+                                        type="file"
+                                        accept="image/*"
+                                        name={imageField.name}
+                                        ref={imageField.ref}
+                                        onBlur={imageField.onBlur}
+                                        aria-label={`상품 ${index + 1} 이미지`}
+                                        onChange={(e) => handleFileChange(e, item.id, index)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormControl>
+                                <Input
+                                  placeholder="제품명"
+                                  aria-label={`상품 ${index + 1} 이름`}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.summary`}
+                                render={({ field: summaryField }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="요약"
+                                        aria-label={`상품 ${index + 1} 요약`}
+                                        {...summaryField}
+                                        value={summaryField.value ?? ""}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
                               />
                             </div>
                             {/* 미리보기 field */}
@@ -174,7 +213,14 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                       render={({ field }) => (
                         <FormItem className="flex flex-col md:flex-row justify-between w-full py-5">
                           <div className="space-y-5">
-                            <Input placeholder="레시피 ID" {...field} />
+                            <FormControl>
+                              <Input
+                                placeholder="레시피 ID"
+                                aria-label={`조합 항목 ${index + 1} 레시피 ID`}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
                             <Button
                               type="button"
                               onClick={() => fetchRecipeByid(field.value, index)}
@@ -227,6 +273,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                 </div>
               </div>
             ))}
+            <FormMessage />
           </FormItem>
         )}
       />

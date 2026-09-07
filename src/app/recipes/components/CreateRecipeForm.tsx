@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
@@ -13,7 +14,7 @@ import { createRecipeAction } from "../actions";
 export default function CreateRecipeForm() {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
-  const [submitting, setSubmitting] = useState(false);
+  const finish = useFormSuccess();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (
@@ -35,7 +36,6 @@ export default function CreateRecipeForm() {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     const uploadedPaths: string[] = [];
@@ -67,7 +67,7 @@ export default function CreateRecipeForm() {
       }
 
       actionStarted = true;
-      await createRecipeAction(
+      const saved = await createRecipeAction(
         {
           ...values,
           id: recipeId,
@@ -76,6 +76,7 @@ export default function CreateRecipeForm() {
         },
         uploadedPaths
       );
+      finish(`/recipes/${saved.id}`, "create");
     } catch (err) {
       if (!actionStarted && uploadedPaths.length > 0) {
         await removeUploadedBucketImages(uploadedPaths).catch((rollbackError) => {
@@ -84,15 +85,12 @@ export default function CreateRecipeForm() {
       }
       console.error("레시피 등록 과정에서 오류가 발생했습니다.", err);
       setError("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-2">
-      <RecipeForm onSubmit={handleSubmit} submitLabel={submitting ? "등록 중..." : "레시피 등록"} />
-      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+      <RecipeForm onSubmit={handleSubmit} mode="create" cancelHref="/recipes" error={error} />
     </div>
   );
 }

@@ -37,7 +37,12 @@ export const recipeInsertSchema = z.object({
     .min(1, "제목을 입력해 주세요.")
     .max(200, "제목은 200자 이하만 가능합니다."),
   summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
-  chef_tip: z.string().trim().max(500, "셰프의 팁은 500자 이하만 가능합니다.").nullable().optional(),
+  chef_tip: z
+    .string()
+    .trim()
+    .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
+    .nullable()
+    .optional(),
   steps: z.array(recipeStepSchema).min(1, "단계를 한 개 이상 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
@@ -79,10 +84,14 @@ const imageFilesFormSchema = z
   .max(10, "이미지는 최대 10장까지 추가할 수 있습니다.")
   .optional();
 
-export const recipeFormSchema = recipeInsertSchema.omit({ image: true, images: true, id: true }).extend({
-  imageFile: imageFormSchema,
-  imageFiles: imageFilesFormSchema,
-});
+export const recipeFormSchema = recipeInsertSchema
+  .omit({ image: true, images: true, id: true })
+  .extend({
+    imageFile: imageFormSchema.refine((image) => Boolean(image), {
+      message: "대표 이미지를 선택해 주세요.",
+    }),
+    imageFiles: imageFilesFormSchema,
+  });
 
 export const recipeUpdateSchema = z
   .object({
@@ -92,7 +101,12 @@ export const recipeUpdateSchema = z
       .min(1, "제목을 입력해 주세요.")
       .max(200, "제목은 200자 이하만 가능합니다."),
     summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
-    chef_tip: z.string().trim().max(500, "셰프의 팁은 500자 이하만 가능합니다.").nullable().optional(),
+    chef_tip: z
+      .string()
+      .trim()
+      .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
+      .nullable()
+      .optional(),
     steps: z.array(recipeStepSchema),
     ingredients: z
       .array(ingredientItemSchema)

@@ -25,6 +25,7 @@ type Props = {
   showTrigger?: boolean; // 트리거 버튼 표시 여부
   open?: boolean; // 모달 열림 상태 제어
   onOpenChange?: (open: boolean) => void; // 모달 열림 상태 변경 핸들러
+  onCloseAutoFocus?: (event: Event) => void; // 트리거 없는 모달의 포커스 복원
 };
 
 export default function ComfirmModal({
@@ -39,6 +40,7 @@ export default function ComfirmModal({
   showTrigger = true,
   open,
   onOpenChange,
+  onCloseAutoFocus,
 }: Props) {
   const alertDialogProps =
     typeof open === "boolean" ? ({ open, onOpenChange } as const) : ({} as const);
@@ -52,7 +54,7 @@ export default function ComfirmModal({
           </Button>
         </AlertDialogTrigger>
       ) : null}
-      <AlertDialogContent>
+      <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
           <AlertDialogTitle>{comfirmText}</AlertDialogTitle>
           <AlertDialogDescription>{content}</AlertDialogDescription>

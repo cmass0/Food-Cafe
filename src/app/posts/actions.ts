@@ -14,6 +14,7 @@ import { safeDiscardFailedUploads } from "@/lib/storage/server";
 export type PostActionState = {
   ok: boolean;
   message?: string;
+  id?: string;
 };
 
 const DEFAULT_ERROR = "요청 처리 과정에서 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
@@ -99,7 +100,7 @@ export async function createPostAction(
 
   revalidatePath("/posts");
   revalidatePath(`/posts/${postId}`);
-  redirect(`/posts/${postId}`);
+  return { ok: true, id: postId };
 }
 
 export async function updatePostAction(
@@ -154,7 +155,7 @@ export async function updatePostAction(
 
   revalidatePath("/posts");
   revalidatePath(`/posts/${id}`);
-  redirect(`/posts/${id}`);
+  return { ok: true, id };
 }
 
 export async function deletePostAction(id: string): Promise<PostActionState> {

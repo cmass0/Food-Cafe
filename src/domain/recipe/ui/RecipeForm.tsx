@@ -1,12 +1,14 @@
-﻿"use client";
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { recipeFormSchema } from "../schema";
 import type { FormValues, IngredientUnit, RecipeInsertDB, RecipeStep } from "../types";
 
-import { Button } from "@/components/ui/button";
+import { FormActionBar, type FormMode } from "@/components/forms/FormActionBar";
+import { FormStatusAlert } from "@/components/forms/FormStatusAlert";
+import { useLockedSubmit } from "@/components/forms/useLockedSubmit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { BasicInfoFields } from "./form-sections/BasicInfoFields";
@@ -27,7 +29,9 @@ type RecipeFormProps = {
     values: RecipeInsertDB,
     extras?: { imageFiles: Array<File | string> }
   ) => Promise<void>;
-  submitLabel?: string;
+  mode: FormMode;
+  cancelHref: string;
+  error?: string | null;
 };
 
 // 태그 문자열을 배열로 변환하고 공백 제거
@@ -62,20 +66,28 @@ const buildRecipeListItem = (steps: RecipeStep[]) => {
 export default function RecipeForm({
   defaultValues,
   onSubmit,
-  submitLabel = "레시피 등록",
+  mode,
+  cancelHref,
+  error,
 }: RecipeFormProps) {
   const [tagsInput, setTagsInput] = useState((defaultValues?.tags ?? []).join(", "));
   const [toolsInput, setToolsInput] = useState((defaultValues?.tools ?? []).join(", "));
   // 기존 이미지 URL이 있으면 초기 미리보기로 설정
-  const existingImages =
-    defaultValues?.images?.length
-      ? defaultValues.images
-      : typeof defaultValues?.image === "string"
-        ? [defaultValues.image]
-        : [];
+  const existingImages = defaultValues?.images?.length
+    ? defaultValues.images
+    : typeof defaultValues?.image === "string"
+      ? [defaultValues.image]
+      : [];
   const [imageItems, setImageItems] = useState<ImageItem[]>(
     existingImages.map((image) => ({ value: image, preview: image }))
   );
+  const previewUrlsRef = useRef(new Set<string>());
+  useEffect(() => {
+    const urls = previewUrlsRef.current;
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
+  }, []);
 
   // 폼 초기값 설정
   const defaultValuesForForm: FormValues = {
@@ -87,7 +99,7 @@ export default function RecipeForm({
     tools: defaultValues?.tools ?? [],
     difficulty: defaultValues?.difficulty ?? "",
     time_minutes: defaultValues?.time_minutes ?? 0,
-    servings: (defaultValues as any)?.servings ?? null,
+    servings: defaultValues?.servings ?? 1,
     ingredients: defaultValues?.ingredients ?? [
       { name: "", amount: "", unit: "g", unitCustom: "" },
     ],
@@ -99,6 +111,8 @@ export default function RecipeForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(recipeFormSchema),
     mode: "onSubmit",
+    reValidateMode: "onChange",
+    shouldFocusError: true,
     defaultValues: defaultValuesForForm,
   });
 
@@ -113,8 +127,14 @@ export default function RecipeForm({
 
   const syncImageValues = (items: ImageItem[]) => {
     const values = items.map((item) => item.value);
-    form.setValue("imageFile", values[0] ?? null, { shouldValidate: true });
-    form.setValue("imageFiles", values, { shouldValidate: true });
+    form.setValue("imageFile", values[0] ?? null, {
+      shouldDirty: true,
+      shouldValidate: form.formState.submitCount > 0,
+    });
+    form.setValue("imageFiles", values, {
+      shouldDirty: true,
+      shouldValidate: form.formState.submitCount > 0,
+    });
   };
 
   // 폼 제출 처리
@@ -166,7 +186,11 @@ export default function RecipeForm({
 
     const nextItems = [
       ...imageItems,
-      ...filesToAdd.map((file) => ({ value: file, preview: URL.createObjectURL(file) })),
+      ...filesToAdd.map((file) => {
+        const preview = URL.createObjectURL(file);
+        previewUrlsRef.current.add(preview);
+        return { value: file, preview };
+      }),
     ];
 
     setImageItems(nextItems);
@@ -178,6 +202,7 @@ export default function RecipeForm({
     const target = imageItems[index];
     if (target?.preview.startsWith("blob:")) {
       URL.revokeObjectURL(target.preview);
+      previewUrlsRef.current.delete(target.preview);
     }
 
     const nextItems = imageItems.filter((_, itemIndex) => itemIndex !== index);
@@ -185,54 +210,69 @@ export default function RecipeForm({
     syncImageValues(nextItems);
   };
 
+  const submit = useLockedSubmit(handleSubmit);
+  // 별도 상태로 관리하는 입력도 포함해, 미저장 변경이 있을 때만 취소를 확인한다.
+  const dirty =
+    form.formState.isDirty ||
+    tagsInput !== (defaultValues?.tags ?? []).join(", ") ||
+    toolsInput !== (defaultValues?.tools ?? []).join(", ") ||
+    imageItems.length !== existingImages.length ||
+    imageItems.some((item, index) => item.value !== existingImages[index]);
+
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="border border-muted-foreground/10 shadow-sm">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold">레시피 작성</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              재료와 이미지, 조리 단계를 차례로 입력해 주세요.
-            </p>
-          </CardHeader>
+      <form
+        onSubmit={submit}
+        noValidate
+        aria-busy={form.formState.isSubmitting}
+        className="space-y-6"
+      >
+        <fieldset
+          disabled={form.formState.isSubmitting}
+          inert={form.formState.isSubmitting}
+          className="min-w-0"
+        >
+          <Card className="border border-muted-foreground/10 shadow-sm">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-semibold">
+                레시피 {mode === "edit" ? "수정" : "작성"}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                재료와 이미지, 조리 단계를 차례로 입력해 주세요.
+              </p>
+            </CardHeader>
 
-          <CardContent className="space-y-8">
-            <BasicInfoFields
-              form={form}
-              tagsInput={tagsInput}
-              setTagsInput={setTagsInput}
-              normalizeTags={normalizeTags}
-              toolsInput={toolsInput}
-              setToolsInput={setToolsInput}
-              normalizeTools={normalizeTools}
-            />
-            <ImageUploadField
-              form={form}
-              imagePreviews={imageItems.map((item) => item.preview)}
-              handleFileChange={handleFileChange}
-              handleRemoveImage={handleRemoveImage}
-            />
-            <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
-            <StepsFields form={form} stepsArray={stepsArray} />
-            <SummaryField form={form} summaryLength={summaryLength} />
-            <ChefTipField form={form} chefTipLength={chefTipLength} />
-          </CardContent>
-        </Card>
-
-        <div className="flex items-center gap-3">
-          {showSubmitError ? (
-            <p className="text-sm text-destructive" role="alert">
-              입력을 완료해 주세요.
-            </p>
-          ) : null}
-          <Button
-            type="submit"
-            disabled={form.formState.isSubmitting}
-            className="ml-auto px-6"
-          >
-            {form.formState.isSubmitting ? "저장 중..." : submitLabel}
-          </Button>
-        </div>
+            <CardContent className="space-y-8">
+              <BasicInfoFields
+                form={form}
+                tagsInput={tagsInput}
+                setTagsInput={setTagsInput}
+                normalizeTags={normalizeTags}
+                toolsInput={toolsInput}
+                setToolsInput={setToolsInput}
+                normalizeTools={normalizeTools}
+              />
+              <ImageUploadField
+                form={form}
+                imagePreviews={imageItems.map((item) => item.preview)}
+                handleFileChange={handleFileChange}
+                handleRemoveImage={handleRemoveImage}
+              />
+              <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
+              <StepsFields form={form} stepsArray={stepsArray} />
+              <SummaryField form={form} summaryLength={summaryLength} />
+              <ChefTipField form={form} chefTipLength={chefTipLength} />
+            </CardContent>
+          </Card>
+        </fieldset>
+        <FormStatusAlert message={showSubmitError ? "입력 내용을 확인해 주세요." : error} />
+        <FormActionBar
+          mode={mode}
+          resourceLabel="레시피"
+          pending={form.formState.isSubmitting}
+          dirty={dirty}
+          cancelHref={cancelHref}
+        />
       </form>
     </Form>
   );

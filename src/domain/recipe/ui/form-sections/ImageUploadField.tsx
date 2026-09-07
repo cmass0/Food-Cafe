@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FormField, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { type ChangeEvent } from "react";
@@ -31,7 +31,7 @@ export function ImageUploadField({
         control={form.control}
         name="imageFile"
         render={({ field }) => (
-          <div className="space-y-4">
+          <FormItem className="space-y-4">
             <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
               <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="grid w-full grid-cols-2 gap-2 md:w-80 md:grid-cols-3">
@@ -41,7 +41,6 @@ export function ImageUploadField({
                         key={`${preview}-${index}`}
                         className="relative h-28 overflow-hidden rounded-md border bg-muted/30"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={preview}
                           alt={`레시피 이미지 미리보기 ${index + 1}`}
@@ -71,28 +70,32 @@ export function ImageUploadField({
                   )}
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    disabled={imagePreviews.length >= 10}
-                    onChange={(event) => {
-                      handleFileChange(event);
-                      const currentImages = form.getValues("imageFiles") ?? [];
-                      field.onChange(currentImages[0] ?? null);
-                    }}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                  />
+                  <FormControl>
+                    <Input
+                      type="file"
+                      aria-label="레시피 이미지"
+                      accept="image/*"
+                      multiple
+                      disabled={imagePreviews.length >= 10}
+                      onChange={(event) => {
+                        handleFileChange(event);
+                        const currentImages = form.getValues("imageFiles") ?? [];
+                        field.onChange(currentImages[0] ?? null);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    이미지를 선택할 때마다 목록에 추가됩니다. 각 이미지의 X 버튼으로 저장 대상에서 제외할 수 있습니다.
+                    이미지를 선택할 때마다 목록에 추가됩니다. 각 이미지의 X 버튼으로 저장 대상에서
+                    제외할 수 있습니다.
                   </p>
                   <FormMessage />
                 </div>
               </div>
             </div>
-          </div>
+          </FormItem>
         )}
       />
     </div>

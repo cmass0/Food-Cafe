@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
@@ -18,7 +19,7 @@ function normalizeStoredImage(image: unknown): string | null | undefined {
 export default function CreateComboForm() {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
-  const [submitting, setSubmitting] = useState(false);
+  const finish = useFormSuccess();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (
@@ -37,7 +38,6 @@ export default function CreateComboForm() {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     const uploadedPaths: string[] = [];
@@ -81,7 +81,7 @@ export default function CreateComboForm() {
       }
       if (itemUploadError) throw itemUploadError;
       actionStarted = true;
-      await createComboAction(
+      const saved = await createComboAction(
         {
           ...values,
           items: insertItems,
@@ -92,6 +92,7 @@ export default function CreateComboForm() {
         },
         uploadedPaths
       );
+      finish(`/combos/${saved.id}`, "create");
     } catch (err) {
       if (!actionStarted && uploadedPaths.length > 0) {
         await removeUploadedBucketImages(uploadedPaths).catch((rollbackError) => {
@@ -100,15 +101,12 @@ export default function CreateComboForm() {
       }
       console.error("조합 등록/로딩과정에서 오류가 발생했습니다.", err);
       setError("등록에 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-2">
-      <ComboForm onSubmit={handleSubmit} submitLabel={submitting ? "등록 중.." : "조합 등록"} />
-      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+      <ComboForm onSubmit={handleSubmit} mode="create" cancelHref="/combos" error={error} />
     </div>
   );
 }

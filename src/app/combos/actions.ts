@@ -46,7 +46,7 @@ export async function createComboAction(input: ComboInsertDb, uploadedPaths: str
 
   revalidatePath("/combos");
   revalidatePath("/search");
-  redirect(`/combos/${comboId}`);
+  return { id: comboId };
 }
 
 export async function updateComboAction(

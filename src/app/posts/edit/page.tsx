@@ -22,8 +22,8 @@ export default async function PostEditPage(props: { searchParams: Promise<{ id?:
           contentJson: post.contentJson,
           category: post.category,
         }}
-        submitLabel="수정"
-        cancelHref="/posts"
+        mode="edit"
+        cancelHref={`/posts/${post.id}`}
       />
     </main>
   );

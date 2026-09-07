@@ -108,25 +108,25 @@ export function BasicInfoFields({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <FormControl>
-                <Select
-                  value={field.value ?? ""}
-                  onValueChange={(val) => field.onChange(val || null)}
-                >
-                  <SelectTrigger className="w-[180px]">
+              <Select
+                value={field.value ?? ""}
+                onValueChange={(val) => field.onChange(val || null)}
+              >
+                <FormControl>
+                  <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-[180px]">
                     <SelectValue placeholder="난이도 선택" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {difficultyLabels.map((label) => (
-                        <SelectItem key={label} value={label}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </FormControl>
+                </FormControl>
+                <SelectContent>
+                  <SelectGroup>
+                    {difficultyLabels.map((label) => (
+                      <SelectItem key={label} value={label}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -138,41 +138,49 @@ export function BasicInfoFields({
           render={({ field }) => (
             <FormItem>
               <FormLabel>소요 시간 (분 기준, 선택)</FormLabel>
-              <FormControl>
-                <Tabs
-                  value={timeUnit}
-                  onValueChange={(val) => setTimeUnit(val as "minutes" | "hours")}
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="minutes">분 단위</TabsTrigger>
-                    <TabsTrigger value="hours">시간 단위</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="minutes">
+              <Tabs
+                value={timeUnit}
+                onValueChange={(val) => setTimeUnit(val as "minutes" | "hours")}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="minutes">분 단위</TabsTrigger>
+                  <TabsTrigger value="hours">시간 단위</TabsTrigger>
+                </TabsList>
+                <TabsContent value="minutes">
+                  <FormControl>
                     <Input
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      name={field.name}
                       type="number"
                       min="0"
                       step="1"
                       placeholder="예) 30"
                       value={timeUnit === "minutes" ? displayMinutes : ""}
                       onChange={(e) =>
-                        field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                        field.onChange(e.target.value === "" ? 0 : Number(e.target.value))
                       }
                     />
-                  </TabsContent>
-                  <TabsContent value="hours">
+                  </FormControl>
+                </TabsContent>
+                <TabsContent value="hours">
+                  <FormControl>
                     <Input
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      name={field.name}
                       type="number"
                       min="0"
                       step="1"
                       placeholder="예) 1"
                       value={timeUnit === "hours" ? displayMinutes : ""}
                       onChange={(e) =>
-                        field.onChange(e.target.value === "" ? null : Number(e.target.value) * 60)
+                        field.onChange(e.target.value === "" ? 0 : Number(e.target.value) * 60)
                       }
                     />
-                  </TabsContent>
-                </Tabs>
-              </FormControl>
+                  </FormControl>
+                </TabsContent>
+              </Tabs>
               {typeof field.value === "number" && field.value > 0 ? (
                 <p className="text-xs text-muted-foreground">
                   현재 설정: {field.value}분 (≈ {Math.round((field.value / 60) * 10) / 10}시간)
@@ -188,9 +196,12 @@ export function BasicInfoFields({
           name="servings"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>인분 (선택)</FormLabel>
+              <FormLabel>인분 (필수)</FormLabel>
               <FormControl>
                 <Input
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   type="number"
                   min="1"
                   max="50"
@@ -198,7 +209,7 @@ export function BasicInfoFields({
                   placeholder="예) 2"
                   value={field.value ?? ""}
                   onChange={(e) =>
-                    field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                    field.onChange(e.target.value === "" ? 0 : Number(e.target.value))
                   }
                 />
               </FormControl>
@@ -213,22 +224,22 @@ export function BasicInfoFields({
           render={({ field }) => (
             <FormItem>
               <FormLabel>카테고리 (선택)</FormLabel>
-              <FormControl>
-                <Select value={field.value ?? ""} onValueChange={(val) => field.onChange(val)}>
-                  <SelectTrigger className="w-[180px]">
+              <Select value={field.value ?? ""} onValueChange={(val) => field.onChange(val)}>
+                <FormControl>
+                  <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="w-[180px]">
                     <SelectValue placeholder="카테고리 선택" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {RECIPE_CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </FormControl>
+                </FormControl>
+                <SelectContent>
+                  <SelectGroup>
+                    {RECIPE_CATEGORIES.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -243,6 +254,9 @@ export function BasicInfoFields({
               <FormControl>
                 <Input
                   placeholder="예) 10분, 칼칼한, 술안주"
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   value={tagsInput}
                   onChange={(event) => {
                     const next = event.target.value;
@@ -251,7 +265,7 @@ export function BasicInfoFields({
                   }}
                 />
               </FormControl>
-              <FormDescription>최대 20개까지 입력할 수 있어요.</FormDescription>
+              <FormDescription>최대 10개까지 입력할 수 있어요.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -266,6 +280,9 @@ export function BasicInfoFields({
               <FormControl>
                 <Input
                   placeholder="팬, 냄비, 에어프라이어"
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   value={toolsInput}
                   onChange={(event) => {
                     const next = event.target.value;

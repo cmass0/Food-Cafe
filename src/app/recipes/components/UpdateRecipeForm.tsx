@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
@@ -16,10 +16,9 @@ type Props = {
 };
 
 export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
-  const router = useRouter();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
-  const [submitting, setSubmitting] = useState(false);
+  const finish = useFormSuccess();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (
@@ -37,7 +36,6 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     const uploadedPaths: string[] = [];
@@ -97,8 +95,7 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
         },
         uploadedPaths
       );
-      router.refresh();
-      router.push(`/recipes/${recipeId}`);
+      finish(`/recipes/${recipeId}`, "edit");
     } catch (err) {
       if (!actionStarted && uploadedPaths.length > 0) {
         await removeUploadedBucketImages(uploadedPaths).catch((rollbackError) => {
@@ -107,8 +104,6 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
       }
       console.error("레시피 수정 과정에서 오류가 발생했습니다.", err);
       setError("수정에 실패했습니다. 다시 시도해 주세요.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -117,9 +112,10 @@ export default function UpdateRecipeForm({ recipeId, defaultValues }: Props) {
       <RecipeForm
         defaultValues={defaultValues}
         onSubmit={handleSubmit}
-        submitLabel={submitting ? "수정 중..." : "수정하기"}
+        mode="edit"
+        cancelHref={`/recipes/${recipeId}`}
+        error={error}
       />
-      {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
     </div>
   );
 }

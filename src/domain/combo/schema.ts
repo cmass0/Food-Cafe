@@ -91,7 +91,9 @@ export const ComboFormSchema = ComboInsertSchema.omit({
   writer_uid: true,
   writer_name: true,
 }).extend({
-  image: imageFormSchema,
+  image: imageFormSchema.refine((image) => Boolean(image), {
+    message: "대표 이미지를 선택해 주세요.",
+  }),
   items: ComboItemsSchemaAtForm,
 });
 

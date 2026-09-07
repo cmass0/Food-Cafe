@@ -47,7 +47,7 @@ export async function createRecipeAction(input: RecipeInsertDB, uploadedPaths: s
 
   revalidatePath("/recipes");
   revalidatePath("/search");
-  redirect(`/recipes/${recipeId}`);
+  return { id: recipeId };
 }
 
 export async function updateRecipeAction(

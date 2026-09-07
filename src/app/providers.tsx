@@ -2,6 +2,7 @@
 import { AuthModalProvider } from "@/domain/auth/ui/AuthModalProvider";
 import type { Session } from "@supabase/supabase-js";
 import { AuthProvider } from "./auth/auth-context";
+import { Toaster } from "sonner";
 
 export default function Providers({
   children,
@@ -12,7 +13,10 @@ export default function Providers({
 }) {
   return (
     <AuthProvider initialSession={initialSession}>
-      <AuthModalProvider>{children}</AuthModalProvider>
+      <AuthModalProvider>
+        {children}
+        <Toaster position="top-center" richColors />
+      </AuthModalProvider>
     </AuthProvider>
   );
 }
