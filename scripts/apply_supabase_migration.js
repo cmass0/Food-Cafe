@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Load .env if present
-try { require('dotenv').config(); } catch (_) {}
+try { require('dotenv').config(); } catch {}
 
 function getConnectionString() {
   // Prefer an explicit URL if provided
@@ -50,4 +50,3 @@ main().catch((err) => {
   console.error('Failed to apply migration:', err.message);
   process.exitCode = 1;
 });
-

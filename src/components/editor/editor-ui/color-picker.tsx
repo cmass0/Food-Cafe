@@ -77,7 +77,8 @@ function composeRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
  * Accepts callback refs and RefObject(s)
  */
 function useComposedRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we want to memoize by all values
+  // refs의 각 항목이 바뀔 때만 합성 콜백을 다시 만들기 위한 Radix 패턴입니다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   return React.useCallback(composeRefs(...refs), refs);
 }
 
@@ -891,7 +892,7 @@ function ColorPickerRootImpl(props: ColorPickerRootImplProps) {
       store.setOpen(newOpen);
       onOpenChange?.(newOpen);
     },
-    [store.setOpen, onOpenChange]
+    [store, onOpenChange]
   );
 
   const RootPrimitive = asChild ? Slot : "div";

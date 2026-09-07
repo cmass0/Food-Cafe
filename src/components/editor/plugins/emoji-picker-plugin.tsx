@@ -74,7 +74,6 @@ export function EmojiPickerPlugin() {
   const [editor] = useLexicalComposerContext()
   const [queryString, setQueryString] = useState<string | null>(null)
   const [emojis, setEmojis] = useState<Array<Emoji>>([])
-  const [isOpen, setIsOpen] = useState(false)
   useEffect(() => {
     import("../utils/emoji-list").then((file) => setEmojis(file.default))
   }, [])
@@ -142,12 +141,6 @@ export function EmojiPickerPlugin() {
       onSelectOption={onSelectOption}
       triggerFn={checkForTriggerMatch}
       options={options}
-      onOpen={() => {
-        setIsOpen(true)
-      }}
-      onClose={() => {
-        setIsOpen(false)
-      }}
       menuRenderFn={(
         anchorElementRef,
         { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }

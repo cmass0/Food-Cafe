@@ -1,4 +1,4 @@
-import type { Database, Enums, TablesInsert, TablesUpdate } from "@/types/supabase";
+import type { Database } from "@/types/supabase";
 
 
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"];
