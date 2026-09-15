@@ -13,14 +13,17 @@ export type TrendingPeriod = (typeof TRENDING_PERIOD_OPTIONS)[number]["value"];
 
 export const DEFAULT_TRENDING_PERIOD: TrendingPeriod = "week";
 
+// 트렌딩 기간이 유효한지 확인한다.
 export function isTrendingPeriod(value: string | null | undefined): value is TrendingPeriod {
   return TRENDING_PERIOD_OPTIONS.some((option) => option.value === value);
 }
 
+// 주어진 문자열을 트렌딩 기간으로 변환한다. 유효하지 않은 값이면 기본값을 반환한다.
 export function parseTrendingPeriod(value: string | null | undefined): TrendingPeriod {
   return isTrendingPeriod(value) ? value : DEFAULT_TRENDING_PERIOD;
 }
 
+// 주어진 트렌딩 기간에 해당하는 옵션을 찾는다.
 function findOption(period: TrendingPeriod) {
   return (
     TRENDING_PERIOD_OPTIONS.find((option) => option.value === period) ?? TRENDING_PERIOD_OPTIONS[1]

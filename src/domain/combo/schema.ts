@@ -2,6 +2,12 @@
 import { z } from "zod";
 import { imageFileSchema } from "./../../lib/domain/schema";
 
+export const MIN_COMBO_ITEMS = 2;
+export const MAX_COMBO_ITEMS = 10;
+
+const comboItemsMinMessage = `조합 항목은 최소 ${MIN_COMBO_ITEMS}개 이상 추가해 주세요.`;
+const comboItemsMaxMessage = `조합 항목은 최대 ${MAX_COMBO_ITEMS}개까지 추가할 수 있습니다.`;
+
 export const comboListOptionsSchema = z.object({
   limit: z.number().int().min(1).max(50).optional(),
   page: z.number().int().min(1).optional(),
@@ -16,23 +22,26 @@ export const ComboSetpsSchema = z.object({
 });
 
 // comboitem의 image는 product에서만 파일 업로드를 위해 사용
-export const ComboItemsSchema = z.array(
-  z.union([
-    z.object({
-      type: z.literal("recipe"),
-      recipeid: z.string().uuid(),
-      title: z.string().max(200).optional(),
-      summary: z.string().max(500).optional(),
-      image: imageFieldSchema,
-    }),
-    z.object({
-      type: z.literal("product"),
-      productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
-      summary: z.string().max(500).optional(),
-      image: imageFieldSchema,
-    }),
-  ])
-);
+export const ComboItemsSchema = z
+  .array(
+    z.union([
+      z.object({
+        type: z.literal("recipe"),
+        recipeid: z.string().uuid(),
+        title: z.string().max(200).optional(),
+        summary: z.string().max(500).optional(),
+        image: imageFieldSchema,
+      }),
+      z.object({
+        type: z.literal("product"),
+        productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
+        summary: z.string().max(500).optional(),
+        image: imageFieldSchema,
+      }),
+    ])
+  )
+  .min(MIN_COMBO_ITEMS, comboItemsMinMessage)
+  .max(MAX_COMBO_ITEMS, comboItemsMaxMessage);
 // ComboItems의 image 필드는 form에서 File(새 업로드) 또는 string(업데이트시 기존 url) 허용
 const comboItemImageFormSchema = z.preprocess(
   (value) => (value == null ? undefined : value),
@@ -40,23 +49,26 @@ const comboItemImageFormSchema = z.preprocess(
 );
 
 // ComboItems의 image 필드는 form에서 File 또는 string을 입력받음
-export const ComboItemsSchemaAtForm = z.array(
-  z.union([
-    z.object({
-      type: z.literal("recipe"),
-      recipeid: z.string().uuid(),
-      title: z.string().max(200).optional(),
-      summary: z.string().max(500).optional(),
-      image: imageFieldSchema,
-    }),
-    z.object({
-      type: z.literal("product"),
-      productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
-      summary: z.string().max(500).optional(),
-      image: comboItemImageFormSchema,
-    }),
-  ])
-);
+export const ComboItemsSchemaAtForm = z
+  .array(
+    z.union([
+      z.object({
+        type: z.literal("recipe"),
+        recipeid: z.string().uuid(),
+        title: z.string().max(200).optional(),
+        summary: z.string().max(500).optional(),
+        image: imageFieldSchema,
+      }),
+      z.object({
+        type: z.literal("product"),
+        productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
+        summary: z.string().max(500).optional(),
+        image: comboItemImageFormSchema,
+      }),
+    ])
+  )
+  .min(MIN_COMBO_ITEMS, comboItemsMinMessage)
+  .max(MAX_COMBO_ITEMS, comboItemsMaxMessage);
 
 export const ComboInsertSchema = z.object({
   id: z.string().uuid(),

@@ -1,7 +1,7 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
 import { normalizePostCategory } from "@/domain/post/category";
-import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   internalError,
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const created = await postService.createPost(supabase, body, {
       uid: user.id,
-      name: deriveDisplayName(user) ?? user.email ?? "user",
+      name: derivePublicDisplayName(user) ?? "user",
     });
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {

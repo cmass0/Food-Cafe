@@ -1,9 +1,9 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
-import CommentArea from "@/domain/comment/ui/CommentArea";
+import CommentArea from "@/components/comment/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
-import RecipeDetail from "@/domain/recipe/ui/RecipeDetail";
+import RecipeDetail from "@/app/recipes/ui/RecipeDetail";
 import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 

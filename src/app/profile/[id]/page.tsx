@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as userFollowService from "@/domain/follow/service";
-import ProfileFollowHeader from "@/domain/follow/ui/ProfileFollowHeader";
+import ProfileFollowHeader from "@/app/profile/ui/ProfileFollowHeader";
 import * as userService from "@/domain/user/service";
 
 import { getServerSupabase } from "@/lib/supabase/server";

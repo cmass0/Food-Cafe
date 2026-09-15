@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
 import { useAuth } from "@/app/auth/auth-context";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { ComboFormSchema } from "@/domain/combo/schema";
 import type { ComboItems } from "@/domain/combo/types";
-import ComboForm from "@/domain/combo/ui/ComboForm";
+import ComboForm from "@/app/combos/ui/ComboForm";
 import { removeUploadedBucketImages, uploadBucketImage } from "@/lib/storage";
 import { z } from "zod";
 import { updateComboAction } from "../actions";

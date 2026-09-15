@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import AuthRequiredModal from "@/domain/auth/ui/AuthRequiredModal";
+import AuthRequiredModal from "@/components/auth/AuthRequiredModal";
 import * as comboService from "@/domain/combo/service";
 import * as postService from "@/domain/post/service";
 import * as recipeService from "@/domain/recipe/service";

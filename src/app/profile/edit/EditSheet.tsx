@@ -16,7 +16,7 @@ import {
   phoneRegistrationAction,
   requestEmailChangeAction,
 } from "@/app/auth/actions";
-import AccountSecurityForm from "@/domain/auth/ui/AccountSecurityForm";
+import AccountSecurityForm from "@/components/auth/AccountSecurityForm";
 import type { ProfileRow } from "@/domain/user/types";
 import { PencilLine } from "lucide-react";
 

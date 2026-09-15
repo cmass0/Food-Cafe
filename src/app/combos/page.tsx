@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { listCombos } from "@/domain/combo/api";
 import { toggleComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { toggleComboLike } from "@/domain/combo/combo_like/api";

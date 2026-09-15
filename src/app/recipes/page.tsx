@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
 import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";

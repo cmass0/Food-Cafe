@@ -1,5 +1,5 @@
 import * as postService from "@/domain/post/service";
-import PostForm from "@/domain/post/ui/PostForm";
+import PostForm from "@/app/posts/ui/PostForm";
 import { requireOwnedContent } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import { updatePostAction } from "../actions";

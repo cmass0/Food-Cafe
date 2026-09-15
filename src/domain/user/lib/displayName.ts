@@ -1,7 +1,7 @@
 import type { User } from "@supabase/supabase-js";
-// supabase User 객체에서 표시 이름 가져옴
-// oauth인증 및 공통으로 사용할 수 있는 이름 필드를 우선적으로 사용
-export function deriveDisplayName(user: User | null): string | null {
+
+// 공개 콘텐츠에 사용할 수 있는 이름만 가져오며 이메일은 대체값으로 사용하지 않는다.
+export function derivePublicDisplayName(user: User | null): string | null {
   if (!user) return null;
 
   const metadata = user.user_metadata ?? {};
@@ -41,5 +41,11 @@ export function deriveDisplayName(user: User | null): string | null {
     }
   }
 
-  return user.email ?? null;
+  return null;
+}
+
+// 본인 화면에서는 공개 이름이 없을 때 계정 이메일까지 대체 표시로 사용할 수 있다.
+export function deriveDisplayName(user: User | null): string | null {
+  if (!user) return null;
+  return derivePublicDisplayName(user) ?? user.email ?? null;
 }

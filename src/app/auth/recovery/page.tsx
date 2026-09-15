@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 
 import { recoverEmailByPhoneAction, requestPasswordResetAction } from "@/app/auth/recovery/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EmailRecoveryForm from "@/domain/auth/ui/EmailRecoveryForm";
-import PasswordRecoveryShell from "@/domain/auth/ui/PasswordRecoveryShell";
-import PasswordResetRequestForm from "@/domain/auth/ui/PasswordResetRequestForm";
+import EmailRecoveryForm from "@/components/auth/EmailRecoveryForm";
+import PasswordRecoveryShell from "@/components/auth/PasswordRecoveryShell";
+import PasswordResetRequestForm from "@/components/auth/PasswordResetRequestForm";
 
 export const metadata: Metadata = {
   title: "이메일·비밀번호 찾기 | FoodCafe",

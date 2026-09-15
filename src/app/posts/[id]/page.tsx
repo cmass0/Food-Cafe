@@ -2,10 +2,10 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import CommentArea from "@/domain/comment/ui/CommentArea";
+import CommentArea from "@/components/comment/CommentArea";
 import * as postService from "@/domain/post/service";
-import PostDetail from "@/domain/post/ui/PostDetail";
-import PostList from "@/domain/post/ui/PostList";
+import PostDetail from "@/app/posts/ui/PostDetail";
+import PostList from "@/app/posts/ui/PostList";
 import { getPostCategoryLabel } from "@/domain/post/category";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getContentPermissions } from "@/lib/auth/content-permissions";

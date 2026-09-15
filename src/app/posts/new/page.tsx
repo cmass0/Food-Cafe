@@ -1,4 +1,4 @@
-import PostForm from "@/domain/post/ui/PostForm";
+import PostForm from "@/app/posts/ui/PostForm";
 import { requirePageAuth } from "@/lib/auth/session";
 import { createPostAction } from "../actions";
 

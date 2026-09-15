@@ -3,9 +3,9 @@
 import { useAuth } from "@/app/auth/auth-context";
 import { fetchComboStatus } from "@/domain/combo/api";
 import { ToggleComboBookmark } from "@/domain/combo/combo_bookmark/type";
-import ComboCardBookmarkButton from "@/domain/combo/combo_bookmark/ui/bookmarkbutton";
+import ComboCardBookmarkButton from "@/app/combos/ui/bookmarkbutton";
 import { ToggleComboLike } from "@/domain/combo/combo_like/types";
-import ComboCardLikeButton from "@/domain/combo/combo_like/ui/likebutton";
+import ComboCardLikeButton from "@/app/combos/ui/likebutton";
 import { Combos } from "@/domain/combo/types";
 import { useEffect, useState } from "react";
 

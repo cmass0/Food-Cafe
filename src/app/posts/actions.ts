@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 
+import { POST_USER_FACING_ERRORS } from "@/domain/post/messages";
 import { postCategorySchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
-import { deriveDisplayName } from "@/domain/user/lib/displayName";
+import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
+import { DEFAULT_ACTION_ERROR, toActionErrorMessage } from "@/lib/api/action-error";
+import { uploadedPathsFromFormData } from "@/lib/api/form-data";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { storagePrefix } from "@/lib/storage/paths";
 import { safeDiscardFailedUploads } from "@/lib/storage/server";
@@ -16,41 +19,6 @@ export type PostActionState = {
   message?: string;
   id?: string;
 };
-
-const DEFAULT_ERROR = "요청 처리 과정에서 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
-const USER_FACING_ERRORS = new Set([
-  "내용을 입력해 주세요.",
-  "본문은 200KB 이하로 작성해 주세요.",
-  "유효하지 않은 게시글 형식입니다.",
-  "유효하지 않은 형식입니다.",
-  "작성자 정보를 확인할 수 없습니다.",
-  "이미지 업로드가 완료되지 않았습니다.",
-  "유효하지 않은 멘션이 포함되어 있습니다.",
-  "한 게시글에는 최대 20명까지 멘션할 수 있습니다.",
-  "팔로잉 중인 사용자만 멘션할 수 있습니다.",
-]);
-
-function getActionErrorMessage(error: unknown): string {
-  if (error instanceof ZodError) {
-    return error.issues[0]?.message ?? "입력 내용을 확인해 주세요.";
-  }
-  if (error instanceof Error && USER_FACING_ERRORS.has(error.message)) {
-    return error.message;
-  }
-  return DEFAULT_ERROR;
-}
-
-function uploadedPathsFromFormData(formData: FormData): string[] {
-  const raw = formData.get("uploaded_paths");
-  if (typeof raw !== "string" || !raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((path): path is string => typeof path === "string").slice(0, 50);
-  } catch {
-    return [];
-  }
-}
 
 export async function createPostAction(
   _prevState: PostActionState,
@@ -72,7 +40,7 @@ export async function createPostAction(
   const title = (formData.get("title") as string | null)?.trim() ?? "";
   const rawJson = formData.get("content_json");
   const category = (formData.get("category") as string | null)?.trim() ?? "";
-  const writerName = deriveDisplayName(user) ?? user.email ?? "user";
+  const writerName = derivePublicDisplayName(user) ?? "user";
 
   try {
     if (typeof rawJson !== "string") {
@@ -95,7 +63,7 @@ export async function createPostAction(
   } catch (err) {
     await safeDiscardFailedUploads(user.id, storagePrefix("posts", user.id, postId), uploadedPaths);
     console.error("게시글 생성 실패", err);
-    return { ok: false, message: getActionErrorMessage(err) };
+    return { ok: false, message: toActionErrorMessage(err, POST_USER_FACING_ERRORS) };
   }
 
   revalidatePath("/posts");
@@ -150,7 +118,7 @@ export async function updatePostAction(
       await safeDiscardFailedUploads(user.id, storagePrefix("posts", user.id, id), uploadedPaths);
     }
     console.error("게시글 수정 실패", err);
-    return { ok: false, message: getActionErrorMessage(err) };
+    return { ok: false, message: toActionErrorMessage(err, POST_USER_FACING_ERRORS) };
   }
 
   revalidatePath("/posts");
@@ -181,7 +149,7 @@ export async function deletePostAction(id: string): Promise<PostActionState> {
     }
   } catch (err) {
     console.error("게시글 삭제 실패", err);
-    return { ok: false, message: DEFAULT_ERROR };
+    return { ok: false, message: DEFAULT_ACTION_ERROR };
   }
 
   revalidatePath("/posts");

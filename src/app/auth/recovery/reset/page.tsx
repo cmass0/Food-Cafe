@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { completePasswordResetAction } from "@/app/auth/recovery/actions";
 import * as authService from "@/domain/auth/service";
-import PasswordRecoveryShell from "@/domain/auth/ui/PasswordRecoveryShell";
-import PasswordUpdateForm from "@/domain/auth/ui/PasswordUpdateForm";
+import PasswordRecoveryShell from "@/components/auth/PasswordRecoveryShell";
+import PasswordUpdateForm from "@/components/auth/PasswordUpdateForm";
 
 export const metadata: Metadata = {
   title: "새 비밀번호 설정 | FoodCafe",

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
 
 type PostCreateButtonProps = {

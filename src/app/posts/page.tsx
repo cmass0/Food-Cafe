@@ -14,7 +14,7 @@ import Link from "next/link";
 import * as postService from "@/domain/post/service";
 import { normalizePostCategory, type PostCategory } from "@/domain/post/category";
 import type { PostSearchField } from "@/domain/post/types";
-import PostList from "@/domain/post/ui/PostList";
+import PostList from "@/app/posts/ui/PostList";
 import * as trendingService from "@/features/trending/service";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";

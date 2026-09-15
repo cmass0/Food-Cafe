@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
-import ComboDetail from "@/domain/combo/ui/ComboDetail";
+import ComboDetail from "@/app/combos/ui/ComboDetail";
 import { getComboById } from "@/domain/combo/service";
-import CommentArea from "@/domain/comment/ui/CommentArea";
+import CommentArea from "@/components/comment/CommentArea";
 import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 

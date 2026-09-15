@@ -17,7 +17,7 @@ import type {
   PostUpdateDB,
   PostUpdateInput,
 } from "./types";
-import { buildPostContentHtml, buildPostContentText } from "./ui/PostContentHtml";
+import { buildPostContentHtml, buildPostContentText } from "./content";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;

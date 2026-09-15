@@ -23,7 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { deriveDisplayName } from "@/domain/user/lib/displayName";
 import { cn } from "@/lib/utils";
 

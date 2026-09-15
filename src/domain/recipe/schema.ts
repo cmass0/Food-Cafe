@@ -2,6 +2,17 @@
 import { z } from "zod";
 import { RECIPE_CATEGORY_KEYS } from "./category";
 
+export const MAX_RECIPE_TAGS = 10;
+export const MAX_RECIPE_TOOLS = 10;
+
+const recipeTagsSchema = z
+  .array(tagSchema)
+  .max(MAX_RECIPE_TAGS, `태그는 최대 ${MAX_RECIPE_TAGS}개까지 추가할 수 있습니다.`);
+
+const recipeToolsSchema = z
+  .array(tagSchema)
+  .max(MAX_RECIPE_TOOLS, `조리도구는 최대 ${MAX_RECIPE_TOOLS}개까지 추가할 수 있습니다.`);
+
 const imageListSchema = z
   .array(z.string().trim().min(1).max(2048, "이미지 경로는 2048자 이하만 가능합니다."))
   .max(10, "이미지는 최대 10장까지 추가할 수 있습니다.")
@@ -51,12 +62,8 @@ export const recipeInsertSchema = z.object({
   image: imageFieldSchema,
   images: imageListSchema,
   category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
-  tags: z.array(tagSchema).max(10, "태그는 최대 10개까지 추가할 수 있습니다.").optional(),
-  tools: z
-    .array(tagSchema)
-    .max(10, "조리도구는 최대 10개까지 추가할 수 있습니다.")
-    .nullable()
-    .optional(),
+  tags: recipeTagsSchema.optional(),
+  tools: recipeToolsSchema.nullable().optional(),
   tools_required: z.boolean().optional(),
   difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
   time_minutes: z
@@ -116,12 +123,8 @@ export const recipeUpdateSchema = z
     images: imageListSchema,
 
     category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
-    tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-    tools: z
-      .array(tagSchema)
-      .max(20, "조리도구는 최대 20개까지 추가할 수 있습니다.")
-      .nullable()
-      .optional(),
+    tags: recipeTagsSchema.optional(),
+    tools: recipeToolsSchema.nullable().optional(),
     tools_required: z.boolean().optional(),
     difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
     time_minutes: z

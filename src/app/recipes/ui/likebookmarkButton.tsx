@@ -4,7 +4,7 @@ import { Bookmark, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
-import { useAuthModal } from "@/domain/auth/ui/AuthModalProvider";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { fetchRecipeStatus } from "@/domain/recipe/api";
 import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
