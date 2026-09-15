@@ -89,3 +89,6 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# 문서 산출물은 로컬에서만 관리
+/docs/*.pdf
