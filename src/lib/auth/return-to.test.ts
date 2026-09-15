@@ -1,14 +1,30 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import { normalizeReturnTo } from "./return-to";
+import { buildAuthModalPath, normalizeReturnTo } from "./return-to";
 
-test("로그인 복귀 주소가 외부 사이트이면 홈 경로로 바꾼다", () => {
-  // 준비: 슬래시 두 개로 시작하는 외부 사이트 주소를 전달한다.
-  const next = "//example.com/phishing";
+describe("normalizeReturnTo", () => {
+  test("내부 경로의 쿼리와 해시를 유지한다", () => {
+    expect(normalizeReturnTo("/recipes?page=2#comments")).toBe("/recipes?page=2#comments");
+  });
 
-  // 실행: 서비스에서 실제 사용하는 복귀 경로 검증 함수를 호출한다.
-  const result = normalizeReturnTo(next);
+  test.each(["https://example.com/phishing", "//example.com/phishing", "javascript:alert(1)"])(
+    "외부 주소 %s를 홈 경로로 바꾼다",
+    (next) => {
+      expect(normalizeReturnTo(next)).toBe("/");
+    }
+  );
 
-  // 확인: 외부 주소 대신 안전한 홈 경로가 반환되어야 한다.
-  expect(result).toBe("/");
+  test("값이 없으면 전달한 기본 경로를 사용한다", () => {
+    expect(normalizeReturnTo(undefined, "/posts")).toBe("/posts");
+  });
+});
+
+describe("buildAuthModalPath", () => {
+  test("로그인 모달과 안전한 복귀 경로를 쿼리에 담는다", () => {
+    const result = new URL(buildAuthModalPath("/recipes/new"), "https://foodcafe.local");
+
+    expect(result.pathname).toBe("/");
+    expect(result.searchParams.get("auth")).toBe("login");
+    expect(result.searchParams.get("next")).toBe("/recipes/new");
+  });
 });

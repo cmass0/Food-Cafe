@@ -1,417 +1,269 @@
-# Task Master AI - Agent Integration Guide
+# Food Cafe — Agent Guide
 
-## Essential Commands
-
-### Core Workflow Commands
+Next.js 16 (App Router) · React 19 · TypeScript strict · Supabase · Tailwind 4 + shadcn/ui
 
 ```bash
-# Project Setup
-task-master init                                    # Initialize Task Master in current project
-task-master parse-prd .taskmaster/docs/prd.txt      # Generate tasks from PRD document
-task-master models --setup                        # Configure AI models interactively
-
-# Daily Development Workflow
-task-master list                                   # Show all tasks with status
-task-master next                                   # Get next available task to work on
-task-master show <id>                             # View detailed task information (e.g., task-master show 1.2)
-task-master set-status --id=<id> --status=done    # Mark task complete
-
-# Task Management
-task-master add-task --prompt="description" --research        # Add new task with AI assistance
-task-master expand --id=<id> --research --force              # Break task into subtasks
-task-master update-task --id=<id> --prompt="changes"         # Update specific task
-task-master update --from=<id> --prompt="changes"            # Update multiple tasks from ID onwards
-task-master update-subtask --id=<id> --prompt="notes"        # Add implementation notes to subtask
-
-# Analysis & Planning
-task-master analyze-complexity --research          # Analyze task complexity
-task-master complexity-report                      # View complexity analysis
-task-master expand --all --research               # Expand all eligible tasks
-
-# Dependencies & Organization
-task-master add-dependency --id=<id> --depends-on=<id>       # Add task dependency
-task-master move --from=<id> --to=<id>                       # Reorganize task hierarchy
-task-master validate-dependencies                            # Check for dependency issues
-task-master generate                                         # Update task markdown files (usually auto-called)
+npm test        # vitest run
+npm run lint    # eslint
+npm run dev     # next dev
 ```
 
-## Key Files & Project Structure
-
-### Core Files
-
-- `.taskmaster/tasks/tasks.json` - Main task data file (auto-managed)
-- `.taskmaster/config.json` - AI model configuration (use `task-master models` to modify)
-- `.taskmaster/docs/prd.txt` - Product Requirements Document for parsing
-- `.taskmaster/tasks/*.txt` - Individual task files (auto-generated from tasks.json)
-- `.env` - API keys for CLI usage
-
-### Claude Code Integration Files
-
-- `CLAUDE.md` - Auto-loaded context for Claude Code (this file)
-- `.claude/settings.json` - Claude Code tool allowlist and preferences
-- `.claude/commands/` - Custom slash commands for repeated workflows
-- `.mcp.json` - MCP server configuration (project-specific)
-
-### Directory Structure
-
-```
-project/
-├── .taskmaster/
-│   ├── tasks/              # Task files directory
-│   │   ├── tasks.json      # Main task database
-│   │   ├── task-1.md      # Individual task files
-│   │   └── task-2.md
-│   ├── docs/              # Documentation directory
-│   │   ├── prd.txt        # Product requirements
-│   ├── reports/           # Analysis reports directory
-│   │   └── task-complexity-report.json
-│   ├── templates/         # Template files
-│   │   └── example_prd.txt  # Example PRD template
-│   └── config.json        # AI models & settings
-├── .claude/
-│   ├── settings.json      # Claude Code configuration
-│   └── commands/         # Custom slash commands
-├── .env                  # API keys
-├── .mcp.json            # MCP configuration
-└── CLAUDE.md            # This file - auto-loaded by Claude Code
-```
-
-## MCP Integration
-
-Task Master provides an MCP server that Claude Code can connect to. Configure in `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "task-master-ai": {
-      "command": "npx",
-      "args": ["-y", "task-master-ai"],
-      "env": {
-        "ANTHROPIC_API_KEY": "your_key_here",
-        "PERPLEXITY_API_KEY": "your_key_here",
-        "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
-        "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
-        "XAI_API_KEY": "XAI_API_KEY_HERE",
-        "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",
-        "MISTRAL_API_KEY": "MISTRAL_API_KEY_HERE",
-        "AZURE_OPENAI_API_KEY": "AZURE_OPENAI_API_KEY_HERE",
-        "OLLAMA_API_KEY": "OLLAMA_API_KEY_HERE"
-      }
-    }
-  }
-}
-```
-
-### Essential MCP Tools
-
-```javascript
-help; // = shows available taskmaster commands
-// Project setup
-initialize_project; // = task-master init
-parse_prd; // = task-master parse-prd
-
-// Daily workflow
-get_tasks; // = task-master list
-next_task; // = task-master next
-get_task; // = task-master show <id>
-set_task_status; // = task-master set-status
-
-// Task management
-add_task; // = task-master add-task
-expand_task; // = task-master expand
-update_task; // = task-master update-task
-update_subtask; // = task-master update-subtask
-update; // = task-master update
-
-// Analysis
-analyze_project_complexity; // = task-master analyze-complexity
-complexity_report; // = task-master complexity-report
-```
-
-## Claude Code Workflow Integration
-
-### Standard Development Workflow
-
-#### 1. Project Initialization
-
-```bash
-# Initialize Task Master
-task-master init
-
-# Create or obtain PRD, then parse it
-task-master parse-prd .taskmaster/docs/prd.txt
-
-# Analyze complexity and expand tasks
-task-master analyze-complexity --research
-task-master expand --all --research
-```
-
-If tasks already exist, another PRD can be parsed (with new information only!) using parse-prd with --append flag. This will add the generated tasks to the existing list of tasks..
-
-#### 2. Daily Development Loop
-
-```bash
-# Start each session
-task-master next                           # Find next available task
-task-master show <id>                     # Review task details
-
-# During implementation, check in code context into the tasks and subtasks
-task-master update-subtask --id=<id> --prompt="implementation notes..."
-
-# Complete tasks
-task-master set-status --id=<id> --status=done
-```
-
-#### 3. Multi-Claude Workflows
-
-For complex projects, use multiple Claude Code sessions:
-
-```bash
-# Terminal 1: Main implementation
-cd project && claude
-
-# Terminal 2: Testing and validation
-cd project-test-worktree && claude
-
-# Terminal 3: Documentation updates
-cd project-docs-worktree && claude
-```
-
-### Custom Slash Commands
-
-Create `.claude/commands/taskmaster-next.md`:
-
-```markdown
-Find the next available Task Master task and show its details.
-
-Steps:
-
-1. Run `task-master next` to get the next task
-2. If a task is available, run `task-master show <id>` for full details
-3. Provide a summary of what needs to be implemented
-4. Suggest the first implementation step
-```
-
-Create `.claude/commands/taskmaster-complete.md`:
-
-```markdown
-Complete a Task Master task: $ARGUMENTS
-
-Steps:
-
-1. Review the current task with `task-master show $ARGUMENTS`
-2. Verify all implementation is complete
-3. Run any tests related to this task
-4. Mark as complete: `task-master set-status --id=$ARGUMENTS --status=done`
-5. Show the next available task with `task-master next`
-```
-
-## Tool Allowlist Recommendations
-
-Add to `.claude/settings.json`:
-
-```json
-{
-  "allowedTools": [
-    "Edit",
-    "Bash(task-master *)",
-    "Bash(git commit:*)",
-    "Bash(git add:*)",
-    "Bash(npm run *)",
-    "mcp__task_master_ai__*"
-  ]
-}
-```
-
-## Configuration & Setup
-
-### API Keys Required
-
-At least **one** of these API keys must be configured:
-
-- `ANTHROPIC_API_KEY` (Claude models) - **Recommended**
-- `PERPLEXITY_API_KEY` (Research features) - **Highly recommended**
-- `OPENAI_API_KEY` (GPT models)
-- `GOOGLE_API_KEY` (Gemini models)
-- `MISTRAL_API_KEY` (Mistral models)
-- `OPENROUTER_API_KEY` (Multiple models)
-- `XAI_API_KEY` (Grok models)
-
-An API key is required for any provider used across any of the 3 roles defined in the `models` command.
-
-### Model Configuration
-
-```bash
-# Interactive setup (recommended)
-task-master models --setup
-
-# Set specific models
-task-master models --set-main claude-3-5-sonnet-20241022
-task-master models --set-research perplexity-llama-3.1-sonar-large-128k-online
-task-master models --set-fallback gpt-4o-mini
-```
-
-## Task Structure & IDs
-
-### Task ID Format
-
-- Main tasks: `1`, `2`, `3`, etc.
-- Subtasks: `1.1`, `1.2`, `2.1`, etc.
-- Sub-subtasks: `1.1.1`, `1.1.2`, etc.
-
-### Task Status Values
-
-- `pending` - Ready to work on
-- `in-progress` - Currently being worked on
-- `done` - Completed and verified
-- `deferred` - Postponed
-- `cancelled` - No longer needed
-- `blocked` - Waiting on external factors
-
-### Task Fields
-
-```json
-{
-  "id": "1.2",
-  "title": "Implement user authentication",
-  "description": "Set up JWT-based auth system",
-  "status": "pending",
-  "priority": "high",
-  "dependencies": ["1.1"],
-  "details": "Use bcrypt for hashing, JWT for tokens...",
-  "testStrategy": "Unit tests for auth functions, integration tests for login flow",
-  "subtasks": []
-}
-```
-
-## Claude Code Best Practices with Task Master
-
-### Context Management
-
-- Use `/clear` between different tasks to maintain focus
-- This CLAUDE.md file is automatically loaded for context
-- Use `task-master show <id>` to pull specific task context when needed
-
-### Iterative Implementation
-
-1. `task-master show <subtask-id>` - Understand requirements
-2. Explore codebase and plan implementation
-3. `task-master update-subtask --id=<id> --prompt="detailed plan"` - Log plan
-4. `task-master set-status --id=<id> --status=in-progress` - Start work
-5. Implement code following logged plan
-6. `task-master update-subtask --id=<id> --prompt="what worked/didn't work"` - Log progress
-7. `task-master set-status --id=<id> --status=done` - Complete task
-
-### Complex Workflows with Checklists
-
-For large migrations or multi-step processes:
-
-1. Create a markdown PRD file describing the new changes: `touch task-migration-checklist.md` (prds can be .txt or .md)
-2. Use Taskmaster to parse the new prd with `task-master parse-prd --append` (also available in MCP)
-3. Use Taskmaster to expand the newly generated tasks into subtasks. Consdier using `analyze-complexity` with the correct --to and --from IDs (the new ids) to identify the ideal subtask amounts for each task. Then expand them.
-4. Work through items systematically, checking them off as completed
-5. Use `task-master update-subtask` to log progress on each task/subtask and/or updating/researching them before/during implementation if getting stuck
-
-### Git Integration
-
-Task Master works well with `gh` CLI:
-
-```bash
-# Create PR for completed task
-gh pr create --title "Complete task 1.2: User authentication" --body "Implements JWT auth system as specified in task 1.2"
-
-# Reference task in commits
-git commit -m "feat: implement JWT auth (task 1.2)"
-```
-
-### Parallel Development with Git Worktrees
-
-```bash
-# Create worktrees for parallel task development
-git worktree add ../project-auth feature/auth-system
-git worktree add ../project-api feature/api-refactor
-
-# Run Claude Code in each worktree
-cd ../project-auth && claude    # Terminal 1: Auth work
-cd ../project-api && claude     # Terminal 2: API work
-```
-
-## Troubleshooting
-
-### AI Commands Failing
-
-```bash
-# Check API keys are configured
-cat .env                           # For CLI usage
-
-# Verify model configuration
-task-master models
-
-# Test with different model
-task-master models --set-fallback gpt-4o-mini
-```
-
-### MCP Connection Issues
-
-- Check `.mcp.json` configuration
-- Verify Node.js installation
-- Use `--mcp-debug` flag when starting Claude Code
-- Use CLI as fallback if MCP unavailable
-
-### Task File Sync Issues
-
-```bash
-# Regenerate task files from tasks.json
-task-master generate
-
-# Fix dependency issues
-task-master fix-dependencies
-```
-
-DO NOT RE-INITIALIZE. That will not do anything beyond re-adding the same Taskmaster core files.
-
-## Important Notes
-
-### AI-Powered Operations
-
-These commands make AI calls and may take up to a minute:
-
-- `parse_prd` / `task-master parse-prd`
-- `analyze_project_complexity` / `task-master analyze-complexity`
-- `expand_task` / `task-master expand`
-- `expand_all` / `task-master expand --all`
-- `add_task` / `task-master add-task`
-- `update` / `task-master update`
-- `update_task` / `task-master update-task`
-- `update_subtask` / `task-master update-subtask`
-
-### File Management
-
-- Never manually edit `tasks.json` - use commands instead
-- Never manually edit `.taskmaster/config.json` - use `task-master models`
-- Task markdown files in `tasks/` are auto-generated
-- Run `task-master generate` after manual changes to tasks.json
-
-### Claude Code Session Management
-
-- Use `/clear` frequently to maintain focused context
-- Create custom slash commands for repeated Task Master workflows
-- Configure tool allowlist to streamline permissions
-- Use headless mode for automation: `claude -p "task-master next"`
-
-### Multi-Task Updates
-
-- Use `update --from=<id>` to update multiple future tasks
-- Use `update-task --id=<id>` for single task updates
-- Use `update-subtask --id=<id>` for implementation logging
-
-### Research Mode
-
-- Add `--research` flag for research-based AI enhancement
-- Requires a research model API key like Perplexity (`PERPLEXITY_API_KEY`) in environment
-- Provides more informed task creation and updates
-- Recommended for complex technical tasks
+## 폴더 구조
+
+| 위치                   | 담는 것                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `src/domain/*`         | 도메인 모델·서비스·저장소·순수 로직. **React 컴포넌트 없음** |
+| `src/app/<라우트>/ui/` | 그 화면 **전용** 컴포넌트                                    |
+| `src/components/`      | 여러 화면이 함께 쓰는 컴포넌트                               |
+| `src/lib/`             | 프레임워크·인프라 유틸                                       |
+
+한 화면만 쓰면 `app/<라우트>/ui/`, 여러 화면이 쓰면 `src/components/`.
 
 ---
 
-_This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._
+# 테스트 — 2단계로 나눈다
+
+1. **무엇을 어떤 방식으로 검증할지 고른다** → 아래 A/B/C/D 거름망
+2. **확정된 대상의 테스트를 작성·실행·검토한다** → 단위 테스트는 [docs/ai-test-authoring-manual.md](docs/ai-test-authoring-manual.md)
+
+1단계를 건너뛰고 테스트를 쓰지 않는다. 값어치 없는 테스트는 유지보수 부채가 된다.
+
+---
+
+# 1단계 — A/B/C/D 거름망
+
+| 구분  | 의미                                            | 기본 검증 방식                                          |
+| ----- | ----------------------------------------------- | ------------------------------------------------------- |
+| **A** | 독립적으로 검증 가능한 중요한 규칙              | 단위 테스트                                             |
+| **B** | 단순하고 실패 영향이 작은 계산·선언             | 별도 테스트 생략 가능                                   |
+| **C** | 자체 규칙이 적은 외부 연결 코드                 | 필요한 연결을 통합·E2E에서 확인                         |
+| **D** | 외부 동작과 중요한 규칙·실행 순서가 결합된 코드 | 내부 A 규칙은 단위 테스트, 연결·순서는 통합 테스트     |
+
+이 표는 동작을 분류하는 거름망이다. **파일명·확장자·함수 수로 자동 판정하지 않는다.** 한 파일 안에서도 동작별 분류가 다를 수 있다. 독립적으로 결과를 검증할 수 있는지, 자체 규칙과 실패 영향이 무엇인지 함께 본다. 외부 연결 코드도 보안이나 데이터 보존에 중요할 수 있으므로 C를 "안 중요한 코드"로 해석하지 않는다.
+
+## 단계 진행 규칙
+
+1단계에서는 소스와 호출부·기존 테스트·확인된 요구사항을 읽고 분류한다. **테스트 작성이나 이를 위한 소스 리팩토링은 수행하지 않는다.**
+
+결과는 **확정 대상·제외 대상·판단 보류 후보**로 나누고, 각 대상의 동작·A/B/C/D 분류·근거·기대 결과·기존 검증 여부를 기록한다. 제외는 별도 테스트를 추가하지 않는다는 뜻이며, 기존 테스트를 삭제할 권한으로 해석하지 않는다. 요청 범위 중 아직 검토하지 못한 부분도 밝힌다.
+
+판단 보류 후보에는 다음을 포함한다.
+
+- 관련 코드와 실제 영향
+- 코드·문서·대화에서 확정할 수 없는 규칙이나 해결되지 않은 제약
+- AI의 권장안과 이유
+- 사용자가 결정해야 할 사항
+
+기술적인 분류와 검증 방식 선택은 AI가 근거를 확인해 결정한다. 제품 의도가 불명확하거나 사용자 결정이 필요한 중대한 제약만 판단 보류 후보로 올린다. 현재 구현을 기대 결과의 유일한 근거로 삼지 않는다.
+
+**판단 보류 후보가 있으면 사용자 답변 전까지 2단계 전체를 시작하지 않는다.** 사용자 답변을 반영해 대상을 확정한 뒤 진행한다. 이미 결정된 사항은 다시 묻지 않는다.
+
+판단 보류 후보가 없고 테스트 작성까지 요청받았다면 1단계 결과를 제시한 뒤 2단계를 진행한다. 대상 선정·검토만 요청받았다면 1단계 결과를 보고하고 종료한다. 2단계 도중 새로운 판단 보류 사유가 발견돼도 같은 중단 규칙을 적용한다.
+
+---
+
+## A 판정 — 테스트한다
+
+### 판정 원칙 — 수치가 아니라 동작과 위험을 본다
+
+`A`는 **실제 DB·네트워크·브라우저 실행 없이 입력에 따른 결과를 검증할 수 있고, 로직의 복잡성 또는 실패 영향 때문에 보호할 가치가 있는 규칙**이다. 다른 순수 함수나 검증 라이브러리를 호출해도 된다. 파일 전체가 아니라 공개 함수와 도메인 규칙 단위로 다음 질문을 확인한다.
+
+- 정상값 외에 경계값·잘못된 값·레거시 값에 따라 결과가 달라지는가?
+- 매핑·정규화·필터·정렬·집계·순회처럼 여러 규칙이 결합되는가?
+- 보안·개인정보·무결성 또는 사용자에게 보이는 핵심 규칙인가?
+- 과거에 발생한 버그이거나, 깨져도 수동 검수에서 알아차리기 어려운가?
+
+하나라도 실질적으로 해당하면 `A` 후보로 보고 입력과 기대 결과를 명확히 적을 수 있는지 확인한다. 함수 수·분기 수·파일 길이는 탐색을 돕는 참고값일 뿐 합격선으로 사용하지 않는다.
+
+대상을 고를 때는 후보별 `A/B/C/D` 판정과 근거를 한 줄씩 남긴다. 제품 의도를 알아야 기대 결과를 정할 수 있는데 코드와 문서에서 확인되지 않으면, 현재 구현을 정답으로 가정해 테스트하지 말고 사용자에게 규칙을 확인한다.
+
+### 알고리즘의 6가지 모양 — 대표적인 A 후보
+
+| 모양                        | 예                                                         |
+| --------------------------- | ---------------------------------------------------------- |
+| ① 매핑표                    | `normalizePostCategory` (레거시 20줄), `getDifficultyMeta` |
+| ② 여러 형태를 하나로 정규화 | `deriveDisplayName`(OAuth 3사), `normalizeReturnTo`        |
+| ③ 허용·차단 목록 필터       | `sanitizePostHtml`, `isManagedStoragePath`                 |
+| ④ 경계값 처리               | `resolveLimit`, `resolveOffset`                            |
+| ⑤ 순회하며 모으기           | `collectMentionTargetIds`, `toArraySteps`                  |
+| ⑥ DB 행 → 도메인 모델 변환  | `mapRowToPost`                                             |
+
+### 코드가 짧아도 우선 검토할 규칙
+
+- **보안** — XSS 정제, 리다이렉트 검증, 권한 판정, 경로 탈출 방어
+- **개인정보** — 공개되는 값을 정하는 코드
+- **무결성** — 카운트, 중복 방지, 페이지 경계
+- **사용자에게 보이는 규칙** — 카테고리, 상한, 정렬 순서
+
+> `normalizeReturnTo`처럼 코드가 짧아도 피싱 리다이렉트를 막는 보안 경계라면 A다.
+
+위 항목도 독립적으로 검증 가능한 규칙일 때 A다. 실제 DB 권한 검사나 저장 순서에 의존하면 D로 보고 그 동작이 실행되는 계층에서 검증한다. 알고리즘 모양과 보안이라는 주제만으로 A를 확정하지 않는다.
+
+### Zod 스키마
+
+Zod 스키마는 함수 수나 분기 수로 복잡도를 판단할 수 없다. 사용자 입력의 형식·상한·필드 간 관계처럼 중요한 규칙을 정의하거나, 잘못된 입력이 보안·무결성 문제로 이어진다면 A다. 단순히 선택 필드 하나를 선언하는 정도라면 별도 테스트를 만들지 않는다.
+
+## B 판정 — 별도 테스트 생략 가능
+
+단순한 선언·조회이며 실패 영향이 작고, 별도 테스트가 의미 있는 보호를 추가하지 않는다면 생략할 수 있다. 타입만 선언하는 파일이나 중요 규칙을 담지 않은 표시용 상수가 대표적이다.
+
+`find(...)`나 `SET.has(...)`처럼 짧아도 중요한 허용 범위·권한을 결정하면 A 후보다. 상수 값을 그대로 복제한 테스트보다 그 상수를 사용하는 동작을 검증한다. 외부 서비스 호출을 전달하는 코드는 B가 아니라 C 후보다.
+
+---
+
+## C 판정 — 자체 규칙이 적은 외부 연결 코드
+
+컨트롤러는 외부 요청을 애플리케이션 입력으로 바꾸고, 정의된 규칙과 서비스를 호출한 뒤 결과를 응답으로 돌려주는 계층이다. 이런 얇은 연결은 보통 C에 해당하지만, 중요한 정책이나 실행 순서를 직접 결정한다면 D일 수 있다. C는 컨트롤러에만 한정되지 않는다.
+
+### 컨트롤러의 대표적인 처리 예시
+
+```
+1. 입력 꺼내기        formData.get, searchParams, params, req.json()
+2. 인증 확인 호출     AuthErrorHelper(), requireAuth()
+3. 스키마 호출        schema.parse(...)      ← 호출만. 규칙 정의는 도메인
+4. 서비스 호출        postService.create(...)
+5. 응답 만들기        json(), notFound(), redirect(), revalidatePath()
+6. 오류 → 상태코드    respondWithSupabaseError()
+```
+
+목록은 허용 범위를 제한하는 조건이 아니다. 응답 헤더·쿠키·요청 로그 등도 역할에 따라 판단한다. `getServerSupabase()`로 클라이언트를 만드는 것만으로 인증 확인이 완료되지는 않는다.
+
+**지역 함수나 조건문의 유무로 C를 판정하지 않는다.** 응답 도우미 함수가 있어도 C일 수 있고, 함수 없이 한 줄로 작성한 개인정보 공개 정책도 D일 수 있다. 파싱·타입 좁히기라는 이름만으로 제외하지 말고 그 처리에 정책 결정이 포함되는지 확인한다.
+
+| 동작                              | 판단할 내용                                                            |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| 서비스 결과를 응답 형식으로 전달  | 자체 규칙이 적다면 C                                                   |
+| 인증 확인 후 서비스 호출          | 호출 연결은 C 후보. 인증 누락 시 차단되는지 통합·E2E에서 확인          |
+| `name ?? email ?? "user"`         | 공개 이름 정책을 결정함. 순수 규칙은 A 후보, 외부 처리와 섞였다면 D    |
+| `if (!persisted) await cleanup()` | 저장 성공 데이터 보존과 실패 정리 순서에 영향을 주면 D. 통합 검증 필요 |
+
+C는 단순 호출을 모두 mock으로 바꾼 단위 테스트를 기본으로 만들지 않는다. 실제 요청·인증·서비스·응답 연결에서 보호할 계약을 골라 통합·E2E로 검증한다. 다른 테스트에서 이미 보호한다면 중복 테스트는 생략한다.
+
+### 호출하는 것 ≠ 호출당하는 것
+
+한 파일이 통째로 한 칸에 들어가지 않는다.
+
+```
+컨트롤러가 schema.parse()를 부른다   →  C
+postInsertSchema 규칙 자체           →  A
+```
+
+---
+
+## D 처리 — 같은 파일 안에서 A 규칙과 연결·실행 순서를 구분해 검증한다
+
+외부 동작과 중요한 규칙 또는 실행 순서가 결합된 코드다. **D 자체가 설계 오류는 아니다.** 분리하면 책임과 검증이 명확해지는 순수 규칙을 찾되, 모든 조건문을 별도 함수로 옮기지는 않는다. 저장·실패·정리 순서나 트랜잭션의 정합성은 순수 함수 테스트만으로 보장할 수 없다.
+
+테스트 작업에서는 D 파일을 A와 C 파일로 나누기 위한 소스 리팩토링을 수행하지 않는다. 먼저 같은 파일 안의 동작을 다음처럼 나눈다.
+
+- 실제 DB·네트워크·브라우저 없이 결과를 확인할 수 있는 중요한 규칙 → A로 기록하고 단위 테스트
+- 외부 요청·인증·저장·응답 연결과 중요한 실행 순서 → 통합·DB·E2E 검증
+
+비공개 A 규칙은 테스트를 위해 억지로 export하지 않는다. 공개 함수를 통해 관찰되는 입력·출력·오류를 검증하고, 필요한 경우 외부 협력자만 최소한으로 대체한다. 이때 mock 호출 횟수나 repository 호출 자체를 검증해 실제 DB 동작이 보장됐다고 판단하지 않는다. 예를 들어 잘못된 JSON 차단은 공개 서비스 함수로 단위 테스트할 수 있지만, INSERT 성공·RLS 적용·Trigger 실행은 DB 검증으로 확인한다.
+
+공개 동작을 통해 A 규칙을 검증할 수 없고 소스 변경이 반드시 필요하면 테스트를 위해 임의로 구조를 바꾸지 않는다. 해당 항목을 **기능 개선 시 분리할 후보**로 기록하고 미검증 범위를 보고한다. 이후 기능 개선 작업에서 범용 규칙은 `src/lib/`, 도메인 규칙은 `src/domain/<도메인>/`로 옮길 수 있으며, 기존 동작 테스트를 유지한 채 구조만 바꾼다.
+
+실제 RLS·RPC·Trigger·제약조건은 DB 검증 대상으로 선정한다. JavaScript의 DB 호출을 mock으로 대체해서 해당 규칙이 검증됐다고 보고하지 않는다. 필요한 실행 환경이나 검증이 미완료라면 그 범위를 밝힌다.
+
+---
+
+## DB 검증 — View·RLS·RPC·Trigger
+
+DB 테스트는 `SupabaseClient`를 사용하는 TypeScript 파일 수로 고르지 않는다. MCP로 실제 DB 객체를 수집하고 마이그레이션·repository·`.rpc(...)` 사용처와 대조한 뒤, DB가 직접 보장하는 계약을 View·RLS·RPC·Trigger 네 영역으로 나눈다.
+
+### 공통 진행 규칙
+
+1. 실제 DB의 View·RLS Policy·RPC·Trigger와 관련 제약조건·실행 권한을 수집한다.
+2. 마이그레이션 및 repository 사용처와 대조해 코드·마이그레이션·실제 DB 사이의 차이를 확인한다.
+3. 테스트 전에 대상별 기대 결과를 역할·입력·성공 결과·거부 결과 표로 먼저 작성한다.
+4. 운영 DB에는 테스트 데이터를 만들지 않는다. 실행 전 프로젝트 식별자를 확인하고 로컬 또는 격리 테스트 DB가 아니면 즉시 중단한다.
+5. 익명 사용자·작성자·다른 사용자·관리자는 실제 해당 역할의 세션으로 검증한다. `service_role`은 fixture 준비·정리에만 사용하고 권한 결과 검증에는 사용하지 않는다.
+6. 허용 결과뿐 아니라 거부된 작업이 행·카운터·연관 데이터에 아무 변화도 남기지 않았는지 확인한다.
+7. 테스트 데이터는 실행마다 구분되는 식별자를 사용하고 성공·실패와 관계없이 정리한다.
+8. 일회성 MCP 확인으로 끝내지 않고 반복 실행 가능한 자동화 테스트 파일로 남긴다.
+9. 빈 DB에 마이그레이션을 처음부터 적용한 결과와 실제 테스트 DB 구조가 일치하는지 확인한다.
+
+제약조건과 실행 권한은 별도의 다섯 번째 분류로 만들지 않고, 영향을 받는 View·RLS·RPC·Trigger 테스트의 공통 구조 검사와 입력 경계에 포함한다.
+
+DB 자동화 테스트는 pgTAP SQL로 작성하고 네 영역을 폴더로 분리한다. 한 영역을 하나의 거대한 파일로 만들지 말고 리소스·계약별 파일로 나눈다.
+
+```text
+supabase/tests/database/
+├─ views/       공개 컬럼·행 범위·읽기 전용 계약
+├─ rls/         테이블·Storage의 역할별 CRUD 권한
+├─ rpc/         함수 실행 권한·반환값·부수효과·동시성
+└─ triggers/    이벤트별 실행·카운터·롤백·멱등성
+```
+
+각 SQL 테스트는 fixture 준비부터 검증까지 하나의 트랜잭션 안에서 수행하고 끝에서 롤백한다. 로컬 Supabase를 대상으로 `supabase test db`로 반복 실행하며, 실행 전에는 현재 설치된 CLI의 `supabase test db --help`로 지원 옵션을 확인한다. MCP는 실제 DB 객체 수집·대조에 사용하고, 최종 검증 결과는 위 SQL 테스트에 남긴다.
+
+### 1. View 테스트
+
+- View가 공개하기로 한 컬럼만 반환하고 이메일·전화번호·내부 권한 같은 비공개 컬럼을 노출하지 않는지 확인한다.
+- 익명 사용자와 로그인 사용자가 의도한 행만 조회할 수 있는지 확인한다.
+- 기반 테이블의 RLS를 따라야 하는 View는 `security_invoker` 등 의도한 보안 방식으로 동작하는지 확인한다.
+- JOIN·계산 컬럼·NULL 처리로 값이 누락되거나 중복되지 않는지 대표 fixture로 확인한다.
+- 읽기 전용 View라면 INSERT·UPDATE·DELETE가 허용되지 않는지 확인한다.
+
+### 2. RLS 테스트
+
+- 노출된 각 테이블의 SELECT·INSERT·UPDATE·DELETE를 익명·작성자·다른 사용자·관리자 역할표대로 검증한다.
+- UPDATE는 기존 행 접근 조건과 변경 후 행 조건을 모두 확인하고, `writer_uid`·소유자·부모 식별자 같은 보호 필드를 다른 값으로 바꾸지 못하는지 검증한다.
+- 거부가 오류로 반환되는 경우와 0행으로 반환되는 경우를 모두 정상적인 차단으로 판정하되, 실제 데이터가 그대로인지 다시 조회한다.
+- Storage 객체 정책도 같은 RLS 영역에서 자신의 경로와 다른 사용자의 경로를 나눠 검증한다.
+
+### 3. RPC 테스트
+
+- 익명·로그인·관리자 역할별 EXECUTE 허용 여부를 확인한다.
+- 정상 입력, 경계값, 잘못된 입력, 존재하지 않는 대상에 대한 반환값과 오류를 검증한다.
+- 좋아요·북마크·팔로우처럼 상태를 바꾸는 RPC는 반환값과 실제 관계 행·카운터를 함께 확인한다.
+- 동일 요청의 반복·동시 실행에서도 중복 행이나 잘못된 카운터가 생기지 않는지 확인한다.
+- `SECURITY DEFINER` 함수는 호출자 확인, 고정된 `search_path`, 최소 실행 권한을 확인하고 의도하지 않은 RLS 우회가 없는지 검증한다.
+- 트렌딩 RPC처럼 집계하는 함수는 기간 경계와 동점 우선순위를 고정 fixture로 확인한다.
+
+### 4. Trigger 테스트
+
+- Trigger가 반응해야 하는 INSERT·UPDATE·DELETE·soft delete 각각에서 정확히 한 번 동작하는지 확인한다.
+- 관련 없는 컬럼 수정이나 이미 삭제된 행의 재처리에는 카운터가 다시 변하지 않는지 확인한다.
+- 원본 작업이 실패하면 Trigger의 부수효과도 함께 롤백되는지 확인한다.
+- 댓글·좋아요·북마크처럼 집계값을 관리하는 Trigger는 생성·취소·재생성 뒤 실제 행 수와 저장된 카운터가 일치하는지 확인한다.
+- Trigger 실행 중 오류가 발생해도 일부 테이블만 변경된 부분 성공 상태가 남지 않는지 확인한다.
+
+### 문자열을 다시 적지 않는다
+
+여러 곳에 흩어진 같은 문자열은 값이 바뀔 때 조용히 어긋난다. **정의한 곳에서 가져온다.**
+
+```ts
+// domain/post/mentions.ts — 유일한 출처
+export const MENTION_LIMIT_MESSAGE = `한 게시글에는 최대 ${MAX_UNIQUE_MENTIONS}명까지 ...`;
+
+// domain/post/messages.ts — 다시 적지 않고 가져옴
+POST_USER_FACING_ERRORS = new Set([..., MENTION_LIMIT_MESSAGE]);
+```
+
+이 결합이 실제로 깨져 있었다. 상한을 바꾸면 사용자가 구체적 안내 대신 일반 오류를 보게 되는 버그였고, 화면상 티가 나지 않아 수동 검수로는 잡히지 않았다. `domain/post/messages.test.ts`가 이 어긋남을 감시한다.
+
+---
+
+## 경로는 탐색 힌트이며 제외 조건이 아니다
+
+| 대상                                    | 기본 검토 방향                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/components/editor/**`, `blocks/**` | 원본 라이브러리 동작의 중복 검증은 생략. 프로젝트에서 추가·변경한 규칙은 평가               |
+| `src/components/ui/**`                  | 기본 UI의 중복 검증은 생략. 중요한 커스텀 동작은 평가                                       |
+| `**/types.ts`                           | 타입 선언만 있으면 생략. 실행 코드가 있다면 평가                                            |
+| `**/repository.ts`                      | 전달 코드는 C 후보. 변환·필터·쿼리 규칙이 있다면 별도로 평가                                |
+| `src/app/**/route.ts`, `actions.ts`     | 얇은 연결은 C, 정책·중요한 실행 순서가 있으면 D                                             |
+| `**/*.tsx`                              | 확장자로 판정하지 않음. 중요한 화면 상호작용은 컴포넌트·E2E, 분리 가능한 순수 규칙은 A 후보 |
+
+좋아요·북마크의 중복 방지와 카운트 정합성은 Postgres RPC가 강제한다. 서버 코드를 mocking해도 그 규칙은 검증되지 않는다.
+
+---
+
+# 2단계 — 작성법
+
+위 단계 진행 규칙의 2단계 시작 조건을 충족한 뒤 **단위 테스트 작성 전에 [docs/ai-test-authoring-manual.md](docs/ai-test-authoring-manual.md)를 끝까지 읽고** 코드 규약·단언·엣지 케이스·실행·검토 규칙을 따른다. 대상 선정 규칙은 이 `AGENTS.md`에서만 관리한다.
+
+통합·DB·컴포넌트·E2E로 선정된 대상에는 단위 테스트 매뉴얼을 억지로 적용하지 않는다. 선정한 검증 방식에 맞게 작성·실행하고, 실제 확인한 범위를 보고한다.
+
+브라우저 수동 검수 항목은 [docs/p1-e2e-test-guide.md](docs/p1-e2e-test-guide.md)에 있다.
