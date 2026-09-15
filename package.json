@@ -11,6 +11,9 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:db": "supabase test db --local",
     "migrate:dry": "cross-env DRY_RUN=1 tsx tools/migrations/migrate.ts",
     "migrate": "tsx tools/migrations/migrate.ts",
     "supabase:list-users": "tsx tools/supabase/list-users.ts",
@@ -79,6 +82,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@supabase/mcp-server-supabase": "^0.5.5",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/jsdom": "^27.0.0",
@@ -98,7 +102,6 @@
     "prettier": "^3.6.2",
     "supabase": "^2.48.3",
     "tailwindcss": "^4.0.0",
-    "task-master": "^2.3.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "5.0.0"
