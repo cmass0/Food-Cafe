@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { useAuth } from "@/app/auth/auth-context";
+import AuthButtons from "@/components/auth/AuthButtons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,9 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PASSWORD_SECURITY_MESSAGE } from "@/domain/auth/constants";
-import AuthButtons from "@/components/auth/AuthButtons";
 import { setRemember } from "@/lib/auth/login-maintain";
-import { useAuth } from "@/app/auth/auth-context";
 
 type SignInSignUpViewProps = {
   next?: string;
@@ -71,7 +71,6 @@ export default function SignInSignUpView({
       }
       onAuthSuccess?.(next);
       router.replace(next);
-      router.refresh();
     });
   };
 
