@@ -2,6 +2,7 @@ import { listCombos } from "@/domain/combo/service";
 import { listPosts } from "@/domain/post/service";
 import { listRecipes } from "@/domain/recipe/service";
 import { parseSearchSort, toContentSorts } from "@/features/search/sort";
+import { loadSearchSection } from "@/features/search/section-result";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import SearchControls from "./section/SearchControls";
@@ -60,29 +61,66 @@ export default async function SearchPage(props: Props) {
 
   const supabase = await getServerSupabase();
 
-  const [recipes, combos, posts] = await Promise.all([
-    listRecipes(supabase, {
-      limit: RECIPE_LIMIT,
-      page: recipePage,
-      search: queryText,
-      searchField: "tag_title",
-      sort: contentSorts.recipe,
-    }),
-    listCombos(supabase, {
-      limit: COMBO_LIMIT,
-      page: comboPage,
-      search: queryText,
-      searchField: "tag_title",
-      sort: contentSorts.combo,
-    }),
-    listPosts(supabase, {
-      limit: POST_LIMIT,
-      page: postPage,
-      search: queryText,
-      searchField: "title_contents",
-      sort: contentSorts.post,
-    }),
+  const [recipeResult, comboResult, postResult] = await Promise.all([
+    loadSearchSection(
+      "recipes",
+      () =>
+        listRecipes(supabase, {
+          limit: RECIPE_LIMIT,
+          page: recipePage,
+          search: queryText,
+          searchField: "tag_title",
+          sort: contentSorts.recipe,
+        }),
+      {
+        items: [],
+        total: 0,
+        limit: RECIPE_LIMIT,
+        offset: (recipePage - 1) * RECIPE_LIMIT,
+        hasMore: false,
+      }
+    ),
+    loadSearchSection(
+      "combos",
+      () =>
+        listCombos(supabase, {
+          limit: COMBO_LIMIT,
+          page: comboPage,
+          search: queryText,
+          searchField: "tag_title",
+          sort: contentSorts.combo,
+        }),
+      {
+        items: [],
+        total: 0,
+        limit: COMBO_LIMIT,
+        offset: (comboPage - 1) * COMBO_LIMIT,
+        hasMore: false,
+      }
+    ),
+    loadSearchSection(
+      "posts",
+      () =>
+        listPosts(supabase, {
+          limit: POST_LIMIT,
+          page: postPage,
+          search: queryText,
+          searchField: "title_contents",
+          sort: contentSorts.post,
+        }),
+      {
+        items: [],
+        total: 0,
+        limit: POST_LIMIT,
+        offset: (postPage - 1) * POST_LIMIT,
+        hasMore: false,
+      }
+    ),
   ]);
+
+  const recipes = recipeResult.data;
+  const combos = comboResult.data;
+  const posts = postResult.data;
 
   const totalCount = recipes.total + combos.total + posts.total;
   const displayQuery = queryText || "전체";
@@ -101,32 +139,34 @@ export default async function SearchPage(props: Props) {
               </span>
             </div>
             <p className="mt-3 text-sm font-medium text-zinc-500 md:text-base">
-              레시피, 레시피 조합, 커뮤니티에서 &apos;{displayQuery}&apos;에 대한 검색
-              결과입니다.
+              레시피, 레시피 조합, 커뮤니티에서 &apos;{displayQuery}&apos;에 대한 검색 결과입니다.
             </p>
           </div>
 
           <SearchControls initialSort={sort} initialView={viewMode} />
         </header>
 
-        <div className="mt-8 space-y-3">
+        <div className="mt-8 space-y-12 md:space-y-16">
           <SearchResultRecipe
             recipes={recipes}
             searchParams={paginationQuery}
             queryText={queryText}
             viewMode={viewMode}
+            error={recipeResult.error}
           />
           <SearchResultCombos
             combos={combos}
             searchParams={paginationQuery}
             queryText={queryText}
             viewMode={viewMode}
+            error={comboResult.error}
           />
           <SearchResultPosts
             posts={posts}
             searchParams={paginationQuery}
             queryText={queryText}
             viewMode={viewMode}
+            error={postResult.error}
           />
         </div>
       </div>

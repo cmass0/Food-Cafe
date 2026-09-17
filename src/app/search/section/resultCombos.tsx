@@ -2,6 +2,7 @@ import { Bookmark, Eye, Heart, Puzzle, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import SectionErrorState from "@/components/status/SectionErrorState";
 import type { ComboItems, ComboListResult, Combos } from "@/domain/combo/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
   queryText: string;
   viewMode: ViewMode;
+  error?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -34,10 +36,9 @@ function buildMoreHref(queryText: string): string {
 }
 
 function imageSlots(combo: Combos): string[] {
-  const slots = [
-    combo.image,
-    ...(combo.items ?? []).map((item) => itemImage(item)),
-  ].filter((image): image is string => Boolean(image));
+  const slots = [combo.image, ...(combo.items ?? []).map((item) => itemImage(item))].filter(
+    (image): image is string => Boolean(image)
+  );
 
   return Array.from(new Set(slots)).slice(0, 2);
 }
@@ -131,6 +132,7 @@ export default function SearchResultCombos({
   searchParams,
   queryText,
   viewMode,
+  error = false,
 }: Props) {
   const comboItems = combos.items;
   const currentPage = Number(searchParams.comboPage) || 1;
@@ -140,16 +142,14 @@ export default function SearchResultCombos({
       : "grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-1 md:gap-4 lg:grid-cols-3";
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <section>
       <header className="mb-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="grid h-6 w-6 place-items-center rounded-md bg-emerald-50 text-[#34783f]">
             <Puzzle className="h-4 w-4" />
           </span>
           <h2 className="text-xl font-black tracking-tight text-zinc-950">레시피 조합</h2>
-          <span className="text-base font-black text-[#34783f]">
-            {formatCount(combos.total)}
-          </span>
+          <span className="text-base font-black text-[#34783f]">{formatCount(combos.total)}</span>
         </div>
         <Link
           href={buildMoreHref(queryText)}
@@ -160,7 +160,9 @@ export default function SearchResultCombos({
         </Link>
       </header>
 
-      {comboItems.length === 0 ? (
+      {error ? (
+        <SectionErrorState title="조합 검색 결과를 불러오지 못했습니다." />
+      ) : comboItems.length === 0 ? (
         <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
           <SearchX className="h-7 w-7 text-zinc-300" />
           <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
@@ -173,8 +175,8 @@ export default function SearchResultCombos({
         </div>
       )}
 
-      {combos.total > 0 ? (
-        <div className="-mx-5 mt-5 sm:mx-0">
+      {!error && combos.total > 0 ? (
+        <div className="mt-5">
           <PaginationComponent
             basePath="/search"
             page={currentPage}

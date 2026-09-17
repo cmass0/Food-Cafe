@@ -2,6 +2,7 @@ import { ChefHat, Eye, Heart, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import SectionErrorState from "@/components/status/SectionErrorState";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
   queryText: string;
   viewMode: ViewMode;
+  error?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -119,6 +121,7 @@ export default function SearchResultRecipe({
   searchParams,
   queryText,
   viewMode,
+  error = false,
 }: Props) {
   const recipeItems = recipes.items;
   const currentPage = Number(searchParams.recipePage) || 1;
@@ -128,16 +131,14 @@ export default function SearchResultRecipe({
       : "grid grid-cols-2 gap-x-3 gap-y-5 md:gap-4 xl:grid-cols-4";
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <section>
       <header className="mb-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="grid h-6 w-6 place-items-center rounded-md bg-emerald-50 text-[#34783f]">
             <ChefHat className="h-4 w-4" />
           </span>
           <h2 className="text-xl font-black tracking-tight text-zinc-950">레시피</h2>
-          <span className="text-base font-black text-[#34783f]">
-            {formatCount(recipes.total)}
-          </span>
+          <span className="text-base font-black text-[#34783f]">{formatCount(recipes.total)}</span>
         </div>
         <Link
           href={buildMoreHref(queryText)}
@@ -148,7 +149,9 @@ export default function SearchResultRecipe({
         </Link>
       </header>
 
-      {recipeItems.length === 0 ? (
+      {error ? (
+        <SectionErrorState title="레시피 검색 결과를 불러오지 못했습니다." />
+      ) : recipeItems.length === 0 ? (
         <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
           <SearchX className="h-7 w-7 text-zinc-300" />
           <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
@@ -161,8 +164,8 @@ export default function SearchResultRecipe({
         </div>
       )}
 
-      {recipes.total > 0 ? (
-        <div className="-mx-5 mt-5 sm:mx-0">
+      {!error && recipes.total > 0 ? (
+        <div className="mt-5">
           <PaginationComponent
             basePath="/search"
             page={currentPage}

@@ -1,6 +1,7 @@
 import { Eye, MessageCircle, SearchX } from "lucide-react";
 import Link from "next/link";
 
+import SectionErrorState from "@/components/status/SectionErrorState";
 import type { Post, PostListResult } from "@/domain/post/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ type Props = {
   searchParams: Record<string, string | string[] | undefined>;
   queryText: string;
   viewMode: ViewMode;
+  error?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -89,7 +91,13 @@ function PostResultCard({ post, viewMode }: { post: Post; viewMode: ViewMode }) 
   );
 }
 
-export default function SearchResultPosts({ posts, searchParams, queryText, viewMode }: Props) {
+export default function SearchResultPosts({
+  posts,
+  searchParams,
+  queryText,
+  viewMode,
+  error = false,
+}: Props) {
   const postItems = posts.items;
   const currentPage = Number(searchParams.postPage) || 1;
   const gridClass =
@@ -98,7 +106,7 @@ export default function SearchResultPosts({ posts, searchParams, queryText, view
       : "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4";
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+    <section>
       <header className="mb-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="grid h-6 w-6 place-items-center rounded-md bg-blue-50 text-blue-500">
@@ -116,7 +124,9 @@ export default function SearchResultPosts({ posts, searchParams, queryText, view
         </Link>
       </header>
 
-      {postItems.length === 0 ? (
+      {error ? (
+        <SectionErrorState title="게시글 검색 결과를 불러오지 못했습니다." />
+      ) : postItems.length === 0 ? (
         <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
           <SearchX className="h-7 w-7 text-zinc-300" />
           <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
@@ -129,8 +139,8 @@ export default function SearchResultPosts({ posts, searchParams, queryText, view
         </div>
       )}
 
-      {posts.total > 0 ? (
-        <div className="-mx-5 mt-5 sm:mx-0">
+      {!error && posts.total > 0 ? (
+        <div className="mt-5">
           <PaginationComponent
             basePath="/search"
             page={currentPage}
