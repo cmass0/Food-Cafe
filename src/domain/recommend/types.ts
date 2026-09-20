@@ -49,7 +49,6 @@ export type RecommendRecipeCandidate = {
   bookmarkCount: number;
   commentCount: number;
   viewCount: number;
-  url: string;
 };
 
 export type RecommendRecipeSearchResult = {

@@ -30,7 +30,6 @@ export function mapRecommendRecipeRow(row: RecommendRecipeRow): RecommendRecipeC
     bookmarkCount: row.bookmark_count,
     commentCount: row.comment_count,
     viewCount: row.view_count,
-    url: `/recipes/${row.id}`,
   };
 }
 

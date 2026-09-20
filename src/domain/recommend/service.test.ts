@@ -26,7 +26,7 @@ const RECIPE_ROW: RecommendRecipeRow = {
 };
 
 describe("추천 레시피 공개 후보 변환", () => {
-  test("추천 답변에 필요한 공개 필드와 레시피 링크를 만든다", () => {
+  test("추천 답변에 필요한 공개 필드를 만든다", () => {
     expect(mapRecommendRecipeRow(RECIPE_ROW)).toEqual({
       id: RECIPE_ROW.id,
       title: "간장 계란밥",
@@ -44,7 +44,6 @@ describe("추천 레시피 공개 후보 변환", () => {
       bookmarkCount: 8,
       commentCount: 3,
       viewCount: 120,
-      url: `/recipes/${RECIPE_ROW.id}`,
     });
   });
 
