@@ -8,73 +8,24 @@ import * as repo from "./repository";
 import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
 import type {
   Recipe,
-  RecipeIngredient,
   RecipeInsertDB,
   RecipeListOptions,
   RecipeListResult,
   RecipeRow,
-  RecipeStep,
   RecipeUpdateDB,
 } from "./types";
-import { isJson } from "@/lib/domain/service/jsoncheck";
 import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
+import {
+  normaliseImageArray,
+  normaliseTextArray,
+  toArrayIngredient,
+  toArraySteps,
+} from "./normalization";
+
+export { normaliseImageArray, normaliseTextArray, toArrayIngredient, toArraySteps };
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
-
-export function normaliseTextArray(value: string[] | null | undefined): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item) => typeof item === "string" && item.length > 0);
-}
-
-export function normaliseImageArray(
-  images: string[] | null | undefined,
-  fallback?: string | null
-): string[] {
-  const result = normaliseTextArray(images);
-  if (result.length > 0) return result;
-  return fallback ? [fallback] : [];
-}
-
-// json 형태로 저장된 재료목록을 RecipeIngredient 배열로 변환
-export function toArrayIngredient(value: unknown): RecipeIngredient[] {
-  if (!Array.isArray(value)) return [];
-
-  const result: RecipeIngredient[] = [];
-  for (const item of value) {
-    if (!isJson(item)) continue;
-
-    if (!item || typeof item !== "object") continue;
-    const name = typeof item.name === "string" ? item.name.trim() : "";
-    const amount = typeof item.amount === "string" ? item.amount.trim() : "";
-    const unit = typeof item.unit === "string" ? item.unit.trim() : "";
-    const unitCustom = typeof item.unitCustom === "string" ? item.unitCustom.trim() : "";
-
-    if (!name && !amount && !unit && !unitCustom) continue;
-
-    result.push({ name, amount, unit, unitCustom });
-  }
-
-  return result;
-}
-
-// json 형태로 저장된 조리단계를 RecipeStep 배열로 변환
-export function toArraySteps(value: unknown): RecipeStep[] {
-  if (!Array.isArray(value)) return [];
-
-  const result: RecipeStep[] = [];
-  for (const item of value) {
-    if (!isJson(item)) continue;
-    if (!item || typeof item !== "object") continue;
-    const step = typeof item.description === "string" ? item.description.trim() : "";
-
-    if (!step) continue;
-
-    result.push({ description: step });
-  }
-
-  return result;
-}
 
 // DB 행을 Recipe 도메인 객체로 변환
 function mapRowToRecipe(row: RecipeRow): Recipe {
