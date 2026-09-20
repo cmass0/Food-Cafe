@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { normaliseTextArray } from "@/domain/recipe/service";
+import { normaliseTextArray } from "@/domain/recipe/normalization";
 import type { Recipe } from "@/domain/recipe/types";
 import { cn } from "@/lib/utils";
 import type { ProfileView } from "../../profile-types";

@@ -22,8 +22,6 @@ import {
   toArraySteps,
 } from "./normalization";
 
-export { normaliseImageArray, normaliseTextArray, toArrayIngredient, toArraySteps };
-
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 

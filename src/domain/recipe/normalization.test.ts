@@ -1,13 +1,11 @@
-import { describe, expect, test, vi } from "vitest";
-
-vi.mock("server-only", () => ({}));
+import { describe, expect, test } from "vitest";
 
 import {
   normaliseImageArray,
   normaliseTextArray,
   toArrayIngredient,
   toArraySteps,
-} from "./service";
+} from "./normalization";
 
 describe("레시피 배열 변환", () => {
   test.each([
