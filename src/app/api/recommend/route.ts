@@ -1,6 +1,6 @@
-import { AuthErrorHelper, badRequest, internalError } from "@/lib/api/route-error";
+import { badRequest, internalError } from "@/lib/api/route-error";
 import { getRecommendLanguageModel } from "@/lib/ai/model";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getAdminSupabase } from "@/lib/supabase/admin";
 import { createRecommendAgent } from "@/features/recommend/agent";
 import { createAgentUIStreamResponse } from "ai";
 import { z } from "zod";
@@ -13,9 +13,6 @@ const recommendChatRequestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const { error: authError } = await AuthErrorHelper();
-    if (authError) return authError;
-
     let body: unknown;
     try {
       body = await request.json();
@@ -28,7 +25,9 @@ export async function POST(request: Request) {
       return badRequest("대화 메시지 형식이 올바르지 않습니다.");
     }
 
-    const client = await getServerSupabase();
+    // 채팅은 비로그인 사용자도 사용할 수 있지만, 검색 RPC 자체를 anon에 공개하지는 않는다.
+    // service role 키는 server-only 모듈 안에 머물고 브라우저에는 전달되지 않는다.
+    const client = getAdminSupabase();
     const agent = createRecommendAgent({
       client,
       model: getRecommendLanguageModel(),
