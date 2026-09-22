@@ -33,6 +33,7 @@ const NAV_ITEMS = [
   { href: "/combos", label: "레시피 조합" },
   { href: "/posts", label: "커뮤니티" },
   { href: "/ranking", label: "랭킹" },
+  { href: "/recommend", label: "AI 추천" },
 ];
 
 function NavbarInner() {
