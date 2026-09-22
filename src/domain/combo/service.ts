@@ -1,5 +1,6 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
+import { syncComboRecommendationDocument } from "@/lib/ai/recommendation-index";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -184,6 +185,7 @@ export async function createCombo(
     image: normalizeStoredImageReference(parsed.image),
     items: normalizeStoredComboItems(parsed.items),
   });
+  await syncComboRecommendationDocument(row);
   return mapRowToCombination(row);
 }
 export async function updateCombo(
@@ -202,6 +204,7 @@ export async function updateCombo(
   const row = await repo.updateCombo(client, id, writerUid, storedPatch);
   if (!row) return null;
 
+  await syncComboRecommendationDocument(row);
   const combo = mapRowToCombination(row);
   if (row.writer_uid && (patch.image !== undefined || patch.items !== undefined)) {
     await safePruneContentImages("combos", row.writer_uid, row.id, [row.image, row.items]);

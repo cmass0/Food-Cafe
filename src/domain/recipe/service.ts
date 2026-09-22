@@ -1,5 +1,6 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
+import { syncRecipeRecommendationDocument } from "@/lib/ai/recommendation-index";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildBookmarkedSetRecipe } from "./recipe_bookmark/service";
@@ -189,6 +190,7 @@ export async function createRecipe(
       ?.map(normalizeStoredImageReference)
       .filter((image): image is string => Boolean(image)),
   });
+  await syncRecipeRecommendationDocument(row);
   return mapRowToRecipe(row);
 }
 
@@ -213,6 +215,7 @@ export async function updateRecipe(
   const row = await repo.updateRecipe(client, id, writerUid, storedPatch);
   if (!row) return null;
 
+  await syncRecipeRecommendationDocument(row);
   const recipe = mapRowToRecipe(row);
   if (row.writer_uid && (patch.image !== undefined || patch.images !== undefined)) {
     await safePruneContentImages("recipes", row.writer_uid, row.id, [row.image, row.images]);

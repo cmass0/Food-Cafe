@@ -50,6 +50,21 @@ export type RecommendationDocument = {
   ingredientNames: string[];
 };
 
+export type RecommendationDocumentStatus = "pending" | "ready" | "failed";
+
+export type PreparedRecommendationDocument = RecommendationDocument & {
+  contentHash: string;
+  embeddingInput: string;
+};
+
+export type RecommendationDocumentState = {
+  source_type: string;
+  source_id: string;
+  content_hash: string;
+  embedding_model: string | null;
+  embedding_status: string;
+};
+
 export type RecommendRecipeRow = Pick<
   RecipeRow,
   | "id"

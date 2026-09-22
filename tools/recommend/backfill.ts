@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -11,16 +10,22 @@ import {
   buildRecipeRecommendationDocument,
 } from "../../src/domain/recommend/document";
 import type {
+  PreparedRecommendationDocument,
   RecommendationComboDocumentSource,
   RecommendationDocument,
+  RecommendationDocumentState,
   RecommendationRecipeDocumentSource,
 } from "../../src/domain/recommend/types";
 import {
   RECOMMENDATION_EMBEDDING_DIMENSIONS,
   RECOMMENDATION_EMBEDDING_PROVIDER_OPTIONS,
 } from "../../src/lib/ai/embedding-config";
-import { formatRecommendationDocumentEmbeddingInput } from "../../src/lib/ai/embedding-input";
-import type { Database, Json } from "../../src/types/supabase";
+import {
+  prepareRecommendationDocument,
+  toRecommendationDocumentRpcPayload,
+  validateRecommendationDocumentEmbedding,
+} from "../../src/lib/ai/recommendation-document";
+import type { Database } from "../../src/types/supabase";
 
 const DEFAULT_BATCH_SIZE = 16;
 const MAX_BATCH_SIZE = 100;
@@ -32,19 +37,6 @@ const COMBO_COLUMNS = `
   id, title, summary, steps, items, tags, tools, tools_required,
   difficulty, time_minutes
 ` as const;
-
-type ExistingDocumentState = {
-  source_type: string;
-  source_id: string;
-  content_hash: string;
-  embedding_model: string | null;
-  embedding_status: string;
-};
-
-type PreparedDocument = RecommendationDocument & {
-  contentHash: string;
-  embeddingInput: string;
-};
 
 function loadLocalEnvironment() {
   for (const name of [".env.local", ".env"]) {
@@ -92,19 +84,6 @@ function splitIntoBatches<T>(values: T[], size: number): T[][] {
   return result;
 }
 
-function createPreparedDocument(
-  document: RecommendationDocument,
-  modelId: string
-): PreparedDocument {
-  const embeddingInput = formatRecommendationDocumentEmbeddingInput(
-    document.title,
-    document.searchText,
-    modelId
-  );
-  const contentHash = createHash("sha256").update(embeddingInput).digest("hex");
-  return { ...document, contentHash, embeddingInput };
-}
-
 function documentKey(sourceType: string, sourceId: string): string {
   return `${sourceType}:${sourceId}`;
 }
@@ -136,40 +115,16 @@ async function loadSourceDocuments(
 
 async function loadExistingDocuments(
   client: SupabaseClient<Database>
-): Promise<Map<string, ExistingDocumentState>> {
+): Promise<Map<string, RecommendationDocumentState>> {
   const { data, error } = await client.rpc("get_recommendation_document_states");
   if (error) throw error;
 
   return new Map((data ?? []).map((row) => [documentKey(row.source_type, row.source_id), row]));
 }
 
-function toRpcDocument(
-  document: PreparedDocument,
-  modelId: string,
-  status: "pending" | "ready" | "failed",
-  embedding: number[] | null,
-  error: string | null
-): Json {
-  return {
-    source_type: document.sourceType,
-    source_id: document.sourceId,
-    search_text: document.searchText,
-    embedding: embedding ? JSON.stringify(embedding) : null,
-    category: document.category,
-    difficulty: document.difficulty,
-    time_minutes: document.timeMinutes,
-    tools_required: document.toolsRequired,
-    ingredient_names: document.ingredientNames,
-    content_hash: document.contentHash,
-    embedding_model: modelId,
-    embedding_status: status,
-    embedding_error: error,
-  };
-}
-
 async function saveDocuments(
   client: SupabaseClient<Database>,
-  documents: PreparedDocument[],
+  documents: PreparedRecommendationDocument[],
   modelId: string,
   status: "pending" | "ready" | "failed",
   embeddings?: number[][],
@@ -179,7 +134,13 @@ async function saveDocuments(
     ? (failure instanceof Error ? failure.message : String(failure)).slice(0, 1000)
     : null;
   const payload = documents.map((document, index) =>
-    toRpcDocument(document, modelId, status, embeddings?.[index] ?? null, errorMessage)
+    toRecommendationDocumentRpcPayload(
+      document,
+      modelId,
+      status,
+      embeddings?.[index] ?? null,
+      errorMessage
+    )
   );
   const { data, error } = await client.rpc("upsert_recommendation_documents", {
     p_documents: payload,
@@ -197,14 +158,7 @@ function validateEmbeddings(embeddings: number[][], expectedCount: number): numb
   }
 
   for (const embedding of embeddings) {
-    if (
-      embedding.length !== RECOMMENDATION_EMBEDDING_DIMENSIONS ||
-      embedding.some((value) => !Number.isFinite(value))
-    ) {
-      throw new Error(
-        `추천 문서 임베딩은 ${RECOMMENDATION_EMBEDDING_DIMENSIONS}차원이어야 합니다.`
-      );
-    }
+    validateRecommendationDocumentEmbedding(embedding);
   }
   return RECOMMENDATION_EMBEDDING_DIMENSIONS;
 }
@@ -231,7 +185,7 @@ async function main() {
     throw new Error("AI_RECOMMEND_EMBEDDING_MODEL 환경변수가 필요합니다.");
   }
 
-  const prepared = documents.map((document) => createPreparedDocument(document, modelId));
+  const prepared = documents.map((document) => prepareRecommendationDocument(document, modelId));
   const existing = await loadExistingDocuments(client);
   const targets = prepared.filter((document) => {
     if (force) return true;
