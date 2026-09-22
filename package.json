@@ -16,6 +16,7 @@
     "test:db": "supabase test db --local",
     "migrate:dry": "cross-env DRY_RUN=1 tsx tools/migrations/migrate.ts",
     "migrate": "tsx tools/migrations/migrate.ts",
+    "recommend:backfill": "tsx tools/recommend/backfill.ts",
     "supabase:list-users": "tsx tools/supabase/list-users.ts",
     "supabase:list-users:pg": "tsx tools/supabase/list-users-pg.ts",
     "supabase:types": "npx supabase gen types typescript --project-id vtkcngubofjqddqvcufp > src/types/supabase.ts"

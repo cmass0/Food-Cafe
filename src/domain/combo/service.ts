@@ -3,10 +3,10 @@ import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/s
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { isJson } from "@/lib/domain/service/jsoncheck";
 import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
 import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
 import { buildLikedSetCombo } from "./combo_like/service";
+import { toArrayItems, toArraySteps } from "./normalization";
 import * as repo from "./repository";
 import { ComboInsertSchema, comboListOptionsSchema, ComboUpdateSchema } from "./schema";
 import {
@@ -16,55 +16,13 @@ import {
   ComboListResult,
   ComboRow,
   Combos,
-  ComboSteps,
   ComboUpdateDb,
 } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-// json 형태로 저장된 조리단계를 ComboSteps 배열로 변환
-export function toArraySteps(value: unknown): ComboSteps[] {
-  if (!Array.isArray(value)) return [];
-
-  const result: ComboSteps[] = [];
-  for (const item of value) {
-    if (!isJson(item)) continue;
-    if (!item || typeof item !== "object") continue;
-    const step = typeof item.description === "string" ? item.description.trim() : "";
-
-    if (!step) continue;
-
-    result.push({ description: step });
-  }
-
-  return result;
-}
-
-// json 형태로 저장된 아이템들을 ComboItems 배열로 변환
-export function toArrayItems(value: unknown): ComboItems[] {
-  if (!Array.isArray(value)) return [];
-  const result: ComboItems[] = [];
-  for (const item of value) {
-    if (!isJson(item)) continue;
-    if (!item || typeof item !== "object") continue;
-
-    if (item.type === "recipe") {
-      const recipeid = typeof item.recipeid === "string" ? item.recipeid.trim() : "";
-      const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      const image = resolveStorageImageUrl(item.image);
-      const title = typeof item.title === "string" ? item.title.trim() : undefined;
-      result.push({ type: "recipe", recipeid, summary, image, title });
-    }
-    if (item.type === "product") {
-      const productName = typeof item.productName === "string" ? item.productName.trim() : "";
-      const summary = typeof item.summary === "string" ? item.summary.trim() : undefined;
-      const image = resolveStorageImageUrl(item.image);
-      result.push({ type: "product", productName: productName, summary, image });
-    }
-  }
-  return result;
-}
+export { toArrayItems, toArraySteps } from "./normalization";
 
 function mapRowToCombination(row: ComboRow): Combos {
   return {

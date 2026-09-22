@@ -704,6 +704,16 @@ export type Database = {
       }
     }
     Functions: {
+      get_recommendation_document_states: {
+        Args: never
+        Returns: {
+          content_hash: string
+          embedding_model: string | null
+          embedding_status: string
+          source_id: string
+          source_type: string
+        }[]
+      }
       combo_toggle_like: {
         Args: { p_combo_id: string }
         Returns: {
@@ -851,6 +861,33 @@ export type Database = {
           like_count: number
           liked: boolean
         }[]
+      }
+      search_recommendations: {
+        Args: {
+          p_category?: string | null
+          p_difficulty?: string | null
+          p_embedding_model_id: string
+          p_exclude_ingredients?: string[] | null
+          p_include_ingredients?: string[] | null
+          p_match_count?: number
+          p_max_time_minutes?: number | null
+          p_query_embedding: number[]
+          p_query_text: string
+          p_source_types?: string[] | null
+          p_tools_required?: boolean | null
+        }
+        Returns: {
+          keyword_rank: number | null
+          score: number
+          semantic_rank: number | null
+          semantic_similarity: number | null
+          source_id: string
+          source_type: "combo" | "recipe"
+        }[]
+      }
+      upsert_recommendation_documents: {
+        Args: { p_documents: Json }
+        Returns: number
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

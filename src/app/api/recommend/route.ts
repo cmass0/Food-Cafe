@@ -1,7 +1,8 @@
 import { AuthErrorHelper, badRequest, internalError } from "@/lib/api/route-error";
+import { getRecommendLanguageModel } from "@/lib/ai/model";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { createRecommendAgent } from "@/features/recommend/agent";
-import { createAgentUIStreamResponse, gateway } from "ai";
+import { createAgentUIStreamResponse } from "ai";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -9,14 +10,6 @@ export const runtime = "nodejs";
 const recommendChatRequestSchema = z.object({
   messages: z.array(z.unknown()).min(1).max(30),
 });
-
-function getRecommendModelId(): string {
-  const modelId = process.env.AI_RECOMMEND_MODEL?.trim();
-  if (!modelId) {
-    throw new Error("AI_RECOMMEND_MODEL 환경변수가 필요합니다.");
-  }
-  return modelId;
-}
 
 export async function POST(request: Request) {
   try {
@@ -38,7 +31,7 @@ export async function POST(request: Request) {
     const client = await getServerSupabase();
     const agent = createRecommendAgent({
       client,
-      model: gateway(getRecommendModelId()),
+      model: getRecommendLanguageModel(),
     });
 
     return createAgentUIStreamResponse({
