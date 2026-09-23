@@ -139,10 +139,15 @@ supabase/
 │  │                                            [구현됨] 백필 상태 조회·일괄 저장 RPC 생성
 │  ├─ 20260921204432_fix_recommendation_embedding_dimension.sql
 │  │                                            [구현됨] 임베딩 컬럼을 vector(768)로 고정
-│  └─ 20260922192014_cleanup_recommendation_documents_on_source_delete.sql
-│                                               [구현됨] 레시피·콤보 삭제 시 파생 문서 정리
+│  ├─ 20260922192014_cleanup_recommendation_documents_on_source_delete.sql
+│  │                                            [구현됨] 레시피·콤보 삭제 시 파생 문서 정리
+│  ├─ 20260923140122_create_recommendation_counts.sql
+│  │                                            [구현됨] 레시피·콤보별 날짜별 추천 횟수 테이블
+│  └─ 20260923144320_create_recommendation_count_rpcs.sql
+│                                               [구현됨] 추천 횟수 증가·많이 추천 조회 RPC
 └─ tests/database/rpc/
-   └─ search_recommendations.test.sql           [예정] 실제 Postgres RPC 계약 pgTAP 테스트
+   ├─ search_recommendations.test.sql           [예정] 실제 Postgres RPC 계약 pgTAP 테스트
+   └─ recommendation_counts.test.sql            [구현됨] 추천 횟수 권한·증가·정렬·CASCADE 테스트
 ```
 
 ## 백필 구현 때 추가·수정한 파일
@@ -233,9 +238,12 @@ AI 추천                                           새 대화
 
 - 우측 카드는 작은 썸네일 옆에 종류·제목 한 줄·설명 최대 두 줄을 배치한다. 채팅 카드보다 작게 구성하고 같은 `RecommendationResultCard`의 축약 변형을 사용한다.
 - `맞춤 추천`은 이전 답변을 스크롤하지 않고 최신 결과를 다시 찾는 용도다. 채팅 카드와 일부 결과가 겹치는 것은 의도된 동작이다.
-- `많이 추천`은 좋아요·조회수 기반 인기 랭킹과 다르다. 실제 추천 이력 집계가 필요하며, 검색 후보로 반환된 것과 사용자에게 추천 카드로 전달된 것을 구분해야 한다.
-- 집계 기간, 추천 1회의 정의, 동일 사용자·대화의 반복 추천 처리, 동점 정렬 기준은 후속 결정 사항이다. 목업의 `최근 7일`과 순위는 예시이며 확정된 집계 정책이 아니다.
-- 많이 추천 집계·조회 기능은 별도 후속 백엔드 작업이다. 기존 검색 RPC가 이 집계를 제공한다고 가정하지 않으며, 구체적인 API·저장 파일은 집계 계약을 확정한 뒤 파일 트리에 추가한다.
+- `많이 추천`은 좋아요·북마크·댓글 기반 인기 랭킹(`/ranking`)과 다른 신호다. 두 점수를 합치지 않는다.
+- 추천 1회는 `searchRecommendations` Tool이 채팅 카드로 반환한 레시피·콤보 1건이다. Tool이 결과를 만든 직후 서버가 `increment_recommendation_counts` RPC로 기록하며, 브라우저는 카운트를 올리지 않는다. 기록 실패는 로그만 남기고 추천 응답은 유지한다.
+- 한 번의 결과 안에서 중복된 ID는 한 번만 세고, 같은 대화에서 다시 추천되면 다시 센다.
+- 저장은 `private.recipe_recommendation_counts`, `private.combo_recommendation_counts`에 한국 날짜별로 누적한다. 원본 삭제 시 FK CASCADE로 함께 정리된다.
+- 화면은 기간 선택 없이 전체 누적 순위를 보여준다. 동점이면 최근 추천 순, 마지막으로 ID 순이다. 날짜는 이후 기간별 집계로 확장하기 위해 저장만 한다.
+- 추천 횟수는 검색 순위에 사용하지 않는다. 자주 추천된 항목이 더 추천되는 되먹임을 막기 위해서다.
 
 ### 반응형·상태·시각 스타일
 
@@ -255,5 +263,5 @@ AI 추천                                           새 대화
 5. 추천 API 요청 횟수 제한을 추가한다.
 6. 새 RPC의 pgTAP 테스트와 통합 서비스 테스트를 작성한다.
 7. navbar 진입·전용 채팅 페이지·답변 내 추천 카드·우측 추천 탭·모바일 전환 UI를 구현한다.
-8. `많이 추천`의 집계 기준을 확정하고 추천 이력 집계·조회 및 UI 연결을 구현한다.
+8. `많이 추천` 집계 저장·증가·조회 RPC는 구현했다. `get_popular_recommendations` 결과로 원본을 재조회해 우측 탭에 연결하는 작업이 남았다.
 9. 새 검색 흐름이 안정화되면 `searchRecipes` 전용 코드를 제거한다.
