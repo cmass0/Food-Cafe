@@ -176,39 +176,64 @@ export type Database = {
       }
       comments: {
         Row: {
+          combo_id: string | null
           content: string
           created_at: string
           deleted_at: string | null
           id: string
-          parent_id: string
-          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          post_id: string | null
+          recipe_id: string | null
           updated_at: string
           writer_name: string
           writer_uid: string | null
         }
         Insert: {
+          combo_id?: string | null
           content: string
           created_at?: string
           deleted_at?: string | null
           id?: string
-          parent_id: string
-          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          post_id?: string | null
+          recipe_id?: string | null
           updated_at?: string
           writer_name?: string
           writer_uid?: string | null
         }
         Update: {
+          combo_id?: string | null
           content?: string
           created_at?: string
           deleted_at?: string | null
           id?: string
-          parent_id?: string
-          parent_type?: Database["public"]["Enums"]["comment_parent_type"]
+          post_id?: string | null
+          recipe_id?: string | null
           updated_at?: string
           writer_name?: string
           writer_uid?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "comments_combo_id_fkey"
+            columns: ["combo_id"]
+            isOneToOne: false
+            referencedRelation: "combos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_bookmarks: {
         Row: {
@@ -922,7 +947,7 @@ export type Database = {
       uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
-      comment_parent_type: "recipe" | "post" | "combo"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1049,8 +1074,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      comment_parent_type: ["recipe", "post", "combo"],
-    },
+    Enums: {},
   },
 } as const

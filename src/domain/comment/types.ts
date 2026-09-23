@@ -4,13 +4,14 @@ import type { Database } from "@/types/supabase";
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"];
 export type CommentInsertRow = Database["public"]["Tables"]["comments"]["Insert"];
 export type CommentUpdateRow = Database["public"]["Tables"]["comments"]["Update"];
-export type CommentParentTypeEnum = Database["public"]["Enums"]["comment_parent_type"];
+export const COMMENT_PARENT_TYPES = ["recipe", "post", "combo"] as const;
+export type CommentParentType = (typeof COMMENT_PARENT_TYPES)[number];
 
 
 
 export interface Comment {
   id: string;
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   writerUid: string | null;
   writerName: string;
@@ -21,7 +22,7 @@ export interface Comment {
 }
 
 export type FetchCommentsParams = {
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   limit: number;
   offset: number;
@@ -30,7 +31,7 @@ export type FetchCommentsParams = {
 export type CommentListOptions = {
   limit?: number;
   page?: number;
-  parentType?: "recipe" | "post" | "combo";
+  parentType?: CommentParentType;
   parentId?: string;
 };
 
@@ -53,7 +54,7 @@ export type CommentDisplayItem = {
 };
 
 export type CommentInsertInput = {
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   writerName: string;
   content: string;
@@ -62,7 +63,7 @@ export type CommentInsertInput = {
 // JSON 직렬화 후 클라이언트가 받는 댓글 형태 (Comment의 Date 필드가 string으로 직렬화됨)
 export type CommentDto = {
   id: string;
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   writerUid: string | null;
   writerName: string;
@@ -79,7 +80,7 @@ export type CommentMutationResponse = {
 };
 
 export type CommentDeleteResponse = {
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   parentCommentCount: number;
 };

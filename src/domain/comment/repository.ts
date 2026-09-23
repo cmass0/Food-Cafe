@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
-import type { CommentInsertRow, CommentRow, CommentUpdateRow, FetchCommentsParams } from "./types";
+import { COMMENT_PARENT_COLUMNS } from "./parent";
+import type {
+  CommentInsertRow,
+  CommentParentType,
+  CommentRow,
+  CommentUpdateRow,
+  FetchCommentsParams,
+} from "./types";
 
 function mapRows(rows: CommentRow[]): CommentRow[] {
   return Array.isArray(rows) ? (rows as CommentRow[]) : [];
@@ -21,8 +28,7 @@ export async function fetchComments(
   const query = client
     .from("comments")
     .select("*", { count: "exact" })
-    .eq("parent_type", params.parentType)
-    .eq("parent_id", params.parentId)
+    .eq(COMMENT_PARENT_COLUMNS[params.parentType], params.parentId)
     .order("created_at", { ascending: false })
     .order("id", { ascending: true })
     .range(offset, Math.max(offset + limit - 1, offset));
@@ -113,7 +119,7 @@ export async function deleteComment(
 // 트리거가 갱신해놓은 값을 그대로 읽기만 함 — service에서 응답에 실어보내기 위해 사용
 export async function selectParentCommentCount(
   client: SupabaseClient<Database>,
-  parentType: "recipe" | "post" | "combo",
+  parentType: CommentParentType,
   parentId: string
 ): Promise<number> {
   const table = parentType === "recipe" ? "recipes" : parentType === "combo" ? "combos" : "posts";

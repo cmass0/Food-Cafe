@@ -1,11 +1,8 @@
-import { Constants } from "@/types/supabase";
 import { z } from "zod";
 
-const parentTypeEnum = z.enum([...Constants.public.Enums.comment_parent_type] as [
-  "recipe",
-  "post",
-  "combo",
-]);
+import { COMMENT_PARENT_TYPES } from "./types";
+
+const parentTypeEnum = z.enum(COMMENT_PARENT_TYPES);
 
 export const commentBodySchema = z.object({
   content: z.string().trim().min(1, "댓글을 입력해주세요.").max(1000, "댓글은 최대 1000자입니다."),

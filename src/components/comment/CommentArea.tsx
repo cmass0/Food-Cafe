@@ -1,12 +1,12 @@
 import { listComments } from "@/domain/comment/service";
-import type { CommentDisplayItem, CommentParentTypeEnum } from "@/domain/comment/types";
+import type { CommentDisplayItem, CommentParentType } from "@/domain/comment/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import CommentThread from "./CommentThread.client";
 
 type Props = {
-  parentType: CommentParentTypeEnum;
+  parentType: CommentParentType;
   parentId: string;
   basePath: string;
   searchParams: Record<string, string | string[] | undefined>;

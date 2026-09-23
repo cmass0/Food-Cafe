@@ -3,6 +3,7 @@ import * as repository from "./repository";
 
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import type { Database } from "@/types/supabase";
+import { readCommentParent, toCommentParentColumns } from "./parent";
 import { commentInsertSchema, commentListOptionsSchema, commentUpdateSchema } from "./schema";
 import {
   Comment,
@@ -10,6 +11,7 @@ import {
   CommentInsertRow,
   CommentListOptions,
   CommentListResult,
+  CommentParentType,
   CommentRow,
   CommentUpdateRow,
 } from "./types";
@@ -20,8 +22,7 @@ const MAX_LIMIT = 50;
 function mapRowToComment(row: CommentRow): Comment {
   return {
     id: row.id,
-    parentType: row.parent_type,
-    parentId: row.parent_id,
+    ...readCommentParent(row),
     writerUid: row.writer_uid,
     writerName: row.writer_name,
     content: row.content,
@@ -36,8 +37,7 @@ function buildInsertPayload(
 ): CommentInsertRow {
   return {
     content: parsed.content,
-    parent_id: parsed.parentId,
-    parent_type: parsed.parentType,
+    ...toCommentParentColumns(parsed.parentType, parsed.parentId),
     writer_name: parsed.writerName,
     writer_uid: parsed.writerUid,
   };
@@ -100,13 +100,14 @@ export async function createComment(
   const parsed = commentInsertSchema.parse({ ...(input as object), writerUid });
   const payload = buildInsertPayload(parsed);
   const row = await repository.insertComment(client, payload);
+  const comment = mapRowToComment(row);
   // 트리거가 부모 테이블의 comment_count를 이미 +1 해놓은 상태 — 그 값을 읽어 함께 반환
   const parentCommentCount = await repository.selectParentCommentCount(
     client,
-    row.parent_type,
-    row.parent_id
+    comment.parentType,
+    comment.parentId
   );
-  return { comment: mapRowToComment(row), parentCommentCount };
+  return { comment, parentCommentCount };
 }
 
 export async function updateComment(
@@ -125,7 +126,7 @@ export async function updateComment(
 // 삭제 응답: 갱신된 부모 카운트와 parent 정보
 // 트리거가 deleted_at 갱신을 감지해 카운트를 -1 한 직후 값을 읽어 반환
 export type CommentDeleteResult = {
-  parentType: "recipe" | "post" | "combo";
+  parentType: CommentParentType;
   parentId: string;
   parentCommentCount: number;
 };
@@ -141,14 +142,11 @@ export async function deleteComment(
 
   const deleted = await repository.deleteComment(client, id, writerUid);
   if (!deleted) return null;
+  const parent = readCommentParent(target);
   const parentCommentCount = await repository.selectParentCommentCount(
     client,
-    target.parent_type,
-    target.parent_id
+    parent.parentType,
+    parent.parentId
   );
-  return {
-    parentType: target.parent_type,
-    parentId: target.parent_id,
-    parentCommentCount,
-  };
+  return { ...parent, parentCommentCount };
 }
