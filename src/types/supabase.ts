@@ -66,45 +66,6 @@ export type Database = {
           },
         ]
       }
-      combo_recipe_ref: {
-        Row: {
-          combo_id: string
-          created_at: string
-          note: string | null
-          recipe_id: string
-          sort_order: number
-        }
-        Insert: {
-          combo_id: string
-          created_at?: string
-          note?: string | null
-          recipe_id: string
-          sort_order?: number
-        }
-        Update: {
-          combo_id?: string
-          created_at?: string
-          note?: string | null
-          recipe_id?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "combo_recipe_ref_combo_id_fkey"
-            columns: ["combo_id"]
-            isOneToOne: false
-            referencedRelation: "combos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "combo_recipe_ref_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       combos: {
         Row: {
           bookmark_count: number
