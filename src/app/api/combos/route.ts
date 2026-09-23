@@ -1,6 +1,5 @@
 import * as comboService from "@/domain/combo/service";
 import { ComboSearchField, ComboSort } from "@/domain/combo/types";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   badRequest,
@@ -65,7 +64,6 @@ export async function POST(req: Request) {
     const combo = await comboService.createCombo(supabase, {
       ...body,
       writer_uid: user.id,
-      writer_name: derivePublicDisplayName(user) ?? "user",
     });
     return json({ data: combo }, 201);
   } catch (error) {

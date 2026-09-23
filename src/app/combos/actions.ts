@@ -2,7 +2,6 @@
 
 import * as comboService from "@/domain/combo/service";
 import type { ComboInsertDb, ComboUpdateDb } from "@/domain/combo/types";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import { requireAuthContext } from "@/lib/auth/session";
 import { storagePrefix } from "@/lib/storage/paths";
 import { safeDiscardFailedUploads } from "@/lib/storage/server";
@@ -30,7 +29,6 @@ export async function createComboAction(input: ComboInsertDb, uploadedPaths: str
     const combo = await comboService.createCombo(supabase, {
       ...input,
       writer_uid: user.id,
-      writer_name: derivePublicDisplayName(user) ?? "user",
     });
     comboId = combo.id;
   } catch (error) {

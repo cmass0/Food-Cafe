@@ -11,12 +11,7 @@ export const commentBodySchema = z.object({
 export const commentContextSchema = z.object({
   parentType: parentTypeEnum,
   parentId: z.string().uuid({ message: "parentId는 UUID 형식이어야 합니다." }),
-  // writerUid는 서버에서 세션으로 얻으므로 클라이언트 입력에서 제외
-  writerName: z
-    .string()
-    .trim()
-    .min(1, "작성자 이름을 입력해주세요.")
-    .max(40, "작성자 이름은 최대 40자입니다."),
+  // writerUid는 서버에서 세션으로 얻고, 작성자 이름은 DB Trigger가 프로필에서 채운다.
   writerUid: z.string().uuid(),
 });
 

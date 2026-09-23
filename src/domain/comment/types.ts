@@ -56,7 +56,6 @@ export type CommentDisplayItem = {
 export type CommentInsertInput = {
   parentType: CommentParentType;
   parentId: string;
-  writerName: string;
   content: string;
 };
 

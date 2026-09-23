@@ -90,7 +90,6 @@ export const ComboInsertSchema = z.object({
   tools_required: z.boolean().optional(),
   image: imageFieldSchema,
   writer_uid: z.string().uuid().optional(),
-  writer_name: z.string().max(200).optional(),
 });
 
 // 폼용 이미지 스키마 File(새 업로드) 또는 string(업데이트시 기존 url사용) 허용
@@ -101,7 +100,6 @@ export const ComboFormSchema = ComboInsertSchema.omit({
   image: true,
   items: true,
   writer_uid: true,
-  writer_name: true,
 }).extend({
   image: imageFormSchema.refine((image) => Boolean(image), {
     message: "대표 이미지를 선택해 주세요.",

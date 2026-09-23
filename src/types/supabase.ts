@@ -520,7 +520,6 @@ export type Database = {
           tsv: unknown
           updated_at: string
           view_count: number
-          writer_email: string | null
           writer_name: string | null
           writer_uid: string | null
         }
@@ -548,7 +547,6 @@ export type Database = {
           tsv?: unknown
           updated_at?: string
           view_count?: number
-          writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
         }
@@ -576,7 +574,6 @@ export type Database = {
           tsv?: unknown
           updated_at?: string
           view_count?: number
-          writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
         }
@@ -848,43 +845,7 @@ export type Database = {
         Args: { p_combo_ids?: string[]; p_recipe_ids?: string[] }
         Returns: undefined
       }
-      increment_recipe_view: {
-        Args: { p_recipe_id: string }
-        Returns: {
-          bookmark_count: number
-          category: string | null
-          chef_tip: string | null
-          comment_count: number
-          created_at: string
-          difficulty: string | null
-          id: string
-          image: string | null
-          images: string[]
-          ingredients: Json
-          last_liked_at: string | null
-          like_count: number
-          servings: number | null
-          steps: Json
-          summary: string | null
-          tags: string[]
-          time_minutes: number | null
-          title: string
-          tools: string[] | null
-          tools_required: boolean
-          tsv: unknown
-          updated_at: string
-          view_count: number
-          writer_email: string | null
-          writer_name: string | null
-          writer_uid: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "recipes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      increment_recipe_view: { Args: { p_recipe_id: string }; Returns: number }
       is_current_user_admin: { Args: never; Returns: boolean }
       post_toggle_like: {
         Args: { p_post_id: string }

@@ -38,7 +38,6 @@ function buildInsertPayload(
   return {
     content: parsed.content,
     ...toCommentParentColumns(parsed.parentType, parsed.parentId),
-    writer_name: parsed.writerName,
     writer_uid: parsed.writerUid,
   };
 }

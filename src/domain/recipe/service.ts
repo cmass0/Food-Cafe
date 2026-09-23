@@ -57,7 +57,6 @@ function mapRowToRecipe(row: RecipeRow): Recipe {
     updatedAt: new Date(row.updated_at),
     writerUid: row.writer_uid ?? null,
     writerName: row.writer_name ?? null,
-    writerEmail: row.writer_email ?? null,
   };
 }
 

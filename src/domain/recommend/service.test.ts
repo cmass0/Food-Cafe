@@ -50,11 +50,11 @@ describe("추천 레시피 공개 후보 변환", () => {
   test("원본 행에 추가 필드가 있어도 공개 후보에 포함하지 않는다", () => {
     const rowWithPrivateFields = {
       ...RECIPE_ROW,
-      writer_email: "private@example.com",
+      writer_name: "작성자 이름",
       writer_uid: "00000000-0000-4000-8000-000000000099",
     } as RecommendRecipeRow;
 
-    expect(mapRecommendRecipeRow(rowWithPrivateFields)).not.toHaveProperty("writer_email");
+    expect(mapRecommendRecipeRow(rowWithPrivateFields)).not.toHaveProperty("writer_name");
     expect(mapRecommendRecipeRow(rowWithPrivateFields)).not.toHaveProperty("writer_uid");
   });
 });
