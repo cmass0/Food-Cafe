@@ -721,6 +721,15 @@ export type Database = {
           liked: boolean
         }[]
       }
+      get_popular_recommendations: {
+        Args: { p_limit?: number }
+        Returns: {
+          last_recommended_at: string
+          recommendation_count: number
+          source_id: string
+          source_type: "combo" | "recipe"
+        }[]
+      }
       get_trending_combos_by_period: {
         Args: { limit_size?: number; period?: string }
         Returns: {
@@ -810,6 +819,10 @@ export type Database = {
       }
       increment_combo_view: { Args: { p_combo_id: string }; Returns: number }
       increment_post_view: { Args: { p_post_id: string }; Returns: number }
+      increment_recommendation_counts: {
+        Args: { p_combo_ids?: string[]; p_recipe_ids?: string[] }
+        Returns: undefined
+      }
       increment_recipe_view: {
         Args: { p_recipe_id: string }
         Returns: {

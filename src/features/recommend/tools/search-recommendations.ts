@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { tool } from "ai";
 
 import { recommendationSearchSchema } from "@/domain/recommend/schema";
-import { searchRecommendations } from "@/domain/recommend/service";
+import { recordRecommendationExposure, searchRecommendations } from "@/domain/recommend/service";
 import { createRecommendationQueryEmbedding } from "@/lib/ai/embedding";
 import type { Database } from "@/types/supabase";
 
@@ -18,7 +18,16 @@ query에는 사용자의 의도를 검색에 유용한 짧은 자연어로 유�
       // LLM에는 DB 권한이나 임베딩 생성 권한을 주지 않는다. LLM은 검증된 검색 조건만 만들고,
       // 실제 Gateway 호출과 Supabase RPC 실행은 이 서버 전용 Tool 안에서만 수행한다.
       const queryEmbedding = await createRecommendationQueryEmbedding(input.query);
-      return searchRecommendations(client, input, queryEmbedding);
+      const result = await searchRecommendations(client, input, queryEmbedding);
+
+      // 추천 횟수는 부가 통계라서 기록에 실패해도 사용자에게 보낼 추천 결과는 그대로 반환한다.
+      try {
+        await recordRecommendationExposure(client, result.items);
+      } catch (error) {
+        console.error("추천 횟수 기록 실패", error);
+      }
+
+      return result;
     },
   });
 }
