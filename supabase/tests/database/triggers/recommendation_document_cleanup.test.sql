@@ -11,8 +11,8 @@ select extensions.is(
     where not tgisinternal
       and tgenabled <> 'D'
       and (
-        (tgrelid = 'public.recipes'::regclass and tgname = 'recipes_delete_recommendation_document')
-        or (tgrelid = 'public.combos'::regclass and tgname = 'combos_delete_recommendation_document')
+        (tgrelid = 'public.recipes'::regclass and tgname = 'trg_recipes_delete_recommendation_document')
+        or (tgrelid = 'public.combos'::regclass and tgname = 'trg_combos_delete_recommendation_document')
       )
   ),
   2,

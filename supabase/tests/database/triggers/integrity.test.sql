@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(31);
+select extensions.plan(33);
 
 -- 프로젝트가 의존하는 Trigger의 존재와 활성 상태를 검증합니다.
 select extensions.is(
@@ -10,27 +10,23 @@ select extensions.is(
     with expected(schema_name, table_name, trigger_name) as (
       values
         ('auth', 'users', 'on_auth_user_created'),
-        ('public', 'combo_bookmarks', 'combo_bookmarks_sync_count'),
-        ('public', 'combo_likes', 'combo_likes_sync_count'),
-        ('public', 'combos', 'combos_preserve_engagement_counts'),
-        ('public', 'combos', 'combos_updated_at'),
-        ('public', 'comments', 'tr_comments_set_writer'),
-        ('public', 'comments', 'trg_comments_after_delete'),
-        ('public', 'comments', 'trg_comments_after_insert'),
-        ('public', 'comments', 'trg_comments_after_update'),
-        ('public', 'comments', 'trg_comments_updated'),
-        ('public', 'post_bookmarks', 'post_bookmarks_sync_count'),
-        ('public', 'post_likes', 'post_likes_sync_count'),
-        ('public', 'posts', 'posts_preserve_engagement_counts'),
-        ('public', 'posts', 'posts_updated_at'),
-        ('public', 'profiles', 'profiles_preserve_follow_counts'),
-        ('public', 'profiles', 'profiles_set_updated_at'),
-        ('public', 'recipe_bookmarks', 'recipe_bookmarks_sync_count'),
-        ('public', 'recipe_likes', 'recipe_likes_sync_count'),
-        ('public', 'recipes', 'recipes_preserve_engagement_counts'),
+        ('public', 'combo_bookmarks', 'trg_combo_bookmarks_sync_count'),
+        ('public', 'combo_likes', 'trg_combo_likes_sync_count'),
+        ('public', 'combos', 'trg_combos_set_updated_at'),
+        ('public', 'combos', 'trg_combos_set_writer'),
+        ('public', 'comments', 'trg_comments_set_updated_at'),
+        ('public', 'comments', 'trg_comments_set_writer'),
+        ('public', 'comments', 'trg_comments_sync_parent_count'),
+        ('public', 'post_bookmarks', 'trg_post_bookmarks_sync_count'),
+        ('public', 'post_likes', 'trg_post_likes_sync_count'),
+        ('public', 'posts', 'trg_posts_set_updated_at'),
+        ('public', 'posts', 'trg_posts_set_writer'),
+        ('public', 'profiles', 'trg_profiles_set_updated_at'),
+        ('public', 'recipe_bookmarks', 'trg_recipe_bookmarks_sync_count'),
+        ('public', 'recipe_likes', 'trg_recipe_likes_sync_count'),
+        ('public', 'recipes', 'trg_recipes_set_updated_at'),
         ('public', 'recipes', 'trg_recipes_set_writer'),
-        ('public', 'recipes', 'trg_recipes_updated'),
-        ('public', 'user_follows', 'user_follows_sync_count')
+        ('public', 'user_follows', 'trg_user_follows_sync_count')
     )
     select count(*)::integer
     from expected
@@ -43,8 +39,8 @@ select extensions.is(
       and app_trigger.tgname = expected.trigger_name
       and not app_trigger.tgisinternal
   ),
-  22,
-  '필수 애플리케이션 Trigger 22개가 존재한다'
+  18,
+  '필수 애플리케이션 Trigger 18개가 존재한다'
 );
 
 select extensions.ok(
@@ -112,8 +108,8 @@ select extensions.is(
 );
 
 select extensions.ok(
-  (select prosecdef from pg_proc where oid = 'public.comments_set_writer()'::regprocedure),
-  '댓글 작성자 지정 Trigger 함수는 SECURITY DEFINER다'
+  (select prosecdef from pg_proc where oid = 'private.set_content_writer()'::regprocedure),
+  '콘텐츠 작성자 지정 Trigger 함수는 SECURITY DEFINER다'
 );
 
 select extensions.ok(
@@ -182,13 +178,15 @@ select extensions.is(
 select set_config('request.jwt.claim.sub', '12000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claims', '{"sub":"12000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-insert into public.comments (id, parent_type, parent_id, content)
-values ('62000000-0000-4000-8000-000000000001', 'post', '22000000-0000-4000-8000-000000000001', '게시글 댓글');
+insert into public.comments (id, post_id, content)
+values ('62000000-0000-4000-8000-000000000001', '22000000-0000-4000-8000-000000000001', '게시글 댓글');
 reset role;
 
-insert into public.comments (id, parent_type, parent_id, writer_uid, writer_name, content) values
-  ('62000000-0000-4000-8000-000000000002', 'recipe', '32000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', 'Trigger 사용자 A', '레시피 댓글'),
-  ('62000000-0000-4000-8000-000000000003', 'combo', '42000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', 'Trigger 사용자 A', '조합 댓글');
+insert into public.comments (id, recipe_id, writer_uid, writer_name, content) values
+  ('62000000-0000-4000-8000-000000000002', '32000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', 'Trigger 사용자 A', '레시피 댓글');
+
+insert into public.comments (id, combo_id, writer_uid, writer_name, content) values
+  ('62000000-0000-4000-8000-000000000003', '42000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', 'Trigger 사용자 A', '조합 댓글');
 
 select extensions.is(
   (select (select comment_count from public.posts where id = '22000000-0000-4000-8000-000000000001')::text || ':' || (select comment_count from public.recipes where id = '32000000-0000-4000-8000-000000000001')::text || ':' || (select comment_count from public.combos where id = '42000000-0000-4000-8000-000000000001')::text),
@@ -223,20 +221,50 @@ select extensions.is(
   '댓글을 물리 삭제해도 콘텐츠 종류별 카운터가 감소한다'
 );
 
--- 일반 사용자가 콘텐츠 수정 요청에 집계값을 섞어도 기존 값이 보존됩니다.
-update public.posts set like_count = 7, bookmark_count = 7, view_count = 7 where id = '22000000-0000-4000-8000-000000000001';
-update public.recipes set like_count = 7, bookmark_count = 7, view_count = 7 where id = '32000000-0000-4000-8000-000000000001';
-update public.combos set like_count = 7, bookmark_count = 7, view_count = 7 where id = '42000000-0000-4000-8000-000000000001';
+-- 조회·좋아요·북마크·댓글로 카운터만 바뀐 UPDATE는 콘텐츠 수정 시각을 바꾸지 않습니다.
+select public.increment_post_view('22000000-0000-4000-8000-000000000001');
+select public.increment_recipe_view('32000000-0000-4000-8000-000000000001');
+select public.increment_combo_view('42000000-0000-4000-8000-000000000001');
+insert into public.recipe_likes (user_id, recipe_id) values ('12000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001');
+insert into public.comments (id, recipe_id, writer_uid, content)
+values ('62000000-0000-4000-8000-000000000009', '32000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', '수정 시각 확인 댓글');
 
+select extensions.ok(
+  (select bool_and(updated_at = '2000-01-01'::timestamptz) from (
+    select updated_at from public.posts where id = '22000000-0000-4000-8000-000000000001'
+    union all
+    select updated_at from public.recipes where id = '32000000-0000-4000-8000-000000000001'
+    union all
+    select updated_at from public.combos where id = '42000000-0000-4000-8000-000000000001'
+  ) untouched_rows),
+  '조회수·좋아요·댓글 수 변경은 콘텐츠 수정 시각을 바꾸지 않는다'
+);
+
+select extensions.is(
+  (select like_count::text || ':' || comment_count::text from public.recipes where id = '32000000-0000-4000-8000-000000000001'),
+  '1:1',
+  '수정 시각과 별개로 카운터는 그대로 증가한다'
+);
+
+-- 집계값은 컬럼 권한으로 막혀 있어, 수정 요청에 섞으면 요청 전체가 거부됩니다.
 set local role authenticated;
-update public.posts set title = '수정된 게시글', like_count = 999, bookmark_count = 999, view_count = 999 where id = '22000000-0000-4000-8000-000000000001';
-update public.recipes set title = '수정된 레시피', like_count = 999, bookmark_count = 999, view_count = 999 where id = '32000000-0000-4000-8000-000000000001';
-update public.combos set title = '수정된 조합', like_count = 999, bookmark_count = 999, view_count = 999 where id = '42000000-0000-4000-8000-000000000001';
-reset role;
+select extensions.throws_ok(
+  $$update public.posts set title = '수정된 게시글', like_count = 999 where id = '22000000-0000-4000-8000-000000000001'$$,
+  '42501', null, '게시글 수정으로 집계값을 직접 바꿀 수 없다'
+);
+select extensions.throws_ok(
+  $$update public.recipes set title = '수정된 레시피', comment_count = 999 where id = '32000000-0000-4000-8000-000000000001'$$,
+  '42501', null, '레시피 수정으로 댓글 수를 직접 바꿀 수 없다'
+);
+select extensions.throws_ok(
+  $$update public.combos set title = '수정된 조합', bookmark_count = 999, view_count = 999 where id = '42000000-0000-4000-8000-000000000001'$$,
+  '42501', null, '조합 수정으로 집계값을 직접 바꿀 수 없다'
+);
 
-select extensions.is((select like_count::text || ':' || bookmark_count::text || ':' || view_count::text from public.posts where id = '22000000-0000-4000-8000-000000000001'), '7:7:7', '게시글 수정으로 집계값을 직접 바꿀 수 없다');
-select extensions.is((select like_count::text || ':' || bookmark_count::text || ':' || view_count::text from public.recipes where id = '32000000-0000-4000-8000-000000000001'), '7:7:7', '레시피 수정으로 집계값을 직접 바꿀 수 없다');
-select extensions.is((select like_count::text || ':' || bookmark_count::text || ':' || view_count::text from public.combos where id = '42000000-0000-4000-8000-000000000001'), '7:7:7', '조합 수정으로 집계값을 직접 바꿀 수 없다');
+update public.posts set title = '수정된 게시글' where id = '22000000-0000-4000-8000-000000000001';
+update public.recipes set title = '수정된 레시피' where id = '32000000-0000-4000-8000-000000000001';
+update public.combos set title = '수정된 조합' where id = '42000000-0000-4000-8000-000000000001';
+reset role;
 
 select extensions.ok(
   (select bool_and(updated_at > '2000-01-01'::timestamptz) from (
