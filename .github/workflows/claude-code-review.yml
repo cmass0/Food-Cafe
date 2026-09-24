@@ -100,13 +100,16 @@ jobs:
           fi
 
           marker="<!-- codex-cross-review:${HEAD_SHA} -->"
-          if gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate --jq '.[].body' | grep -Fq "$marker"; then
+          printf -v request_body '@codex review\n\n%s' "$marker"
+          token_owner="$(gh api user --jq '.login')"
+          existing="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate |
+            jq -r --arg owner "$token_owner" --arg body "$request_body" \
+              '.[] | select(.user.login == $owner and .body == $body) | .id')"
+          if [ -n "$existing" ]; then
             echo "Codex review already requested for ${HEAD_SHA}." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            -f body="@codex review
-
-          ${marker}"
+            -f "body=${request_body}"
 
