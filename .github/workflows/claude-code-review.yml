@@ -33,7 +33,7 @@ jobs:
           messages="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" --paginate --jq '.[].commit.message')"
           if printf '%s\n' "$messages" | grep -qiE '^Co-Authored-By:.*<noreply@anthropic\.com>'; then
             echo "claude_authored=true" >> "$GITHUB_OUTPUT"
-            echo "Claude가 작성에 참여한 PR이라 Claude 자동 리뷰를 건너뜁니다." >> "$GITHUB_STEP_SUMMARY"
+            echo "Claude 공동 작성 서명을 확인했습니다." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "claude_authored=false" >> "$GITHUB_OUTPUT"
           fi
@@ -51,8 +51,8 @@ jobs:
           fi
 
   claude-review:
-    needs: check-authorship
-    if: needs.check-authorship.outputs.claude_authored != 'true' || needs.check-authorship.outputs.codex_available != 'true'
+    needs: [check-authorship, codex-review]
+    if: ${{ !cancelled() && needs.codex-review.result != 'success' }}
 
     runs-on: ubuntu-latest
     permissions:
