@@ -24,9 +24,9 @@ const MAX_LIMIT = 10;
 const MAX_JSON_CHARS = 200_000;
 const RICH_CONTENT_PATTERN = /<(?:img|iframe)\b|class="youtube-link-card"/i;
 
+// 작성자 이름은 DB Trigger(private.set_content_writer)가 프로필에서 채운다.
 export type PostAuthor = {
   uid: string;
-  name: string;
 };
 
 function mapRowToPost(row: PostRow): Post {
@@ -100,8 +100,7 @@ export async function createPost(
   const contentText = buildPostContentText(parsed.content_json);
   assertPostContentIsNotEmpty(contentText, contentHtml);
 
-  const writerName = author.name.trim();
-  if (!author.uid || !writerName) {
+  if (!author.uid) {
     throw new Error("작성자 정보를 확인할 수 없습니다.");
   }
 
@@ -113,7 +112,6 @@ export async function createPost(
     content_html: contentHtml,
     content_text: contentText,
     writer_uid: author.uid,
-    writer_name: writerName.slice(0, 120),
   };
   const row = await repository.insertPostRecord(client, payload);
   return mapRowToPost(row);

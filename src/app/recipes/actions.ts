@@ -2,7 +2,6 @@
 
 import * as recipeService from "@/domain/recipe/service";
 import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import { requireAuthContext } from "@/lib/auth/session";
 import { safeDiscardFailedUploads } from "@/lib/storage/server";
 import { storagePrefix } from "@/lib/storage/paths";
@@ -30,8 +29,6 @@ export async function createRecipeAction(input: RecipeInsertDB, uploadedPaths: s
     const recipe = await recipeService.createRecipe(supabase, {
       ...input,
       writer_uid: user.id,
-      writer_name: derivePublicDisplayName(user) ?? "user",
-      writer_email: user.email ?? undefined,
     });
     recipeId = recipe.id;
   } catch (error) {

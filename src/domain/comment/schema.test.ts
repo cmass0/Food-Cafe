@@ -11,7 +11,6 @@ describe("댓글 입력", () => {
       content: "  맛있어 보여요  ",
       parentType: "recipe",
       parentId: PARENT_ID,
-      writerName: "작성자",
       writerUid: USER_ID,
     });
 
@@ -26,7 +25,6 @@ describe("댓글 입력", () => {
       content,
       parentType: "recipe",
       parentId: PARENT_ID,
-      writerName: "작성자",
       writerUid: USER_ID,
     });
 
@@ -41,7 +39,6 @@ describe("댓글 입력", () => {
         content: "가".repeat(1000),
         parentType: "post",
         parentId: PARENT_ID,
-        writerName: "작성자",
         writerUid: USER_ID,
       }).success
     ).toBe(true);

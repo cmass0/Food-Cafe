@@ -2,7 +2,6 @@ import { isRecipeCategoryKey } from "@/domain/recipe/category";
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
 import type { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   badRequest,
@@ -79,8 +78,6 @@ export async function POST(req: Request) {
     const recipe = await recipeService.createRecipe(supabase, {
       ...parsed,
       writer_uid: user.id,
-      writer_name: derivePublicDisplayName(user) ?? "user",
-      writer_email: user.email ?? undefined,
     });
     return json({ data: recipe }, 201);
   } catch (error) {

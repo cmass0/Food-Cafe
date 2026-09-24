@@ -7,7 +7,6 @@ import { z } from "zod";
 import { POST_USER_FACING_ERRORS } from "@/domain/post/messages";
 import { postCategorySchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import { DEFAULT_ACTION_ERROR, toActionErrorMessage } from "@/lib/api/action-error";
 import { uploadedPathsFromFormData } from "@/lib/api/form-data";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -40,7 +39,6 @@ export async function createPostAction(
   const title = (formData.get("title") as string | null)?.trim() ?? "";
   const rawJson = formData.get("content_json");
   const category = (formData.get("category") as string | null)?.trim() ?? "";
-  const writerName = derivePublicDisplayName(user) ?? "user";
 
   try {
     if (typeof rawJson !== "string") {
@@ -55,10 +53,7 @@ export async function createPostAction(
         content_json: rawJson,
         category: postCategorySchema.parse(category),
       },
-      {
-        uid: user.id,
-        name: writerName,
-      }
+      { uid: user.id }
     );
   } catch (err) {
     await safeDiscardFailedUploads(user.id, storagePrefix("posts", user.id, postId), uploadedPaths);

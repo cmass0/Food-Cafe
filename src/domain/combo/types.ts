@@ -73,7 +73,6 @@ export type ComboInsertDb = {
   tools_required?: boolean;
   image?: string | null;
   writer_uid?: string | null;
-  writer_name?: string | null;
 };
 
 export type ComboFormType = {
@@ -88,7 +87,6 @@ export type ComboFormType = {
   tools_required?: boolean;
   image?: File | null;
   writer_uid?: string | null;
-  writer_name?: string | null;
 };
 
 export type ComboUpdateDb = {

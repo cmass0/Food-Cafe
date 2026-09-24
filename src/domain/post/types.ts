@@ -10,7 +10,6 @@ export type PostInsertDB = {
   content_html: string;
   content_text: string;
   writer_uid: string;
-  writer_name: string;
   category: PostCategory;
 };
 

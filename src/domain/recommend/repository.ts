@@ -115,6 +115,20 @@ export async function selectRecommendationRanks(
   }));
 }
 
+export async function incrementRecommendationCounts(
+  client: SupabaseClient<Database>,
+  recipeIds: string[],
+  comboIds: string[]
+): Promise<void> {
+  // 읽고 더해서 다시 쓰지 않고 RPC 안의 on conflict로 증가시켜 동시 추천에서도 누락이 없다.
+  const { error } = await client.rpc("increment_recommendation_counts", {
+    p_recipe_ids: recipeIds,
+    p_combo_ids: comboIds,
+  });
+
+  if (error) throw error;
+}
+
 export async function selectRecommendRecipeRowsByIds(
   client: SupabaseClient<Database>,
   ids: string[]

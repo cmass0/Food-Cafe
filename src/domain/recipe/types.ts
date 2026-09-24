@@ -29,7 +29,6 @@ export interface Recipe {
   viewCount: number;
   writerUid: string | null;
   writerName: string | null;
-  writerEmail: string | null;
   lastLikedAt: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -96,8 +95,6 @@ export type RecipeInsertDB = {
   time_minutes?: number | null;
   servings?: number | null;
   writer_uid?: string | null;
-  writer_name?: string | null;
-  writer_email?: string | null;
 };
 
 // DB Update 용

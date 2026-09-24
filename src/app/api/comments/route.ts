@@ -14,23 +14,34 @@ import { ZodError } from "zod";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// 값이 없거나 비어 있으면 서비스 기본값(1페이지, 기본 개수)을 쓰도록 undefined로 넘긴다.
+// Number("")는 0이 되어 "1 이상" 검증에 걸리므로 빈 문자열을 먼저 걸러낸다.
+function readOptionalNumber(params: URLSearchParams, key: string): number | undefined {
+  const raw = params.get(key)?.trim();
+  if (!raw) return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limitParam = Number(url.searchParams.get("limit") ?? "");
-    const pageParam = Number(url.searchParams.get("page") ?? "");
     const parentType = url.searchParams.get("parentType");
     const parentId = url.searchParams.get("parentId");
     const supabase = await getServerSupabase();
 
     const data = await commentService.listComments(supabase, {
-      limit: Number.isFinite(limitParam) ? limitParam : undefined,
-      page: Number.isFinite(pageParam) ? pageParam : undefined,
+      limit: readOptionalNumber(url.searchParams, "limit"),
+      page: readOptionalNumber(url.searchParams, "page"),
       parentType: parentType as "recipe" | "post" | "combo" | undefined,
       parentId: parentId ?? undefined,
     });
     return json({ data });
   } catch (error) {
+    // page=0, 부모 누락처럼 잘못된 요청은 서버 오류(500)가 아니라 입력 오류(400)로 응답한다.
+    if (error instanceof ZodError) {
+      return validationError(error.errors);
+    }
     if (isPostgrestError(error)) {
       return respondWithSupabaseError(error);
     }

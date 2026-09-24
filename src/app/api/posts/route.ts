@@ -1,7 +1,6 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
 import { normalizePostCategory } from "@/domain/post/category";
-import { derivePublicDisplayName } from "@/domain/user/lib/displayName";
 import {
   AuthErrorHelper,
   internalError,
@@ -54,10 +53,7 @@ export async function POST(req: Request) {
       return error;
     }
     const body = await req.json();
-    const created = await postService.createPost(supabase, body, {
-      uid: user.id,
-      name: derivePublicDisplayName(user) ?? "user",
-    });
+    const created = await postService.createPost(supabase, body, { uid: user.id });
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {

@@ -35,7 +35,7 @@ export default function CommentThread({
   const [list, setList] = useState<CommentDisplayItem[]>(items);
   const [total, setTotal] = useState(initialTotal);
 
-  const { user, displayName } = useAuth();
+  const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
 
   const handleSubmit = async () => {
@@ -56,7 +56,6 @@ export default function CommentThread({
       const { comment, parentCommentCount } = await createComment({
         parentType,
         parentId,
-        writerName: displayName || user.user_metadata?.name || user.email,
         content: content.trim(),
       });
 

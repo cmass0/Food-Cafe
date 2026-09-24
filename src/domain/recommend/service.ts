@@ -156,3 +156,15 @@ export async function searchRecommendations(
     },
   };
 }
+
+// 채팅 카드는 검색 결과 items를 그대로 렌더링하므로, 이 목록이 곧 사용자에게 노출된 추천이다.
+export async function recordRecommendationExposure(
+  client: SupabaseClient<Database>,
+  items: RecommendationCandidate[]
+): Promise<void> {
+  if (items.length === 0) return;
+
+  const recipeIds = items.filter((item) => item.sourceType === "recipe").map((item) => item.id);
+  const comboIds = items.filter((item) => item.sourceType === "combo").map((item) => item.id);
+  await repository.incrementRecommendationCounts(client, recipeIds, comboIds);
+}

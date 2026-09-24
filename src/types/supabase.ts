@@ -66,45 +66,6 @@ export type Database = {
           },
         ]
       }
-      combo_recipe_ref: {
-        Row: {
-          combo_id: string
-          created_at: string
-          note: string | null
-          recipe_id: string
-          sort_order: number
-        }
-        Insert: {
-          combo_id: string
-          created_at?: string
-          note?: string | null
-          recipe_id: string
-          sort_order?: number
-        }
-        Update: {
-          combo_id?: string
-          created_at?: string
-          note?: string | null
-          recipe_id?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "combo_recipe_ref_combo_id_fkey"
-            columns: ["combo_id"]
-            isOneToOne: false
-            referencedRelation: "combos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "combo_recipe_ref_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       combos: {
         Row: {
           bookmark_count: number
@@ -176,39 +137,64 @@ export type Database = {
       }
       comments: {
         Row: {
+          combo_id: string | null
           content: string
           created_at: string
           deleted_at: string | null
           id: string
-          parent_id: string
-          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          post_id: string | null
+          recipe_id: string | null
           updated_at: string
           writer_name: string
           writer_uid: string | null
         }
         Insert: {
+          combo_id?: string | null
           content: string
           created_at?: string
           deleted_at?: string | null
           id?: string
-          parent_id: string
-          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          post_id?: string | null
+          recipe_id?: string | null
           updated_at?: string
           writer_name?: string
           writer_uid?: string | null
         }
         Update: {
+          combo_id?: string | null
           content?: string
           created_at?: string
           deleted_at?: string | null
           id?: string
-          parent_id?: string
-          parent_type?: Database["public"]["Enums"]["comment_parent_type"]
+          post_id?: string | null
+          recipe_id?: string | null
           updated_at?: string
           writer_name?: string
           writer_uid?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "comments_combo_id_fkey"
+            columns: ["combo_id"]
+            isOneToOne: false
+            referencedRelation: "combos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_bookmarks: {
         Row: {
@@ -495,7 +481,6 @@ export type Database = {
           tsv: unknown
           updated_at: string
           view_count: number
-          writer_email: string | null
           writer_name: string | null
           writer_uid: string | null
         }
@@ -523,7 +508,6 @@ export type Database = {
           tsv?: unknown
           updated_at?: string
           view_count?: number
-          writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
         }
@@ -551,7 +535,6 @@ export type Database = {
           tsv?: unknown
           updated_at?: string
           view_count?: number
-          writer_email?: string | null
           writer_name?: string | null
           writer_uid?: string | null
         }
@@ -721,6 +704,15 @@ export type Database = {
           liked: boolean
         }[]
       }
+      get_popular_recommendations: {
+        Args: { p_limit?: number }
+        Returns: {
+          last_recommended_at: string
+          recommendation_count: number
+          source_id: string
+          source_type: "combo" | "recipe"
+        }[]
+      }
       get_trending_combos_by_period: {
         Args: { limit_size?: number; period?: string }
         Returns: {
@@ -810,43 +802,11 @@ export type Database = {
       }
       increment_combo_view: { Args: { p_combo_id: string }; Returns: number }
       increment_post_view: { Args: { p_post_id: string }; Returns: number }
-      increment_recipe_view: {
-        Args: { p_recipe_id: string }
-        Returns: {
-          bookmark_count: number
-          category: string | null
-          chef_tip: string | null
-          comment_count: number
-          created_at: string
-          difficulty: string | null
-          id: string
-          image: string | null
-          images: string[]
-          ingredients: Json
-          last_liked_at: string | null
-          like_count: number
-          servings: number | null
-          steps: Json
-          summary: string | null
-          tags: string[]
-          time_minutes: number | null
-          title: string
-          tools: string[] | null
-          tools_required: boolean
-          tsv: unknown
-          updated_at: string
-          view_count: number
-          writer_email: string | null
-          writer_name: string | null
-          writer_uid: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "recipes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+      increment_recommendation_counts: {
+        Args: { p_combo_ids?: string[]; p_recipe_ids?: string[] }
+        Returns: undefined
       }
+      increment_recipe_view: { Args: { p_recipe_id: string }; Returns: number }
       is_current_user_admin: { Args: never; Returns: boolean }
       post_toggle_like: {
         Args: { p_post_id: string }
@@ -909,7 +869,7 @@ export type Database = {
       uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
-      comment_parent_type: "recipe" | "post" | "combo"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1036,8 +996,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      comment_parent_type: ["recipe", "post", "combo"],
-    },
+    Enums: {},
   },
 } as const
