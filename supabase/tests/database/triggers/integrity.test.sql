@@ -177,10 +177,13 @@ select extensions.is(
 -- 댓글 Trigger는 작성자 보정과 세 콘텐츠의 댓글 수를 처리합니다.
 select set_config('request.jwt.claim.sub', '12000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claims', '{"sub":"12000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+-- 앱처럼 id 없이 추가한다. 로그인 사용자는 댓글 id를 지정할 권한이 없으므로 테스트용 id는 관리자 권한으로 붙인다.
 set local role authenticated;
-insert into public.comments (id, post_id, content)
-values ('62000000-0000-4000-8000-000000000001', '22000000-0000-4000-8000-000000000001', '게시글 댓글');
+insert into public.comments (post_id, content)
+values ('22000000-0000-4000-8000-000000000001', '게시글 댓글');
 reset role;
+update public.comments set id = '62000000-0000-4000-8000-000000000001'
+where post_id = '22000000-0000-4000-8000-000000000001' and content = '게시글 댓글';
 
 insert into public.comments (id, recipe_id, writer_uid, writer_name, content) values
   ('62000000-0000-4000-8000-000000000002', '32000000-0000-4000-8000-000000000001', '12000000-0000-4000-8000-000000000001', 'Trigger 사용자 A', '레시피 댓글');

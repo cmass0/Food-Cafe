@@ -82,14 +82,18 @@ select extensions.throws_ok(
 -- 댓글 수: 부모 작성자가 아닌 사용자의 댓글도 부모 카운트에 반영된다.
 select set_config('request.jwt.claim.sub', '13000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claims', '{"sub":"13000000-0000-4000-8000-000000000002","role":"authenticated"}', true);
+-- 앱처럼 id 없이 추가한다. 로그인 사용자는 댓글 id를 지정할 권한이 없으므로 테스트용 id는 관리자 권한으로 붙인다.
 set local role authenticated;
-insert into public.comments (id, post_id, content)
-values ('63000000-0000-4000-8000-000000000001', '23000000-0000-4000-8000-000000000001', '게시글 방문 댓글');
-insert into public.comments (id, recipe_id, content)
-values ('63000000-0000-4000-8000-000000000002', '33000000-0000-4000-8000-000000000001', '레시피 방문 댓글');
-insert into public.comments (id, combo_id, content)
-values ('63000000-0000-4000-8000-000000000003', '43000000-0000-4000-8000-000000000001', '조합 방문 댓글');
+insert into public.comments (post_id, content)
+values ('23000000-0000-4000-8000-000000000001', '게시글 방문 댓글');
+insert into public.comments (recipe_id, content)
+values ('33000000-0000-4000-8000-000000000001', '레시피 방문 댓글');
+insert into public.comments (combo_id, content)
+values ('43000000-0000-4000-8000-000000000001', '조합 방문 댓글');
 reset role;
+update public.comments set id = '63000000-0000-4000-8000-000000000001' where content = '게시글 방문 댓글';
+update public.comments set id = '63000000-0000-4000-8000-000000000002' where content = '레시피 방문 댓글';
+update public.comments set id = '63000000-0000-4000-8000-000000000003' where content = '조합 방문 댓글';
 
 select extensions.is(
   (select (select comment_count from public.posts where id = '23000000-0000-4000-8000-000000000001')::text
