@@ -99,8 +99,8 @@ select extensions.is(
     select count(*)::integer
     from pg_proc trigger_function
     join pg_namespace function_schema on function_schema.oid = trigger_function.pronamespace
-    where function_schema.nspname in ('public', 'private')
-      and trigger_function.proname in ('adjust_content_engagement_counter', 'adjust_follow_counters')
+    where function_schema.nspname = 'private'
+      and trigger_function.proname in ('sync_engagement_count', 'sync_follow_count')
       and trigger_function.prosecdef
   ),
   2,
@@ -116,7 +116,7 @@ select extensions.ok(
   coalesce((
     select 'search_path=""' = any(trigger_function.proconfig)
     from pg_proc trigger_function
-    where trigger_function.oid = 'public.set_updated_at()'::regprocedure
+    where trigger_function.oid = 'private.set_updated_at()'::regprocedure
   ), false),
   '공통 updated_at Trigger 함수는 빈 search_path를 사용한다'
 );

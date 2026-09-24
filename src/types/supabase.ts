@@ -427,28 +427,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "user_likes_recipe_id_fkey"
+            foreignKeyName: "recipe_likes_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_likes_user_id_fkey"
+            foreignKeyName: "recipe_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_likes_user_id_fkey"
+            foreignKeyName: "recipe_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_likes_user_id_fkey"
+            foreignKeyName: "recipe_likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users_public"
@@ -538,29 +538,7 @@ export type Database = {
           writer_name?: string | null
           writer_uid?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "recipes_writer_fk"
-            columns: ["writer_uid"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_writer_fk"
-            columns: ["writer_uid"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_writer_fk"
-            columns: ["writer_uid"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_follows: {
         Row: {
@@ -866,7 +844,6 @@ export type Database = {
           following_count: number
         }[]
       }
-      uuid_v7: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
