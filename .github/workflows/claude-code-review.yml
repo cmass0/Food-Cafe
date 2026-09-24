@@ -70,17 +70,22 @@ jobs:
     needs: check-authorship
     if: needs.check-authorship.outputs.claude_authored == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
+    permissions: {}
     steps:
       - name: Request Codex review once per PR revision
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Codex must see the comment from the GitHub account linked to Codex.
+          # Use a fine-grained token limited to this repository with Pull requests: write.
+          GH_TOKEN: ${{ secrets.CODEX_REVIEW_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Set CODEX_REVIEW_TOKEN to a token for the GitHub account linked to Codex."
+            exit 1
+          fi
+
           marker="<!-- codex-cross-review:${HEAD_SHA} -->"
           if gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate --jq '.[].body' | grep -Fq "$marker"; then
             echo "Codex review already requested for ${HEAD_SHA}." >> "$GITHUB_STEP_SUMMARY"
