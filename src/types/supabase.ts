@@ -646,8 +646,8 @@ export type Database = {
           source_type: "combo" | "recipe"
         }[]
       }
-      get_trending_combos_by_period: {
-        Args: { limit_size?: number; period?: string }
+      get_trending_combos: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: {
           bookmark_count: number
           comment_count: number
@@ -670,8 +670,8 @@ export type Database = {
           writer_uid: string
         }[]
       }
-      get_trending_posts_by_period: {
-        Args: { limit_size?: number; period?: string }
+      get_trending_posts: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: {
           bookmark_count: number
           comment_count: number
@@ -694,8 +694,8 @@ export type Database = {
           writer_uid: string
         }[]
       }
-      get_trending_recipe_tags_by_period: {
-        Args: { limit_size?: number; period?: string }
+      get_trending_recipe_tags: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: {
           last_activity_at: string
           recent_activity_count: number
@@ -709,8 +709,8 @@ export type Database = {
           trend_score: number
         }[]
       }
-      get_trending_recipes_by_period: {
-        Args: { limit_size?: number; period?: string }
+      get_trending_recipes: {
+        Args: { p_limit?: number; p_period?: string }
         Returns: {
           bookmark_count: number
           comment_count: number

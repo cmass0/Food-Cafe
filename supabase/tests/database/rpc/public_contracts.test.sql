@@ -15,18 +15,18 @@ select extensions.is(
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
       and rpc.proname = any (array[
-        'get_trending_combos_by_period', 'get_trending_posts_by_period',
-        'get_trending_recipe_tags_by_period', 'get_trending_recipes_by_period',
+        'get_trending_combos', 'get_trending_posts',
+        'get_trending_recipe_tags', 'get_trending_recipes',
         'increment_combo_view', 'increment_post_view', 'increment_recipe_view',
         'is_current_user_admin', 'set_combo_bookmark', 'set_combo_like', 'set_follow',
         'set_post_bookmark', 'set_post_like', 'set_recipe_bookmark', 'set_recipe_like'
       ])
   ),
   array[
-    'get_trending_combos_by_period(period text, limit_size integer)',
-    'get_trending_posts_by_period(period text, limit_size integer)',
-    'get_trending_recipe_tags_by_period(period text, limit_size integer)',
-    'get_trending_recipes_by_period(period text, limit_size integer)',
+    'get_trending_combos(p_period text, p_limit integer)',
+    'get_trending_posts(p_period text, p_limit integer)',
+    'get_trending_recipe_tags(p_period text, p_limit integer)',
+    'get_trending_recipes(p_period text, p_limit integer)',
     'increment_combo_view(p_combo_id uuid)',
     'increment_post_view(p_post_id uuid)',
     'increment_recipe_view(p_recipe_id uuid)',
@@ -81,7 +81,10 @@ select extensions.ok(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname like 'get_trending_%_by_period'
+      and rpc.proname in (
+        'get_trending_recipes', 'get_trending_combos',
+        'get_trending_posts', 'get_trending_recipe_tags'
+      )
   ),
   '익명 사용자도 기간별 트렌딩 RPC를 실행할 수 있다'
 );
@@ -129,12 +132,16 @@ select extensions.is(
     select count(*)::integer
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
-    where rpc_schema.nspname = 'private'
-      and rpc.proname like 'get_trending_%_by_period'
+    where rpc_schema.nspname = 'public'
+      and rpc.proname in (
+        'get_trending_recipes', 'get_trending_combos',
+        'get_trending_posts', 'get_trending_recipe_tags', 'search_recommendations'
+      )
       and rpc.prosecdef
+      and 'search_path=""' = any(rpc.proconfig)
   ),
-  4,
-  '비공개 트렌딩 집계 함수는 SECURITY DEFINER다'
+  5,
+  '트렌딩·추천 검색 RPC는 빈 search_path의 SECURITY DEFINER 함수 하나로 동작한다'
 );
 
 select extensions.is(
@@ -142,45 +149,44 @@ select extensions.is(
     select count(*)::integer
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
-    where rpc_schema.nspname = 'public'
-      and rpc.proname like 'get_trending_%_by_period'
-      and not rpc.prosecdef
+    where rpc_schema.nspname = 'private'
+      and (rpc.proname like 'get_trending_%' or rpc.proname = 'search_recommendations_internal')
   ),
-  4,
-  '공개 트렌딩 래퍼는 호출자 권한을 유지한다'
+  0,
+  '트렌딩·추천 검색의 private 중복 본체가 남아 있지 않다'
 );
 
 select extensions.ok(
-  has_schema_privilege('anon', 'private', 'USAGE')
+  not has_schema_privilege('anon', 'private', 'USAGE')
   and has_schema_privilege('authenticated', 'private', 'USAGE'),
-  '공개 트렌딩 래퍼가 private 함수를 찾을 수 있다'
+  'anon은 private 스키마를 쓸 수 없고, 로그인 사용자는 관리자 확인 함수 때문에 유지한다'
 );
 
 set local role anon;
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_recipes_by_period('year', 10) $$,
+  $$ select * from public.get_trending_recipes('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '레시피 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_combos_by_period('year', 10) $$,
+  $$ select * from public.get_trending_combos('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '조합 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_posts_by_period('year', 10) $$,
+  $$ select * from public.get_trending_posts('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '게시글 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_recipe_tags_by_period('year', 10) $$,
+  $$ select * from public.get_trending_recipe_tags('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '레시피 태그 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
@@ -353,16 +359,16 @@ insert into public.comments (id, recipe_id, writer_uid, writer_name, content, cr
   ('61000000-0000-4000-8000-000000000004', '51000000-0000-4000-8000-000000000004', '11000000-0000-4000-8000-000000000001', 'RPC 사용자 A', '댓글 3', now() - interval '1 hour');
 
 set local role anon;
-select extensions.lives_ok($$ select * from public.get_trending_recipes_by_period('day', 10) $$, '레시피 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_combos_by_period('day', 10) $$, '조합 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_posts_by_period('day', 10) $$, '게시글 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_recipe_tags_by_period('day', 10) $$, '태그 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_recipes('day', 10) $$, '레시피 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_combos('day', 10) $$, '조합 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_posts('day', 10) $$, '게시글 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_recipe_tags('day', 10) $$, '태그 트렌딩 RPC를 익명으로 실행할 수 있다');
 reset role;
 
 select extensions.is(
   (
     select array_agg(id)
-    from public.get_trending_recipes_by_period('day', 50)
+    from public.get_trending_recipes('day', 50)
     where id::text like '51000000-%'
   ),
   array[
@@ -378,7 +384,7 @@ select extensions.is(
 
 select extensions.ok(
   not exists (
-    select 1 from public.get_trending_recipes_by_period('day', 50)
+    select 1 from public.get_trending_recipes('day', 50)
     where id = '51000000-0000-4000-8000-000000000007'
   ),
   '24시간보다 오래된 활동은 일간 트렌딩에서 제외된다'
@@ -386,14 +392,14 @@ select extensions.ok(
 
 select extensions.ok(
   exists (
-    select 1 from public.get_trending_recipes_by_period('week', 50)
+    select 1 from public.get_trending_recipes('week', 50)
     where id = '51000000-0000-4000-8000-000000000007'
   ),
   '7일 이내 활동은 주간 트렌딩에 포함된다'
 );
 
 select extensions.is(
-  (select count(*)::integer from public.get_trending_recipes_by_period('day', 0)),
+  (select count(*)::integer from public.get_trending_recipes('day', 0)),
   1,
   '트렌딩 요청 개수의 최솟값은 1이다'
 );
