@@ -3,7 +3,7 @@
 import { useAuth } from "@/app/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { fetchFollowStatus, toggleFollow } from "@/domain/follow/api";
+import { fetchFollowStatus, setFollow } from "@/domain/follow/api";
 import { isUnauthorizedApiError } from "@/lib/api/client";
 import * as React from "react";
 
@@ -66,7 +66,7 @@ export default function FollowButton({
 
     startTransition(async () => {
       try {
-        const { following, followerCount } = await toggleFollow(targetUserId);
+        const { following, followerCount } = await setFollow(targetUserId, !isFollowing);
         setIsFollowing(following);
         onFollowerCountChange?.(followerCount);
       } catch (error) {
@@ -74,11 +74,11 @@ export default function FollowButton({
           openAuthModal({ next: getReturnPath() });
           return;
         }
-        console.error("[follow] toggle failed:", error);
+        console.error("[follow] update failed:", error);
         setErrorMessage("팔로우 상태를 변경하지 못했습니다.");
       }
     });
-  }, [isPending, onFollowerCountChange, openAuthModal, targetUserId, user]);
+  }, [isFollowing, isPending, onFollowerCountChange, openAuthModal, targetUserId, user]);
 
   const buttonLabel = isFollowing ? "언팔로우" : "팔로우";
 

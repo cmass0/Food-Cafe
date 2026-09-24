@@ -103,7 +103,7 @@ export async function selectRecipeByBookmarked(
 
   let query = client
     .from("recipe_bookmarks")
-    .select("created_at, recipes:parent_id!inner(*)", { count: "exact" })
+    .select("created_at, recipes!inner(*)", { count: "exact" })
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 

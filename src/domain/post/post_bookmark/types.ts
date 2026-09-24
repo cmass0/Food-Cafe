@@ -2,6 +2,6 @@ export type PostBookmarkStatus = {
   bookmarked: boolean;
 };
 
-export type TogglePostBookmark = PostBookmarkStatus & {
+export type PostBookmarkResult = PostBookmarkStatus & {
   bookmarkCount: number;
 };

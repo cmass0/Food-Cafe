@@ -1,7 +1,9 @@
 import { isLikedPost } from "@/domain/post/post_like/service";
 import { contentParams } from "@/lib/api/prams-type";
+import { readRelationState } from "@/lib/api/relation-state";
 import {
   AuthErrorHelper,
+  badRequest,
   internalError,
   isPostgrestError,
   json,
@@ -31,25 +33,28 @@ export async function GET(_: Request, props: contentParams) {
   }
 }
 
-export async function POST(_: Request, props: contentParams) {
+export async function POST(req: Request, props: contentParams) {
   const params = await props.params;
 
   try {
-    const supabase = await getServerSupabase();
-    const { error } = await AuthErrorHelper();
-    if (error) return error;
+    const { error: authError } = await AuthErrorHelper();
+    if (authError) return authError;
 
-    const { data, error: toggleError } = await supabase.rpc("post_toggle_like", {
-      p_post_id: params.id,
-    });
-    if (toggleError) return respondWithSupabaseError(toggleError);
-    if (!data?.[0]) return notFound();
+    const liked = await readRelationState(req, "liked");
+    if (liked === null) return badRequest("liked 값이 필요합니다.");
+
+    const supabase = await getServerSupabase();
+    const { data, error } = await supabase
+      .rpc("set_post_like", { p_post_id: params.id, p_liked: liked })
+      .maybeSingle();
+    if (error) return respondWithSupabaseError(error);
+    if (!data) return notFound("게시글");
 
     revalidatePath("/");
     revalidatePath("/posts");
     revalidatePath(`/posts/${params.id}`);
 
-    return json({ liked: data[0].liked, likeCount: data[0].like_count });
+    return json({ liked: data.liked, likeCount: data.like_count });
   } catch (error) {
     if (isPostgrestError(error)) return respondWithSupabaseError(error);
     console.error("게시글 좋아요 처리에 실패했습니다.", error);

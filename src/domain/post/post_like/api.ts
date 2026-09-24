@@ -1,6 +1,6 @@
 import { throwApiError } from "@/lib/domain/api/error";
 
-import type { PostLikeStatus, TogglePostLike } from "./types";
+import type { PostLikeResult, PostLikeStatus } from "./types";
 
 export async function fetchPostLikeStatus(
   postId: string,
@@ -14,10 +14,11 @@ export async function fetchPostLikeStatus(
   return response.json();
 }
 
-export async function togglePostLike(postId: string): Promise<TogglePostLike> {
+export async function setPostLike(postId: string, liked: boolean): Promise<PostLikeResult> {
   const response = await fetch(`/api/posts/${postId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ liked }),
   });
   if (!response.ok) await throwApiError(response);
   return response.json();

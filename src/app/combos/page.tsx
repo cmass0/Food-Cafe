@@ -20,8 +20,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { listCombos } from "@/domain/combo/api";
-import { toggleComboBookmark } from "@/domain/combo/combo_bookmark/api";
-import { toggleComboLike } from "@/domain/combo/combo_like/api";
+import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
+import { setComboLike } from "@/domain/combo/combo_like/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 
@@ -107,7 +107,7 @@ function ComboActionButtons({
     }
 
     try {
-      const next = await toggleComboLike(combo.id);
+      const next = await setComboLike(combo.id, !stats.liked);
       onStatsChange(combo.id, {
         liked: next.liked,
         likeCount: next.likeCount,
@@ -126,10 +126,10 @@ function ComboActionButtons({
     }
 
     try {
-      const next = await toggleComboBookmark(combo.id, stats.bookmarked);
+      const next = await setComboBookmark(combo.id, !stats.bookmarked);
       onStatsChange(combo.id, {
         bookmarked: next.bookmarked,
-        bookmarkCount: Math.max(0, stats.bookmarkCount + (next.bookmarked ? 1 : -1)),
+        bookmarkCount: next.bookmarkCount,
       });
     } catch (error) {
       console.error("조합 저장 처리에 실패했습니다.", error);

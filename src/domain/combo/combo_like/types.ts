@@ -10,7 +10,7 @@ export interface ComboLike {
   createdAt: string;
 }
 
-export type ToggleComboLike = {
+export type ComboLikeResult = {
   liked: boolean;
   likeCount: number;
 };

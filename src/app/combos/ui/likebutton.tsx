@@ -6,14 +6,14 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
-import { toggleComboLike } from "@/domain/combo/combo_like/api";
-import { ToggleComboLike } from "@/domain/combo/combo_like/types";
+import { setComboLike } from "@/domain/combo/combo_like/api";
+import { ComboLikeResult } from "@/domain/combo/combo_like/types";
 
 type Props = {
   comboId: string;
   liked: boolean;
   count: number;
-  onChange?(next: ToggleComboLike): void;
+  onChange?(next: ComboLikeResult): void;
 };
 
 function currentNextUrl() {
@@ -39,7 +39,8 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
     }
 
     try {
-      const { liked: nextLiked, likeCount } = await toggleComboLike(comboId);
+      const currentLiked = onChange ? liked : localLiked;
+      const { liked: nextLiked, likeCount } = await setComboLike(comboId, !currentLiked);
       if (onChange) {
         onChange({ liked: nextLiked, likeCount });
       } else {
@@ -53,7 +54,7 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
         openAuthModal({ next: currentNextUrl() });
         return;
       }
-      console.error("조합 좋아요 토글 실패:", error);
+      console.error("조합 좋아요 처리 실패:", error);
     }
   }
 

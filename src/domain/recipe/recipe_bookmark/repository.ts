@@ -8,9 +8,9 @@ export async function isBookmarkedRecipe(
 ): Promise<boolean> {
   const { data, error } = await client
     .from("recipe_bookmarks")
-    .select("id")
+    .select("recipe_id")
     .eq("user_id", userId)
-    .eq("parent_id", recipeId)
+    .eq("recipe_id", recipeId)
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
@@ -25,11 +25,11 @@ export async function fetchBookmarkedRecipeIds(
   if (!userId || recipeIds.length === 0) return new Set();
   const { data, error } = await client
     .from("recipe_bookmarks")
-    .select("parent_id")
+    .select("recipe_id")
     .eq("user_id", userId)
-    .in("parent_id", recipeIds);
+    .in("recipe_id", recipeIds);
   if (error) throw error;
-  return new Set((data ?? []).map((d) => d.parent_id));
+  return new Set((data ?? []).map((d) => d.recipe_id));
 }
 
 

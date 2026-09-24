@@ -146,9 +146,9 @@ select extensions.is((select like_count from public.recipes where id = '32000000
 delete from public.recipe_likes where user_id = '12000000-0000-4000-8000-000000000001' and recipe_id = '32000000-0000-4000-8000-000000000001';
 select extensions.is((select like_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 0, '레시피 좋아요 삭제 시 카운터가 감소한다');
 
-insert into public.recipe_bookmarks (user_id, parent_id) values ('12000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001');
+insert into public.recipe_bookmarks (user_id, recipe_id) values ('12000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001');
 select extensions.is((select bookmark_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 1, '레시피 북마크 추가 시 카운터가 증가한다');
-delete from public.recipe_bookmarks where user_id = '12000000-0000-4000-8000-000000000001' and parent_id = '32000000-0000-4000-8000-000000000001';
+delete from public.recipe_bookmarks where user_id = '12000000-0000-4000-8000-000000000001' and recipe_id = '32000000-0000-4000-8000-000000000001';
 select extensions.is((select bookmark_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 0, '레시피 북마크 삭제 시 카운터가 감소한다');
 
 insert into public.combo_likes (user_id, combo_id) values ('12000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001');

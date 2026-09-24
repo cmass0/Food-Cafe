@@ -6,7 +6,7 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import {
   fetchPostBookmarkStatus,
-  togglePostBookmark,
+  setPostBookmark,
 } from "@/domain/post/post_bookmark/api";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
@@ -101,7 +101,7 @@ export default function PostHeaderActions({
 
     startTransition(async () => {
       try {
-        const next = await togglePostBookmark(postId);
+        const next = await setPostBookmark(postId, optimisticBookmarked);
         setBookmarked(next.bookmarked);
         setBookmarkCount(next.bookmarkCount);
       } catch (error) {

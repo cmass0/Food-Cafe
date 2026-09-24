@@ -18,7 +18,7 @@ export function toUserLike(row: UserLikeRow): UserLike {
   };
 }
 
-export type ToggleLikeRecipe = {
+export type RecipeLikeResult = {
   liked: boolean;
   likeCount: number;
 };

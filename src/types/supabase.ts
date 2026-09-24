@@ -369,26 +369,23 @@ export type Database = {
       recipe_bookmarks: {
         Row: {
           created_at: string
-          id: string
-          parent_id: string
+          recipe_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          parent_id: string
+          recipe_id: string
           user_id: string
         }
         Update: {
           created_at?: string
-          id?: string
-          parent_id?: string
+          recipe_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_bookmarks_parent_id_fkey"
-            columns: ["parent_id"]
+            foreignKeyName: "recipe_bookmarks_recipe_id_fkey"
+            columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
@@ -640,13 +637,6 @@ export type Database = {
           source_type: string
         }[]
       }
-      combo_toggle_like: {
-        Args: { p_combo_id: string }
-        Returns: {
-          like_count: number
-          liked: boolean
-        }[]
-      }
       get_popular_recommendations: {
         Args: { p_limit?: number }
         Returns: {
@@ -751,20 +741,6 @@ export type Database = {
       }
       increment_recipe_view: { Args: { p_recipe_id: string }; Returns: number }
       is_current_user_admin: { Args: never; Returns: boolean }
-      post_toggle_like: {
-        Args: { p_post_id: string }
-        Returns: {
-          like_count: number
-          liked: boolean
-        }[]
-      }
-      recipe_toggle_like: {
-        Args: { p_recipe_id: string }
-        Returns: {
-          like_count: number
-          liked: boolean
-        }[]
-      }
       search_recommendations: {
         Args: {
           p_category?: string | null
@@ -788,26 +764,59 @@ export type Database = {
           source_type: "combo" | "recipe"
         }[]
       }
-      upsert_recommendation_documents: {
-        Args: { p_documents: Json }
-        Returns: number
-      }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
-      toggle_bookmark: {
-        Args: { p_id: string; p_type: string }
+      set_combo_bookmark: {
+        Args: { p_combo_id: string; p_bookmarked: boolean }
         Returns: {
           bookmark_count: number
           bookmarked: boolean
         }[]
       }
-      toggle_follow: {
-        Args: { p_target_id: string }
+      set_combo_like: {
+        Args: { p_combo_id: string; p_liked: boolean }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
+      set_follow: {
+        Args: { p_following: boolean; p_target_id: string }
         Returns: {
           follower_count: number
           following: boolean
           following_count: number
         }[]
+      }
+      set_post_bookmark: {
+        Args: { p_post_id: string; p_bookmarked: boolean }
+        Returns: {
+          bookmark_count: number
+          bookmarked: boolean
+        }[]
+      }
+      set_post_like: {
+        Args: { p_post_id: string; p_liked: boolean }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
+      set_recipe_bookmark: {
+        Args: { p_recipe_id: string; p_bookmarked: boolean }
+        Returns: {
+          bookmark_count: number
+          bookmarked: boolean
+        }[]
+      }
+      set_recipe_like: {
+        Args: { p_recipe_id: string; p_liked: boolean }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
+      upsert_recommendation_documents: {
+        Args: { p_documents: Json }
+        Returns: number
       }
     }
     Enums: {

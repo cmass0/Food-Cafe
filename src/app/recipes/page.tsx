@@ -21,8 +21,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { listRecipes } from "@/domain/recipe/api";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
-import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
+import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
+import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type {
   Recipe,
   RecipeListResult,
@@ -99,7 +99,7 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
     }
 
     try {
-      const next = await toggleRecipeLike(recipe.id);
+      const next = await setRecipeLike(recipe.id, !liked);
       setLiked(next.liked);
       if (typeof next.likeCount === "number") {
         setLikeCount(next.likeCount);
@@ -116,7 +116,7 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
     }
 
     try {
-      const next = await toggleRecipeBookmark(recipe.id, bookmarked);
+      const next = await setRecipeBookmark(recipe.id, !bookmarked);
       setBookmarked(next.bookmarked);
       if (typeof next.bookmarkCount === "number") {
         setBookmarkCount(next.bookmarkCount);

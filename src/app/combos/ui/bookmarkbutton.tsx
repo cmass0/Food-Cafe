@@ -6,14 +6,14 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
-import { toggleComboBookmark } from "@/domain/combo/combo_bookmark/api";
-import { ToggleComboBookmark } from "@/domain/combo/combo_bookmark/type";
+import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
+import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/type";
 
 type Props = {
   comboId: string;
   marked: boolean;
   count: number;
-  onChange?(next: ToggleComboBookmark): void;
+  onChange?(next: ComboBookmarkResult): void;
 };
 
 function currentNextUrl() {
@@ -38,18 +38,18 @@ export default function ComboCardBookmarkButton({ comboId, marked, count, onChan
     }
 
     try {
-      const { bookmarked: nextMarked } = await toggleComboBookmark(comboId, currentMarked);
+      const next = await setComboBookmark(comboId, !currentMarked);
       if (onChange) {
-        onChange({ bookmarked: nextMarked });
+        onChange(next);
       } else {
-        setLocalMarked(nextMarked);
+        setLocalMarked(next.bookmarked);
       }
     } catch (error) {
       if (isUnauthorizedApiError(error)) {
         openAuthModal({ next: currentNextUrl() });
         return;
       }
-      console.error("조합 북마크 토글 실패:", error);
+      console.error("조합 북마크 처리 실패:", error);
     }
   }
 

@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { fetchRecipeStatus } from "@/domain/recipe/api";
-import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
+import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
+import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
 
 type Props = {
@@ -67,7 +67,7 @@ export default function LikeBookmarkButton({ recipe }: Props) {
     }
 
     try {
-      const next = await toggleRecipeBookmark(recipe.id, bookmarked);
+      const next = await setRecipeBookmark(recipe.id, !bookmarked);
       setBookmarked(next.bookmarked);
       if (typeof next.bookmarkCount === "number") {
         setBookmarkCount(next.bookmarkCount);
@@ -84,7 +84,7 @@ export default function LikeBookmarkButton({ recipe }: Props) {
     }
 
     try {
-      const next = await toggleRecipeLike(recipe.id);
+      const next = await setRecipeLike(recipe.id, !liked);
       setLiked(next.liked);
       if (typeof next.likeCount === "number") {
         setLikeCount(next.likeCount);

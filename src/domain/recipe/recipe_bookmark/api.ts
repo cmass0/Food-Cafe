@@ -1,21 +1,15 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { ToggleRecipeBookmark } from "./type";
+import { RecipeBookmarkResult } from "./type";
 
-export async function toggleRecipeBookmark(
+export async function setRecipeBookmark(
   recipeId: string,
-  currentlyBookmarked: boolean
-): Promise<ToggleRecipeBookmark> {
+  bookmarked: boolean
+): Promise<RecipeBookmarkResult> {
   const res = await fetch(`/api/recipes/${recipeId}/bookmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipeId, currentlyBookmarked }),
+    body: JSON.stringify({ bookmarked }),
   });
-
-  if (!res.ok) {
-    await throwApiError(res);
-  }
-
-  const data = await res.json();
-
-  return data;
+  if (!res.ok) await throwApiError(res);
+  return res.json();
 }

@@ -1,16 +1,12 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { ToggleLikeRecipe } from "./types";
+import { RecipeLikeResult } from "./types";
 
-export async function toggleRecipeLike(recipeId: string): Promise<ToggleLikeRecipe> {
+export async function setRecipeLike(recipeId: string, liked: boolean): Promise<RecipeLikeResult> {
   const res = await fetch(`/api/recipes/${recipeId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ liked }),
   });
-
-  if (!res.ok) {
-    await throwApiError(res);
-  }
-  const data = await res.json();
-
-  return data;
+  if (!res.ok) await throwApiError(res);
+  return res.json();
 }
