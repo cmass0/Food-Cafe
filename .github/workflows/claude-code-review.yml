@@ -11,12 +11,35 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
+  # 교차 리뷰: Claude와 함께 작성한 PR은 Codex가 리뷰하고, 그 외 PR은 Claude가 리뷰한다.
+  # Claude가 만든 커밋에는 "Co-Authored-By: ... <noreply@anthropic.com>" 서명이 붙으므로,
+  # PR 커밋 중 하나라도 이 서명이 있으면 Claude 자동 리뷰를 건너뛴다.
+  # 필요하면 PR 댓글에서 @claude를 멘션해 수동으로 리뷰를 요청할 수 있다(claude.yml).
+  check-authorship:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      claude_authored: ${{ steps.check.outputs.claude_authored }}
+    steps:
+      - name: Check for Claude co-authored commits
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          messages="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" --paginate --jq '.[].commit.message')"
+          if printf '%s\n' "$messages" | grep -qiE '^Co-Authored-By:.*<noreply@anthropic\.com>'; then
+            echo "claude_authored=true" >> "$GITHUB_OUTPUT"
+            echo "Claude가 작성에 참여한 PR이라 Claude 자동 리뷰를 건너뜁니다." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "claude_authored=false" >> "$GITHUB_OUTPUT"
+          fi
+
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    needs: check-authorship
+    if: needs.check-authorship.outputs.claude_authored != 'true'
 
     runs-on: ubuntu-latest
     permissions:
