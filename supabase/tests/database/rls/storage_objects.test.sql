@@ -2,9 +2,9 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(11);
+select extensions.plan(12);
 
--- 구조: Food-Cafe 버킷은 업로드·삭제 정책 두 개만 가지며, 파일 크기를 서버에서도 제한한다.
+-- 구조: Food-Cafe 버킷은 자기 폴더의 업로드·조회·삭제 정책만 가지며, 파일 크기를 서버에서도 제한한다.
 select extensions.is(
   (
     select array_agg(policyname::text order by policyname)
@@ -13,8 +13,8 @@ select extensions.is(
       and tablename = 'objects'
       and concat_ws(' ', qual, with_check) like '%Food-Cafe%'
   ),
-  array['food_cafe_images_delete_own', 'food_cafe_images_insert_own']::text[],
-  'Food-Cafe 버킷에는 업로드·삭제 정책만 있다'
+  array['food_cafe_images_delete_own', 'food_cafe_images_insert_own', 'food_cafe_images_select_own']::text[],
+  'Food-Cafe 버킷에는 자기 폴더의 업로드·조회·삭제 정책만 있다'
 );
 
 select extensions.is(
@@ -79,6 +79,12 @@ select extensions.throws_ok(
   '옛 임시 폴더에는 올릴 수 없다'
 );
 
+select extensions.is(
+  (select count(*)::integer from storage.objects where name like 'recipes/14000000-0000-4000-8000-000000000002/%'),
+  0,
+  '다른 사용자의 파일 목록은 조회할 수 없다'
+);
+
 delete from storage.objects where name = 'recipes/14000000-0000-4000-8000-000000000002/r1/b.jpg';
 delete from storage.objects where name = 'recipes/14000000-0000-4000-8000-000000000001/r1/a.jpg';
 
@@ -105,17 +111,17 @@ select extensions.throws_ok(
 
 reset role;
 
-select extensions.is(
-  (
-    select count(*)::integer
+select extensions.ok(
+  not exists (
+    select 1
     from pg_policies
     where schemaname = 'storage'
       and tablename = 'objects'
       and cmd = 'SELECT'
       and concat_ws(' ', qual, with_check) like '%Food-Cafe%'
+      and not (roles @> array['authenticated']::name[] and qual like '%auth.uid()%')
   ),
-  0,
-  '공개 버킷은 공개 URL로 읽으므로 파일 목록 조회 정책을 두지 않는다'
+  '파일 목록 조회는 로그인 사용자의 자기 폴더로만 한정한다(공개 이미지는 공개 URL로 읽는다)'
 );
 
 select * from extensions.finish();
