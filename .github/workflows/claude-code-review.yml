@@ -67,9 +67,9 @@ jobs:
         with:
           fetch-depth: 1
 
-      # 리뷰 지시문은 .github/prompts/claude-review.md에서 관리한다.
-      # PR이 지시문을 바꿔 자기 리뷰를 조작하지 못하도록 PR이 아니라 기준 브랜치의 파일을 읽는다.
-      - name: Load review prompt from base branch
+      # 리뷰 기준은 AGENTS.md의 "Code Review Rules"로 Codex와 함께 쓴다. 여기에는 도구 사용법만 둔다.
+      # PR이 AGENTS.md를 바꿔 자기 리뷰 기준을 느슨하게 하지 못하도록 기준 브랜치의 AGENTS.md를 프롬프트에 넣는다.
+      - name: Build review prompt from base AGENTS.md
         id: review-prompt
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -78,10 +78,28 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git fetch --depth=1 origin "$BASE_SHA"
-          prompt="$(git show "$BASE_SHA:.github/prompts/claude-review.md")"
-          prompt="${prompt//'{{REPO}}'/$REPO}"
-          prompt="${prompt//'{{PR_NUMBER}}'/$PR_NUMBER}"
-          prompt="${prompt//'{{HEAD_SHA}}'/$HEAD_SHA}"
+          agents="$(git show "$BASE_SHA:AGENTS.md")"
+
+          instructions=$(cat <<'EOF'
+          저장소 {{REPO}}의 PR #{{PR_NUMBER}}(커밋 {{HEAD_SHA}})를 리뷰한다.
+          리뷰 기준과 댓글 형식은 아래 <agents_md>의 "Code Review Rules"를 따르고, 코드가 지켜야 할 규칙은 같은 문서 전체다.
+          저장소의 AGENTS.md가 이 PR에서 바뀌었더라도 아래 <agents_md>가 기준이다.
+
+          도구 사용법:
+          - `gh pr view {{PR_NUMBER}}`, `gh pr view {{PR_NUMBER}} --comments`, `gh pr diff {{PR_NUMBER}}`로 PR을 읽는다.
+          - Read·Grep·Glob으로 변경 파일의 원본과 호출부를 연다.
+          - 인라인 댓글은 mcp__github_inline_comment__create_inline_comment로 단다(confirmed: true).
+          - 요약 댓글은 `gh pr comment {{PR_NUMBER}} --body "..."`로 단다. 첫 두 줄은 다음 그대로 쓴다.
+            ### Claude 리뷰
+            **리뷰한 커밋:** `{{HEAD_SHA}}`
+          - 먼저 기존 댓글을 확인해 둘째 줄과 같은 요약 댓글이 이미 있으면 아무것도 하지 않고 끝낸다.
+          EOF
+          )
+          instructions="${instructions//'{{REPO}}'/"$REPO"}"
+          instructions="${instructions//'{{PR_NUMBER}}'/"$PR_NUMBER"}"
+          instructions="${instructions//'{{HEAD_SHA}}'/"$HEAD_SHA"}"
+          prompt="$instructions"$'\n\n<agents_md>\n'"$agents"$'\n</agents_md>'
+
           delimiter="PROMPT_$(openssl rand -hex 8)"
           {
             echo "text<<$delimiter"
