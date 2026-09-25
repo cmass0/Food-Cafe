@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useSingleFlight } from "@/components/hooks/useSingleFlight";
 import { listRecipes } from "@/domain/recipe/api";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
-import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
+import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
+import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type {
   Recipe,
   RecipeListResult,
@@ -79,6 +80,8 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
   const [bookmarkCount, setBookmarkCount] = useState(recipe.bookmarkCount ?? 0);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const likeFlight = useSingleFlight();
+  const bookmarkFlight = useSingleFlight();
 
   useEffect(() => {
     setLiked(recipe.liked ?? false);
@@ -98,15 +101,17 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
       return;
     }
 
-    try {
-      const next = await toggleRecipeLike(recipe.id);
-      setLiked(next.liked);
-      if (typeof next.likeCount === "number") {
-        setLikeCount(next.likeCount);
+    await likeFlight.run(async () => {
+      try {
+        const next = await setRecipeLike(recipe.id, !liked);
+        setLiked(next.liked);
+        if (typeof next.likeCount === "number") {
+          setLikeCount(next.likeCount);
+        }
+      } catch (error) {
+        console.error("좋아요 처리에 실패했습니다.", error);
       }
-    } catch (error) {
-      console.error("좋아요 처리에 실패했습니다.", error);
-    }
+    });
   }
 
   async function handleBookmark() {
@@ -115,15 +120,17 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
       return;
     }
 
-    try {
-      const next = await toggleRecipeBookmark(recipe.id, bookmarked);
-      setBookmarked(next.bookmarked);
-      if (typeof next.bookmarkCount === "number") {
-        setBookmarkCount(next.bookmarkCount);
+    await bookmarkFlight.run(async () => {
+      try {
+        const next = await setRecipeBookmark(recipe.id, !bookmarked);
+        setBookmarked(next.bookmarked);
+        if (typeof next.bookmarkCount === "number") {
+          setBookmarkCount(next.bookmarkCount);
+        }
+      } catch (error) {
+        console.error("북마크 처리에 실패했습니다.", error);
       }
-    } catch (error) {
-      console.error("북마크 처리에 실패했습니다.", error);
-    }
+    });
   }
 
   const writerName = recipe.writerName ?? "무명 셰프";
@@ -157,7 +164,8 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
           type="button"
           aria-label={`북마크 ${formatCount(bookmarkCount)}`}
           onClick={handleBookmark}
-          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+          disabled={bookmarkFlight.isRunning}
+          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
         >
           <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
             <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-[#438e4d]" : ""}`} />
@@ -168,7 +176,8 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
           type="button"
           aria-label={`좋아요 ${formatCount(likeCount)}`}
           onClick={handleLike}
-          className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+          disabled={likeFlight.isRunning}
+          className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
         >
           <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
             <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />

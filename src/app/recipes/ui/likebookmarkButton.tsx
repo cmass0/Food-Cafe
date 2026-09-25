@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useSingleFlight } from "@/components/hooks/useSingleFlight";
 import { fetchRecipeStatus } from "@/domain/recipe/api";
-import { toggleRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { toggleRecipeLike } from "@/domain/recipe/recipe_like/api";
+import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
+import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
 
 type Props = {
@@ -25,6 +26,8 @@ export default function LikeBookmarkButton({ recipe }: Props) {
   const [bookmarkCount, setBookmarkCount] = useState(recipe.bookmarkCount ?? 0);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const likeFlight = useSingleFlight();
+  const bookmarkFlight = useSingleFlight();
 
   useEffect(() => {
     setLikeCount(recipe.likeCount ?? 0);
@@ -66,15 +69,17 @@ export default function LikeBookmarkButton({ recipe }: Props) {
       return;
     }
 
-    try {
-      const next = await toggleRecipeBookmark(recipe.id, bookmarked);
-      setBookmarked(next.bookmarked);
-      if (typeof next.bookmarkCount === "number") {
-        setBookmarkCount(next.bookmarkCount);
+    await bookmarkFlight.run(async () => {
+      try {
+        const next = await setRecipeBookmark(recipe.id, !bookmarked);
+        setBookmarked(next.bookmarked);
+        if (typeof next.bookmarkCount === "number") {
+          setBookmarkCount(next.bookmarkCount);
+        }
+      } catch (error) {
+        console.error("북마크 처리 실패", error);
       }
-    } catch (error) {
-      console.error("북마크 토글 실패", error);
-    }
+    });
   }
 
   async function handleLike() {
@@ -83,15 +88,17 @@ export default function LikeBookmarkButton({ recipe }: Props) {
       return;
     }
 
-    try {
-      const next = await toggleRecipeLike(recipe.id);
-      setLiked(next.liked);
-      if (typeof next.likeCount === "number") {
-        setLikeCount(next.likeCount);
+    await likeFlight.run(async () => {
+      try {
+        const next = await setRecipeLike(recipe.id, !liked);
+        setLiked(next.liked);
+        if (typeof next.likeCount === "number") {
+          setLikeCount(next.likeCount);
+        }
+      } catch (error) {
+        console.error("좋아요 처리 실패", error);
       }
-    } catch (error) {
-      console.error("좋아요 토글 실패", error);
-    }
+    });
   }
 
   return (
@@ -99,6 +106,8 @@ export default function LikeBookmarkButton({ recipe }: Props) {
       <button
         type="button"
         onClick={handleBookmark}
+        disabled={bookmarkFlight.isRunning}
+        aria-pressed={bookmarked}
         className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50"
         aria-label={`북마크 ${formatCount(bookmarkCount)}`}
       >
@@ -108,6 +117,8 @@ export default function LikeBookmarkButton({ recipe }: Props) {
       <button
         type="button"
         onClick={handleLike}
+        disabled={likeFlight.isRunning}
+        aria-pressed={liked}
         className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-red-200 hover:bg-red-50"
         aria-label={`좋아요 ${formatCount(likeCount)}`}
       >

@@ -2,9 +2,9 @@
 
 import { useAuth } from "@/app/auth/auth-context";
 import { fetchComboStatus } from "@/domain/combo/api";
-import { ToggleComboBookmark } from "@/domain/combo/combo_bookmark/type";
+import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/type";
 import ComboCardBookmarkButton from "@/app/combos/ui/bookmarkbutton";
-import { ToggleComboLike } from "@/domain/combo/combo_like/types";
+import { ComboLikeResult } from "@/domain/combo/combo_like/types";
 import ComboCardLikeButton from "@/app/combos/ui/likebutton";
 import { Combos } from "@/domain/combo/types";
 import { useEffect, useState } from "react";
@@ -48,17 +48,14 @@ export default function ComboLikeBookmarkButton({ combo }: props) {
     };
   }, [combo.id, user?.id]);
 
-  function handleLikeChange(next: ToggleComboLike) {
+  function handleLikeChange(next: ComboLikeResult) {
     setLiked(next.liked);
     setLikeCount(next.likeCount);
   }
 
-  function handleBookmarkChange(next: ToggleComboBookmark) {
-    setBookmarkCount((prev) => {
-      const delta = next.bookmarked === bookmarked ? 0 : next.bookmarked ? 1 : -1;
-      return Math.max(0, prev + delta);
-    });
+  function handleBookmarkChange(next: ComboBookmarkResult) {
     setBookmarked(next.bookmarked);
+    setBookmarkCount(next.bookmarkCount);
   }
 
   return (

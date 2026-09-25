@@ -1,19 +1,15 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { ToggleComboBookmark } from "./type";
+import { ComboBookmarkResult } from "./type";
 
-export async function toggleComboBookmark(
+export async function setComboBookmark(
   comboId: string,
-  currentlyBookmarked: boolean
-): Promise<ToggleComboBookmark> {
+  bookmarked: boolean
+): Promise<ComboBookmarkResult> {
   const res = await fetch(`/api/combos/${comboId}/bookmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ comboId, currentlyBookmarked }),
+    body: JSON.stringify({ bookmarked }),
   });
-  if (!res.ok) {
-    await throwApiError(res);
-  }
-  const data = await res.json();
-
-  return data;
+  if (!res.ok) await throwApiError(res);
+  return res.json();
 }

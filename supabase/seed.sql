@@ -10,7 +10,7 @@ values (
   'Food-Cafe',
   'Food-Cafe',
   true,
-  null,
+  5242880,
   array['image/jpeg', 'image/png']
 )
 on conflict (id) do update

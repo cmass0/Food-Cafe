@@ -15,27 +15,29 @@ select extensions.is(
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
       and rpc.proname = any (array[
-        'combo_toggle_like', 'get_trending_combos_by_period',
-        'get_trending_posts_by_period', 'get_trending_recipe_tags_by_period',
-        'get_trending_recipes_by_period', 'increment_combo_view',
-        'increment_post_view', 'increment_recipe_view', 'is_current_user_admin',
-        'post_toggle_like', 'recipe_toggle_like', 'toggle_bookmark', 'toggle_follow'
+        'get_trending_combos', 'get_trending_posts',
+        'get_trending_recipe_tags', 'get_trending_recipes',
+        'increment_combo_view', 'increment_post_view', 'increment_recipe_view',
+        'is_current_user_admin', 'set_combo_bookmark', 'set_combo_like', 'set_follow',
+        'set_post_bookmark', 'set_post_like', 'set_recipe_bookmark', 'set_recipe_like'
       ])
   ),
   array[
-    'combo_toggle_like(p_combo_id uuid)',
-    'get_trending_combos_by_period(period text, limit_size integer)',
-    'get_trending_posts_by_period(period text, limit_size integer)',
-    'get_trending_recipe_tags_by_period(period text, limit_size integer)',
-    'get_trending_recipes_by_period(period text, limit_size integer)',
+    'get_trending_combos(p_period text, p_limit integer)',
+    'get_trending_posts(p_period text, p_limit integer)',
+    'get_trending_recipe_tags(p_period text, p_limit integer)',
+    'get_trending_recipes(p_period text, p_limit integer)',
     'increment_combo_view(p_combo_id uuid)',
     'increment_post_view(p_post_id uuid)',
     'increment_recipe_view(p_recipe_id uuid)',
     'is_current_user_admin()',
-    'post_toggle_like(p_post_id uuid)',
-    'recipe_toggle_like(p_recipe_id uuid)',
-    'toggle_bookmark(p_type text, p_id uuid)',
-    'toggle_follow(p_target_id uuid)'
+    'set_combo_bookmark(p_combo_id uuid, p_bookmarked boolean)',
+    'set_combo_like(p_combo_id uuid, p_liked boolean)',
+    'set_follow(p_target_id uuid, p_following boolean)',
+    'set_post_bookmark(p_post_id uuid, p_bookmarked boolean)',
+    'set_post_like(p_post_id uuid, p_liked boolean)',
+    'set_recipe_bookmark(p_recipe_id uuid, p_bookmarked boolean)',
+    'set_recipe_like(p_recipe_id uuid, p_liked boolean)'
   ]::text[],
   '애플리케이션이 사용하는 공개 RPC 시그니처가 유지된다'
 );
@@ -46,10 +48,7 @@ select extensions.ok(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname in (
-        'post_toggle_like', 'recipe_toggle_like', 'combo_toggle_like',
-        'toggle_bookmark', 'toggle_follow'
-      )
+      and rpc.proname like 'set_%'
   ),
   '익명 사용자는 좋아요·북마크·팔로우 RPC를 실행할 수 없다'
 );
@@ -60,10 +59,7 @@ select extensions.ok(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname in (
-        'post_toggle_like', 'recipe_toggle_like', 'combo_toggle_like',
-        'toggle_bookmark', 'toggle_follow'
-      )
+      and rpc.proname like 'set_%'
   ),
   '로그인 사용자는 좋아요·북마크·팔로우 RPC를 실행할 수 있다'
 );
@@ -85,7 +81,10 @@ select extensions.ok(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname like 'get_trending_%_by_period'
+      and rpc.proname in (
+        'get_trending_recipes', 'get_trending_combos',
+        'get_trending_posts', 'get_trending_recipe_tags'
+      )
   ),
   '익명 사용자도 기간별 트렌딩 RPC를 실행할 수 있다'
 );
@@ -108,26 +107,41 @@ select extensions.is(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname in (
-        'post_toggle_like', 'recipe_toggle_like', 'combo_toggle_like',
-        'toggle_bookmark', 'toggle_follow'
-      )
+      and rpc.proname like 'set_%'
       and rpc.prosecdef
   ),
-  5,
+  7,
   '직접 쓰기 권한을 대신하는 참여 RPC는 SECURITY DEFINER다'
 );
 
-select extensions.ok(
-  coalesce((
-    select 'search_path=""' = any(rpc.proconfig)
+select extensions.is(
+  (
+    select count(*)::integer
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'public'
-      and rpc.proname = 'toggle_follow'
-      and pg_catalog.pg_get_function_identity_arguments(rpc.oid) = 'p_target_id uuid'
-  ), false),
-  '팔로우 SECURITY DEFINER RPC는 빈 search_path를 사용한다'
+      and rpc.proname like 'set_%'
+      and 'search_path=""' = any(rpc.proconfig)
+  ),
+  7,
+  '참여 SECURITY DEFINER RPC는 빈 search_path를 사용한다'
+);
+
+select extensions.is(
+  (
+    select count(*)::integer
+    from pg_proc rpc
+    join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
+    where rpc_schema.nspname = 'public'
+      and rpc.proname in (
+        'get_trending_recipes', 'get_trending_combos',
+        'get_trending_posts', 'get_trending_recipe_tags', 'search_recommendations'
+      )
+      and rpc.prosecdef
+      and 'search_path=""' = any(rpc.proconfig)
+  ),
+  5,
+  '트렌딩·추천 검색 RPC는 빈 search_path의 SECURITY DEFINER 함수 하나로 동작한다'
 );
 
 select extensions.is(
@@ -136,57 +150,43 @@ select extensions.is(
     from pg_proc rpc
     join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
     where rpc_schema.nspname = 'private'
-      and rpc.proname like 'get_trending_%_by_period'
-      and rpc.prosecdef
+      and (rpc.proname like 'get_trending_%' or rpc.proname = 'search_recommendations_internal')
   ),
-  4,
-  '비공개 트렌딩 집계 함수는 SECURITY DEFINER다'
-);
-
-select extensions.is(
-  (
-    select count(*)::integer
-    from pg_proc rpc
-    join pg_namespace rpc_schema on rpc_schema.oid = rpc.pronamespace
-    where rpc_schema.nspname = 'public'
-      and rpc.proname like 'get_trending_%_by_period'
-      and not rpc.prosecdef
-  ),
-  4,
-  '공개 트렌딩 래퍼는 호출자 권한을 유지한다'
+  0,
+  '트렌딩·추천 검색의 private 중복 본체가 남아 있지 않다'
 );
 
 select extensions.ok(
-  has_schema_privilege('anon', 'private', 'USAGE')
+  not has_schema_privilege('anon', 'private', 'USAGE')
   and has_schema_privilege('authenticated', 'private', 'USAGE'),
-  '공개 트렌딩 래퍼가 private 함수를 찾을 수 있다'
+  'anon은 private 스키마를 쓸 수 없고, 로그인 사용자는 관리자 확인 함수 때문에 유지한다'
 );
 
 set local role anon;
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_recipes_by_period('year', 10) $$,
+  $$ select * from public.get_trending_recipes('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '레시피 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_combos_by_period('year', 10) $$,
+  $$ select * from public.get_trending_combos('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '조합 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_posts_by_period('year', 10) $$,
+  $$ select * from public.get_trending_posts('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '게시글 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
 );
 
 select extensions.throws_ok(
-  $$ select * from public.get_trending_recipe_tags_by_period('year', 10) $$,
+  $$ select * from public.get_trending_recipe_tags('year', 10) $$,
   '22023',
   'unsupported trending period: year',
   '레시피 태그 트렌딩은 지원하지 않는 기간을 오류로 거부한다'
@@ -225,7 +225,7 @@ select set_config('request.jwt.claims', '{"sub":"11000000-0000-4000-8000-0000000
 set local role authenticated;
 
 select extensions.lives_ok(
-  $$ select * from public.post_toggle_like('21000000-0000-4000-8000-000000000001') $$,
+  $$ select * from public.set_post_like('21000000-0000-4000-8000-000000000001', true) $$,
   '게시글 좋아요 RPC를 실행할 수 있다'
 );
 reset role;
@@ -236,64 +236,64 @@ select extensions.is(
 );
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.post_toggle_like('21000000-0000-4000-8000-000000000001') $$, '게시글 좋아요 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_post_like('21000000-0000-4000-8000-000000000001', false) $$, '게시글 좋아요 해제 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.post_likes where user_id = '11000000-0000-4000-8000-000000000001' and post_id = '21000000-0000-4000-8000-000000000001')::text || ':' || like_count::text from public.posts where id = '21000000-0000-4000-8000-000000000001'), 'false:0', '게시글 좋아요 해제 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.recipe_toggle_like('31000000-0000-4000-8000-000000000001') $$, '레시피 좋아요 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_recipe_like('31000000-0000-4000-8000-000000000001', true) $$, '레시피 좋아요 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.recipe_likes where user_id = '11000000-0000-4000-8000-000000000001' and recipe_id = '31000000-0000-4000-8000-000000000001')::text || ':' || like_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'true:1', '레시피 좋아요 추가 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.recipe_toggle_like('31000000-0000-4000-8000-000000000001') $$, '레시피 좋아요 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_recipe_like('31000000-0000-4000-8000-000000000001', false) $$, '레시피 좋아요 해제 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.recipe_likes where user_id = '11000000-0000-4000-8000-000000000001' and recipe_id = '31000000-0000-4000-8000-000000000001')::text || ':' || like_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'false:0', '레시피 좋아요 해제 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.combo_toggle_like('41000000-0000-4000-8000-000000000001') $$, '조합 좋아요 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_combo_like('41000000-0000-4000-8000-000000000001', true) $$, '조합 좋아요 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.combo_likes where user_id = '11000000-0000-4000-8000-000000000001' and combo_id = '41000000-0000-4000-8000-000000000001')::text || ':' || like_count::text from public.combos where id = '41000000-0000-4000-8000-000000000001'), 'true:1', '조합 좋아요 추가 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.combo_toggle_like('41000000-0000-4000-8000-000000000001') $$, '조합 좋아요 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_combo_like('41000000-0000-4000-8000-000000000001', false) $$, '조합 좋아요 해제 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.combo_likes where user_id = '11000000-0000-4000-8000-000000000001' and combo_id = '41000000-0000-4000-8000-000000000001')::text || ':' || like_count::text from public.combos where id = '41000000-0000-4000-8000-000000000001'), 'false:0', '조합 좋아요 해제 결과와 카운터가 일치한다');
 
--- 공통 북마크 RPC는 세 콘텐츠 종류를 모두 같은 결과 형식으로 처리합니다.
+-- 북마크 RPC도 좋아요와 같은 상태 지정 방식으로 처리합니다.
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('post', '21000000-0000-4000-8000-000000000001') $$, '게시글 북마크 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_post_bookmark('21000000-0000-4000-8000-000000000001', true) $$, '게시글 북마크 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.post_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and post_id = '21000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.posts where id = '21000000-0000-4000-8000-000000000001'), 'true:1', '게시글 북마크 추가 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('post', '21000000-0000-4000-8000-000000000001') $$, '게시글 북마크 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_post_bookmark('21000000-0000-4000-8000-000000000001', false) $$, '게시글 북마크 해제 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.post_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and post_id = '21000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.posts where id = '21000000-0000-4000-8000-000000000001'), 'false:0', '게시글 북마크 해제 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('recipe', '31000000-0000-4000-8000-000000000001') $$, '레시피 북마크 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_recipe_bookmark('31000000-0000-4000-8000-000000000001', true) $$, '레시피 북마크 RPC를 실행할 수 있다');
 reset role;
-select extensions.is((select exists (select 1 from public.recipe_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and parent_id = '31000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'true:1', '레시피 북마크 추가 결과와 카운터가 일치한다');
+select extensions.is((select exists (select 1 from public.recipe_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and recipe_id = '31000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'true:1', '레시피 북마크 추가 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('recipe', '31000000-0000-4000-8000-000000000001') $$, '레시피 북마크 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_recipe_bookmark('31000000-0000-4000-8000-000000000001', false) $$, '레시피 북마크 해제 RPC를 실행할 수 있다');
 reset role;
-select extensions.is((select exists (select 1 from public.recipe_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and parent_id = '31000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'false:0', '레시피 북마크 해제 결과와 카운터가 일치한다');
+select extensions.is((select exists (select 1 from public.recipe_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and recipe_id = '31000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.recipes where id = '31000000-0000-4000-8000-000000000001'), 'false:0', '레시피 북마크 해제 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('combo', '41000000-0000-4000-8000-000000000001') $$, '조합 북마크 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_combo_bookmark('41000000-0000-4000-8000-000000000001', true) $$, '조합 북마크 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.combo_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and combo_id = '41000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.combos where id = '41000000-0000-4000-8000-000000000001'), 'true:1', '조합 북마크 추가 결과와 카운터가 일치한다');
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_bookmark('combo', '41000000-0000-4000-8000-000000000001') $$, '조합 북마크 해제 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_combo_bookmark('41000000-0000-4000-8000-000000000001', false) $$, '조합 북마크 해제 RPC를 실행할 수 있다');
 reset role;
 select extensions.is((select exists (select 1 from public.combo_bookmarks where user_id = '11000000-0000-4000-8000-000000000001' and combo_id = '41000000-0000-4000-8000-000000000001')::text || ':' || bookmark_count::text from public.combos where id = '41000000-0000-4000-8000-000000000001'), 'false:0', '조합 북마크 해제 결과와 카운터가 일치한다');
 
 -- 팔로우 RPC는 관계 행과 양쪽 프로필 카운터를 한 번에 맞춰야 합니다.
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_follow('11000000-0000-4000-8000-000000000002') $$, '팔로우 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_follow('11000000-0000-4000-8000-000000000002', true) $$, '팔로우 RPC를 실행할 수 있다');
 reset role;
 select extensions.is(
   (select exists (select 1 from public.user_follows where follower_id = '11000000-0000-4000-8000-000000000001' and following_id = '11000000-0000-4000-8000-000000000002')::text || ':' || follower_count::text || ':' || (select following_count from public.profiles where id = '11000000-0000-4000-8000-000000000001')::text from public.profiles where id = '11000000-0000-4000-8000-000000000002'),
@@ -302,7 +302,7 @@ select extensions.is(
 );
 
 set local role authenticated;
-select extensions.lives_ok($$ select * from public.toggle_follow('11000000-0000-4000-8000-000000000002') $$, '언팔로우 RPC를 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.set_follow('11000000-0000-4000-8000-000000000002', false) $$, '언팔로우 RPC를 실행할 수 있다');
 reset role;
 select extensions.is(
   (select exists (select 1 from public.user_follows where follower_id = '11000000-0000-4000-8000-000000000001' and following_id = '11000000-0000-4000-8000-000000000002')::text || ':' || follower_count::text || ':' || (select following_count from public.profiles where id = '11000000-0000-4000-8000-000000000001')::text from public.profiles where id = '11000000-0000-4000-8000-000000000002'),
@@ -340,7 +340,7 @@ from unnest(array[
 ]) as recipe_id;
 
 -- 1번: 북마크 2개 = 26점, 2번: 좋아요 1개+댓글 1개 = 26점
-insert into public.recipe_bookmarks (user_id, parent_id, created_at) values
+insert into public.recipe_bookmarks (user_id, recipe_id, created_at) values
   ('11000000-0000-4000-8000-000000000001', '51000000-0000-4000-8000-000000000001', now() - interval '1 hour'),
   ('11000000-0000-4000-8000-000000000002', '51000000-0000-4000-8000-000000000001', now() - interval '1 hour');
 insert into public.recipe_likes (user_id, recipe_id, created_at) values
@@ -359,16 +359,16 @@ insert into public.comments (id, recipe_id, writer_uid, writer_name, content, cr
   ('61000000-0000-4000-8000-000000000004', '51000000-0000-4000-8000-000000000004', '11000000-0000-4000-8000-000000000001', 'RPC 사용자 A', '댓글 3', now() - interval '1 hour');
 
 set local role anon;
-select extensions.lives_ok($$ select * from public.get_trending_recipes_by_period('day', 10) $$, '레시피 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_combos_by_period('day', 10) $$, '조합 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_posts_by_period('day', 10) $$, '게시글 트렌딩 RPC를 익명으로 실행할 수 있다');
-select extensions.lives_ok($$ select * from public.get_trending_recipe_tags_by_period('day', 10) $$, '태그 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_recipes('day', 10) $$, '레시피 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_combos('day', 10) $$, '조합 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_posts('day', 10) $$, '게시글 트렌딩 RPC를 익명으로 실행할 수 있다');
+select extensions.lives_ok($$ select * from public.get_trending_recipe_tags('day', 10) $$, '태그 트렌딩 RPC를 익명으로 실행할 수 있다');
 reset role;
 
 select extensions.is(
   (
     select array_agg(id)
-    from public.get_trending_recipes_by_period('day', 50)
+    from public.get_trending_recipes('day', 50)
     where id::text like '51000000-%'
   ),
   array[
@@ -384,7 +384,7 @@ select extensions.is(
 
 select extensions.ok(
   not exists (
-    select 1 from public.get_trending_recipes_by_period('day', 50)
+    select 1 from public.get_trending_recipes('day', 50)
     where id = '51000000-0000-4000-8000-000000000007'
   ),
   '24시간보다 오래된 활동은 일간 트렌딩에서 제외된다'
@@ -392,14 +392,14 @@ select extensions.ok(
 
 select extensions.ok(
   exists (
-    select 1 from public.get_trending_recipes_by_period('week', 50)
+    select 1 from public.get_trending_recipes('week', 50)
     where id = '51000000-0000-4000-8000-000000000007'
   ),
   '7일 이내 활동은 주간 트렌딩에 포함된다'
 );
 
 select extensions.is(
-  (select count(*)::integer from public.get_trending_recipes_by_period('day', 0)),
+  (select count(*)::integer from public.get_trending_recipes('day', 0)),
   1,
   '트렌딩 요청 개수의 최솟값은 1이다'
 );

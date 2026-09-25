@@ -6,14 +6,15 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
-import { toggleComboLike } from "@/domain/combo/combo_like/api";
-import { ToggleComboLike } from "@/domain/combo/combo_like/types";
+import { useSingleFlight } from "@/components/hooks/useSingleFlight";
+import { setComboLike } from "@/domain/combo/combo_like/api";
+import { ComboLikeResult } from "@/domain/combo/combo_like/types";
 
 type Props = {
   comboId: string;
   liked: boolean;
   count: number;
-  onChange?(next: ToggleComboLike): void;
+  onChange?(next: ComboLikeResult): void;
 };
 
 function currentNextUrl() {
@@ -26,6 +27,7 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
   const [localCount, setLocalCount] = React.useState(count);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { isRunning, run } = useSingleFlight();
 
   React.useEffect(() => {
     setLocalLiked(liked);
@@ -38,23 +40,26 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
       return;
     }
 
-    try {
-      const { liked: nextLiked, likeCount } = await toggleComboLike(comboId);
-      if (onChange) {
-        onChange({ liked: nextLiked, likeCount });
-      } else {
-        setLocalLiked(nextLiked);
-        if (typeof likeCount === "number") {
-          setLocalCount(likeCount);
+    await run(async () => {
+      try {
+        const currentLiked = onChange ? liked : localLiked;
+        const { liked: nextLiked, likeCount } = await setComboLike(comboId, !currentLiked);
+        if (onChange) {
+          onChange({ liked: nextLiked, likeCount });
+        } else {
+          setLocalLiked(nextLiked);
+          if (typeof likeCount === "number") {
+            setLocalCount(likeCount);
+          }
         }
+      } catch (error) {
+        if (isUnauthorizedApiError(error)) {
+          openAuthModal({ next: currentNextUrl() });
+          return;
+        }
+        console.error("조합 좋아요 처리 실패:", error);
       }
-    } catch (error) {
-      if (isUnauthorizedApiError(error)) {
-        openAuthModal({ next: currentNextUrl() });
-        return;
-      }
-      console.error("조합 좋아요 토글 실패:", error);
-    }
+    });
   }
 
   const displayLiked = onChange ? liked : localLiked;
@@ -66,6 +71,7 @@ export default function ComboCardLikeButton({ comboId, liked, count, onChange }:
       aria-label={`좋아요 ${displayCount}`}
       className="group inline-grid h-11 w-11 cursor-pointer place-items-center rounded-full text-emerald-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-900 disabled:cursor-not-allowed disabled:opacity-70"
       onClick={handleClick}
+      disabled={isRunning}
     >
       <span className="grid h-8 w-8 place-items-center rounded-full border border-emerald-300/60 shadow-sm transition group-hover:border-emerald-200 group-hover:bg-emerald-500/20 group-hover:text-emerald-50">
         <Heart

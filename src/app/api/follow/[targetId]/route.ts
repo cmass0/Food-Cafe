@@ -7,6 +7,7 @@ import {
   notFound,
   respondWithSupabaseError,
 } from "@/lib/api/route-error";
+import { readRelationState } from "@/lib/api/relation-state";
 import * as followService from "@/domain/follow/service";
 import { followTargetSchema } from "@/domain/follow/schema";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -32,11 +33,10 @@ export async function GET(_req: Request, props: FollowParams) {
   }
 }
 
-export async function POST(_req: Request, props: FollowParams) {
+export async function POST(req: Request, props: FollowParams) {
   const params = await props.params;
   const parsedTarget = followTargetSchema.safeParse(params.targetId);
   if (!parsedTarget.success) return badRequest(parsedTarget.error.issues[0]?.message);
-  const supabase = await getServerSupabase();
 
   try {
     const { user, error: authError } = await AuthErrorHelper();
@@ -44,28 +44,26 @@ export async function POST(_req: Request, props: FollowParams) {
 
     if (user.id === parsedTarget.data) return badRequest("자기 자신은 팔로우할 수 없습니다.");
 
-    const { data, error } = await supabase.rpc("toggle_follow", {
-      p_target_id: parsedTarget.data,
-    });
+    const following = await readRelationState(req, "following");
+    if (following === null) return badRequest("following 값이 필요합니다.");
 
+    const supabase = await getServerSupabase();
+    const { data, error } = await supabase
+      .rpc("set_follow", { p_target_id: parsedTarget.data, p_following: following })
+      .maybeSingle();
     if (error) {
-      console.error("팔로우 토글 실패", error);
+      console.error("팔로우 처리 실패", error);
       return respondWithSupabaseError(error);
     }
+    if (!data) return notFound("사용자");
 
-    const row = data?.[0];
-    if (!row) return notFound("사용자를 찾을 수 없습니다.");
-
-    return json({
-      following: row.following,
-      followerCount: row.follower_count,
-    });
+    return json({ following: data.following, followerCount: data.follower_count });
   } catch (error) {
     if (isPostgrestError(error)) {
-      console.error("팔로우 토글 실패", error);
+      console.error("팔로우 처리 실패", error);
       return respondWithSupabaseError(error);
     }
-    console.error("팔로우 토글 실패", error);
+    console.error("팔로우 처리 실패", error);
     return internalError();
   }
 }

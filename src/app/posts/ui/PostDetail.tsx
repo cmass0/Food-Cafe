@@ -5,9 +5,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AuthorProfileMenu from "@/components/user/AuthorProfileMenu";
 import ViewCount from "@/components/ViewCount.client";
 import { getPostCategoryLabel } from "@/domain/post/category";
+import PostBookmarkButton from "@/app/posts/ui/PostBookmarkButton";
 import PostLikeButton from "@/app/posts/ui/PostLikeButton";
 import { renderPostContentHtml } from "@/domain/post/content";
-import PostHeaderActions from "./PostHeaderActions.client";
 import type { Post } from "@/domain/post/types";
 
 function formatPostDate(date: Date) {
@@ -54,28 +54,22 @@ export default function PostDetail({ post }: { post: Post }) {
           {post.title}
         </h1>
 
-        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-zinc-500">
-            <div className="inline-flex items-center gap-2">
-              <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-emerald-100 text-[11px] font-bold text-[#16883d]">
-                  {initials(post.writerName)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-zinc-600">작성자</span>
-              <AuthorProfileMenu name={post.writerName} userId={post.writerUid} />
-            </div>
-            <span className="hidden h-4 w-px bg-zinc-300 sm:block" />
-            <span>{formatPostDate(post.createdAt)}</span>
-            <span className="hidden h-4 w-px bg-zinc-300 sm:block" />
-            <span>
-              조회수 <ViewCount type="post" id={post.id} initialCount={post.viewCount} />
-            </span>
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-zinc-500">
+          <div className="inline-flex items-center gap-2">
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="bg-emerald-100 text-[11px] font-bold text-[#16883d]">
+                {initials(post.writerName)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-zinc-600">작성자</span>
+            <AuthorProfileMenu name={post.writerName} userId={post.writerUid} />
           </div>
-          <PostHeaderActions
-            postId={post.id}
-            initialBookmarkCount={post.bookmarkCount}
-          />
+          <span className="hidden h-4 w-px bg-zinc-300 sm:block" />
+          <span>{formatPostDate(post.createdAt)}</span>
+          <span className="hidden h-4 w-px bg-zinc-300 sm:block" />
+          <span>
+            조회수 <ViewCount type="post" id={post.id} initialCount={post.viewCount} />
+          </span>
         </div>
       </header>
 
@@ -88,7 +82,8 @@ export default function PostDetail({ post }: { post: Post }) {
         <section className="py-9 text-sm text-muted-foreground">등록된 본문이 없습니다.</section>
       )}
 
-      <div className="border-t border-border/80 py-5">
+      <div className="flex items-center gap-3 border-t border-border/80 py-5">
+        <PostBookmarkButton postId={post.id} initialCount={post.bookmarkCount} />
         <PostLikeButton postId={post.id} initialCount={post.likeCount} />
       </div>
     </article>

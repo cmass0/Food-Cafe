@@ -9,9 +9,9 @@ export async function selectTrendingRecipes(
   limit: number,
   period: TrendingPeriod
 ): Promise<TrendingRecipeRow[]> {
-  const { data, error } = await client.rpc("get_trending_recipes_by_period", {
-    limit_size: limit,
-    period,
+  const { data, error } = await client.rpc("get_trending_recipes", {
+    p_limit: limit,
+    p_period: period,
   });
 
   if (error) throw error;
@@ -23,9 +23,9 @@ export async function selectTrendingCombos(
   limit: number,
   period: TrendingPeriod
 ): Promise<TrendingComboRow[]> {
-  const { data, error } = await client.rpc("get_trending_combos_by_period", {
-    limit_size: limit,
-    period,
+  const { data, error } = await client.rpc("get_trending_combos", {
+    p_limit: limit,
+    p_period: period,
   });
 
   if (error) throw error;
@@ -37,9 +37,9 @@ export async function selectTrendingPosts(
   limit: number,
   period: TrendingPeriod
 ): Promise<TrendingPostRow[]> {
-  const { data, error } = await client.rpc("get_trending_posts_by_period", {
-    limit_size: limit,
-    period,
+  const { data, error } = await client.rpc("get_trending_posts", {
+    p_limit: limit,
+    p_period: period,
   });
 
   if (error) throw error;
@@ -51,9 +51,9 @@ export async function selectTrendingRecipeTags(
   limit: number,
   period: TrendingPeriod
 ): Promise<TrendingTagRow[]> {
-  const { data, error } = await client.rpc("get_trending_recipe_tags_by_period", {
-    limit_size: limit,
-    period,
+  const { data, error } = await client.rpc("get_trending_recipe_tags", {
+    p_limit: limit,
+    p_period: period,
   });
 
   if (error) throw error;

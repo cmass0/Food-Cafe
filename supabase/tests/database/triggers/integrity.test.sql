@@ -99,8 +99,8 @@ select extensions.is(
     select count(*)::integer
     from pg_proc trigger_function
     join pg_namespace function_schema on function_schema.oid = trigger_function.pronamespace
-    where function_schema.nspname in ('public', 'private')
-      and trigger_function.proname in ('adjust_content_engagement_counter', 'adjust_follow_counters')
+    where function_schema.nspname = 'private'
+      and trigger_function.proname in ('sync_engagement_count', 'sync_follow_count')
       and trigger_function.prosecdef
   ),
   2,
@@ -116,7 +116,7 @@ select extensions.ok(
   coalesce((
     select 'search_path=""' = any(trigger_function.proconfig)
     from pg_proc trigger_function
-    where trigger_function.oid = 'public.set_updated_at()'::regprocedure
+    where trigger_function.oid = 'private.set_updated_at()'::regprocedure
   ), false),
   '공통 updated_at Trigger 함수는 빈 search_path를 사용한다'
 );
@@ -146,9 +146,9 @@ select extensions.is((select like_count from public.recipes where id = '32000000
 delete from public.recipe_likes where user_id = '12000000-0000-4000-8000-000000000001' and recipe_id = '32000000-0000-4000-8000-000000000001';
 select extensions.is((select like_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 0, '레시피 좋아요 삭제 시 카운터가 감소한다');
 
-insert into public.recipe_bookmarks (user_id, parent_id) values ('12000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001');
+insert into public.recipe_bookmarks (user_id, recipe_id) values ('12000000-0000-4000-8000-000000000001', '32000000-0000-4000-8000-000000000001');
 select extensions.is((select bookmark_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 1, '레시피 북마크 추가 시 카운터가 증가한다');
-delete from public.recipe_bookmarks where user_id = '12000000-0000-4000-8000-000000000001' and parent_id = '32000000-0000-4000-8000-000000000001';
+delete from public.recipe_bookmarks where user_id = '12000000-0000-4000-8000-000000000001' and recipe_id = '32000000-0000-4000-8000-000000000001';
 select extensions.is((select bookmark_count from public.recipes where id = '32000000-0000-4000-8000-000000000001'), 0, '레시피 북마크 삭제 시 카운터가 감소한다');
 
 insert into public.combo_likes (user_id, combo_id) values ('12000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001');

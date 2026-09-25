@@ -1,7 +1,9 @@
 import { isBookmarkedPost } from "@/domain/post/post_bookmark/service";
 import { contentParams } from "@/lib/api/prams-type";
+import { readRelationState } from "@/lib/api/relation-state";
 import {
   AuthErrorHelper,
+  badRequest,
   internalError,
   isPostgrestError,
   json,
@@ -31,29 +33,28 @@ export async function GET(_: Request, props: contentParams) {
   }
 }
 
-export async function POST(_: Request, props: contentParams) {
+export async function POST(req: Request, props: contentParams) {
   const params = await props.params;
 
   try {
-    const supabase = await getServerSupabase();
     const { error: authError } = await AuthErrorHelper();
     if (authError) return authError;
 
-    const { data, error } = await supabase.rpc("toggle_bookmark", {
-      p_type: "post",
-      p_id: params.id,
-    });
+    const bookmarked = await readRelationState(req, "bookmarked");
+    if (bookmarked === null) return badRequest("bookmarked 값이 필요합니다.");
+
+    const supabase = await getServerSupabase();
+    const { data, error } = await supabase
+      .rpc("set_post_bookmark", { p_post_id: params.id, p_bookmarked: bookmarked })
+      .maybeSingle();
     if (error) return respondWithSupabaseError(error);
-    if (!data?.[0]) return notFound();
+    if (!data) return notFound("게시글");
 
     revalidatePath("/");
     revalidatePath("/posts");
     revalidatePath(`/posts/${params.id}`);
 
-    return json({
-      bookmarked: data[0].bookmarked,
-      bookmarkCount: data[0].bookmark_count,
-    });
+    return json({ bookmarked: data.bookmarked, bookmarkCount: data.bookmark_count });
   } catch (error) {
     if (isPostgrestError(error)) return respondWithSupabaseError(error);
     console.error("게시글 북마크 처리에 실패했습니다.", error);

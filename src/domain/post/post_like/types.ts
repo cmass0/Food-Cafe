@@ -1,4 +1,4 @@
-export type TogglePostLike = {
+export type PostLikeResult = {
   liked: boolean;
   likeCount: number;
 };

@@ -3,13 +3,13 @@ import type { Database } from "@/types/supabase";
 export type TrendingResourceType = "recipe" | "combo" | "post";
 
 export type TrendingRecipeRow =
-  Database["public"]["Functions"]["get_trending_recipes_by_period"]["Returns"][number];
+  Database["public"]["Functions"]["get_trending_recipes"]["Returns"][number];
 export type TrendingComboRow =
-  Database["public"]["Functions"]["get_trending_combos_by_period"]["Returns"][number];
+  Database["public"]["Functions"]["get_trending_combos"]["Returns"][number];
 export type TrendingPostRow =
-  Database["public"]["Functions"]["get_trending_posts_by_period"]["Returns"][number];
+  Database["public"]["Functions"]["get_trending_posts"]["Returns"][number];
 export type TrendingTagRow =
-  Database["public"]["Functions"]["get_trending_recipe_tags_by_period"]["Returns"][number];
+  Database["public"]["Functions"]["get_trending_recipe_tags"]["Returns"][number];
 
 export interface TrendingContentItem {
   resourceType: TrendingResourceType;

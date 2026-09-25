@@ -7,7 +7,7 @@ import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
 
-import { fetchPostLikeStatus, togglePostLike } from "@/domain/post/post_like/api";
+import { fetchPostLikeStatus, setPostLike } from "@/domain/post/post_like/api";
 
 type PostLikeButtonProps = {
   postId: string;
@@ -94,7 +94,7 @@ export default function PostLikeButton({ postId, initialCount }: PostLikeButtonP
 
     startTransition(async () => {
       try {
-        const next = await togglePostLike(postId);
+        const next = await setPostLike(postId, optimisticLiked);
         setLiked(next.liked);
         setLikeCount(next.likeCount);
       } catch (error) {

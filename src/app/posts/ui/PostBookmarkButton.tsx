@@ -6,14 +6,14 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import {
   fetchPostBookmarkStatus,
-  togglePostBookmark,
+  setPostBookmark,
 } from "@/domain/post/post_bookmark/api";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
 
-type PostHeaderActionsProps = {
+type PostBookmarkButtonProps = {
   postId: string;
-  initialBookmarkCount: number;
+  initialCount: number;
 };
 
 function getReturnPath() {
@@ -25,12 +25,9 @@ function formatCount(value: number) {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
 
-export default function PostHeaderActions({
-  postId,
-  initialBookmarkCount,
-}: PostHeaderActionsProps) {
+export default function PostBookmarkButton({ postId, initialCount }: PostBookmarkButtonProps) {
   const [bookmarked, setBookmarked] = React.useState(false);
-  const [bookmarkCount, setBookmarkCount] = React.useState(initialBookmarkCount);
+  const [bookmarkCount, setBookmarkCount] = React.useState(initialCount);
   const [isPending, startTransition] = React.useTransition();
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
@@ -39,8 +36,8 @@ export default function PostHeaderActions({
   const mutationPending = React.useRef(false);
 
   React.useEffect(() => {
-    setBookmarkCount(initialBookmarkCount);
-  }, [initialBookmarkCount]);
+    setBookmarkCount(initialCount);
+  }, [initialCount]);
 
   React.useEffect(() => {
     if (!user?.id) {
@@ -101,7 +98,7 @@ export default function PostHeaderActions({
 
     startTransition(async () => {
       try {
-        const next = await togglePostBookmark(postId);
+        const next = await setPostBookmark(postId, optimisticBookmarked);
         setBookmarked(next.bookmarked);
         setBookmarkCount(next.bookmarkCount);
       } catch (error) {
@@ -120,20 +117,16 @@ export default function PostHeaderActions({
   }
 
   return (
-    <div className="flex items-center gap-1 text-sm font-medium text-zinc-700">
-      <button
-        type="button"
-        onClick={handleBookmark}
-        disabled={isPending}
-        aria-pressed={bookmarked}
-        aria-label={`북마크 ${formatCount(bookmarkCount)}`}
-        className="inline-flex h-11 items-center gap-2 rounded-md px-2.5 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        <Bookmark
-          className={`h-4 w-4 ${bookmarked ? "fill-[#15933d] text-[#15933d]" : ""}`}
-        />
-        북마크 {formatCount(bookmarkCount)}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={handleBookmark}
+      disabled={isPending}
+      aria-pressed={bookmarked}
+      aria-label={`북마크 ${formatCount(bookmarkCount)}`}
+      className="inline-flex h-12 min-w-[96px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      <Bookmark className={`h-5 w-5 text-amber-400 ${bookmarked ? "fill-amber-400" : ""}`} />
+      {formatCount(bookmarkCount)}
+    </button>
   );
 }
