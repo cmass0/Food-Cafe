@@ -346,13 +346,15 @@ select extensions.ok(
 );
 
 -- 테이블을 새로 만들 때 설명을 빠뜨리지 않도록 모든 앱 테이블에 설명을 요구한다.
+-- 일반·파티션 테이블(r·p), 일반·구체화 뷰(v·m), 외부 테이블(f)을 모두 보고, 파티션의 자식 조각은 부모 설명으로 대신한다.
 select extensions.is(
   (
     select coalesce(array_agg(table_relation.oid::regclass::text order by 1), '{}'::text[])
     from pg_class table_relation
     join pg_namespace table_schema on table_schema.oid = table_relation.relnamespace
     where table_schema.nspname in ('public', 'private')
-      and table_relation.relkind in ('r', 'v')
+      and table_relation.relkind in ('r', 'p', 'v', 'm', 'f')
+      and not table_relation.relispartition
       and obj_description(table_relation.oid, 'pg_class') is null
   ),
   '{}'::text[],
