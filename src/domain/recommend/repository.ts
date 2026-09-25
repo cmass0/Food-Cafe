@@ -66,13 +66,13 @@ export async function selectRecommendRecipeRows(
     query = query.contains("ingredients", [{ name: ingredient }]);
   }
 
+  // 인기순은 좋아요·북마크만 반영한다. 조회수는 누구나 반복 요청으로 늘릴 수 있어 순위에 쓰지 않는다.
   if (params.sort === "recent") {
     query = query.order("created_at", { ascending: false });
   } else {
     query = query
       .order("like_count", { ascending: false })
       .order("bookmark_count", { ascending: false })
-      .order("view_count", { ascending: false })
       .order("created_at", { ascending: false });
   }
 
