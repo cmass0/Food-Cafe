@@ -40,6 +40,8 @@ jobs:
           additional_permissions: |
             actions: read
 
+          claude_args: '--append-system-prompt "GitHub PR 코드 리뷰를 게시할 때 제목, 요약, 인라인 댓글을 한국어로 작성하세요. 코드, 식별자, 파일 경로, 심각도 표기는 그대로 유지하세요."'
+
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 

@@ -267,3 +267,9 @@ POST_USER_FACING_ERRORS = new Set([..., MENTION_LIMIT_MESSAGE]);
 통합·DB·컴포넌트·E2E로 선정된 대상에는 단위 테스트 매뉴얼을 억지로 적용하지 않는다. 선정한 검증 방식에 맞게 작성·실행하고, 실제 확인한 범위를 보고한다.
 
 브라우저 수동 검수 항목은 [docs/p1-e2e-test-guide.md](docs/p1-e2e-test-guide.md)에 있다.
+
+---
+
+## Code Review Rules
+
+- GitHub PR 리뷰의 제목, 요약, 인라인 댓글은 한국어로 작성한다. 코드, 식별자, 파일 경로, 심각도 표기(P0/P1)는 원문 그대로 유지한다.
