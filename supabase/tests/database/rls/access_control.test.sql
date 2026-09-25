@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(33);
+select extensions.plan(34);
 
 -- 구조 검증: 앱 테이블과 핵심 정책이 빠지지 않았는지 먼저 확인합니다.
 select extensions.is(
@@ -343,6 +343,20 @@ select extensions.ok(
       and with_check like '%auth.uid()%'
   ),
   'Storage 업로드 정책은 로그인 사용자 소유 경로를 검사한다'
+);
+
+-- 테이블을 새로 만들 때 설명을 빠뜨리지 않도록 모든 앱 테이블에 설명을 요구한다.
+select extensions.is(
+  (
+    select coalesce(array_agg(table_relation.oid::regclass::text order by 1), '{}'::text[])
+    from pg_class table_relation
+    join pg_namespace table_schema on table_schema.oid = table_relation.relnamespace
+    where table_schema.nspname in ('public', 'private')
+      and table_relation.relkind in ('r', 'v')
+      and obj_description(table_relation.oid, 'pg_class') is null
+  ),
+  '{}'::text[],
+  'public·private의 모든 테이블과 뷰는 설명(comment)을 가진다'
 );
 
 select * from extensions.finish();

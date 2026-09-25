@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(57);
+select extensions.plan(58);
 
 -- 외부에서 사용하는 RPC 목록과 실행 권한을 계약으로 고정합니다.
 select extensions.is(
@@ -402,6 +402,21 @@ select extensions.is(
   (select count(*)::integer from public.get_trending_recipes('day', 0)),
   1,
   '트렌딩 요청 개수의 최솟값은 1이다'
+);
+
+-- 함수를 새로 만들 때 설명을 빠뜨리지 않도록 모든 앱 함수에 설명을 요구한다.
+select extensions.is(
+  (
+    select coalesce(array_agg(fn.oid::regprocedure::text order by fn.oid::regprocedure::text), '{}'::text[])
+    from pg_proc fn
+    join pg_namespace fn_schema on fn_schema.oid = fn.pronamespace
+    where fn_schema.nspname in ('public', 'private')
+      and fn.prokind = 'f'
+      and not exists (select 1 from pg_depend dep where dep.objid = fn.oid and dep.deptype = 'e')
+      and obj_description(fn.oid, 'pg_proc') is null
+  ),
+  '{}'::text[],
+  'public·private의 모든 함수는 설명(comment)을 가진다'
 );
 
 select * from extensions.finish();
