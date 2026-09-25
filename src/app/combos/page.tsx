@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useSingleFlight } from "@/components/hooks/useSingleFlight";
 import { listCombos } from "@/domain/combo/api";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";
@@ -92,6 +93,9 @@ function ComboActionButtons({
 }) {
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  // 카드 전체가 클릭 영역이라 disabled 대신 클릭을 받아 전파를 막고, 요청 중인 클릭은 무시한다.
+  const likeFlight = useSingleFlight();
+  const bookmarkFlight = useSingleFlight();
 
   function requireAuth() {
     const current = new URL(window.location.href);
@@ -106,15 +110,17 @@ function ComboActionButtons({
       return;
     }
 
-    try {
-      const next = await setComboLike(combo.id, !stats.liked);
-      onStatsChange(combo.id, {
-        liked: next.liked,
-        likeCount: next.likeCount,
-      });
-    } catch (error) {
-      console.error("조합 좋아요 처리에 실패했습니다.", error);
-    }
+    await likeFlight.run(async () => {
+      try {
+        const next = await setComboLike(combo.id, !stats.liked);
+        onStatsChange(combo.id, {
+          liked: next.liked,
+          likeCount: next.likeCount,
+        });
+      } catch (error) {
+        console.error("조합 좋아요 처리에 실패했습니다.", error);
+      }
+    });
   }
 
   async function handleBookmark(event: React.MouseEvent<HTMLButtonElement>) {
@@ -125,15 +131,17 @@ function ComboActionButtons({
       return;
     }
 
-    try {
-      const next = await setComboBookmark(combo.id, !stats.bookmarked);
-      onStatsChange(combo.id, {
-        bookmarked: next.bookmarked,
-        bookmarkCount: next.bookmarkCount,
-      });
-    } catch (error) {
-      console.error("조합 저장 처리에 실패했습니다.", error);
-    }
+    await bookmarkFlight.run(async () => {
+      try {
+        const next = await setComboBookmark(combo.id, !stats.bookmarked);
+        onStatsChange(combo.id, {
+          bookmarked: next.bookmarked,
+          bookmarkCount: next.bookmarkCount,
+        });
+      } catch (error) {
+        console.error("조합 저장 처리에 실패했습니다.", error);
+      }
+    });
   }
 
   const buttonSurfaceClass = compact
@@ -146,7 +154,8 @@ function ComboActionButtons({
         type="button"
         aria-label={`저장 ${formatCount(stats.bookmarkCount)}`}
         onClick={handleBookmark}
-        className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+        aria-disabled={bookmarkFlight.isRunning}
+        className="grid h-11 w-11 aria-disabled:cursor-wait place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
       >
         <span className={buttonSurfaceClass}>
           <Bookmark
@@ -158,7 +167,8 @@ function ComboActionButtons({
         type="button"
         aria-label={`좋아요 ${formatCount(stats.likeCount)}`}
         onClick={handleLike}
-        className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+        aria-disabled={likeFlight.isRunning}
+        className="grid h-11 w-11 aria-disabled:cursor-wait place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
       >
         <span className={buttonSurfaceClass}>
           <Heart

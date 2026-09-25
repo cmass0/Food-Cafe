@@ -6,6 +6,7 @@ import * as React from "react";
 import { useAuth } from "@/app/auth/auth-context";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
+import { useSingleFlight } from "@/components/hooks/useSingleFlight";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/type";
 
@@ -25,6 +26,7 @@ export default function ComboCardBookmarkButton({ comboId, marked, count, onChan
   const [localMarked, setLocalMarked] = React.useState(marked);
   const { user } = useAuth();
   const { openAuthModal } = useAuthModal();
+  const { isRunning, run } = useSingleFlight();
 
   React.useEffect(() => {
     setLocalMarked(marked);
@@ -37,20 +39,22 @@ export default function ComboCardBookmarkButton({ comboId, marked, count, onChan
       return;
     }
 
-    try {
-      const next = await setComboBookmark(comboId, !currentMarked);
-      if (onChange) {
-        onChange(next);
-      } else {
-        setLocalMarked(next.bookmarked);
+    await run(async () => {
+      try {
+        const next = await setComboBookmark(comboId, !currentMarked);
+        if (onChange) {
+          onChange(next);
+        } else {
+          setLocalMarked(next.bookmarked);
+        }
+      } catch (error) {
+        if (isUnauthorizedApiError(error)) {
+          openAuthModal({ next: currentNextUrl() });
+          return;
+        }
+        console.error("조합 북마크 처리 실패:", error);
       }
-    } catch (error) {
-      if (isUnauthorizedApiError(error)) {
-        openAuthModal({ next: currentNextUrl() });
-        return;
-      }
-      console.error("조합 북마크 처리 실패:", error);
-    }
+    });
   }
 
   const displayMarked = onChange ? marked : localMarked;
@@ -61,6 +65,7 @@ export default function ComboCardBookmarkButton({ comboId, marked, count, onChan
       aria-label={`북마크 ${displayMarked ? "해제" : "추가"} (현재 ${count})`}
       className="group inline-grid h-11 w-11 cursor-pointer place-items-center rounded-full text-emerald-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-900 disabled:cursor-not-allowed disabled:opacity-70"
       onClick={handleClick}
+      disabled={isRunning}
     >
       <span className="grid h-8 w-8 place-items-center rounded-full border border-emerald-300/60 shadow-sm transition group-hover:border-emerald-200 group-hover:bg-emerald-500/20 group-hover:text-emerald-50">
         <Bookmark
