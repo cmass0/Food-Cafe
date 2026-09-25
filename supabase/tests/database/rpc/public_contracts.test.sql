@@ -405,13 +405,14 @@ select extensions.is(
 );
 
 -- 함수를 새로 만들 때 설명을 빠뜨리지 않도록 모든 앱 함수에 설명을 요구한다.
+-- 일반 함수(f), 집계 함수(a), 윈도 함수(w), 프로시저(p)를 모두 본다. 확장이 만든 함수는 제외한다.
 select extensions.is(
   (
     select coalesce(array_agg(fn.oid::regprocedure::text order by fn.oid::regprocedure::text), '{}'::text[])
     from pg_proc fn
     join pg_namespace fn_schema on fn_schema.oid = fn.pronamespace
     where fn_schema.nspname in ('public', 'private')
-      and fn.prokind = 'f'
+      and fn.prokind in ('f', 'a', 'w', 'p')
       and not exists (select 1 from pg_depend dep where dep.objid = fn.oid and dep.deptype = 'e')
       and obj_description(fn.oid, 'pg_proc') is null
   ),
