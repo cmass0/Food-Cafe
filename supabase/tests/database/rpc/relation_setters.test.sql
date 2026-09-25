@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(16);
+select extensions.plan(17);
 
 -- 구조: 공통 로직은 클라이언트가 직접 호출할 수 없고, 입구 함수만 로그인 사용자에게 열려 있습니다.
 select extensions.ok(
@@ -15,6 +15,22 @@ select extensions.ok(
   not has_function_privilege('anon', 'public.set_recipe_like(uuid, boolean)', 'EXECUTE')
   and not has_function_privilege('anon', 'public.set_follow(uuid, boolean)', 'EXECUTE'),
   '익명 사용자는 관계 지정 RPC를 실행할 수 없다'
+);
+
+-- 켜기·끄기 요청이 겹쳐도 마지막 요청대로 되도록 같은 사용자·대상 요청을 잠금으로 줄 세운다.
+-- 동시 실행은 한 연결로 재현할 수 없어, 잠금을 잡는 코드가 빠지지 않았는지를 구조로 검사한다.
+select extensions.is(
+  (
+    select count(*)::integer
+    from pg_proc fn
+    where fn.oid in (
+      'private.set_relation(text, text, text, text, uuid, boolean)'::regprocedure,
+      'public.set_follow(uuid, boolean)'::regprocedure
+    )
+      and fn.prosrc like '%pg_advisory_xact_lock%'
+  ),
+  2,
+  '관계 지정 함수는 같은 사용자·대상 요청을 잠금으로 차례로 처리한다'
 );
 
 select extensions.is(
