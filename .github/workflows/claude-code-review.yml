@@ -75,7 +75,7 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment" --append-system-prompt "GitHub PR 리뷰의 제목, 요약, 인라인 댓글을 한국어로 작성하세요. 코드, 식별자, 파일 경로, 심각도 표기는 그대로 유지하세요."'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
@@ -101,7 +101,7 @@ jobs:
           fi
 
           marker="<!-- codex-cross-review:${HEAD_SHA} -->"
-          printf -v request_body '@codex review\n\n%s' "$marker"
+          printf -v request_body '@codex review\n\n리뷰 제목, 요약, 인라인 댓글을 한국어로 작성해 주세요. 코드, 식별자, 파일 경로, 심각도 표기는 그대로 유지해 주세요.\n\n%s' "$marker"
           token_owner="$(gh api user --jq '.login')"
           existing="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate |
             jq -r --arg owner "$token_owner" --arg body "$request_body" \
