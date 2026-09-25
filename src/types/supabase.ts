@@ -227,13 +227,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "post_bookmarks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       post_likes: {
@@ -265,13 +258,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
             referencedColumns: ["id"]
           },
         ]
@@ -423,13 +409,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "recipe_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       recipes: {
@@ -541,90 +520,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_follows_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_follows_following_id_fkey"
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_follows_following_id_fkey"
-            columns: ["following_id"]
-            isOneToOne: false
-            referencedRelation: "users_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
     Views: {
-      users: {
-        Row: {
-          created_at: string | null
-          display_name: string | null
-          follower_count: number | null
-          following_count: number | null
-          id: string | null
-          photo_url: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      users_public: {
-        Row: {
-          created_at: string | null
-          display_name: string | null
-          follower_count: number | null
-          following_count: number | null
-          id: string | null
-          photo_url: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string | null
-          photo_url?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_recommendation_document_states: {
