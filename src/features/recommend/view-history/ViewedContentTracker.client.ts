@@ -2,37 +2,25 @@
 
 import { useEffect } from "react";
 
-type SourceType = "recipe" | "combo";
-type ViewedContent = {
-  sourceType: SourceType;
-  sourceId: string;
-  viewedAt: number;
-};
-
-const STORAGE_KEY = "food-cafe:recommend:views:v1";
+import {
+  addViewedContent,
+  parseViewHistory,
+  VIEW_HISTORY_STORAGE_KEY,
+  type ViewedSourceType,
+} from "./history";
 
 export default function ViewedContentTracker({
   sourceType,
   sourceId,
 }: {
-  sourceType: SourceType;
+  sourceType: ViewedSourceType;
   sourceId: string;
 }) {
   useEffect(() => {
-    let history: ViewedContent[] = [];
-
     try {
-      const parsed: unknown = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "[]");
-      if (Array.isArray(parsed)) history = parsed as ViewedContent[];
-    } catch {}
-
-    const updated = [
-      { sourceType, sourceId, viewedAt: Date.now() },
-      ...history.filter((item) => item?.sourceType !== sourceType || item?.sourceId !== sourceId),
-    ].slice(0, 20);
-
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      const history = parseViewHistory(sessionStorage.getItem(VIEW_HISTORY_STORAGE_KEY));
+      const updated = addViewedContent(history, { sourceType, sourceId, viewedAt: Date.now() });
+      sessionStorage.setItem(VIEW_HISTORY_STORAGE_KEY, JSON.stringify(updated));
     } catch {
       // 저장소를 사용할 수 없어도 상세 화면은 계속 보여준다.
     }
