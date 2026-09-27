@@ -3,18 +3,18 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { RotateCcw } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { RecommendationCandidate } from "@/domain/recommend/types";
+import type { RecommendationCardItem } from "@/domain/recommend/types";
 import type { RecommendAgentUIMessage } from "@/features/recommend/agent";
 import { RecommendComposer } from "./RecommendComposer";
 import { RecommendMessageList } from "./RecommendMessageList";
 import { RecommendSidebar } from "./RecommendSidebar";
-import type { RecommendSidebarTab } from "./types";
+import type { PopularSidebarState, RecommendSidebarTab } from "./types";
 import { useRecommendSession } from "./useRecommendSession";
 
-const EMPTY_SIDEBAR_ITEMS: RecommendationCandidate[] = [];
+const EMPTY_SIDEBAR_ITEMS: RecommendationCardItem[] = [];
 
 // 백엔드의 createAgentUIStreamResponse가 보내는 UI 메시지 스트림을 읽는다.
 const RECOMMEND_TRANSPORT = new DefaultChatTransport<RecommendAgentUIMessage>({
@@ -24,6 +24,7 @@ const RECOMMEND_TRANSPORT = new DefaultChatTransport<RecommendAgentUIMessage>({
 export function RecommendChat() {
   const [draft, setDraft] = useState("");
   const [activeTab, setActiveTab] = useState<RecommendSidebarTab>("personalized");
+  const [popular, setPopular] = useState<PopularSidebarState>({ status: "idle", items: [] });
   const { clearError, error, messages, sendMessage, setMessages, status, stop } =
     useChat<RecommendAgentUIMessage>({
       transport: RECOMMEND_TRANSPORT,
@@ -33,6 +34,32 @@ export function RecommendChat() {
     setMessages,
   });
   const isResponding = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    if (activeTab !== "popular") return;
+
+    const controller = new AbortController();
+    setPopular({ status: "loading", items: [] });
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/recommend/popular", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`인기 추천 조회 실패: ${response.status}`);
+        const body = (await response.json()) as { items?: RecommendationCardItem[] };
+        if (!Array.isArray(body.items)) throw new Error("인기 추천 응답 형식 오류");
+        if (!controller.signal.aborted) setPopular({ status: "success", items: body.items });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("인기 추천 조회 실패", error);
+        setPopular({ status: "error", items: [] });
+      }
+    })();
+
+    return () => controller.abort();
+  }, [activeTab]);
 
   async function handleNewConversation() {
     if (isResponding) {
@@ -103,8 +130,12 @@ export function RecommendChat() {
 
         <RecommendSidebar
           activeTab={activeTab}
-          items={EMPTY_SIDEBAR_ITEMS}
+          items={activeTab === "popular" ? popular.items : EMPTY_SIDEBAR_ITEMS}
           onTabChange={setActiveTab}
+          isLoading={
+            activeTab === "popular" && (popular.status === "idle" || popular.status === "loading")
+          }
+          error={activeTab === "popular" && popular.status === "error"}
         />
       </div>
     </main>

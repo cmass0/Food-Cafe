@@ -188,6 +188,14 @@ export type RecommendationComboCandidate = {
 
 export type RecommendationCandidate = RecommendationRecipeCandidate | RecommendationComboCandidate;
 
+/** 채팅 검색 카드와 우측 추천 탭이 공유하는 공개 표시 필드만 전달한다. */
+export type RecommendationCardItem = Pick<
+  RecommendationCandidate,
+  "sourceType" | "id" | "title" | "summary"
+>;
+
+export type PopularRecipeCardRow = Pick<RecipeRow, "id" | "title" | "summary">;
+
 export type RecommendationSearchResult = {
   items: RecommendationCandidate[];
   query: string;

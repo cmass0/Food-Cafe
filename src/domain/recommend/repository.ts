@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type {
+  PopularRecipeCardRow,
   RecommendComboRow,
   RecommendRecipeRow,
   RecommendRecipeSearch,
@@ -10,6 +11,28 @@ import type {
   RecommendationRank,
   RecommendationSearch,
 } from "./types";
+
+export async function selectPopularRecipeIds(
+  client: SupabaseClient<Database>,
+  limit: number
+): Promise<string[]> {
+  const { data, error } = await client.rpc("get_popular_recipes_30d", { p_limit: limit });
+  if (error) throw error;
+
+  return (data ?? []).map((row) => row.recipe_id);
+}
+
+export async function selectPopularRecipeCardRows(
+  client: SupabaseClient<Database>,
+  ids: string[]
+): Promise<PopularRecipeCardRow[]> {
+  if (ids.length === 0) return [];
+
+  // 집계는 서버 전용이지만 화면 데이터는 호출자의 RLS를 적용받는 원본에서 재조회한다.
+  const { data, error } = await client.from("recipes").select("id,title,summary").in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
 
 const RECOMMEND_RECIPE_COLUMNS = `
   id,
