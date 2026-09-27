@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { type KeyedSingleFlight, useKeyedSingleFlight } from "@/components/hooks/useSingleFlight";
+import { type KeyedSingleFlight, useKeyedSingleFlight } from "@/hooks/useSingleFlight";
 import { listCombos } from "@/domain/combo/api";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";

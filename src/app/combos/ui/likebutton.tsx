@@ -6,7 +6,7 @@ import * as React from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
-import { useSingleFlight } from "@/components/hooks/useSingleFlight";
+import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { setComboLike } from "@/domain/combo/combo_like/api";
 import { ComboLikeResult } from "@/domain/combo/combo_like/types";
 

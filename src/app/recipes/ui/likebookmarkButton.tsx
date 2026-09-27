@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { useSingleFlight } from "@/components/hooks/useSingleFlight";
+import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { fetchRecipeStatus } from "@/domain/recipe/api";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
