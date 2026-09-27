@@ -4,7 +4,7 @@ import { Check, Link2 } from "lucide-react";
 import Script from "next/script";
 import { useState, type ReactNode } from "react";
 
-import ErrorModal from "@/lib/ui/errormodal";
+import ErrorModal from "@/components/status/ErrorModal";
 
 type contentinfo = {
   description?: string | null;

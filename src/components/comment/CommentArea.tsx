@@ -1,6 +1,6 @@
 import { listComments } from "@/domain/comment/service";
 import type { CommentDisplayItem, CommentParentType } from "@/domain/comment/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import CommentThread from "./CommentThread.client";

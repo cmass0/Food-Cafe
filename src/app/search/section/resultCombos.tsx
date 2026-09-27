@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import SectionErrorState from "@/components/status/SectionErrorState";
 import type { ComboItems, ComboListResult, Combos } from "@/domain/combo/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";

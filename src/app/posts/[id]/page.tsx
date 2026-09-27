@@ -7,7 +7,7 @@ import * as postService from "@/domain/post/service";
 import PostDetail from "@/app/posts/ui/PostDetail";
 import PostList from "@/app/posts/ui/PostList";
 import { getPostCategoryLabel } from "@/domain/post/category";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 

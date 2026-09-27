@@ -1,6 +1,6 @@
 "use client";
 
-import ComfirmModal from "@/lib/ui/comfirmmodal";
+import ConfirmModal from "@/components/ConfirmModal";
 import { useRouter } from "next/navigation";
 
 type UpdatateButtonProps = {
@@ -13,7 +13,7 @@ export default function PostUpdateButton({ id }: UpdatateButtonProps) {
     router.push(`/posts/edit?id=${id}`);
   }
   return (
-    <ComfirmModal
+    <ConfirmModal
       btnText="수정"
       comfirmText={<>게시글 수정을 진행하시겠습니까?</>}
       content="게시글 수정을 원하시면 확인 버튼을 눌러주세요."

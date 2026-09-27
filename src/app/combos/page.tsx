@@ -24,7 +24,7 @@ import { listCombos } from "@/domain/combo/api";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 
 const DEFAULT_LIMIT = 9;
 
