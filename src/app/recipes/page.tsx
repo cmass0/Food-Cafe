@@ -30,7 +30,7 @@ import type {
   RecipeSearchField,
   RecipeSort,
 } from "@/domain/recipe/types";
-import type { ApiError } from "@/lib/api/client";
+import type { ApiError } from "@/lib/errors/api-client";
 import { PaginationComponent } from "@/components/Pagination";
 
 const SORT_OPTIONS: { key: RecipeSort; title: string }[] = [

@@ -4,11 +4,11 @@ import {
   AuthErrorHelper,
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   respondWithSupabaseError,
   validationError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

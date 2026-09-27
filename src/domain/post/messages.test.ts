@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { toActionErrorMessage } from "@/lib/api/action-error";
+import { toActionErrorMessage } from "@/lib/errors/action";
 import { MAX_UNIQUE_MENTIONS, collectMentionTargetIds } from "./mentions";
 import { POST_USER_FACING_ERRORS } from "./messages";
 

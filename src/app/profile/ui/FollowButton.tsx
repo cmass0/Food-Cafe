@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { fetchFollowStatus, setFollow } from "@/domain/follow/api";
-import { isUnauthorizedApiError } from "@/lib/api/client";
+import { isUnauthorizedApiError } from "@/lib/errors/api-client";
 import * as React from "react";
 
 type Props = {

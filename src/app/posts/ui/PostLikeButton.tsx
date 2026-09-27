@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { isUnauthorizedApiError } from "@/lib/api/client";
+import { isUnauthorizedApiError } from "@/lib/errors/api-client";
 
 import { fetchPostLikeStatus, setPostLike } from "@/domain/post/post_like/api";
 

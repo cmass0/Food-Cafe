@@ -1,10 +1,6 @@
 ﻿import { contentParams } from "@/lib/api/prams-type";
-import {
-  internalError,
-  isPostgrestError,
-  json,
-  respondWithSupabaseError,
-} from "@/lib/api/route-error";
+import { internalError, json, respondWithSupabaseError } from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function POST(_: Request, props: contentParams) {
