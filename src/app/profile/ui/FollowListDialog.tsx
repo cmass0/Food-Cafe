@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { fetchFollowList } from "@/domain/follow/api";
-import type { FollowListItem, FollowListType } from "@/domain/follow/type";
+import type { FollowListItem, FollowListType } from "@/domain/follow/types";
 
 const PAGE_SIZE = 20;
 

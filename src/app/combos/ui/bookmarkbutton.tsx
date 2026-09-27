@@ -8,7 +8,7 @@ import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/api/client";
 import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
-import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/type";
+import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/types";
 
 type Props = {
   comboId: string;

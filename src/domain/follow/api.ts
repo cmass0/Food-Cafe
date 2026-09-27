@@ -1,6 +1,6 @@
 import { throwApiError } from "@/lib/domain/api/error";
 
-import type { FollowListResponse, FollowListType, MentionCandidateResponse } from "./type";
+import type { FollowListResponse, FollowListType, MentionCandidateResponse } from "./types";
 
 // 팔로우 지정 응답
 // 다른 카운터(Like/Bookmark) 응답과 동일한 구조 — 새 상태와 카운트를 함께 받음
