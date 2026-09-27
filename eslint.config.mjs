@@ -20,5 +20,52 @@ export default defineConfig([
       "react-hooks/use-memo": "off",
     },
   },
+  {
+    // AGENTS.md "import 방향": app → components → hooks → features → domain → lib.
+    // 예외는 AGENTS.md에 이유를 적고 해당 import 한 줄에만 eslint-disable-next-line을 단다.
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "import/no-restricted-paths": [
+        "error",
+        {
+          zones: [
+            {
+              target: "./src/lib",
+              from: [
+                "./src/domain",
+                "./src/features",
+                "./src/hooks",
+                "./src/components",
+                "./src/app",
+              ],
+              message: "lib은 업무 규칙과 JSX를 모른다. AGENTS.md 폴더 구조 참고.",
+            },
+            {
+              target: "./src/domain",
+              from: ["./src/features", "./src/hooks", "./src/components", "./src/app"],
+              message:
+                "domain은 features·hooks·components·app을 가져다 쓰지 않는다. AGENTS.md 폴더 구조 참고.",
+            },
+            {
+              target: "./src/features",
+              from: ["./src/hooks", "./src/components", "./src/app"],
+              message:
+                "features는 hooks·components·app을 가져다 쓰지 않는다. AGENTS.md 폴더 구조 참고.",
+            },
+            {
+              target: "./src/hooks",
+              from: ["./src/components", "./src/app"],
+              message: "hooks는 JSX 조각과 라우트를 가져다 쓰지 않는다. AGENTS.md 폴더 구조 참고.",
+            },
+            {
+              target: "./src/components",
+              from: "./src/app",
+              message: "components는 특정 라우트를 가져다 쓰지 않는다. AGENTS.md 폴더 구조 참고.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);

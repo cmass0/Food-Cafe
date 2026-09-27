@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import Section from "@/components/status/Section";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";

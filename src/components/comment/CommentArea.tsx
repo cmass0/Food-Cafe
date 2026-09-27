@@ -5,7 +5,7 @@ import type {
   CommentListResult,
   CommentParentType,
 } from "@/domain/comment/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";

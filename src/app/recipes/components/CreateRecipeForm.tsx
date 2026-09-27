@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import type { RecipeInsertDB } from "@/domain/recipe/types";
 import RecipeForm from "@/app/recipes/ui/RecipeForm";

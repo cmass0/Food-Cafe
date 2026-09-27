@@ -1,7 +1,7 @@
 "use client";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import type { Session } from "@supabase/supabase-js";
-import { AuthProvider } from "./auth/auth-context";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Toaster } from "sonner";
 
 export default function Providers({

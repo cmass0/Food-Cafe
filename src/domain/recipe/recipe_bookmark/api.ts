@@ -1,5 +1,5 @@
 import { throwApiError } from "@/lib/domain/api/error";
-import { RecipeBookmarkResult } from "./type";
+import { RecipeBookmarkResult } from "./types";
 
 export async function setRecipeBookmark(
   recipeId: string,

@@ -4,7 +4,7 @@ import Image from "next/image";
 import * as React from "react";
 import { Github } from "lucide-react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { normalizeReturnTo } from "@/lib/auth/return-to";
 import { cn } from "@/lib/utils";

@@ -35,7 +35,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/component/navbar/nav-bar.tsx",
+    "src/components/navbar/nav-bar.tsx",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [

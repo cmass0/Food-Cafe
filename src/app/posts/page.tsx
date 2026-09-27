@@ -20,7 +20,7 @@ import type { PostListResult, PostSearchField } from "@/domain/post/types";
 import PostList from "@/app/posts/ui/PostList";
 import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem } from "@/features/trending/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import PostCategorySelect from "./components/PostCategorySelect.client";

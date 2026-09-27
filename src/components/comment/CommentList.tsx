@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { useAuth } from "@/app/auth/auth-context";
-import ComfirmModal from "@/lib/ui/comfirmmodal";
+import { useAuth } from "@/components/auth/AuthProvider";
+import ConfirmModal from "@/components/ConfirmModal";
 import type { CommentDisplayItem } from "@/domain/comment/types";
 import { MessageCircle, TriangleAlert } from "lucide-react";
 
@@ -49,7 +49,7 @@ export function CommentList({ items, loading, onDelete }: CommentListProps) {
                 </span>
               </div>
               {!isDeleted && currentUserID === item.writerUid ? (
-                <ComfirmModal
+                <ConfirmModal
                   btnText="삭제"
                   comfirmText={
                     <div className="flex items-center gap-2">
