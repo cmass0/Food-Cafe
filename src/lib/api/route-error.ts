@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { isAuthSessionMissingError } from "@/lib/auth/errors";
+import { isPageOutOfRangeError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "../supabase/server";
 
 // 공통 JSON 응답 생성기
@@ -19,6 +20,14 @@ export const isPostgrestError = (error: unknown): error is PostgrestError =>
   typeof (error as PostgrestError)?.code === "string";
 
 export const respondWithSupabaseError = (error: PostgrestError) => {
+  // 목록 범위를 벗어난 page는 잘못된 요청이 아니라 "없는 페이지"다.
+  // 레시피·조합 목록 화면은 이 404를 보고 첫 페이지 안내를 띄운다.
+  if (isPageOutOfRangeError(error)) {
+    return json(
+      { error: "PAGE_OUT_OF_RANGE", message: "요청한 페이지에 표시할 항목이 없습니다." },
+      404
+    );
+  }
   const status = error.code === "42501" ? 403 : 400;
   return json(
     {
