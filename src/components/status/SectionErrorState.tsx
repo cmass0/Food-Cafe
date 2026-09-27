@@ -6,14 +6,7 @@ import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type SectionErrorStateProps = {
-  title: string;
-  description?: string;
-  className?: string;
-  compact?: boolean;
-  onRetry?: () => void;
-};
+import type { SectionErrorStateProps } from "./types";
 
 export default function SectionErrorState({
   title,
@@ -21,18 +14,15 @@ export default function SectionErrorState({
   className,
   compact = false,
   onRetry,
+  retrying = false,
 }: SectionErrorStateProps) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
 
   function handleRetry() {
-    if (onRetry) {
-      onRetry();
-      return;
-    }
-
-    startTransition(() => {
-      router.refresh();
+    startTransition(async () => {
+      if (onRetry) await onRetry();
+      else router.refresh();
     });
   }
 
@@ -70,10 +60,13 @@ export default function SectionErrorState({
         size="sm"
         className={cn("gap-2", compact ? "w-full sm:w-auto sm:shrink-0" : "mt-5")}
         onClick={handleRetry}
-        disabled={isRefreshing}
+        disabled={isRefreshing || retrying}
       >
-        <RotateCcw className={cn("size-4", isRefreshing && "animate-spin")} aria-hidden="true" />
-        {isRefreshing ? "불러오는 중" : "다시 시도"}
+        <RotateCcw
+          className={cn("size-4", (isRefreshing || retrying) && "animate-spin")}
+          aria-hidden="true"
+        />
+        {isRefreshing || retrying ? "불러오는 중" : "다시 시도"}
       </Button>
     </div>
   );
