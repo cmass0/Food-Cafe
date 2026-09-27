@@ -1,6 +1,6 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
-import { syncRecipeRecommendationDocument } from "@/lib/ai/recommendation-index";
+import { syncRecipeRecommendationDocument } from "@/domain/recommend/recommendation-index";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildBookmarkedSetRecipe } from "./recipe_bookmark/service";

@@ -24,7 +24,7 @@ import {
   prepareRecommendationDocument,
   toRecommendationDocumentRpcPayload,
   validateRecommendationDocumentEmbedding,
-} from "../../src/lib/ai/recommendation-document";
+} from "../../src/domain/recommend/recommendation-document";
 import type { Database } from "../../src/types/supabase";
 
 const DEFAULT_BATCH_SIZE = 16;

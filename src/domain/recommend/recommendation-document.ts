@@ -7,8 +7,8 @@ import type {
 } from "@/domain/recommend/types";
 import type { Json } from "@/types/supabase";
 
-import { RECOMMENDATION_EMBEDDING_DIMENSIONS } from "./embedding-config";
-import { formatRecommendationDocumentEmbeddingInput } from "./embedding-input";
+import { RECOMMENDATION_EMBEDDING_DIMENSIONS } from "@/lib/ai/embedding-config";
+import { formatRecommendationDocumentEmbeddingInput } from "@/lib/ai/embedding-input";
 
 export function prepareRecommendationDocument(
   document: RecommendationDocument,
