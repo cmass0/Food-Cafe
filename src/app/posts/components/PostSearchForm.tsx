@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { PostSearchField } from "@/domain/post/types";
 import { normalizePostCategory } from "@/domain/post/category";
 import { cn } from "@/lib/utils";
-import SearchForm from "@/lib/searchForm/searchform";
+import SearchForm from "@/app/posts/ui/SearchForm";
 
 const SEARCH_FIELD_OPTIONS: { value: PostSearchField; label: string }[] = [
   { value: "title", label: "제목" },

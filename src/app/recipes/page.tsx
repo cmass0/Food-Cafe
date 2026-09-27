@@ -30,7 +30,7 @@ import type {
   RecipeSearchField,
   RecipeSort,
 } from "@/domain/recipe/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 
 const SORT_OPTIONS: { key: RecipeSort; title: string }[] = [
   { key: "recent", title: "최신" },

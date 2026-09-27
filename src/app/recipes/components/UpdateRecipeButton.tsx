@@ -1,5 +1,5 @@
 "use client";
-import ComfirmModal from "@/lib/ui/comfirmmodal";
+import ConfirmModal from "@/components/ConfirmModal";
 import { useRouter } from "next/navigation";
 
 export default function RecipeUpdateButton({ id }: { id: string }) {
@@ -8,7 +8,7 @@ export default function RecipeUpdateButton({ id }: { id: string }) {
     router.push(`/recipes/edit?id=${id}`);
   };
   return (
-    <ComfirmModal
+    <ConfirmModal
       btnText="수정"
       comfirmText={<>레시피 수정을 진행하시겠습니까?</>}
       content="레시피 수정을 원하시면 확인 버튼을 눌러주세요."

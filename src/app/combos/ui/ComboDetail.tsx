@@ -17,8 +17,8 @@ import ComboDeleteButton from "@/app/combos/components/DeleteButton";
 import ComboUpdateButton from "@/app/combos/components/UpdateButton";
 import ComboLikeBookmarkButton from "@/app/combos/ui/likebookmarkButton";
 import ViewCount from "@/components/ViewCount.client";
-import { CopyClipButton } from "@/lib/shareButton/copycliep";
-import KakaoShareButton from "@/lib/shareButton/kakaosharebutton";
+import { CopyClipButton } from "@/components/share/CopyClipButton";
+import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Combos } from "@/domain/combo/types";
 import ComboToolsPanel from "./ComboToolsPanel";
 

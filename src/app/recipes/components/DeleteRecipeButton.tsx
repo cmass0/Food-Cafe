@@ -1,6 +1,6 @@
 "use client";
 
-import ComfirmModal from "@/lib/ui/comfirmmodal";
+import ConfirmModal from "@/components/ConfirmModal";
 import { TriangleAlert } from "lucide-react";
 import { deleteRecipeAction } from "../actions";
 
@@ -10,7 +10,7 @@ type Props = {
 
 export default function DeleteRecipeButton({ recipeId }: Props) {
   return (
-    <ComfirmModal
+    <ConfirmModal
       btnText="삭제"
       comfirmText={
         <div className="flex items-center gap-2">

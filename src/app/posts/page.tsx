@@ -16,7 +16,7 @@ import { normalizePostCategory, type PostCategory } from "@/domain/post/category
 import type { PostSearchField } from "@/domain/post/types";
 import PostList from "@/app/posts/ui/PostList";
 import * as trendingService from "@/features/trending/service";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { getServerSupabase } from "@/lib/supabase/server";
 import PostCategorySelect from "./components/PostCategorySelect.client";
 import PostCreateButton from "./components/PostCreateButton";
