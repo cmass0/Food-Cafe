@@ -3,7 +3,7 @@
 import { Bookmark, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useSingleFlight } from "@/components/hooks/useSingleFlight";
 import { fetchRecipeStatus } from "@/domain/recipe/api";

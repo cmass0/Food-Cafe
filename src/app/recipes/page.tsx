@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import SectionErrorState from "@/components/status/SectionErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

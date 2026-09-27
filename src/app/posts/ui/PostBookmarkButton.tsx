@@ -3,7 +3,7 @@
 import { Bookmark } from "lucide-react";
 import * as React from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import {
   fetchPostBookmarkStatus,
   setPostBookmark,
