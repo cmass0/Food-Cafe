@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { PostgrestError } from "@supabase/supabase-js";
 
-import { respondWithSupabaseError } from "./route-error";
+import { respondWithSupabaseError } from "./api-response";
 
 function postgrestError(code: string): PostgrestError {
   return {

@@ -5,12 +5,12 @@ import {
   AuthErrorHelper,
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   notFound,
   respondWithSupabaseError,
   validationError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(_: Request, props: contentParams) {

@@ -1,4 +1,4 @@
-import { badRequest, internalError } from "@/lib/api/route-error";
+import { badRequest, internalError } from "@/lib/errors/api-response";
 import { getRecommendLanguageModel } from "@/lib/ai/model";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { createRecommendAgent } from "@/features/recommend/agent";

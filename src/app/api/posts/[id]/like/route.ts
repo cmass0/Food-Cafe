@@ -5,11 +5,11 @@ import {
   AuthErrorHelper,
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   notFound,
   respondWithSupabaseError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 

@@ -1,4 +1,4 @@
-import { throwApiError } from "@/lib/domain/api/error";
+import { throwApiError } from "@/lib/errors/api-client";
 import { RecipeLikeResult } from "./types";
 
 export async function setRecipeLike(recipeId: string, liked: boolean): Promise<RecipeLikeResult> {

@@ -1,11 +1,7 @@
 // src/app/api/users/route.ts
 import * as userService from "@/domain/user/service";
-import {
-  internalError,
-  isPostgrestError,
-  json,
-  respondWithSupabaseError,
-} from "@/lib/api/route-error";
+import { internalError, json, respondWithSupabaseError } from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -1,4 +1,4 @@
-export type ApiFailureReason = "unauthorized" | "request_failed";
+import type { ApiError, ApiFailureReason } from "@/lib/errors/api-client";
 
 export type ApiResult<T> =
   | { ok: true; data: T }
@@ -8,11 +8,6 @@ export type ApiResult<T> =
       message: string;
       status: number;
     };
-
-export type ApiError = Error & {
-  reason?: ApiFailureReason;
-  status?: number;
-};
 
 export const AUTH_REQUIRED_EVENT = "food-cafe:auth-required";
 
@@ -34,7 +29,7 @@ export function requestAuthModal(next = currentNextPath()): void {
   );
 }
 
-async function readErrorMessage(res: Response): Promise<string> {
+export async function readErrorMessage(res: Response): Promise<string> {
   let message = res.statusText || `Request failed: ${res.status}`;
 
   try {
@@ -51,24 +46,6 @@ async function readErrorMessage(res: Response): Promise<string> {
   }
 
   return message;
-}
-
-export function isUnauthorizedApiError(error: unknown): error is ApiError {
-  return (
-    error instanceof Error &&
-    ((error as ApiError).status === 401 || (error as ApiError).reason === "unauthorized")
-  );
-}
-
-export async function throwApiError(res: Response): Promise<never> {
-  const message = await readErrorMessage(res);
-  const error = new Error(message) as ApiError;
-  error.status = res.status;
-  error.reason = res.status === 401 ? "unauthorized" : "request_failed";
-  if (error.reason === "unauthorized") {
-    requestAuthModal();
-  }
-  throw error;
 }
 
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<ApiResult<T>> {

@@ -2,11 +2,11 @@ import {
   AuthErrorHelper,
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   notFound,
   respondWithSupabaseError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { readRelationState } from "@/lib/api/relation-state";
 import * as followService from "@/domain/follow/service";
 import { followTargetSchema } from "@/domain/follow/schema";

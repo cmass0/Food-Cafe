@@ -9,7 +9,7 @@ import {
   setPostBookmark,
 } from "@/domain/post/post_bookmark/api";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { isUnauthorizedApiError } from "@/lib/api/client";
+import { isUnauthorizedApiError } from "@/lib/errors/api-client";
 
 type PostBookmarkButtonProps = {
   postId: string;

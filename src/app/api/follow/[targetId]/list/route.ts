@@ -3,11 +3,11 @@ import * as followService from "@/domain/follow/service";
 import {
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   respondWithSupabaseError,
   validationError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 type FollowListParams = { params: Promise<{ targetId: string }> };
