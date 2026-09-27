@@ -7,7 +7,7 @@ import {
   parseViewHistory,
   VIEW_HISTORY_STORAGE_KEY,
   type ViewedSourceType,
-} from "./history";
+} from "@/features/recommend/view-history/history";
 
 export default function ViewedContentTracker({
   sourceType,

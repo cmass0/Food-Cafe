@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import ComboDetail from "@/app/combos/ui/ComboDetail";
 import { getComboById } from "@/domain/combo/service";
 import CommentArea from "@/components/comment/CommentArea";
-import ViewedContentTracker from "@/features/recommend/view-history/ViewedContentTracker.client";
+import ViewedContentTracker from "@/components/ViewedContentTracker.client";
 import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 
