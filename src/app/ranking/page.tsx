@@ -1,3 +1,4 @@
+import Section from "@/components/status/Section";
 import {
   parseTrendingPeriod,
   TRENDING_PERIOD_OPTIONS,
@@ -5,6 +6,8 @@ import {
   type TrendingPeriod,
 } from "@/features/trending/period";
 import * as trendingService from "@/features/trending/service";
+import type { TrendingContentItem } from "@/features/trending/types";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -53,7 +56,11 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
   const typeOption =
     RANKING_TYPE_OPTIONS.find((option) => option.value === rankingType) ?? RANKING_TYPE_OPTIONS[0];
   const windowLabel = trendingWindowLabel(period);
-  const items = await getRankingItems(period, rankingType);
+  const rankingResult = await loadSection<TrendingContentItem[]>(
+    "ranking.items",
+    () => getRankingItems(period, rankingType),
+    []
+  );
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10">
@@ -111,10 +118,17 @@ export default async function RankingPage({ searchParams }: RankingPageProps) {
         </nav>
 
         <div>
-          <RankingGrid
-            items={items}
-            emptyMessage={`${windowLabel} 동안 참여가 발생한 ${typeOption.emptySubject} 없습니다.`}
-          />
+          <Section
+            name="ranking.items"
+            failed={rankingResult.error}
+            title="랭킹을 표시하지 못했습니다."
+            resetKeys={[period, rankingType]}
+          >
+            <RankingGrid
+              items={rankingResult.data}
+              emptyMessage={`${windowLabel} 동안 참여가 발생한 ${typeOption.emptySubject} 없습니다.`}
+            />
+          </Section>
         </div>
       </section>
     </main>

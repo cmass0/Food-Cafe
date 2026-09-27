@@ -2,7 +2,7 @@ import { ChefHat, Eye, Heart, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import SectionErrorState from "@/components/status/SectionErrorState";
+import Section from "@/components/status/Section";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ type Props = {
   queryText: string;
   viewMode: ViewMode;
   error?: boolean;
+  /** 이 섹션의 recipePage가 결과 범위를 벗어났다. */
+  outOfRange?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -122,6 +124,7 @@ export default function SearchResultRecipe({
   queryText,
   viewMode,
   error = false,
+  outOfRange = false,
 }: Props) {
   const recipeItems = recipes.items;
   const currentPage = Number(searchParams.recipePage) || 1;
@@ -149,35 +152,42 @@ export default function SearchResultRecipe({
         </Link>
       </header>
 
-      {error ? (
-        <SectionErrorState title="레시피 검색 결과를 불러오지 못했습니다." />
-      ) : recipeItems.length === 0 ? (
-        <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
-          <SearchX className="h-7 w-7 text-zinc-300" />
-          <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
-        </div>
-      ) : (
-        <div className={gridClass}>
-          {recipeItems.map((recipe) => (
-            <RecipeResultCard key={recipe.id} recipe={recipe} viewMode={viewMode} />
-          ))}
-        </div>
-      )}
+      <Section
+        name="search.recipes"
+        failed={error}
+        outOfRange={outOfRange}
+        pageParam="recipePage"
+        title="레시피 검색 결과를 표시하지 못했습니다."
+        resetKeys={[queryText, currentPage, viewMode, String(searchParams.sort ?? "")]}
+      >
+        {recipeItems.length === 0 ? (
+          <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
+            <SearchX className="h-7 w-7 text-zinc-300" />
+            <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
+          </div>
+        ) : (
+          <div className={gridClass}>
+            {recipeItems.map((recipe) => (
+              <RecipeResultCard key={recipe.id} recipe={recipe} viewMode={viewMode} />
+            ))}
+          </div>
+        )}
 
-      {!error && recipes.total > 0 ? (
-        <div className="mt-5">
-          <PaginationComponent
-            basePath="/search"
-            page={currentPage}
-            pageItemSize={recipes.limit}
-            blockSize={5}
-            total={recipes.total}
-            query={searchParams}
-            pageParam="recipePage"
-            scroll={false}
-          />
-        </div>
-      ) : null}
+        {recipes.total > 0 ? (
+          <div className="mt-5">
+            <PaginationComponent
+              basePath="/search"
+              page={currentPage}
+              pageItemSize={recipes.limit}
+              blockSize={5}
+              total={recipes.total}
+              query={searchParams}
+              pageParam="recipePage"
+              scroll={false}
+            />
+          </div>
+        ) : null}
+      </Section>
     </section>
   );
 }

@@ -1,6 +1,12 @@
+import Section from "@/components/status/Section";
 import { listComments } from "@/domain/comment/service";
-import type { CommentDisplayItem, CommentParentType } from "@/domain/comment/types";
+import type {
+  CommentDisplayItem,
+  CommentListResult,
+  CommentParentType,
+} from "@/domain/comment/types";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import CommentThread from "./CommentThread.client";
@@ -33,12 +39,25 @@ export default async function CommentArea({
   delete paginationQuery[pageParam];
 
   const supabase = await getServerSupabase();
-  const { items, total } = await listComments(supabase, {
-    parentType,
-    parentId,
-    page: currentPage,
-    limit,
-  });
+  const commentsResult = await loadSection<CommentListResult>(
+    `comments.${parentType}`,
+    () =>
+      listComments(supabase, {
+        parentType,
+        parentId,
+        page: currentPage,
+        limit,
+      }),
+    {
+      items: [],
+      total: 0,
+      limit,
+      offset: (currentPage - 1) * limit,
+      hasMore: false,
+    }
+  );
+
+  const { items, total } = commentsResult.data;
 
   const displayItems: CommentDisplayItem[] = items.map((comment) => ({
     id: comment.id,
@@ -52,24 +71,34 @@ export default async function CommentArea({
 
   return (
     <section className={cn("space-y-4 border-t border-border/60 pt-8", className)}>
-      {/* key에 page를 포함 — 페이지 이동 시 CommentThread를 다시 mount해 SSR 데이터로 초기화 */}
-      <CommentThread
-        key={`${parentId}-${currentPage}`}
-        parentType={parentType}
-        parentId={parentId}
-        pageSize={limit}
-        items={displayItems}
-        initialTotal={total}
-        showTitle={showTitle}
-      />
-      <PaginationComponent
-        basePath={basePath}
-        page={currentPage}
-        pageItemSize={limit}
-        total={total}
-        query={paginationQuery}
+      <Section
+        name={`comments.${parentType}`}
+        failed={commentsResult.error}
+        outOfRange={commentsResult.outOfRange}
         pageParam={pageParam}
-      />
+        title="댓글을 표시하지 못했습니다."
+        compact
+        resetKeys={[parentId, currentPage, limit]}
+      >
+        {/* key에 page를 포함 — 페이지 이동 시 CommentThread를 다시 mount해 SSR 데이터로 초기화 */}
+        <CommentThread
+          key={`${parentId}-${currentPage}`}
+          parentType={parentType}
+          parentId={parentId}
+          pageSize={limit}
+          items={displayItems}
+          initialTotal={total}
+          showTitle={showTitle}
+        />
+        <PaginationComponent
+          basePath={basePath}
+          page={currentPage}
+          pageItemSize={limit}
+          total={total}
+          query={paginationQuery}
+          pageParam={pageParam}
+        />
+      </Section>
     </section>
   );
 }

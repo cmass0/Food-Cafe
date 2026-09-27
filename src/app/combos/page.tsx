@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/auth/auth-context";
-import SectionErrorState from "@/components/status/SectionErrorState";
+import Section from "@/components/status/Section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,7 @@ import { listCombos } from "@/domain/combo/api";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
+import type { ApiError } from "@/lib/api/client";
 import { PaginationComponent } from "@/lib/pagenation/pagenation";
 
 const DEFAULT_LIMIT = 9;
@@ -457,6 +458,7 @@ function CombosPageInner() {
   const [combos, setCombos] = useState<Combos[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [outOfRange, setOutOfRange] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [pageMeta, setPageMeta] = useState<Pick<ComboListResult, "limit" | "offset" | "total">>({
     limit: requestedPageSize,
@@ -479,6 +481,7 @@ function CombosPageInner() {
     async function fetchCombos() {
       setLoading(true);
       setLoadError(false);
+      setOutOfRange(false);
       try {
         const data = await listCombos({
           limit: requestedPageSize,
@@ -516,9 +519,12 @@ function CombosPageInner() {
           });
         }
       } catch (error) {
-        console.error("조합 목록을 불러오지 못했습니다.", error);
+        // 목록 API의 404는 범위를 벗어난 page뿐이다. 장애가 아니므로 첫 페이지 안내로 처리한다.
+        const pageOutOfRange = (error as ApiError).status === 404;
+        if (!pageOutOfRange) console.error("조합 목록을 불러오지 못했습니다.", error);
         if (mounted) {
-          setLoadError(true);
+          setOutOfRange(pageOutOfRange);
+          setLoadError(!pageOutOfRange);
           setCombos([]);
           setPageMeta({ limit: requestedPageSize, offset: 0, total: 0 });
         }
@@ -592,6 +598,12 @@ function CombosPageInner() {
   }
 
   const pageSize = pageMeta.limit > 0 ? pageMeta.limit : requestedPageSize;
+  function retryCombos() {
+    setLoading(true);
+    setLoadError(false);
+    setReloadKey((current) => current + 1);
+  }
+
   const showPreview = !loading && !loadError && activeCombo !== null;
   const paginationQuery: Record<string, string> = {};
   if (searchQuery) {
@@ -686,63 +698,84 @@ function CombosPageInner() {
           }
         >
           <section className="flex flex-col gap-7">
-            {loading ? (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-[245px] animate-pulse rounded-lg border border-zinc-200 bg-zinc-50"
-                  />
-                ))}
-              </div>
-            ) : loadError ? (
-              <SectionErrorState
-                title="조합 목록을 불러오지 못했습니다."
-                onRetry={() => setReloadKey((current) => current + 1)}
-              />
-            ) : combos.length ? (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {combos.map((combo) => (
-                  <ComboGridCard
-                    key={combo.id}
-                    combo={combo}
-                    isActive={combo.id === activeCombo?.id}
-                    stats={getStats(combo)}
-                    onSelect={() => setActiveComboId(combo.id)}
-                    onStatsChange={updateComboStats}
-                    flight={relationFlight}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center">
-                <p className="text-sm font-semibold text-zinc-700">조건에 맞는 조합이 없습니다.</p>
-                <p className="mt-2 text-sm text-zinc-500">
-                  검색어를 바꾸거나 새 조합을 만들어보세요.
-                </p>
-              </div>
-            )}
+            <Section
+              name="combos.list"
+              failed={!loading && loadError}
+              outOfRange={!loading && outOfRange}
+              title="조합 목록을 표시하지 못했습니다."
+              resetKeys={[
+                currentPage,
+                requestedPageSize,
+                searchQuery,
+                fieldParam,
+                sort,
+                user?.id,
+                loading,
+              ]}
+              onRetry={retryCombos}
+            >
+              {loading ? (
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-[245px] animate-pulse rounded-lg border border-zinc-200 bg-zinc-50"
+                    />
+                  ))}
+                </div>
+              ) : combos.length ? (
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {combos.map((combo) => (
+                    <ComboGridCard
+                      key={combo.id}
+                      combo={combo}
+                      isActive={combo.id === activeCombo?.id}
+                      stats={getStats(combo)}
+                      onSelect={() => setActiveComboId(combo.id)}
+                      onStatsChange={updateComboStats}
+                      flight={relationFlight}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center">
+                  <p className="text-sm font-semibold text-zinc-700">
+                    조건에 맞는 조합이 없습니다.
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    검색어를 바꾸거나 새 조합을 만들어보세요.
+                  </p>
+                </div>
+              )}
 
-            {!loading && !loadError && pageMeta.total > 0 ? (
-              <div className="flex justify-center">
-                <PaginationComponent
-                  basePath="/combos"
-                  page={currentPage}
-                  pageItemSize={pageSize}
-                  total={pageMeta.total}
-                  query={paginationQuery}
-                />
-              </div>
-            ) : null}
+              {!loading && !loadError && pageMeta.total > 0 ? (
+                <div className="flex justify-center">
+                  <PaginationComponent
+                    basePath="/combos"
+                    page={currentPage}
+                    pageItemSize={pageSize}
+                    total={pageMeta.total}
+                    query={paginationQuery}
+                  />
+                </div>
+              ) : null}
+            </Section>
           </section>
 
           {showPreview ? (
-            <ComboPreviewPanel
-              combo={activeCombo}
-              stats={getStats(activeCombo)}
-              onStatsChange={updateComboStats}
-              flight={relationFlight}
-            />
+            <Section
+              name="combos.preview"
+              title="조합 미리보기를 표시하지 못했습니다."
+              resetKeys={[activeCombo.id]}
+              onRetry={retryCombos}
+            >
+              <ComboPreviewPanel
+                combo={activeCombo}
+                stats={getStats(activeCombo)}
+                onStatsChange={updateComboStats}
+                flight={relationFlight}
+              />
+            </Section>
           ) : null}
         </div>
       </div>
