@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { addViewedContent, parseViewHistory, type ViewedContent } from "./history";
+import { addViewedContent, parseViewHistory, type ViewedContent } from "./view-history";
 
 const RECIPE_A: ViewedContent = { sourceType: "recipe", sourceId: "recipe-a", viewedAt: 100 };
 const RECIPE_B: ViewedContent = { sourceType: "recipe", sourceId: "recipe-b", viewedAt: 200 };

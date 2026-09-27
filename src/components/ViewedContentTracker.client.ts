@@ -6,7 +6,7 @@ import {
   addViewedContent,
   parseViewHistory,
   VIEW_HISTORY_STORAGE_KEY,
-} from "@/features/recommend/view-history/history";
+} from "@/domain/recommend/view-history";
 import type { RecommendSourceType } from "@/domain/recommend/types";
 
 export default function ViewedContentTracker({
