@@ -4,11 +4,11 @@ import {
   AuthErrorHelper,
   badRequest,
   internalError,
-  isPostgrestError,
   json,
   respondWithSupabaseError,
   validationError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 

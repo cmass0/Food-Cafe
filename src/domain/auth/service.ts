@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { isAuthSessionMissingError } from "@/lib/auth/errors";
+import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import {
   clearPasswordRecoveryCookie,
   matchesPasswordRecoveryMarker,

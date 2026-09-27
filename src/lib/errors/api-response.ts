@@ -1,7 +1,8 @@
 import type { PostgrestError } from "@supabase/supabase-js";
-import { isAuthSessionMissingError } from "@/lib/auth/errors";
-import { isPageOutOfRangeError } from "@/lib/errors/supabase";
-import { getServerSupabase } from "../supabase/server";
+import { isAuthSessionMissingError, isPageOutOfRangeError } from "@/lib/errors/supabase";
+import { getServerSupabase } from "@/lib/supabase/server";
+
+// 서버 API 라우트가 돌려주는 오류 응답 모음. 오류 판별 자체는 ./supabase.ts에 둔다.
 
 // 공통 JSON 응답 생성기
 // json(data, 200, { "cache-control": "max-age=캐시 값" }) 형식으로 캐시 제어 가능
@@ -14,10 +15,6 @@ export const json = (body: unknown, status = 200, headers?: HeadersInit) =>
       ...headers,
     },
   });
-
-// PostgrestError
-export const isPostgrestError = (error: unknown): error is PostgrestError =>
-  typeof (error as PostgrestError)?.code === "string";
 
 export const respondWithSupabaseError = (error: PostgrestError) => {
   // 목록 범위를 벗어난 page는 잘못된 요청이 아니라 "없는 페이지"다.

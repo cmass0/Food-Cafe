@@ -1,5 +1,5 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
-import { isAuthSessionMissingError } from "@/lib/auth/errors";
+import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { safePruneAvatarImages, safeRemoveAvatarImages } from "@/lib/storage/server";

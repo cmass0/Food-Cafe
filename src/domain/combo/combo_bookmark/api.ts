@@ -1,4 +1,4 @@
-import { throwApiError } from "@/lib/domain/api/error";
+import { throwApiError } from "@/lib/errors/api-client";
 import { ComboBookmarkResult } from "./types";
 
 export async function setComboBookmark(

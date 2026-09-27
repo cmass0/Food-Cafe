@@ -4,10 +4,10 @@ import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
   internalError,
-  isPostgrestError,
   json,
   respondWithSupabaseError,
-} from "@/lib/api/route-error";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(_: Request, props: contentParams) {

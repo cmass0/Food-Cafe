@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
-import { DEFAULT_ACTION_ERROR, toActionErrorMessage } from "./action-error";
+import { DEFAULT_ACTION_ERROR, toActionErrorMessage } from "./action";
 
 const USER_FACING = new Set(["제목을 입력해 주세요."]);
 

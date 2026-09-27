@@ -2,12 +2,12 @@ import { mentionCandidateQuerySchema } from "@/domain/follow/schema";
 import * as followService from "@/domain/follow/service";
 import {
   internalError,
-  isPostgrestError,
   json,
   respondWithSupabaseError,
   validationError,
-} from "@/lib/api/route-error";
-import { isAuthSessionMissingError } from "@/lib/auth/errors";
+} from "@/lib/errors/api-response";
+import { isPostgrestError } from "@/lib/errors/supabase";
+import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {

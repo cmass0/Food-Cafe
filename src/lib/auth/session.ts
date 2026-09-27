@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isAuthSessionMissingError } from "@/lib/auth/errors";
+import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import { buildAuthModalPath } from "@/lib/auth/return-to";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
