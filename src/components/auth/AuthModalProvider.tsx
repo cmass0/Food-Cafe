@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import SignInSignUpView from "@/components/auth/SignInSignUpView";
+import Section from "@/components/status/Section";
 import { AUTH_REQUIRED_EVENT } from "@/lib/api/client";
 import { normalizeReturnTo } from "@/lib/auth/return-to";
 
@@ -86,14 +87,21 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
           <DialogDescription className="sr-only">
             계속하려면 로그인하거나 새 계정을 만들어 주세요.
           </DialogDescription>
-          <SignInSignUpView
-            key={`${state.mode}:${state.next}:${state.notice ?? ""}`}
-            next={state.next}
-            defaultMode={state.mode}
-            notice={state.notice}
-            onAuthSuccess={closeAuthModal}
-            onNavigateAway={closeAuthModal}
-          />
+          <Section
+            name="auth.modal"
+            title="로그인 화면을 표시하지 못했습니다."
+            resetKeys={[state.open, state.mode, state.next, state.notice]}
+            errorClassName="m-6"
+          >
+            <SignInSignUpView
+              key={`${state.mode}:${state.next}:${state.notice ?? ""}`}
+              next={state.next}
+              defaultMode={state.mode}
+              notice={state.notice}
+              onAuthSuccess={closeAuthModal}
+              onNavigateAway={closeAuthModal}
+            />
+          </Section>
         </DialogContent>
       </Dialog>
     </AuthModalContext.Provider>

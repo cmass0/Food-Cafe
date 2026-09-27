@@ -1,10 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import AuthRequiredModal from "@/components/auth/AuthRequiredModal";
+import Section from "@/components/status/Section";
+import SectionErrorState from "@/components/status/SectionErrorState";
 import * as comboService from "@/domain/combo/service";
 import * as postService from "@/domain/post/service";
 import * as recipeService from "@/domain/recipe/service";
 import * as userService from "@/domain/user/service";
+import { loadSection } from "@/lib/errors/section";
 import { cn } from "@/lib/utils";
 import {
   BookOpenCheck,
@@ -63,7 +66,7 @@ type ProfileHrefOptions = {
 
 type SidebarItem = {
   label: string;
-  count?: number;
+  count?: number | null;
   href: string;
   active: boolean;
   icon: LucideIcon;
@@ -129,18 +132,35 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
   const supabase = await getServerSupabase();
-  const [authUserResult, recipeSummary, comboSummary, postSummary] = await Promise.all([
+  const [authUserResult, recipeTotalResult, comboTotalResult, postTotalResult] = await Promise.all([
     supabase.auth.getUser(),
-    recipeService.listRecipes(supabase, { writerUid: me.id, page: 1, limit: 1 }),
-    comboService.listCombos(supabase, { writerUid: me.id, page: 1, limit: 1 }),
-    postService.listPosts(supabase, { writerUid: me.id, page: 1, limit: 1 }),
+    loadSection<number | null>(
+      "profile.recipe-total",
+      async () =>
+        (await recipeService.listRecipes(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
+      null
+    ),
+    loadSection<number | null>(
+      "profile.combo-total",
+      async () =>
+        (await comboService.listCombos(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
+      null
+    ),
+    loadSection<number | null>(
+      "profile.post-total",
+      async () =>
+        (await postService.listPosts(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
+      null
+    ),
   ]);
   if (authUserResult.error) throw authUserResult.error;
   const currentEmail = authUserResult.data.user?.email ?? "";
   const currentPhone = authUserResult.data.user?.phone ?? null;
-  const recipeTotal = recipeSummary.total;
-  const comboTotal = comboSummary.total;
-  const postTotal = postSummary.total;
+  const recipeTotal = recipeTotalResult.data;
+  const comboTotal = comboTotalResult.data;
+  const postTotal = postTotalResult.data;
+  const hasSummaryError =
+    recipeTotalResult.error || comboTotalResult.error || postTotalResult.error;
 
   function buildHref(options: ProfileHrefOptions = {}) {
     const params = new URLSearchParams();
@@ -267,7 +287,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
               <span className="flex items-center gap-2">
                 <ChefHat className="h-4 w-4" aria-hidden="true" />내 레시피
               </span>
-              <span className="font-bold text-emerald-700">{recipeTotal}</span>
+              <span className="font-bold text-emerald-700">{recipeTotal ?? "—"}</span>
             </div>
             <div className="flex items-center justify-between text-zinc-600">
               <span className="flex items-center gap-2">
@@ -285,31 +305,46 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
             </div>
           </div>
 
+          {hasSummaryError ? (
+            <SectionErrorState
+              title="일부 작성 수를 불러오지 못했습니다."
+              compact
+              className="mt-3"
+            />
+          ) : null}
+
           <Separator className="my-8" />
 
-          <nav className="grid gap-2" aria-label="마이페이지 메뉴">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={cn(
-                    "flex h-12 items-center justify-between rounded-lg px-4 text-sm font-semibold transition",
-                    item.active
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
-                  </span>
-                  {typeof item.count === "number" ? <span>{item.count}</span> : null}
-                </Link>
-              );
-            })}
-          </nav>
+          <Section
+            name="profile.menu"
+            title="프로필 메뉴를 표시하지 못했습니다."
+            compact
+            resetKeys={[me.id]}
+          >
+            <nav className="grid gap-2" aria-label="마이페이지 메뉴">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={cn(
+                      "flex h-12 items-center justify-between rounded-lg px-4 text-sm font-semibold transition",
+                      item.active
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      {item.label}
+                    </span>
+                    {item.count !== undefined ? <span>{item.count ?? "—"}</span> : null}
+                  </Link>
+                );
+              })}
+            </nav>
+          </Section>
 
           <Separator className="my-8" />
 
@@ -363,7 +398,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
                   <span className="hidden h-4 w-px bg-zinc-300 sm:block" aria-hidden="true" />
                   <span className="flex items-center gap-2 rounded-md bg-white/35 px-3 py-1.5">
                     <BookOpenCheck className="h-4 w-4" aria-hidden="true" />총 작성 레시피{" "}
-                    {recipeTotal}개
+                    {recipeTotal === null ? "조회 실패" : `${recipeTotal}개`}
                   </span>
                 </div>
               </div>

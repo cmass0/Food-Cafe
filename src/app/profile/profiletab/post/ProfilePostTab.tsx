@@ -1,10 +1,7 @@
-import SectionErrorState from "@/components/status/SectionErrorState";
-import {
-  listBookmarkedPosts,
-  listLikedPosts,
-  listPosts,
-} from "@/domain/post/service";
-import type { PostListOptions } from "@/domain/post/types";
+import Section from "@/components/status/Section";
+import { listBookmarkedPosts, listLikedPosts, listPosts } from "@/domain/post/service";
+import type { PostListOptions, PostListResult } from "@/domain/post/types";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import type { ProfileSort, ProfileView } from "../../profile-types";
@@ -45,31 +42,37 @@ export default async function ProfilePostTab({
     sort: serviceSort,
   };
 
-  try {
-    const supabase = await getServerSupabase();
-    const result =
-      type === "written"
+  const result = await loadSection<PostListResult>(
+    "profile.posts",
+    async () => {
+      const supabase = await getServerSupabase();
+      return type === "written"
         ? await listPosts(supabase, { ...options, writerUid: userId })
         : type === "bookmark"
           ? await listBookmarkedPosts(supabase, userId, options)
           : await listLikedPosts(supabase, userId, options);
+    },
+    { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
+  );
 
-    return (
-      <>
-        <ProfilePostGrid posts={result.items} view={view} />
-        <ProfilePostPagination
-          type={type}
-          page={currentPage}
-          limit={safeLimit}
-          total={result.total}
-          search={trimmedSearch}
-          sort={sort}
-          view={view}
-        />
-      </>
-    );
-  } catch (error) {
-    console.error("[profile.post] fetch error:", error);
-    return <SectionErrorState title="게시글을 불러오지 못했습니다." />;
-  }
+  return (
+    <Section
+      name="profile.posts"
+      failed={result.error}
+      outOfRange={result.outOfRange}
+      title="게시글을 불러오지 못했습니다."
+      resetKeys={[userId, type, currentPage, safeLimit, trimmedSearch, sort, view]}
+    >
+      <ProfilePostGrid posts={result.data.items} view={view} />
+      <ProfilePostPagination
+        type={type}
+        page={currentPage}
+        limit={safeLimit}
+        total={result.data.total}
+        search={trimmedSearch}
+        sort={sort}
+        view={view}
+      />
+    </Section>
+  );
 }

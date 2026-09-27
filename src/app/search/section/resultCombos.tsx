@@ -2,7 +2,7 @@ import { Bookmark, Eye, Heart, Puzzle, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import SectionErrorState from "@/components/status/SectionErrorState";
+import Section from "@/components/status/Section";
 import type { ComboItems, ComboListResult, Combos } from "@/domain/combo/types";
 import { PaginationComponent } from "@/components/Pagination";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ type Props = {
   queryText: string;
   viewMode: ViewMode;
   error?: boolean;
+  /** 이 섹션의 comboPage가 결과 범위를 벗어났다. */
+  outOfRange?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -133,6 +135,7 @@ export default function SearchResultCombos({
   queryText,
   viewMode,
   error = false,
+  outOfRange = false,
 }: Props) {
   const comboItems = combos.items;
   const currentPage = Number(searchParams.comboPage) || 1;
@@ -160,35 +163,42 @@ export default function SearchResultCombos({
         </Link>
       </header>
 
-      {error ? (
-        <SectionErrorState title="조합 검색 결과를 불러오지 못했습니다." />
-      ) : comboItems.length === 0 ? (
-        <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
-          <SearchX className="h-7 w-7 text-zinc-300" />
-          <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
-        </div>
-      ) : (
-        <div className={gridClass}>
-          {comboItems.map((combo) => (
-            <ComboResultCard key={combo.id} combo={combo} viewMode={viewMode} />
-          ))}
-        </div>
-      )}
+      <Section
+        name="search.combos"
+        failed={error}
+        outOfRange={outOfRange}
+        pageParam="comboPage"
+        title="조합 검색 결과를 표시하지 못했습니다."
+        resetKeys={[queryText, currentPage, viewMode, String(searchParams.sort ?? "")]}
+      >
+        {comboItems.length === 0 ? (
+          <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
+            <SearchX className="h-7 w-7 text-zinc-300" />
+            <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
+          </div>
+        ) : (
+          <div className={gridClass}>
+            {comboItems.map((combo) => (
+              <ComboResultCard key={combo.id} combo={combo} viewMode={viewMode} />
+            ))}
+          </div>
+        )}
 
-      {!error && combos.total > 0 ? (
-        <div className="mt-5">
-          <PaginationComponent
-            basePath="/search"
-            page={currentPage}
-            pageItemSize={combos.limit}
-            blockSize={5}
-            total={combos.total}
-            query={searchParams}
-            pageParam="comboPage"
-            scroll={false}
-          />
-        </div>
-      ) : null}
+        {combos.total > 0 ? (
+          <div className="mt-5">
+            <PaginationComponent
+              basePath="/search"
+              page={currentPage}
+              pageItemSize={combos.limit}
+              blockSize={5}
+              total={combos.total}
+              query={searchParams}
+              pageParam="comboPage"
+              scroll={false}
+            />
+          </div>
+        ) : null}
+      </Section>
     </section>
   );
 }

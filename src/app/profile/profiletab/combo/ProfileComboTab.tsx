@@ -1,5 +1,7 @@
-import SectionErrorState from "@/components/status/SectionErrorState";
-import { listBookmarkedCombos, listCombos, listLikedCombos } from "@/domain/combo/service";
+import Section from "@/components/status/Section";
+import { listBookmarkedCombos, listLikedCombos, listCombos } from "@/domain/combo/service";
+import type { ComboListResult } from "@/domain/combo/types";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -29,15 +31,13 @@ export default async function ProfileComboTab({
   id,
 }: Props) {
   const currentUid = id ?? null;
-  if (!currentUid) {
-    return notFound();
-  }
+  if (!currentUid) return notFound();
 
   const supabase = await getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
+  // 인증·404 판단은 선택적 콘텐츠 조회의 오류로 바꾸지 않는다.
   if (!user && type !== "written") {
     return <div className="text-sm text-slate-600">로그인이 필요합니다.</div>;
   }
@@ -45,78 +45,36 @@ export default async function ProfileComboTab({
   const currentPage = Math.max(1, Math.trunc(page));
   const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
   const trimmedSearch = search?.trim() || undefined;
+  const options = { page: currentPage, limit: safeLimit, search: trimmedSearch };
+  const result = await loadSection<ComboListResult>(
+    "profile.combos",
+    () => {
+      if (type === "written")
+        return listCombos(supabase, { ...options, writerUid: currentUid, sort });
+      if (type === "bookmark") return listBookmarkedCombos(supabase, currentUid, options);
+      return listLikedCombos(supabase, currentUid, options);
+    },
+    { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
+  );
 
-  try {
-    if (type === "written") {
-      const result = await listCombos(supabase, {
-        writerUid: currentUid,
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-        sort,
-      });
-      return (
-        <>
-          <ProfileComboGrid combos={result.items} view={view} />
-          <ProfileComboPagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-
-    if (type === "bookmark") {
-      const result = await listBookmarkedCombos(supabase, currentUid, {
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-      });
-
-      return (
-        <>
-          <ProfileComboGrid combos={result.items} view={view} />
-          <ProfileComboPagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-
-    if (type === "like") {
-      const result = await listLikedCombos(supabase, currentUid, {
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-      });
-      return (
-        <>
-          <ProfileComboGrid combos={result.items} view={view} />
-          <ProfileComboPagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-  } catch (error) {
-    console.error("[profile.combo.tab] fetch error:", error);
-    return <SectionErrorState title="조합을 불러오지 못했습니다." />;
-  }
+  return (
+    <Section
+      name="profile.combos"
+      failed={result.error}
+      outOfRange={result.outOfRange}
+      title="조합을 불러오지 못했습니다."
+      resetKeys={[currentUid, type, currentPage, safeLimit, trimmedSearch, sort, view]}
+    >
+      <ProfileComboGrid combos={result.data.items} view={view} />
+      <ProfileComboPagination
+        type={type}
+        page={currentPage}
+        limit={safeLimit}
+        total={result.data.total}
+        search={trimmedSearch}
+        sort={sort}
+        view={view}
+      />
+    </Section>
+  );
 }

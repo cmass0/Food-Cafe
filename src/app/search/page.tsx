@@ -2,7 +2,7 @@ import { listCombos } from "@/domain/combo/service";
 import { listPosts } from "@/domain/post/service";
 import { listRecipes } from "@/domain/recipe/service";
 import { parseSearchSort, toContentSorts } from "@/features/search/sort";
-import { loadSearchSection } from "@/features/search/section-result";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 import SearchControls from "./section/SearchControls";
@@ -62,8 +62,8 @@ export default async function SearchPage(props: Props) {
   const supabase = await getServerSupabase();
 
   const [recipeResult, comboResult, postResult] = await Promise.all([
-    loadSearchSection(
-      "recipes",
+    loadSection(
+      "search.recipes",
       () =>
         listRecipes(supabase, {
           limit: RECIPE_LIMIT,
@@ -80,8 +80,8 @@ export default async function SearchPage(props: Props) {
         hasMore: false,
       }
     ),
-    loadSearchSection(
-      "combos",
+    loadSection(
+      "search.combos",
       () =>
         listCombos(supabase, {
           limit: COMBO_LIMIT,
@@ -98,8 +98,8 @@ export default async function SearchPage(props: Props) {
         hasMore: false,
       }
     ),
-    loadSearchSection(
-      "posts",
+    loadSection(
+      "search.posts",
       () =>
         listPosts(supabase, {
           limit: POST_LIMIT,
@@ -153,6 +153,7 @@ export default async function SearchPage(props: Props) {
             queryText={queryText}
             viewMode={viewMode}
             error={recipeResult.error}
+            outOfRange={recipeResult.outOfRange}
           />
           <SearchResultCombos
             combos={combos}
@@ -160,6 +161,7 @@ export default async function SearchPage(props: Props) {
             queryText={queryText}
             viewMode={viewMode}
             error={comboResult.error}
+            outOfRange={comboResult.outOfRange}
           />
           <SearchResultPosts
             posts={posts}
@@ -167,6 +169,7 @@ export default async function SearchPage(props: Props) {
             queryText={queryText}
             viewMode={viewMode}
             error={postResult.error}
+            outOfRange={postResult.outOfRange}
           />
         </div>
       </div>
