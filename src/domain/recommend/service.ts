@@ -12,16 +12,56 @@ import {
   type RecommendRecipeSearchInput,
 } from "./schema";
 import type {
+  PopularRecipeCardRow,
   RecommendComboRow,
   RecommendRecipeCandidate,
   RecommendRecipeRow,
   RecommendRecipeSearchResult,
   RecommendationCandidate,
+  RecommendationCardItem,
   RecommendationComboCandidate,
   RecommendationQueryEmbedding,
   RecommendationRank,
   RecommendationSearchResult,
 } from "./types";
+
+const POPULAR_RECIPE_CARD_COUNT = 5;
+const POPULAR_RECIPE_FETCH_COUNT = 20;
+
+/** IN 조회 순서를 믿지 않고 RPC 순위를 복원하며, 삭제·비공개 레시피는 제외한다. */
+export function mapPopularRecipeCards(
+  rankedIds: string[],
+  rows: PopularRecipeCardRow[]
+): RecommendationCardItem[] {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return rankedIds
+    .flatMap<RecommendationCardItem>((id) => {
+      const row = byId.get(id);
+      return row
+        ? [
+            {
+              sourceType: "recipe",
+              id: row.id,
+              title: row.title,
+              summary: row.summary,
+            },
+          ]
+        : [];
+    })
+    .slice(0, POPULAR_RECIPE_CARD_COUNT);
+}
+
+export async function listPopularRecipeCards(
+  adminClient: SupabaseClient<Database>,
+  readerClient: SupabaseClient<Database>
+): Promise<RecommendationCardItem[]> {
+  const rankedIds = await repository.selectPopularRecipeIds(
+    adminClient,
+    POPULAR_RECIPE_FETCH_COUNT
+  );
+  const rows = await repository.selectPopularRecipeCardRows(readerClient, rankedIds);
+  return mapPopularRecipeCards(rankedIds, rows);
+}
 
 export function mapRecommendRecipeRow(row: RecommendRecipeRow): RecommendRecipeCandidate {
   const ingredients = toArrayIngredient(row.ingredients);
@@ -59,7 +99,6 @@ export async function searchRecommendRecipes(
     appliedIngredients: parsed.ingredients,
   };
 }
-
 
 function toCandidateRank(
   rank: RecommendationRank

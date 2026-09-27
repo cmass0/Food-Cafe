@@ -1,7 +1,7 @@
 import type { ChatStatus } from "ai";
 import type { FormEvent } from "react";
 
-import type { RecommendationCandidate } from "@/domain/recommend/types";
+import type { RecommendationCandidate, RecommendationCardItem } from "@/domain/recommend/types";
 import type { RecommendAgentUIMessage } from "@/features/recommend/agent";
 
 export type RecommendSidebarTab = "personalized" | "popular";
@@ -22,7 +22,7 @@ export type RecommendMessageListProps = {
 };
 
 export type RecommendResultCardProps = {
-  item: RecommendationCandidate;
+  item: RecommendationCardItem;
 };
 
 export type RecommendResultCarouselProps = {
@@ -31,8 +31,15 @@ export type RecommendResultCarouselProps = {
 
 export type RecommendSidebarProps = {
   activeTab: RecommendSidebarTab;
-  items: RecommendationCandidate[];
+  items: RecommendationCardItem[];
   onTabChange: (tab: RecommendSidebarTab) => void;
+  isLoading?: boolean;
+  error?: boolean;
+};
+
+export type PopularSidebarState = {
+  status: "idle" | "loading" | "success" | "error";
+  items: RecommendationCardItem[];
 };
 
 export type RecommendComposerProps = {
