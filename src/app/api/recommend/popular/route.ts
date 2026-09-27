@@ -1,5 +1,5 @@
 import { listPopularRecipeCards } from "@/domain/recommend/service";
-import { internalError, json } from "@/lib/api/route-error";
+import { internalError, json } from "@/lib/errors/api-response";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 
