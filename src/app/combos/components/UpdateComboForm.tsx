@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormSuccess } from "@/components/forms/useFormSuccess";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { ComboFormSchema } from "@/domain/combo/schema";
 import type { ComboItems } from "@/domain/combo/types";

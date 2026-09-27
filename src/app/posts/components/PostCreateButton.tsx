@@ -3,7 +3,7 @@
 import { PencilLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { cn } from "@/lib/utils";

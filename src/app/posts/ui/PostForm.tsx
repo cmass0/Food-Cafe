@@ -3,7 +3,7 @@
 import { $getRoot, type EditorState, type SerializedEditorState } from "lexical";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import type { PostActionState } from "@/app/posts/actions";
 import { Editor } from "@/components/blocks/editor-x/editor";
 import { FormActionBar, type FormMode } from "@/components/forms/FormActionBar";

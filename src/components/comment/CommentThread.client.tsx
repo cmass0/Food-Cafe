@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { createComment, deleteComment } from "@/domain/comment/api";
 import type { CommentDisplayItem } from "@/domain/comment/types";

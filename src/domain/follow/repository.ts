@@ -2,7 +2,7 @@ import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
-import type { FollowFetchParams, FollowListItem, FollowProfile } from "./type";
+import type { FollowFetchParams, FollowListItem, FollowProfile } from "./types";
 
 const PUBLIC_PROFILE_COLUMNS = "id, display_name, photo_url";
 

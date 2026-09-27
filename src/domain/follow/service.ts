@@ -5,7 +5,7 @@ import { resolveStorageImageUrl } from "@/lib/storage/paths";
 import type { Database } from "@/types/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import * as repository from "./repository";
-import type { FollowListOptions, FollowListResult, MentionCandidateResult } from "./type";
+import type { FollowListOptions, FollowListResult, MentionCandidateResult } from "./types";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;

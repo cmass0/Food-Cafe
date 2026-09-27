@@ -16,8 +16,8 @@ import type {
 } from "@/domain/recommend/types";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 
-import { RECOMMENDATION_EMBEDDING_PROVIDER_OPTIONS } from "./embedding-config";
-import { getRecommendEmbeddingModel, getRecommendEmbeddingModelId } from "./model";
+import { RECOMMENDATION_EMBEDDING_PROVIDER_OPTIONS } from "@/lib/ai/embedding-config";
+import { getRecommendEmbeddingModel, getRecommendEmbeddingModelId } from "@/lib/ai/model";
 import {
   prepareRecommendationDocument,
   toRecommendationDocumentRpcPayload,

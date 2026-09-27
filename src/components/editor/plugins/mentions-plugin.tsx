@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { fetchMentionCandidates } from "@/domain/follow/api";
-import type { MentionCandidate } from "@/domain/follow/type";
+import type { MentionCandidate } from "@/domain/follow/types";
 
 class MentionTypeaheadOption extends MenuOption {
   candidate: MentionCandidate;

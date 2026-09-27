@@ -1,6 +1,6 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
-import { syncComboRecommendationDocument } from "@/lib/ai/recommendation-index";
+import { syncComboRecommendationDocument } from "@/domain/recommend/recommendation-index";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
 

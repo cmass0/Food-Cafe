@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import SectionErrorState from "@/components/status/SectionErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { type KeyedSingleFlight, useKeyedSingleFlight } from "@/components/hooks/useSingleFlight";
+import { type KeyedSingleFlight, useKeyedSingleFlight } from "@/hooks/useSingleFlight";
 import { listCombos } from "@/domain/combo/api";
 import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";

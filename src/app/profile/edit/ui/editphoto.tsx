@@ -4,7 +4,7 @@ import { User } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

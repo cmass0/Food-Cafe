@@ -46,7 +46,11 @@ npm run dev     # next dev
 app → components → hooks → features → domain → lib   (역방향 금지)
 ```
 
-`eslint.config.mjs`의 `import/no-restricted-paths`가 이 방향을 검사한다. 기존 위반을 정리하는 동안은 경고(`warn`)이고, 0건이 되면 오류(`error`)로 올린다. 예외가 필요하면 이 문서에 이유와 함께 적는다.
+`eslint.config.mjs`의 `import/no-restricted-paths`가 이 방향을 오류로 검사한다. 예외가 필요하면 아래 표에 이유와 함께 적고, 해당 import 한 줄에만 `eslint-disable-next-line`을 단다.
+
+| 예외                                                                 | 이유                                                                                                                         |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `domain/post/content.ts` → `components/blocks/editor-x/nodes.server` | 서버에서 게시글 HTML을 만들 때 에디터와 같은 노드 정의를 써야 한다. 노드 정의는 에디터 컴포넌트와 함께 있어 분리 비용이 크다 |
 
 ---
 
