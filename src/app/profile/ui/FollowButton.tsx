@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { fetchFollowStatus, setFollow } from "@/domain/follow/api";

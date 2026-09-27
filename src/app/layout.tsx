@@ -1,4 +1,4 @@
-import Navbar from "@/component/navbar/nav-bar";
+import Navbar from "@/components/navbar/nav-bar";
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";

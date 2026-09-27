@@ -6,6 +6,8 @@ import { $getRoot, type SerializedEditorState } from "lexical";
 
 import sanitizeHtml from "sanitize-html";
 
+// 게시글 HTML은 에디터와 같은 노드 정의로 만들어야 하므로 예외로 허용한다(AGENTS.md import 방향 예외).
+// eslint-disable-next-line import/no-restricted-paths
 import { nodesServer } from "@/components/blocks/editor-x/nodes.server";
 import { ensureDom } from "@/lib/dom-shim";
 import { resolveStorageImageUrl } from "@/lib/storage/paths";

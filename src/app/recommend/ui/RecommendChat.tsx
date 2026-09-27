@@ -6,6 +6,7 @@ import { RotateCcw } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import Section from "@/components/status/Section";
 import type { RecommendationCardItem } from "@/domain/recommend/types";
 import type { RecommendAgentUIMessage } from "@/features/recommend/agent";
 import { RecommendComposer } from "./RecommendComposer";
@@ -103,7 +104,16 @@ export function RecommendChat() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="flex min-h-[640px] flex-col" aria-label="AI 추천 대화">
           {isRestored ? (
-            <RecommendMessageList messages={messages} status={status} />
+            <Section
+              name="recommend.messages"
+              title="대화를 표시하지 못했습니다."
+              description="계속 표시되지 않으면 위의 '새 대화'로 다시 시작해 주세요. 입력 중인 내용은 유지됩니다."
+              resetKeys={[messages[0]?.id]}
+              // 메시지는 브라우저 상태라 서버 새로고침으로 바뀌지 않는다. 영역만 다시 그린다.
+              onRetry={() => {}}
+            >
+              <RecommendMessageList messages={messages} status={status} />
+            </Section>
           ) : (
             <p className="flex-1 py-6 text-sm text-zinc-500" role="status">
               이전 대화를 불러오는 중이에요…
@@ -128,15 +138,21 @@ export function RecommendChat() {
           />
         </section>
 
-        <RecommendSidebar
-          activeTab={activeTab}
-          items={activeTab === "popular" ? popular.items : EMPTY_SIDEBAR_ITEMS}
-          onTabChange={setActiveTab}
-          isLoading={
-            activeTab === "popular" && (popular.status === "idle" || popular.status === "loading")
-          }
-          error={activeTab === "popular" && popular.status === "error"}
-        />
+        <Section
+          name="recommend.sidebar"
+          title="추천 목록을 표시하지 못했습니다."
+          resetKeys={[activeTab]}
+        >
+          <RecommendSidebar
+            activeTab={activeTab}
+            items={activeTab === "popular" ? popular.items : EMPTY_SIDEBAR_ITEMS}
+            onTabChange={setActiveTab}
+            isLoading={
+              activeTab === "popular" && (popular.status === "idle" || popular.status === "loading")
+            }
+            error={activeTab === "popular" && popular.status === "error"}
+          />
+        </Section>
       </div>
     </main>
   );

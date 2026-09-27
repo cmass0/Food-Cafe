@@ -3,7 +3,7 @@ import { tool } from "ai";
 
 import { recommendationSearchSchema } from "@/domain/recommend/schema";
 import { recordRecommendationExposure, searchRecommendations } from "@/domain/recommend/service";
-import { createRecommendationQueryEmbedding } from "@/lib/ai/embedding";
+import { createRecommendationQueryEmbedding } from "@/domain/recommend/embedding";
 import type { Database } from "@/types/supabase";
 
 export function createSearchRecommendationsTool(client: SupabaseClient<Database>) {

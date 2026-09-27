@@ -1,5 +1,7 @@
-import SectionErrorState from "@/components/status/SectionErrorState";
+import Section from "@/components/status/Section";
 import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/domain/recipe/service";
+import type { RecipeListResult } from "@/domain/recipe/types";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -19,8 +21,6 @@ type Props = {
   id?: string;
 };
 
-
-
 export default async function ProfileRecipeTab({
   type,
   page = 1,
@@ -31,15 +31,13 @@ export default async function ProfileRecipeTab({
   id,
 }: Props) {
   const currentUid = id ?? null;
-  if (!currentUid) {
-    return notFound();
-  }
+  if (!currentUid) return notFound();
 
   const supabase = await getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
+  // 인증·404 판단은 선택적 콘텐츠 조회의 오류로 바꾸지 않는다.
   if (!user && type !== "written") {
     return <div className="text-sm text-slate-600">로그인이 필요합니다.</div>;
   }
@@ -47,78 +45,36 @@ export default async function ProfileRecipeTab({
   const currentPage = Math.max(1, Math.trunc(page));
   const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
   const trimmedSearch = search?.trim() || undefined;
+  const options = { page: currentPage, limit: safeLimit, search: trimmedSearch };
+  const result = await loadSection<RecipeListResult>(
+    "profile.recipes",
+    () => {
+      if (type === "written")
+        return listRecipes(supabase, { ...options, writerUid: currentUid, sort });
+      if (type === "bookmark") return listBookmarkedRecipes(supabase, currentUid, options);
+      return listLikedRecipes(supabase, currentUid, options);
+    },
+    { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
+  );
 
-  try {
-    if (type === "written") {
-      const result = await listRecipes(supabase, {
-        writerUid: currentUid,
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-        sort,
-      });
-      return (
-        <>
-          <ProfileRecipeGrid recipes={result.items} view={view} />
-          <ProfileRecipePagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-
-    if (type === "bookmark") {
-      const result = await listBookmarkedRecipes(supabase, currentUid, {
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-      });
-
-      return (
-        <>
-          <ProfileRecipeGrid recipes={result.items} view={view} />
-          <ProfileRecipePagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-
-    if (type === "like") {
-      const result = await listLikedRecipes(supabase, currentUid, {
-        page: currentPage,
-        limit: safeLimit,
-        search: trimmedSearch,
-      });
-      return (
-        <>
-          <ProfileRecipeGrid recipes={result.items} view={view} />
-          <ProfileRecipePagination
-            type={type}
-            page={currentPage}
-            limit={safeLimit}
-            total={result.total}
-            search={trimmedSearch}
-            sort={sort}
-            view={view}
-          />
-        </>
-      );
-    }
-  } catch (error) {
-    console.error("[profile.tab] fetch error:", error);
-    return <SectionErrorState title="레시피를 불러오지 못했습니다." />;
-  }
+  return (
+    <Section
+      name="profile.recipes"
+      failed={result.error}
+      outOfRange={result.outOfRange}
+      title="레시피를 불러오지 못했습니다."
+      resetKeys={[currentUid, type, currentPage, safeLimit, trimmedSearch, sort, view]}
+    >
+      <ProfileRecipeGrid recipes={result.data.items} view={view} />
+      <ProfileRecipePagination
+        type={type}
+        page={currentPage}
+        limit={safeLimit}
+        total={result.data.total}
+        search={trimmedSearch}
+        sort={sort}
+        view={view}
+      />
+    </Section>
+  );
 }

@@ -22,11 +22,11 @@ export default defineConfig([
   },
   {
     // AGENTS.md "import 방향": app → components → hooks → features → domain → lib.
-    // 기존 위반을 정리하는 동안은 warn이며, 0건이 되면 error로 올린다.
+    // 예외는 AGENTS.md에 이유를 적고 해당 import 한 줄에만 eslint-disable-next-line을 단다.
     files: ["src/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "import/no-restricted-paths": [
-        "warn",
+        "error",
         {
           zones: [
             {

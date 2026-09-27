@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useRef, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
+import Section from "@/components/status/Section";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,10 +48,6 @@ function NavbarInner() {
   const { user, status, displayName } = useAuth();
   const { openAuthModal } = useAuthModal();
   const name = displayName || deriveDisplayName(user) || "내 프로필";
-
-  if (pathname?.startsWith("/profile") || pathname?.startsWith("/auth/recovery")) {
-    return null;
-  }
 
   function isActivePath(href: string) {
     if (!pathname) return false;
@@ -246,9 +243,31 @@ function NavbarInner() {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/profile") || pathname?.startsWith("/auth/recovery")) return null;
+
   return (
-    <Suspense fallback={<div className="h-[68px] border-b border-zinc-200 bg-white" />}>
-      <NavbarInner />
-    </Suspense>
+    <Section
+      name="shell.navbar"
+      title="메뉴를 표시하지 못했습니다."
+      compact
+      resetKeys={[pathname]}
+      recoveryContent={
+        <nav
+          aria-label="대체 주요 메뉴"
+          className="flex flex-wrap gap-4 border-b bg-white px-5 py-3 text-sm"
+        >
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.href} href={item.href}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      }
+    >
+      <Suspense fallback={<div className="h-[68px] border-b border-zinc-200 bg-white" />}>
+        <NavbarInner />
+      </Suspense>
+    </Section>
   );
 }

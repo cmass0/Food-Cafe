@@ -28,7 +28,7 @@ type Props = {
   onCloseAutoFocus?: (event: Event) => void; // 트리거 없는 모달의 포커스 복원
 };
 
-export default function ComfirmModal({
+export default function ConfirmModal({
   btnText,
   comfirmText,
   content,

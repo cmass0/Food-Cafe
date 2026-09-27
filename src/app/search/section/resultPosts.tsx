@@ -1,9 +1,9 @@
 import { Eye, MessageCircle, SearchX } from "lucide-react";
 import Link from "next/link";
 
-import SectionErrorState from "@/components/status/SectionErrorState";
+import Section from "@/components/status/Section";
 import type { Post, PostListResult } from "@/domain/post/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import { PaginationComponent } from "@/components/Pagination";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -14,6 +14,8 @@ type Props = {
   queryText: string;
   viewMode: ViewMode;
   error?: boolean;
+  /** 이 섹션의 postPage가 결과 범위를 벗어났다. */
+  outOfRange?: boolean;
 };
 
 function formatCount(value: number | null | undefined): string {
@@ -97,6 +99,7 @@ export default function SearchResultPosts({
   queryText,
   viewMode,
   error = false,
+  outOfRange = false,
 }: Props) {
   const postItems = posts.items;
   const currentPage = Number(searchParams.postPage) || 1;
@@ -124,35 +127,42 @@ export default function SearchResultPosts({
         </Link>
       </header>
 
-      {error ? (
-        <SectionErrorState title="게시글 검색 결과를 불러오지 못했습니다." />
-      ) : postItems.length === 0 ? (
-        <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
-          <SearchX className="h-7 w-7 text-zinc-300" />
-          <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
-        </div>
-      ) : (
-        <div className={gridClass}>
-          {postItems.map((post) => (
-            <PostResultCard key={post.id} post={post} viewMode={viewMode} />
-          ))}
-        </div>
-      )}
+      <Section
+        name="search.posts"
+        failed={error}
+        outOfRange={outOfRange}
+        pageParam="postPage"
+        title="게시글 검색 결과를 표시하지 못했습니다."
+        resetKeys={[queryText, currentPage, viewMode, String(searchParams.sort ?? "")]}
+      >
+        {postItems.length === 0 ? (
+          <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-center">
+            <SearchX className="h-7 w-7 text-zinc-300" />
+            <p className="mt-3 text-sm font-bold text-zinc-700">검색 결과가 없습니다.</p>
+          </div>
+        ) : (
+          <div className={gridClass}>
+            {postItems.map((post) => (
+              <PostResultCard key={post.id} post={post} viewMode={viewMode} />
+            ))}
+          </div>
+        )}
 
-      {!error && posts.total > 0 ? (
-        <div className="mt-5">
-          <PaginationComponent
-            basePath="/search"
-            page={currentPage}
-            pageItemSize={posts.limit}
-            blockSize={5}
-            total={posts.total}
-            query={searchParams}
-            pageParam="postPage"
-            scroll={false}
-          />
-        </div>
-      ) : null}
+        {posts.total > 0 ? (
+          <div className="mt-5">
+            <PaginationComponent
+              basePath="/search"
+              page={currentPage}
+              pageItemSize={posts.limit}
+              blockSize={5}
+              total={posts.total}
+              query={searchParams}
+              pageParam="postPage"
+              scroll={false}
+            />
+          </div>
+        ) : null}
+      </Section>
     </section>
   );
 }

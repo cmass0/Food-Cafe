@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import CommentArea from "@/components/comment/CommentArea";
 import { getRecipeById } from "@/domain/recipe/service";
 import RecipeDetail from "@/app/recipes/ui/RecipeDetail";
+import ViewedContentTracker from "@/components/ViewedContentTracker.client";
 import { getContentPermissions } from "@/lib/auth/content-permissions";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -28,6 +29,7 @@ export default async function RecipeDetailPage(props: {
   return (
     <main className="bg-white pb-20 pt-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 lg:px-8">
+        <ViewedContentTracker sourceType="recipe" sourceId={recipe.id} />
         <RecipeDetail recipe={recipe} {...permissions} />
 
         <CommentArea

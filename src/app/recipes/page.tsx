@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import { useAuth } from "@/app/auth/auth-context";
-import SectionErrorState from "@/components/status/SectionErrorState";
+import { useAuth } from "@/components/auth/AuthProvider";
+import Section from "@/components/status/Section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { useSingleFlight } from "@/components/hooks/useSingleFlight";
+import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { listRecipes } from "@/domain/recipe/api";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
@@ -30,7 +30,8 @@ import type {
   RecipeSearchField,
   RecipeSort,
 } from "@/domain/recipe/types";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import type { ApiError } from "@/lib/api/client";
+import { PaginationComponent } from "@/components/Pagination";
 
 const SORT_OPTIONS: { key: RecipeSort; title: string }[] = [
   { key: "recent", title: "최신" },
@@ -233,17 +234,7 @@ function RecipesPageCard({ recipe }: { recipe: Recipe }) {
   );
 }
 
-function RecipesGrid({
-  recipes,
-  loading,
-  loadError,
-  onRetry,
-}: {
-  recipes: Recipe[];
-  loading: boolean;
-  loadError: boolean;
-  onRetry: () => void;
-}) {
+function RecipesGrid({ recipes, loading }: { recipes: Recipe[]; loading: boolean }) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -255,10 +246,6 @@ function RecipesGrid({
         ))}
       </div>
     );
-  }
-
-  if (loadError) {
-    return <SectionErrorState title="레시피 목록을 불러오지 못했습니다." onRetry={onRetry} />;
   }
 
   if (!recipes.length) {
@@ -284,6 +271,7 @@ function RecipesPageInner() {
   const [sort, setSort] = useState<RecipeSort>("recent");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [outOfRange, setOutOfRange] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [pageMeta, setPageMeta] = useState<Pick<RecipeListResult, "limit" | "offset" | "total">>({
     limit: DEFAULT_LIMIT,
@@ -323,6 +311,7 @@ function RecipesPageInner() {
     async function fetchRecipes() {
       setLoading(true);
       setLoadError(false);
+      setOutOfRange(false);
       try {
         const data = await listRecipes({
           limit: safeLimit,
@@ -345,9 +334,12 @@ function RecipesPageInner() {
           });
         }
       } catch (error) {
-        console.error("레시피 목록을 불러오지 못했습니다.", error);
+        // 목록 API의 404는 범위를 벗어난 page뿐이다. 장애가 아니므로 첫 페이지 안내로 처리한다.
+        const pageOutOfRange = (error as ApiError).status === 404;
+        if (!pageOutOfRange) console.error("레시피 목록을 불러오지 못했습니다.", error);
         if (mounted) {
-          setLoadError(true);
+          setOutOfRange(pageOutOfRange);
+          setLoadError(!pageOutOfRange);
           setRecipes([]);
           setPageMeta({ limit: safeLimit, offset: 0, total: 0 });
         }
@@ -491,24 +483,42 @@ function RecipesPageInner() {
           </div>
         </section>
 
-        <RecipesGrid
-          recipes={recipes}
-          loading={loading}
-          loadError={loadError}
-          onRetry={() => setReloadKey((current) => current + 1)}
-        />
+        <Section
+          name="recipes.list"
+          failed={!loading && loadError}
+          outOfRange={!loading && outOfRange}
+          title="레시피 목록을 표시하지 못했습니다."
+          resetKeys={[
+            safePage,
+            safeLimit,
+            searchQuery,
+            fieldParam,
+            sort,
+            category,
+            user?.id,
+            loading,
+          ]}
+          onRetry={() => {
+            // useEffect의 재조회가 끝날 때까지 기존 카드 대신 로딩 화면을 유지한다.
+            setLoading(true);
+            setLoadError(false);
+            setReloadKey((current) => current + 1);
+          }}
+        >
+          <RecipesGrid recipes={recipes} loading={loading} />
 
-        {!loading && !loadError && pageMeta.total > 0 ? (
-          <footer className="mt-10 flex justify-center">
-            <PaginationComponent
-              basePath="/recipes"
-              page={currentPage}
-              pageItemSize={pageSize}
-              total={pageMeta.total}
-              query={paginationQuery}
-            />
-          </footer>
-        ) : null}
+          {!loading && !loadError && pageMeta.total > 0 ? (
+            <footer className="mt-10 flex justify-center">
+              <PaginationComponent
+                basePath="/recipes"
+                page={currentPage}
+                pageItemSize={pageSize}
+                total={pageMeta.total}
+                query={paginationQuery}
+              />
+            </footer>
+          ) : null}
+        </Section>
       </div>
     </main>
   );

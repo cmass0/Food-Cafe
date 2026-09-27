@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import ComfirmModal from "@/lib/ui/comfirmmodal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export type FormMode = "create" | "edit";
 
@@ -24,7 +24,7 @@ export function FormActionBar({ mode, resourceLabel, pending, dirty, cancelHref 
 
   return (
     <div className="flex justify-end gap-2">
-      <ComfirmModal
+      <ConfirmModal
         showTrigger={false}
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

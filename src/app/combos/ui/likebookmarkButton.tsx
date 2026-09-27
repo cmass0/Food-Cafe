@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "@/app/auth/auth-context";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchComboStatus } from "@/domain/combo/api";
-import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/type";
+import { ComboBookmarkResult } from "@/domain/combo/combo_bookmark/types";
 import ComboCardBookmarkButton from "@/app/combos/ui/bookmarkbutton";
 import { ComboLikeResult } from "@/domain/combo/combo_like/types";
 import ComboCardLikeButton from "@/app/combos/ui/likebutton";

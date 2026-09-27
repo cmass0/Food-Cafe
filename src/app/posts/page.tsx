@@ -10,13 +10,18 @@ import {
 } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
+import Section from "@/components/status/Section";
+import SectionErrorState from "@/components/status/SectionErrorState";
 import * as postService from "@/domain/post/service";
 import { normalizePostCategory, type PostCategory } from "@/domain/post/category";
-import type { PostSearchField } from "@/domain/post/types";
+import type { PostListResult, PostSearchField } from "@/domain/post/types";
 import PostList from "@/app/posts/ui/PostList";
 import * as trendingService from "@/features/trending/service";
-import { PaginationComponent } from "@/lib/pagenation/pagenation";
+import type { TrendingContentItem } from "@/features/trending/types";
+import { PaginationComponent } from "@/components/Pagination";
+import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import PostCategorySelect from "./components/PostCategorySelect.client";
 import PostCreateButton from "./components/PostCreateButton";
@@ -96,30 +101,58 @@ export default async function PostsPage(props: PostsPageProps) {
   const limit = Number.isFinite(limitNumber) && limitNumber > 0 ? limitNumber : DEFAULT_LIMIT;
   const currentPage = Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1;
   const activeCategory = category ?? "all";
+  const emptyPostList: PostListResult = {
+    items: [],
+    total: 0,
+    limit,
+    hasMore: false,
+    offset: (currentPage - 1) * limit,
+  };
 
-  const [postList, popularPostList, categoryPostLists] = await Promise.all([
-    postService.listPosts(supabase, {
-      page: currentPage,
-      limit,
-      writerUid: writerUid ?? undefined,
-      category,
-      ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
-    }),
-    trendingService.listTrendingPosts(supabase, 5),
-    Promise.all(
-      POST_CATEGORIES.map((category) =>
+  const [postListResult, popularPostListResult, categoryPostListsResult] = await Promise.all([
+    loadSection(
+      "posts.list",
+      () =>
         postService.listPosts(supabase, {
-          page: 1,
-          limit: 1,
-          ...(category.value === "all" ? {} : { category: category.value }),
-        })
-      )
+          page: currentPage,
+          limit,
+          writerUid: writerUid ?? undefined,
+          category,
+          ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
+        }),
+      emptyPostList
+    ),
+    loadSection<TrendingContentItem[]>(
+      "posts.popular",
+      () => trendingService.listTrendingPosts(supabase, 5),
+      []
+    ),
+    loadSection<PostListResult[]>(
+      "posts.category-totals",
+      () =>
+        Promise.all(
+          POST_CATEGORIES.map((category) =>
+            postService.listPosts(supabase, {
+              page: 1,
+              limit: 1,
+              ...(category.value === "all" ? {} : { category: category.value }),
+            })
+          )
+        ),
+      []
     ),
   ]);
 
-  const { items, total } = postList;
-  const categoryTotals = new Map(
-    POST_CATEGORIES.map((category, index) => [category.value, categoryPostLists[index]?.total ?? 0])
+  // 게시판 목록이 이 화면의 본문이므로, 없는 페이지 요청은 페이지 자체를 404로 처리한다.
+  if (postListResult.outOfRange) notFound();
+
+  const { items, total } = postListResult.data;
+  // 집계에 실패하면 실제 0건과 구분되도록 null로 두고 "—"로 표시한다.
+  const categoryTotals = new Map<string, number | null>(
+    POST_CATEGORIES.map((category, index) => [
+      category.value,
+      categoryPostListsResult.error ? null : (categoryPostListsResult.data[index]?.total ?? 0),
+    ])
   );
 
   const pageSize = limit > 0 ? limit : 1;
@@ -167,22 +200,28 @@ export default async function PostsPage(props: PostsPageProps) {
             </section>
 
             <section className="mt-6">
-              <PostList
-                posts={items}
-                variant="community"
-                detailListContext={{ listPage: currentPage, listLimit: pageSize }}
-              />
+              <Section
+                name="posts.list"
+                failed={postListResult.error}
+                title="게시글 목록을 표시하지 못했습니다."
+                resetKeys={[currentPage, limit, writerUid, category, searchQuery, fieldParam]}
+              >
+                <PostList
+                  posts={items}
+                  variant="community"
+                  detailListContext={{ listPage: currentPage, listLimit: pageSize }}
+                />
+                <footer className="mt-7 flex justify-center pb-6">
+                  <PaginationComponent
+                    basePath="/posts"
+                    page={currentPage}
+                    pageItemSize={pageSize}
+                    total={total}
+                    query={paginationQuery}
+                  />
+                </footer>
+              </Section>
             </section>
-
-            <footer className="mt-7 flex justify-center pb-6">
-              <PaginationComponent
-                basePath="/posts"
-                page={currentPage}
-                pageItemSize={pageSize}
-                total={total}
-                query={paginationQuery}
-              />
-            </footer>
           </div>
 
           <aside className="hidden space-y-4 xl:block">
@@ -215,35 +254,51 @@ export default async function PostsPage(props: PostsPageProps) {
                   더보기 ›
                 </Link>
               </div>
-              <ol className="mt-4 space-y-3">
-                {popularPostList.length > 0 ? (
-                  popularPostList.map((post, index) => (
-                    <li key={post.id} className="flex items-center gap-2">
-                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-xs font-bold text-[#16883d]">
-                        {index + 1}
-                      </span>
-                      <Link
-                        href={`/posts/${post.id}`}
-                        prefetch={false}
-                        className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-700 hover:text-[#16883d]"
-                      >
-                        {post.title}
-                      </Link>
-                      <span className="shrink-0 text-xs font-medium text-rose-500">
-                        활동 {post.recentActivityCount}
-                      </span>
+              <Section
+                name="posts.popular"
+                failed={popularPostListResult.error}
+                title="인기글을 표시하지 못했습니다."
+                compact
+                errorClassName="mt-4"
+              >
+                <ol className="mt-4 space-y-3">
+                  {popularPostListResult.data.length > 0 ? (
+                    popularPostListResult.data.map((post, index) => (
+                      <li key={post.id} className="flex items-center gap-2">
+                        <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-xs font-bold text-[#16883d]">
+                          {index + 1}
+                        </span>
+                        <Link
+                          href={`/posts/${post.id}`}
+                          prefetch={false}
+                          className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-700 hover:text-[#16883d]"
+                        >
+                          {post.title}
+                        </Link>
+                        <span className="shrink-0 text-xs font-medium text-rose-500">
+                          활동 {post.recentActivityCount}
+                        </span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="py-3 text-center text-sm text-zinc-500">
+                      아직 인기글이 없습니다.
                     </li>
-                  ))
-                ) : (
-                  <li className="py-3 text-center text-sm text-zinc-500">
-                    아직 인기글이 없습니다.
-                  </li>
-                )}
-              </ol>
+                  )}
+                </ol>
+              </Section>
             </section>
 
             <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <h2 className="text-base font-black text-zinc-950">카테고리</h2>
+              {/* 카테고리 링크는 건수와 무관하게 동작하므로, 집계가 실패해도 링크는 두고 건수만 "—"로 표시한다. */}
+              {categoryPostListsResult.error ? (
+                <SectionErrorState
+                  title="카테고리별 글 수를 불러오지 못했습니다."
+                  compact
+                  className="mt-4"
+                />
+              ) : null}
               <ul className="mt-4 space-y-3">
                 {POST_CATEGORIES.slice(1).map((category) => {
                   const CategoryIcon = category.icon;
@@ -258,7 +313,7 @@ export default async function PostsPage(props: PostsPageProps) {
                         <CategoryIcon className="h-4 w-4 text-[#67b979]" />
                         <span className="flex-1">{category.label}</span>
                         <span className="text-zinc-500">
-                          ({categoryTotals.get(category.value) ?? 0})
+                          ({categoryTotals.get(category.value) ?? "—"})
                         </span>
                       </Link>
                     </li>
