@@ -1,7 +1,8 @@
-export type ViewedSourceType = "recipe" | "combo";
+import { RECOMMEND_SOURCE_TYPES, type RecommendSourceType } from "@/domain/recommend/types";
 
+// 조회 기록의 종류는 추천 대상 종류와 같다. 종류가 늘어나면 추천 스키마와 함께 따라간다.
 export type ViewedContent = {
-  sourceType: ViewedSourceType;
+  sourceType: RecommendSourceType;
   sourceId: string;
   viewedAt: number;
 };
@@ -13,7 +14,7 @@ function isViewedContent(value: unknown): value is ViewedContent {
   if (typeof value !== "object" || value === null) return false;
   const item = value as Record<string, unknown>;
   return (
-    (item.sourceType === "recipe" || item.sourceType === "combo") &&
+    (RECOMMEND_SOURCE_TYPES as readonly unknown[]).includes(item.sourceType) &&
     typeof item.sourceId === "string" &&
     item.sourceId !== "" &&
     typeof item.viewedAt === "number" &&

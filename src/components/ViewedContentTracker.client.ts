@@ -6,14 +6,14 @@ import {
   addViewedContent,
   parseViewHistory,
   VIEW_HISTORY_STORAGE_KEY,
-  type ViewedSourceType,
 } from "@/features/recommend/view-history/history";
+import type { RecommendSourceType } from "@/domain/recommend/types";
 
 export default function ViewedContentTracker({
   sourceType,
   sourceId,
 }: {
-  sourceType: ViewedSourceType;
+  sourceType: RecommendSourceType;
   sourceId: string;
 }) {
   useEffect(() => {
