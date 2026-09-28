@@ -50,6 +50,7 @@ test.describe("계정 관리", () => {
     const requestedAt = new Date(Date.now() - 5_000);
     await clearMailbox(RESET_ACCOUNT.email);
 
+    let scenarioFailed = false;
     try {
       await page.goto("/auth/recovery");
       await page.getByPlaceholder("가입한 이메일 입력").fill(RESET_ACCOUNT.email);
@@ -76,8 +77,17 @@ test.describe("계정 관리", () => {
       await expect(
         page.getByRole("alert").filter({ hasText: "만료되었거나 이미 사용되었습니다" })
       ).toBeVisible();
+    } catch (error) {
+      scenarioFailed = true;
+      throw error;
     } finally {
-      await restorePassword(RESET_ACCOUNT.email, RESET_ACCOUNT.password);
+      try {
+        await restorePassword(RESET_ACCOUNT.email, RESET_ACCOUNT.password);
+      } catch (restoreError) {
+        // 본 시나리오가 이미 실패했다면 그 원인을 가리지 않도록 복원 실패는 기록만 한다.
+        if (!scenarioFailed) throw restoreError;
+        console.error("E2E_RESET 계정 비밀번호 복원 실패", restoreError);
+      }
     }
   });
 });

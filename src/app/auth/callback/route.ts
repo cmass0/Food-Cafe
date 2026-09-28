@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   // 세션 쿠키가 저장된 출처로 돌려보내야 이어지는 화면에서 로그인·복구 세션을 읽을 수 있다.
-  const origin = resolveRequestOrigin(req.url, req.headers);
+  const origin = resolveRequestOrigin(req.url, req.headers, {
+    trustHostHeaders: process.env.NODE_ENV !== "production",
+  });
   if (!url || !anon) {
     return NextResponse.redirect(new URL("/", origin));
   }
