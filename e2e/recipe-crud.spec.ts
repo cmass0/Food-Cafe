@@ -31,7 +31,7 @@ test.describe("레시피 CRUD와 소유권", () => {
       recipeId = resourceIdFromPage(page, "recipes");
 
       await page.goto(`/recipes/edit?id=${recipeId}`);
-      await page.getByLabel("레시피 제목").fill(editedTitle);
+      await page.locator('input[name="title"]:visible').fill(editedTitle);
       await page.getByRole("button", { name: "수정", exact: true }).click();
       await expect(page).toHaveURL(`/recipes/${recipeId}`);
       await expect(page.getByRole("heading", { name: editedTitle })).toBeVisible();

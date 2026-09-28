@@ -35,7 +35,9 @@ test.describe("공개 프로필과 팔로우", () => {
 
     await page.getByRole("button", { name: "팔로우", exact: true }).click();
 
-    await expectLoginModal(page);
+    const loginDialog = await expectLoginModal(page);
+    await page.keyboard.press("Escape");
+    await expect(loginDialog).toBeHidden();
     await expect(followerButton).toHaveAttribute("aria-label", countBefore ?? "");
   });
 
