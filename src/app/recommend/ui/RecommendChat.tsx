@@ -8,14 +8,13 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Section from "@/components/status/Section";
 import type { RecommendationCardItem } from "@/domain/recommend/types";
+import { parseViewHistory, VIEW_HISTORY_STORAGE_KEY } from "@/domain/recommend/view-history";
 import type { RecommendAgentUIMessage } from "@/features/recommend/agent";
 import { RecommendComposer } from "./RecommendComposer";
 import { RecommendMessageList } from "./RecommendMessageList";
 import { RecommendSidebar } from "./RecommendSidebar";
-import type { PopularSidebarState, RecommendSidebarTab } from "./types";
+import type { RecommendSidebarState, RecommendSidebarTab } from "./types";
 import { useRecommendSession } from "./useRecommendSession";
-
-const EMPTY_SIDEBAR_ITEMS: RecommendationCardItem[] = [];
 
 // 백엔드의 createAgentUIStreamResponse가 보내는 UI 메시지 스트림을 읽는다.
 const RECOMMEND_TRANSPORT = new DefaultChatTransport<RecommendAgentUIMessage>({
@@ -25,7 +24,11 @@ const RECOMMEND_TRANSPORT = new DefaultChatTransport<RecommendAgentUIMessage>({
 export function RecommendChat() {
   const [draft, setDraft] = useState("");
   const [activeTab, setActiveTab] = useState<RecommendSidebarTab>("personalized");
-  const [popular, setPopular] = useState<PopularSidebarState>({ status: "idle", items: [] });
+  const [popular, setPopular] = useState<RecommendSidebarState>({ status: "idle", items: [] });
+  const [personalized, setPersonalized] = useState<RecommendSidebarState>({
+    status: "idle",
+    items: [],
+  });
   const { clearError, error, messages, sendMessage, setMessages, status, stop } =
     useChat<RecommendAgentUIMessage>({
       transport: RECOMMEND_TRANSPORT,
@@ -61,6 +64,50 @@ export function RecommendChat() {
 
     return () => controller.abort();
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "personalized") return;
+
+    let history: ReturnType<typeof parseViewHistory> = [];
+    try {
+      history = parseViewHistory(sessionStorage.getItem(VIEW_HISTORY_STORAGE_KEY));
+    } catch {
+      // 저장소를 쓸 수 없는 환경이면 본 기록이 없는 것으로 본다.
+    }
+    // 본 기록이 없으면 서버에 물어볼 기준이 없으므로 요청하지 않는다.
+    if (history.length === 0) {
+      setPersonalized({ status: "success", items: [] });
+      return;
+    }
+
+    const controller = new AbortController();
+    setPersonalized({ status: "loading", items: [] });
+
+    void (async () => {
+      try {
+        // 조회 기록은 개인 정보라 주소가 아니라 본문으로 보낸다. 사용자 ID는 서버가 세션에서 꺼낸다.
+        const response = await fetch("/api/recommend/personal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: history }),
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`맞춤 추천 조회 실패: ${response.status}`);
+        const body = (await response.json()) as { items?: RecommendationCardItem[] };
+        if (!Array.isArray(body.items)) throw new Error("맞춤 추천 응답 형식 오류");
+        if (!controller.signal.aborted) setPersonalized({ status: "success", items: body.items });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("맞춤 추천 조회 실패", error);
+        setPersonalized({ status: "error", items: [] });
+      }
+    })();
+
+    return () => controller.abort();
+  }, [activeTab]);
+
+  const sidebar = activeTab === "popular" ? popular : personalized;
 
   async function handleNewConversation() {
     if (isResponding) {
@@ -145,12 +192,10 @@ export function RecommendChat() {
         >
           <RecommendSidebar
             activeTab={activeTab}
-            items={activeTab === "popular" ? popular.items : EMPTY_SIDEBAR_ITEMS}
+            items={sidebar.items}
             onTabChange={setActiveTab}
-            isLoading={
-              activeTab === "popular" && (popular.status === "idle" || popular.status === "loading")
-            }
-            error={activeTab === "popular" && popular.status === "error"}
+            isLoading={sidebar.status === "idle" || sidebar.status === "loading"}
+            error={sidebar.status === "error"}
           />
         </Section>
       </div>

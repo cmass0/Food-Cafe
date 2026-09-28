@@ -4,13 +4,14 @@ import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type {
   RecommendationCardRows,
+  RecommendationQueryEmbedding,
+  RecommendationRank,
   RecommendationRef,
+  RecommendationSearch,
   RecommendComboRow,
   RecommendRecipeRow,
   RecommendRecipeSearch,
-  RecommendationQueryEmbedding,
-  RecommendationRank,
-  RecommendationSearch,
+  ViewedContent,
 } from "./types";
 
 export async function selectPopularRecommendationRefs(
@@ -18,6 +19,27 @@ export async function selectPopularRecommendationRefs(
   limit: number
 ): Promise<RecommendationRef[]> {
   const { data, error } = await client.rpc("get_popular_recommendations_30d", { p_limit: limit });
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({ sourceType: row.source_type, sourceId: row.source_id }));
+}
+
+export async function selectPersonalizedRecommendationRefs(
+  client: SupabaseClient<Database>,
+  params: {
+    items: ViewedContent[];
+    embeddingModelId: string;
+    userId?: string;
+    matchCount: number;
+  }
+): Promise<RecommendationRef[]> {
+  // 좋아요·북마크 가중치는 RPC가 p_user_id로 DB에서 확인한다. 호출하는 쪽은 서버 세션의 사용자 ID만 넘긴다.
+  const { data, error } = await client.rpc("get_personalized_recommendations", {
+    p_items: params.items,
+    p_embedding_model_id: params.embeddingModelId,
+    p_user_id: params.userId,
+    p_match_count: params.matchCount,
+  });
   if (error) throw error;
 
   return (data ?? []).map((row) => ({ sourceType: row.source_type, sourceId: row.source_id }));

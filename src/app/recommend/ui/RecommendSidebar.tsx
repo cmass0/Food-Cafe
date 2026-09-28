@@ -7,6 +7,20 @@ const TABS: Array<{ value: RecommendSidebarTab; label: string }> = [
   { value: "popular", label: "인기 메뉴" },
 ];
 
+const TAB_MESSAGES: Record<RecommendSidebarTab, { loading: string; error: string; empty: string }> =
+  {
+    personalized: {
+      loading: "맞춤 추천을 불러오는 중이에요…",
+      error: "맞춤 추천을 불러오지 못했어요.",
+      empty: "레시피나 조합을 둘러보면 본 메뉴와 비슷한 추천이 여기에 표시돼요.",
+    },
+    popular: {
+      loading: "인기 추천을 불러오는 중이에요…",
+      error: "인기 추천을 불러오지 못했어요.",
+      empty: "최근 30일간 추천된 메뉴가 아직 없어요.",
+    },
+  };
+
 export function RecommendSidebar({
   activeTab,
   items,
@@ -43,14 +57,14 @@ export function RecommendSidebar({
           <TabsContent key={tab.value} value={tab.value} className="mt-5 space-y-3">
             {isLoading ? (
               <p className="py-10 text-center text-sm text-zinc-500" role="status">
-                인기 추천을 불러오는 중이에요…
+                {TAB_MESSAGES[tab.value].loading}
               </p>
             ) : error ? (
               <p
                 className="rounded-xl border border-dashed border-red-200 px-4 py-6 text-center text-sm text-red-700"
                 role="alert"
               >
-                인기 추천을 불러오지 못했어요.
+                {TAB_MESSAGES[tab.value].error}
               </p>
             ) : items.length > 0 ? (
               items.map((item, index) => (
@@ -67,9 +81,7 @@ export function RecommendSidebar({
               ))
             ) : (
               <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500">
-                {tab.value === "popular"
-                  ? "최근 30일간 추천된 메뉴가 아직 없어요."
-                  : "추천 데이터가 여기에 표시됩니다."}
+                {TAB_MESSAGES[tab.value].empty}
               </p>
             )}
           </TabsContent>

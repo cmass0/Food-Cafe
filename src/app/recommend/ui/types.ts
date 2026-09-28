@@ -37,7 +37,8 @@ export type RecommendSidebarProps = {
   error?: boolean;
 };
 
-export type PopularSidebarState = {
+// 인기·맞춤 탭이 같은 모양의 조회 상태를 쓴다.
+export type RecommendSidebarState = {
   status: "idle" | "loading" | "success" | "error";
   items: RecommendationCardItem[];
 };
