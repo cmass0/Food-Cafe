@@ -656,6 +656,20 @@ export type Database = {
       }
       increment_recipe_view: { Args: { p_recipe_id: string }; Returns: number }
       is_current_user_admin: { Args: never; Returns: boolean }
+      recommend_from_view_history: {
+        Args: {
+          p_embedding_model_id: string
+          p_items: Json
+          p_match_count?: number
+          p_source_types?: string[]
+          p_user_id?: string
+        }
+        Returns: {
+          similarity: number
+          source_id: string
+          source_type: "combo" | "recipe"
+        }[]
+      }
       search_recommendations: {
         Args: {
           p_category?: string | null
