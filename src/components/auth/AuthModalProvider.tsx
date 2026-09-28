@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -59,28 +60,13 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
   }, [openAuthModal]);
 
-  React.useEffect(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get("auth") !== "login") return;
-
-    const notice = url.searchParams.get("notice");
-    openAuthModal({
-      next: normalizeReturnTo(url.searchParams.get("next")),
-      notice: notice === "password-reset" ? "password-reset" : undefined,
-    });
-    url.searchParams.delete("auth");
-    url.searchParams.delete("next");
-    url.searchParams.delete("notice");
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${url.pathname}${url.search}${url.hash}`
-    );
-  }, [openAuthModal]);
-
   return (
     <AuthModalContext.Provider value={{ openAuthModal, closeAuthModal }}>
       {children}
+      {/* 검색 매개변수를 읽는 부분만 Suspense로 감싸 레이아웃 전체가 클라이언트 렌더링으로 바뀌지 않게 한다. */}
+      <React.Suspense fallback={null}>
+        <AuthQueryParamListener onLoginRequested={openAuthModal} />
+      </React.Suspense>
       <Dialog open={state.open} onOpenChange={(open) => !open && closeAuthModal()}>
         <DialogContent className="w-[92vw] p-0 sm:max-w-[400px]">
           <DialogTitle className="sr-only">로그인 또는 회원가입</DialogTitle>
@@ -114,4 +100,35 @@ export function useAuthModal() {
     throw new Error("useAuthModal must be used within <AuthModalProvider>");
   }
   return context;
+}
+
+// ?auth=login 주소로 들어오면 로그인 모달을 연다. 처음 불러올 때뿐 아니라 Server Action의 redirect()처럼
+// 레이아웃이 유지된 채 주소만 바뀌는 이동에서도 동작하도록 검색 매개변수 변화를 따라간다.
+function AuthQueryParamListener({
+  onLoginRequested,
+}: {
+  onLoginRequested: (options?: AuthModalOptions) => void;
+}) {
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    if (searchParams.get("auth") !== "login") return;
+
+    const url = new URL(window.location.href);
+    const notice = url.searchParams.get("notice");
+    onLoginRequested({
+      next: normalizeReturnTo(url.searchParams.get("next")),
+      notice: notice === "password-reset" ? "password-reset" : undefined,
+    });
+    url.searchParams.delete("auth");
+    url.searchParams.delete("next");
+    url.searchParams.delete("notice");
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`
+    );
+  }, [searchParams, onLoginRequested]);
+
+  return null;
 }

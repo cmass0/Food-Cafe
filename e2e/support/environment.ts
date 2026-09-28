@@ -4,7 +4,7 @@ export type E2EAccount = {
 };
 
 function readAccount(
-  prefix: "E2E_AUTHOR" | "E2E_OTHER" | "E2E_ADMIN"
+  prefix: "E2E_AUTHOR" | "E2E_OTHER" | "E2E_ADMIN" | "E2E_RESET"
 ): E2EAccount | null {
   const email = process.env[`${prefix}_EMAIL`]?.trim();
   const password = process.env[`${prefix}_PASSWORD`];
@@ -15,6 +15,8 @@ function readAccount(
 export const AUTHOR_ACCOUNT = readAccount("E2E_AUTHOR");
 export const OTHER_ACCOUNT = readAccount("E2E_OTHER");
 export const ADMIN_ACCOUNT = readAccount("E2E_ADMIN");
+// 비밀번호 재설정 E2E는 실제로 비밀번호를 바꾸므로 다른 시나리오와 섞이지 않는 전용 계정을 쓴다.
+export const RESET_ACCOUNT = readAccount("E2E_RESET");
 export const OTHER_USER_ID = process.env.E2E_OTHER_USER_ID?.trim() || null;
 export const MENTION_QUERY = process.env.E2E_MENTION_QUERY?.trim() || null;
 export const MENTION_EXPECTED_NAME = process.env.E2E_MENTION_EXPECTED_NAME?.trim() || null;

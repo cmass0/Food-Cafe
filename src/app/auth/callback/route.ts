@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { resolveRequestOrigin } from "@/lib/auth/request-origin";
 import { normalizeReturnTo } from "@/lib/auth/return-to";
 import {
   clearPasswordRecoveryCookie,
@@ -16,8 +17,12 @@ function getRedirectType(data: unknown): string | null {
 export async function GET(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // 세션 쿠키가 저장된 출처로 돌려보내야 이어지는 화면에서 로그인·복구 세션을 읽을 수 있다.
+  const origin = resolveRequestOrigin(req.url, req.headers, {
+    trustHostHeaders: process.env.NODE_ENV !== "production",
+  });
   if (!url || !anon) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", origin));
   }
 
   const isRecoveryFlow = req.nextUrl.searchParams.get("flow") === "recovery";
@@ -27,7 +32,7 @@ export async function GET(req: NextRequest) {
   const next = normalizeReturnTo(rawNext);
   const code = req.nextUrl.searchParams.get("code");
   if (!code) {
-    const failedResponse = NextResponse.redirect(new URL(failurePath, req.url));
+    const failedResponse = NextResponse.redirect(new URL(failurePath, origin));
     failedResponse.headers.set("Cache-Control", "private, no-store");
     if (isRecoveryFlow) {
       clearPasswordRecoveryCookie(failedResponse.cookies, useSecureCookies);
@@ -35,7 +40,7 @@ export async function GET(req: NextRequest) {
     return failedResponse;
   }
 
-  const redirectUrl = new URL(next, req.url);
+  const redirectUrl = new URL(next, origin);
   const response = NextResponse.redirect(redirectUrl);
   response.headers.set("Cache-Control", "private, no-store");
 
@@ -59,7 +64,7 @@ export async function GET(req: NextRequest) {
       flow: isRecoveryFlow ? "recovery" : "default",
       message: error.message,
     });
-    const failedResponse = NextResponse.redirect(new URL(failurePath, req.url));
+    const failedResponse = NextResponse.redirect(new URL(failurePath, origin));
     failedResponse.headers.set("Cache-Control", "private, no-store");
     if (isRecoveryFlow) {
       clearPasswordRecoveryCookie(failedResponse.cookies, useSecureCookies);
@@ -70,7 +75,7 @@ export async function GET(req: NextRequest) {
   if (isRecoveryFlow) {
     if (getRedirectType(data) !== "recovery" || !data.session) {
       console.error("[auth/callback] 비밀번호 복구가 아닌 인증 코드가 복구 경로로 전달됨");
-      const failedResponse = NextResponse.redirect(new URL(failurePath, req.url));
+      const failedResponse = NextResponse.redirect(new URL(failurePath, origin));
       failedResponse.headers.set("Cache-Control", "private, no-store");
       clearPasswordRecoveryCookie(failedResponse.cookies, useSecureCookies);
       return failedResponse;

@@ -13,7 +13,7 @@ const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const DEFAULT_LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 type AccountSpec = {
-  prefix: "E2E_AUTHOR" | "E2E_OTHER" | "E2E_ADMIN";
+  prefix: "E2E_AUTHOR" | "E2E_OTHER" | "E2E_ADMIN" | "E2E_RESET";
   displayName: string;
   // 프로필 URL을 고정해야 하는 계정만 ID를 정한다.
   fixedId?: string;
@@ -117,6 +117,10 @@ async function main() {
     fixedId: otherId,
   });
   const adminId = await upsertAccount(admin, { prefix: "E2E_ADMIN", displayName: "e2e-admin" });
+  // 비밀번호 재설정 E2E 전용 계정(선택). 테스트가 비밀번호를 바꾸므로 다른 계정과 분리한다.
+  if (process.env.E2E_RESET_EMAIL?.trim()) {
+    await upsertAccount(admin, { prefix: "E2E_RESET", displayName: "e2e-reset" });
+  }
 
   if (actualOtherId !== otherId) {
     throw new Error(
