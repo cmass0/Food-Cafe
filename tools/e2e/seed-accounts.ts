@@ -34,6 +34,27 @@ function assertLocal(url: string, label: string) {
   }
 }
 
+// pg는 connection string의 host·hostaddr 등 쿼리 매개변수가 주소 부분보다 우선한다.
+// 문자열을 그대로 넘기지 않고, 로컬임을 확인한 값만 골라 접속 설정을 만든다.
+function localDbConfig(url: string) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
+    throw new Error("E2E_DB_URL은 postgres:// 또는 postgresql:// 주소여야 합니다.");
+  }
+  if (parsed.search) {
+    throw new Error("E2E_DB_URL에는 쿼리 매개변수를 쓰지 않습니다(접속 host를 바꿀 수 있어 거부).");
+  }
+  assertLocal(url, "E2E_DB_URL");
+
+  return {
+    host: parsed.hostname.replace(/^\[(.*)\]$/, "$1"),
+    port: Number(parsed.port || 5432),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: decodeURIComponent(parsed.pathname.slice(1)) || "postgres",
+  };
+}
+
 async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
   for (let page = 1; ; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
@@ -71,9 +92,8 @@ async function upsertAccount(admin: SupabaseClient, spec: AccountSpec): Promise<
 
 async function main() {
   const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const dbUrl = process.env.E2E_DB_URL?.trim() || DEFAULT_LOCAL_DB_URL;
   assertLocal(supabaseUrl, "NEXT_PUBLIC_SUPABASE_URL");
-  assertLocal(dbUrl.replace(/^postgres(ql)?:/, "http:"), "E2E_DB_URL");
+  const dbConfig = localDbConfig(process.env.E2E_DB_URL?.trim() || DEFAULT_LOCAL_DB_URL);
 
   const admin = createClient(supabaseUrl, requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -97,7 +117,7 @@ async function main() {
     );
   }
 
-  const db = new Client({ connectionString: dbUrl });
+  const db = new Client(dbConfig);
   await db.connect();
   try {
     // 프로필 이름은 가입 트리거(INSERT)에서만 채워지므로, 이미 있던 계정도 여기서 맞춘다.
