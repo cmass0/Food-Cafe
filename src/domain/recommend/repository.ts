@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type {
-  PopularRecipeCardRow,
+  RecommendationCardRows,
+  RecommendationRef,
   RecommendComboRow,
   RecommendRecipeRow,
   RecommendRecipeSearch,
@@ -12,26 +13,36 @@ import type {
   RecommendationSearch,
 } from "./types";
 
-export async function selectPopularRecipeIds(
+export async function selectPopularRecommendationRefs(
   client: SupabaseClient<Database>,
   limit: number
-): Promise<string[]> {
-  const { data, error } = await client.rpc("get_popular_recipes_30d", { p_limit: limit });
+): Promise<RecommendationRef[]> {
+  const { data, error } = await client.rpc("get_popular_recommendations_30d", { p_limit: limit });
   if (error) throw error;
 
-  return (data ?? []).map((row) => row.recipe_id);
+  return (data ?? []).map((row) => ({ sourceType: row.source_type, sourceId: row.source_id }));
 }
 
-export async function selectPopularRecipeCardRows(
+export async function selectRecommendationCardRows(
   client: SupabaseClient<Database>,
-  ids: string[]
-): Promise<PopularRecipeCardRow[]> {
-  if (ids.length === 0) return [];
+  refs: RecommendationRef[]
+): Promise<RecommendationCardRows> {
+  const recipeIds = refs.filter((ref) => ref.sourceType === "recipe").map((ref) => ref.sourceId);
+  const comboIds = refs.filter((ref) => ref.sourceType === "combo").map((ref) => ref.sourceId);
 
-  // 집계는 서버 전용이지만 화면 데이터는 호출자의 RLS를 적용받는 원본에서 재조회한다.
-  const { data, error } = await client.from("recipes").select("id,title,summary").in("id", ids);
-  if (error) throw error;
-  return data ?? [];
+  // 순위는 서버 전용 RPC가 정하지만 화면 데이터는 호출자의 RLS를 적용받는 원본에서 재조회한다.
+  const [recipes, combos] = await Promise.all([
+    recipeIds.length === 0
+      ? { data: [], error: null }
+      : client.from("recipes").select("id,title,summary").in("id", recipeIds),
+    comboIds.length === 0
+      ? { data: [], error: null }
+      : client.from("combos").select("id,title,summary").in("id", comboIds),
+  ]);
+  if (recipes.error) throw recipes.error;
+  if (combos.error) throw combos.error;
+
+  return { recipes: recipes.data ?? [], combos: combos.data ?? [] };
 }
 
 const RECOMMEND_RECIPE_COLUMNS = `
