@@ -55,6 +55,15 @@ describe("addViewedContent", () => {
     expect(thrice.map((item) => item.viewCount)).toEqual([3]);
   });
 
+  test("저장된 기록에 같은 항목이 여러 번 있으면 모두 지우고 하나로 합친다", () => {
+    const duplicated = [{ ...RECIPE_A, viewCount: 2 }, RECIPE_B, { ...RECIPE_A, viewCount: 1 }];
+
+    expect(addViewedContent(duplicated, { ...RECIPE_A, viewedAt: 999 })).toEqual([
+      { ...RECIPE_A, viewedAt: 999, viewCount: 3 },
+      RECIPE_B,
+    ]);
+  });
+
   test("ID가 같아도 레시피와 조합의 본 횟수는 따로 센다", () => {
     const history = addViewedContent([{ ...RECIPE_A, viewCount: 2 }], COMBO_A);
 

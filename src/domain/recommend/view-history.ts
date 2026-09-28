@@ -44,10 +44,11 @@ export function addViewedContent(
   history: readonly ViewedContent[],
   viewed: Omit<ViewedContent, "viewCount">
 ): ViewedContent[] {
-  const previous = history.find(
-    (item) => item.sourceType === viewed.sourceType && item.sourceId === viewed.sourceId
-  );
-  const others = history.filter((item) => item !== previous);
+  const isSame = (item: ViewedContent) =>
+    item.sourceType === viewed.sourceType && item.sourceId === viewed.sourceId;
+  // 기록은 최근순이므로 첫 항목의 본 횟수를 이어 센다. 손상된 기록의 중복 항목은 모두 지운다.
+  const previous = history.find(isSame);
+  const others = history.filter((item) => !isSame(item));
   return [{ ...viewed, viewCount: (previous?.viewCount ?? 0) + 1 }, ...others].slice(
     0,
     VIEW_HISTORY_LIMIT
