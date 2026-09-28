@@ -97,6 +97,16 @@ async function main() {
   const db = new Client({ connectionString: dbUrl });
   await db.connect();
   try {
+    // 프로필 이름은 가입 트리거(INSERT)에서만 채워지므로, 이미 있던 계정도 여기서 맞춘다.
+    // 멘션 E2E가 E2E_MENTION_EXPECTED_NAME으로 다른 사용자를 찾는다.
+    await db.query(
+      `update public.profiles as profile
+       set display_name = names.display_name
+       from (values ($1::uuid, 'e2e-author'), ($2::uuid, $3::text), ($4::uuid, 'e2e-admin'))
+         as names (id, display_name)
+       where profile.id = names.id`,
+      [authorId, otherId, mentionName, adminId]
+    );
     // 관리자 역할은 API로 노출하지 않는 private 스키마라 SQL로 지정한다.
     await db.query(
       `insert into private.user_roles (user_id, role) values ($1, 'admin')
