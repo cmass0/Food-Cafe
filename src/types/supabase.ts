@@ -552,12 +552,13 @@ export type Database = {
           source_type: "combo" | "recipe"
         }[]
       }
-      get_popular_recipes_30d: {
+      get_popular_recommendations_30d: {
         Args: { p_limit?: number }
         Returns: {
           last_recommended_at: string
           recommendation_count: number
-          recipe_id: string
+          source_id: string
+          source_type: "combo" | "recipe"
         }[]
       }
       get_trending_combos: {

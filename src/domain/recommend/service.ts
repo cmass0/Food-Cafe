@@ -12,7 +12,8 @@ import {
   type RecommendRecipeSearchInput,
 } from "./schema";
 import type {
-  PopularRecipeCardRow,
+  RecommendationCardRows,
+  RecommendationRef,
   RecommendComboRow,
   RecommendRecipeCandidate,
   RecommendRecipeRow,
@@ -25,42 +26,49 @@ import type {
   RecommendationSearchResult,
 } from "./types";
 
-const POPULAR_RECIPE_CARD_COUNT = 5;
-const POPULAR_RECIPE_FETCH_COUNT = 20;
+const RECOMMENDATION_CARD_COUNT = 5;
+// 삭제·비공개로 빠지는 항목이 있어도 카드 다섯 개를 채울 수 있게 넉넉히 가져온다.
+const POPULAR_RECOMMENDATION_FETCH_COUNT = 20;
 
-/** IN 조회 순서를 믿지 않고 RPC 순위를 복원하며, 삭제·비공개 레시피는 제외한다. */
-export function mapPopularRecipeCards(
-  rankedIds: string[],
-  rows: PopularRecipeCardRow[]
+/**
+ * IN 조회 순서를 믿지 않고 RPC 순위를 복원하며, 삭제·비공개 콘텐츠는 제외한다.
+ * 레시피와 조합은 ID 공간이 다르므로 종류별로 따로 찾는다.
+ */
+export function mapRecommendationCards(
+  refs: RecommendationRef[],
+  rows: RecommendationCardRows
 ): RecommendationCardItem[] {
-  const byId = new Map(rows.map((row) => [row.id, row]));
-  return rankedIds
-    .flatMap<RecommendationCardItem>((id) => {
-      const row = byId.get(id);
+  const recipesById = new Map(rows.recipes.map((row) => [row.id, row]));
+  const combosById = new Map(rows.combos.map((row) => [row.id, row]));
+
+  return refs
+    .flatMap<RecommendationCardItem>((ref) => {
+      const row = (ref.sourceType === "recipe" ? recipesById : combosById).get(ref.sourceId);
       return row
-        ? [
-            {
-              sourceType: "recipe",
-              id: row.id,
-              title: row.title,
-              summary: row.summary,
-            },
-          ]
+        ? [{ sourceType: ref.sourceType, id: row.id, title: row.title, summary: row.summary }]
         : [];
     })
-    .slice(0, POPULAR_RECIPE_CARD_COUNT);
+    .slice(0, RECOMMENDATION_CARD_COUNT);
 }
 
-export async function listPopularRecipeCards(
+/** 인기·맞춤 추천이 공유하는 카드 조립. 순위 목록만 넘기면 호출자 권한으로 화면 정보를 읽는다. */
+export async function loadRecommendationCards(
+  readerClient: SupabaseClient<Database>,
+  refs: RecommendationRef[]
+): Promise<RecommendationCardItem[]> {
+  const rows = await repository.selectRecommendationCardRows(readerClient, refs);
+  return mapRecommendationCards(refs, rows);
+}
+
+export async function listPopularRecommendationCards(
   adminClient: SupabaseClient<Database>,
   readerClient: SupabaseClient<Database>
 ): Promise<RecommendationCardItem[]> {
-  const rankedIds = await repository.selectPopularRecipeIds(
+  const refs = await repository.selectPopularRecommendationRefs(
     adminClient,
-    POPULAR_RECIPE_FETCH_COUNT
+    POPULAR_RECOMMENDATION_FETCH_COUNT
   );
-  const rows = await repository.selectPopularRecipeCardRows(readerClient, rankedIds);
-  return mapPopularRecipeCards(rankedIds, rows);
+  return loadRecommendationCards(readerClient, refs);
 }
 
 export function mapRecommendRecipeRow(row: RecommendRecipeRow): RecommendRecipeCandidate {
