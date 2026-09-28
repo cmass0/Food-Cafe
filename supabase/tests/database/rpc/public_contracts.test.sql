@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(58);
+select extensions.plan(61);
 
 -- 외부에서 사용하는 RPC 목록과 실행 권한을 계약으로 고정합니다.
 select extensions.is(
@@ -87,6 +87,21 @@ select extensions.ok(
       )
   ),
   '익명 사용자도 기간별 트렌딩 RPC를 실행할 수 있다'
+);
+
+select extensions.ok(
+  not has_function_privilege('anon', 'public.search_recommendations(text, extensions.vector, text, text[], text, text, integer, boolean, text[], text[], integer)', 'EXECUTE'),
+  '익명 사용자는 추천 검색 RPC를 직접 실행할 수 없다'
+);
+
+select extensions.ok(
+  not has_function_privilege('authenticated', 'public.search_recommendations(text, extensions.vector, text, text[], text, text, integer, boolean, text[], text[], integer)', 'EXECUTE'),
+  '로그인 사용자도 추천 검색 RPC를 직접 실행할 수 없다(채팅 API는 서버 권한으로 호출)'
+);
+
+select extensions.ok(
+  has_function_privilege('service_role', 'public.search_recommendations(text, extensions.vector, text, text[], text, text, integer, boolean, text[], text[], integer)', 'EXECUTE'),
+  '서버의 service_role은 추천 검색 RPC를 실행할 수 있다'
 );
 
 select extensions.is(
