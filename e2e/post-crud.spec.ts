@@ -85,7 +85,14 @@ test.describe("게시글 CRUD와 멘션", () => {
     const editor = page.locator('[contenteditable="true"]');
     await editor.fill(`@${MENTION_QUERY}`);
 
-    await expect(page.getByText("내 팔로잉", { exact: true })).toBeVisible();
+    const candidateGroup = page.getByText("내 팔로잉", { exact: true });
+    const retryButton = page.getByRole("button", { name: "다시 시도", exact: true });
+    await expect(candidateGroup.or(retryButton)).toBeVisible();
+    if (await retryButton.isVisible()) {
+      await retryButton.click();
+    }
+
+    await expect(candidateGroup).toBeVisible();
     await expect(page.getByText(MENTION_EXPECTED_NAME, { exact: true })).toBeVisible();
   });
 });

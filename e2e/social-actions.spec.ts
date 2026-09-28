@@ -57,12 +57,24 @@ test.describe("좋아요·북마크·댓글", () => {
       const initialLike = await likeButton.getAttribute("aria-pressed");
       const initialBookmark = await bookmarkButton.getAttribute("aria-pressed");
 
+      const likeResponsePromise = page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().endsWith(`/api/posts/${postId}/like`)
+      );
       await likeButton.click();
+      await expect((await likeResponsePromise).ok()).toBe(true);
       await expect(likeButton).toHaveAttribute(
         "aria-pressed",
         initialLike === "true" ? "false" : "true"
       );
+      const bookmarkResponsePromise = page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().endsWith(`/api/posts/${postId}/bookmark`)
+      );
       await bookmarkButton.click();
+      await expect((await bookmarkResponsePromise).ok()).toBe(true);
       await expect(bookmarkButton).toHaveAttribute(
         "aria-pressed",
         initialBookmark === "true" ? "false" : "true"
@@ -88,8 +100,21 @@ test.describe("좋아요·북마크·댓글", () => {
       await dialog.getByRole("button", { name: "삭제", exact: true }).click();
       await expect(page.getByText("삭제된 댓글입니다.")).toBeVisible();
 
+      const restoreLikeResponse = page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().endsWith(`/api/posts/${postId}/like`)
+      );
       await page.getByRole("button", { name: /^좋아요 / }).click();
+      await expect((await restoreLikeResponse).ok()).toBe(true);
+
+      const restoreBookmarkResponse = page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().endsWith(`/api/posts/${postId}/bookmark`)
+      );
       await page.getByRole("button", { name: /^북마크 / }).click();
+      await expect((await restoreBookmarkResponse).ok()).toBe(true);
       await expect(page.getByRole("button", { name: /^좋아요 / })).toHaveAttribute(
         "aria-pressed",
         initialLike ?? "false"
