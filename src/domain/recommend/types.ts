@@ -218,3 +218,9 @@ export type RecommendationSearchResult = {
     excludeIngredients: string[];
   };
 };
+export type ViewedContent = {
+  sourceType: RecommendSourceType;
+  sourceId: string;
+  viewedAt: number;
+  viewCount: number;
+};

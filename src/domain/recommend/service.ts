@@ -5,30 +5,33 @@ import { normaliseTextArray, toArrayIngredient } from "@/domain/recipe/normaliza
 import type { Database } from "@/types/supabase";
 import * as repository from "./repository";
 import {
-  recommendationSearchSchema,
   RECOMMENDATION_MATCH_COUNT,
+  recommendationSearchSchema,
   recommendRecipeSearchSchema,
   type RecommendationSearchInput,
   type RecommendRecipeSearchInput,
 } from "./schema";
 import type {
+  RecommendationCandidate,
+  RecommendationCardItem,
   RecommendationCardRows,
+  RecommendationComboCandidate,
+  RecommendationQueryEmbedding,
+  RecommendationRank,
   RecommendationRef,
+  RecommendationSearchResult,
   RecommendComboRow,
   RecommendRecipeCandidate,
   RecommendRecipeRow,
   RecommendRecipeSearchResult,
-  RecommendationCandidate,
-  RecommendationCardItem,
-  RecommendationComboCandidate,
-  RecommendationQueryEmbedding,
-  RecommendationRank,
-  RecommendationSearchResult,
+  ViewedContent,
 } from "./types";
 
 const RECOMMENDATION_CARD_COUNT = 5;
 // 삭제·비공개로 빠지는 항목이 있어도 카드 다섯 개를 채울 수 있게 넉넉히 가져온다.
 const POPULAR_RECOMMENDATION_FETCH_COUNT = 20;
+// 맞춤 추천도 삭제·비공개로 빠지는 항목을 감안해 카드 수보다 넉넉히 가져온다. RPC 상한은 20이다.
+const PERSONALIZED_RECOMMENDATION_FETCH_COUNT = 10;
 
 /**
  * IN 조회 순서를 믿지 않고 RPC 순위를 복원하며, 삭제·비공개 콘텐츠는 제외한다.
@@ -68,6 +71,21 @@ export async function listPopularRecommendationCards(
     adminClient,
     POPULAR_RECOMMENDATION_FETCH_COUNT
   );
+  return loadRecommendationCards(readerClient, refs);
+}
+
+export async function listPersonalizedRecommendationCards(
+  adminClient: SupabaseClient<Database>,
+  readerClient: SupabaseClient<Database>,
+  params: { items: ViewedContent[]; userId?: string; embeddingModelId: string }
+): Promise<RecommendationCardItem[]> {
+  // 본 기록이 없으면 비교할 기준 벡터가 없으므로 RPC를 부르지 않는다.
+  if (params.items.length === 0) return [];
+
+  const refs = await repository.selectPersonalizedRecommendationRefs(adminClient, {
+    ...params,
+    matchCount: PERSONALIZED_RECOMMENDATION_FETCH_COUNT,
+  });
   return loadRecommendationCards(readerClient, refs);
 }
 

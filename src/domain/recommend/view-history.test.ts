@@ -1,16 +1,33 @@
 import { describe, expect, test } from "vitest";
 
-import { addViewedContent, parseViewHistory, type ViewedContent } from "./view-history";
+import type { ViewedContent } from "./types";
+import { addViewedContent, parseViewHistory } from "./view-history";
 
-const RECIPE_A: ViewedContent = { sourceType: "recipe", sourceId: "recipe-a", viewedAt: 100 };
-const RECIPE_B: ViewedContent = { sourceType: "recipe", sourceId: "recipe-b", viewedAt: 200 };
-const COMBO_A: ViewedContent = { sourceType: "combo", sourceId: "recipe-a", viewedAt: 300 };
+const RECIPE_A: ViewedContent = {
+  sourceType: "recipe",
+  sourceId: "recipe-a",
+  viewedAt: 100,
+  viewCount: 1,
+};
+const RECIPE_B: ViewedContent = {
+  sourceType: "recipe",
+  sourceId: "recipe-b",
+  viewedAt: 200,
+  viewCount: 1,
+};
+const COMBO_A: ViewedContent = {
+  sourceType: "combo",
+  sourceId: "recipe-a",
+  viewedAt: 300,
+  viewCount: 1,
+};
 
 function createHistory(count: number): ViewedContent[] {
   return Array.from({ length: count }, (_, index) => ({
     sourceType: "recipe",
     sourceId: `recipe-${index}`,
     viewedAt: index,
+    viewCount: 1,
   }));
 }
 
@@ -23,10 +40,37 @@ describe("addViewedContent", () => {
     expect(addViewedContent([RECIPE_A], RECIPE_B)).toEqual([RECIPE_B, RECIPE_A]);
   });
 
-  test("다시 본 항목은 이전 기록을 지우고 새 조회 시각으로 맨 앞에 둔다", () => {
-    const viewedAgain = { ...RECIPE_A, viewedAt: 999 };
+  test("다시 본 항목은 이전 기록을 지우고 새 조회 시각과 늘어난 본 횟수로 맨 앞에 둔다", () => {
+    expect(addViewedContent([RECIPE_B, RECIPE_A], { ...RECIPE_A, viewedAt: 999 })).toEqual([
+      { ...RECIPE_A, viewedAt: 999, viewCount: 2 },
+      RECIPE_B,
+    ]);
+  });
 
-    expect(addViewedContent([RECIPE_B, RECIPE_A], viewedAgain)).toEqual([viewedAgain, RECIPE_B]);
+  test("같은 항목을 볼 때마다 본 횟수를 1씩 늘린다", () => {
+    const once = addViewedContent([], RECIPE_A);
+    const twice = addViewedContent(once, RECIPE_A);
+    const thrice = addViewedContent(twice, RECIPE_A);
+
+    expect(thrice.map((item) => item.viewCount)).toEqual([3]);
+  });
+
+  test("저장된 기록에 같은 항목이 여러 번 있으면 모두 지우고 하나로 합친다", () => {
+    const duplicated = [{ ...RECIPE_A, viewCount: 2 }, RECIPE_B, { ...RECIPE_A, viewCount: 1 }];
+
+    expect(addViewedContent(duplicated, { ...RECIPE_A, viewedAt: 999 })).toEqual([
+      { ...RECIPE_A, viewedAt: 999, viewCount: 3 },
+      RECIPE_B,
+    ]);
+  });
+
+  test("ID가 같아도 레시피와 조합의 본 횟수는 따로 센다", () => {
+    const history = addViewedContent([{ ...RECIPE_A, viewCount: 2 }], COMBO_A);
+
+    expect(history.map(({ sourceType, viewCount }) => [sourceType, viewCount])).toEqual([
+      ["combo", 1],
+      ["recipe", 2],
+    ]);
   });
 
   test("ID가 같아도 레시피와 조합은 다른 항목으로 본다", () => {
@@ -48,14 +92,10 @@ describe("addViewedContent", () => {
 
   test("20개가 찬 기록에서 다시 본 항목은 다른 기록을 밀어내지 않는다", () => {
     const history = createHistory(20);
-    const viewedAgain: ViewedContent = {
-      sourceType: "recipe",
-      sourceId: "recipe-5",
-      viewedAt: 999,
-    };
+    const viewedAgain = { sourceType: "recipe", sourceId: "recipe-5", viewedAt: 999 } as const;
 
     expect(addViewedContent(history, viewedAgain)).toEqual([
-      viewedAgain,
+      { ...viewedAgain, viewCount: 2 },
       ...history.slice(0, 5),
       ...history.slice(6),
     ]);
@@ -98,5 +138,22 @@ describe("parseViewHistory", () => {
       RECIPE_B,
       COMBO_A,
     ]);
+  });
+
+  test("저장된 본 횟수를 유지한다", () => {
+    expect(parseViewHistory(JSON.stringify([{ ...RECIPE_A, viewCount: 3 }]))).toEqual([
+      { ...RECIPE_A, viewCount: 3 },
+    ]);
+  });
+
+  test.each([
+    ["본 횟수 누락(이전 형식)", { sourceType: "recipe", sourceId: "recipe-a", viewedAt: 100 }],
+    ["0", { ...RECIPE_A, viewCount: 0 }],
+    ["음수", { ...RECIPE_A, viewCount: -2 }],
+    ["소수", { ...RECIPE_A, viewCount: 1.5 }],
+    ["문자열", { ...RECIPE_A, viewCount: "3" }],
+    ["null", { ...RECIPE_A, viewCount: null }],
+  ] as const)("본 횟수가 %s인 기록은 버리지 않고 한 번 본 것으로 읽는다", (_label, stored) => {
+    expect(parseViewHistory(JSON.stringify([stored]))).toEqual([RECIPE_A]);
   });
 });

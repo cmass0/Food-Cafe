@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { RECOMMEND_RECIPE_SORTS, RECOMMEND_SOURCE_TYPES } from "./types";
+import { VIEW_HISTORY_LIMIT } from "./view-history";
 
 export const MAX_RECOMMEND_QUERY_LENGTH = 200;
 export const MAX_RECOMMEND_INGREDIENTS = 20;
@@ -113,3 +114,24 @@ export const recommendationSearchSchema = z
   });
 
 export type RecommendationSearchInput = z.input<typeof recommendationSearchSchema>;
+
+const viewedContentSchema = z.object({
+  sourceType: z.enum(RECOMMEND_SOURCE_TYPES),
+  sourceId: z.string().uuid("조회 기록의 콘텐츠 ID가 올바르지 않습니다."),
+  viewedAt: z.number().finite(),
+  // viewCount를 저장하기 전에 쌓인 조회 기록에는 값이 없으므로 한 번 본 것으로 본다.
+  viewCount: z
+    .number({ invalid_type_error: "본 횟수는 숫자여야 합니다." })
+    .int("본 횟수는 정수여야 합니다.")
+    .min(1, "본 횟수는 1 이상이어야 합니다.")
+    .optional()
+    .default(1),
+});
+
+// 맞춤 추천 요청은 브라우저 세션의 조회 기록만 받는다.
+// 사용자 ID는 서버 세션에서, 임베딩 모델과 추천 개수는 서버 설정에서 정한다.
+export const personalRecommendationRequestSchema = z.object({
+  items: z
+    .array(viewedContentSchema)
+    .max(VIEW_HISTORY_LIMIT, `조회 기록은 최대 ${VIEW_HISTORY_LIMIT}개까지 보낼 수 있습니다.`),
+});
