@@ -25,6 +25,13 @@ function requireEnv(name: string): string {
   return value;
 }
 
+// 비밀번호는 앞뒤 공백까지 그대로 쓴다. E2E 로그인(e2e/support/environment.ts)도 원문을 입력하기 때문이다.
+function requirePassword(name: string): string {
+  const value = process.env[name];
+  if (!value?.trim()) throw new Error(`${name}이 .env.local 또는 .env.e2e.local에 필요합니다.`);
+  return value;
+}
+
 function assertLocal(url: string, label: string) {
   const { hostname } = new URL(url);
   if (!LOCAL_HOSTS.has(hostname)) {
@@ -67,7 +74,7 @@ async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<
 
 async function upsertAccount(admin: SupabaseClient, spec: AccountSpec): Promise<string> {
   const email = requireEnv(`${spec.prefix}_EMAIL`);
-  const password = requireEnv(`${spec.prefix}_PASSWORD`);
+  const password = requirePassword(`${spec.prefix}_PASSWORD`);
   const attributes = {
     password,
     email_confirm: true,
