@@ -2,37 +2,43 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(35);
+select extensions.plan(36);
 
 -- 구조: 서버 전용 읽기 함수다.
 select extensions.ok(
-  not has_function_privilege('anon', 'public.recommend_from_view_history(jsonb, text, uuid, text[], integer)', 'execute'),
+  not has_function_privilege('anon', 'public.get_personalized_recommendations(jsonb, text, uuid, text[], integer)', 'execute'),
   '익명 사용자는 맞춤 추천 RPC를 직접 실행할 수 없다'
 );
 select extensions.ok(
-  not has_function_privilege('authenticated', 'public.recommend_from_view_history(jsonb, text, uuid, text[], integer)', 'execute'),
+  not has_function_privilege('authenticated', 'public.get_personalized_recommendations(jsonb, text, uuid, text[], integer)', 'execute'),
   '로그인 사용자도 맞춤 추천 RPC를 직접 실행할 수 없다(사용자 ID는 서버가 넘긴다)'
 );
 select extensions.ok(
-  has_function_privilege('service_role', 'public.recommend_from_view_history(jsonb, text, uuid, text[], integer)', 'execute'),
+  has_function_privilege('service_role', 'public.get_personalized_recommendations(jsonb, text, uuid, text[], integer)', 'execute'),
   '서버의 service_role은 맞춤 추천 RPC를 실행할 수 있다'
 );
 select extensions.ok(
   (
     select not fn.prosecdef and fn.provolatile = 's' and fn.proconfig = array['search_path=""']
     from pg_proc as fn
-    where fn.oid = 'public.recommend_from_view_history(jsonb, text, uuid, text[], integer)'::regprocedure
+    where fn.oid = 'public.get_personalized_recommendations(jsonb, text, uuid, text[], integer)'::regprocedure
   ),
   '맞춤 추천 RPC는 security invoker, stable, 빈 search_path다'
 );
 select extensions.ok(
-  obj_description('public.recommend_from_view_history(jsonb, text, uuid, text[], integer)'::regprocedure, 'pg_proc') is not null,
+  obj_description('public.get_personalized_recommendations(jsonb, text, uuid, text[], integer)'::regprocedure, 'pg_proc') is not null,
   '맞춤 추천 RPC에는 설명(comment)이 있다'
+);
+select extensions.hasnt_function(
+  'public',
+  'recommend_from_view_history',
+  array['jsonb', 'text', 'uuid', 'text[]', 'integer'],
+  '이름을 바꾸기 전 함수는 남아 있지 않다'
 );
 
 set local role anon;
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('[]'::jsonb, 'test-model-view-history')$$,
+  $$select * from public.get_personalized_recommendations('[]'::jsonb, 'test-model-view-history')$$,
   '42501',
   null,
   '익명 실행은 실제로 권한 오류가 난다'
@@ -41,7 +47,7 @@ reset role;
 
 set local role authenticated;
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('[]'::jsonb, 'test-model-view-history')$$,
+  $$select * from public.get_personalized_recommendations('[]'::jsonb, 'test-model-view-history')$$,
   '42501',
   null,
   '로그인 사용자 실행도 실제로 권한 오류가 난다'
@@ -134,7 +140,7 @@ select
 
 set local role service_role;
 select extensions.lives_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"}]'::jsonb,
     'test-model-view-history'
   )$$,
@@ -144,7 +150,7 @@ reset role;
 
 -- 동작: 본 항목과 같은 무리가 위로 오고, 본 항목은 제외한다.
 select extensions.set_eq(
-  $$select source_type, source_id from public.recommend_from_view_history(
+  $$select source_type, source_id from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 2
   )$$,
@@ -155,7 +161,7 @@ select extensions.set_eq(
 select extensions.is(
   (
     select count(*)::integer
-    from public.recommend_from_view_history(
+    from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"},
         {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a2"}]'::jsonb,
       'test-model-view-history', null, array['recipe', 'combo'], 20
@@ -167,7 +173,7 @@ select extensions.is(
 );
 
 select extensions.results_eq(
-  $$select source_id from public.recommend_from_view_history(
+  $$select source_id from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95300000-0000-4000-8000-000000000001"}]'::jsonb,
     'test-model-centering', null, array['recipe'], 1
   )$$,
@@ -179,7 +185,7 @@ select extensions.results_eq(
 select extensions.is(
   (
     select round(result.similarity::numeric, 6)
-    from public.recommend_from_view_history(
+    from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"},
         {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1"}]'::jsonb,
       'test-model-view-history', null, array['recipe', 'combo'], 20
@@ -188,7 +194,7 @@ select extensions.is(
   ),
   (
     select round(result.similarity::numeric, 6)
-    from public.recommend_from_view_history(
+    from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"},
         {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1"}]'::jsonb,
       'test-model-view-history', null, array['recipe', 'combo'], 20
@@ -199,7 +205,7 @@ select extensions.is(
 );
 
 select extensions.set_eq(
-  $$select source_type, source_id from public.recommend_from_view_history(
+  $$select source_type, source_id from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1"}]'::jsonb,
     'test-model-view-history', '95000000-0000-4000-8000-000000000001', array['recipe', 'combo'], 2
@@ -212,7 +218,7 @@ insert into public.recipe_bookmarks (user_id, recipe_id)
 values ('95000000-0000-4000-8000-000000000001', '95100000-0000-4000-8000-0000000000a1');
 
 select extensions.set_eq(
-  $$select source_type, source_id from public.recommend_from_view_history(
+  $$select source_type, source_id from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1"}]'::jsonb,
     'test-model-view-history', '95000000-0000-4000-8000-000000000001', array['recipe', 'combo'], 2
@@ -222,7 +228,7 @@ select extensions.set_eq(
 );
 
 select extensions.set_eq(
-  $$select source_type, source_id from public.recommend_from_view_history(
+  $$select source_type, source_id from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":4}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 2
@@ -232,12 +238,12 @@ select extensions.set_eq(
 );
 
 select extensions.results_eq(
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":9}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 20
   )$$,
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":4}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 20
@@ -246,13 +252,13 @@ select extensions.results_eq(
 );
 
 select extensions.results_eq(
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":0},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1"},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000c1","viewCount":null}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 20
   )$$,
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000c1","viewCount":1}]'::jsonb,
@@ -262,13 +268,13 @@ select extensions.results_eq(
 );
 
 select extensions.results_eq(
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":3},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":1}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 20
   )$$,
-  $$select source_id, round(similarity::numeric, 6) from public.recommend_from_view_history(
+  $$select source_id, round(similarity::numeric, 6) from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":3},
       {"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000b1","viewCount":1}]'::jsonb,
     'test-model-view-history', null, array['recipe', 'combo'], 20
@@ -279,7 +285,7 @@ select extensions.results_eq(
 select extensions.ok(
   (
     select count(*) > 0 and count(*) filter (where result.source_type = 'combo') = 0
-    from public.recommend_from_view_history(
+    from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"}]'::jsonb,
       'test-model-view-history', null, array['recipe'], 20
     ) as result
@@ -290,7 +296,7 @@ select extensions.ok(
 -- 비어 있는 결과.
 select extensions.is(
   (
-    select count(*)::integer from public.recommend_from_view_history(
+    select count(*)::integer from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1"}]'::jsonb,
       'no-such-model'
     )
@@ -300,7 +306,7 @@ select extensions.is(
 );
 select extensions.is(
   (
-    select count(*)::integer from public.recommend_from_view_history(
+    select count(*)::integer from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000ff"}]'::jsonb,
       'test-model-view-history'
     )
@@ -309,18 +315,18 @@ select extensions.is(
   '추천 문서가 없는 항목만 보면 결과가 없다'
 );
 select extensions.is(
-  (select count(*)::integer from public.recommend_from_view_history('[]'::jsonb, 'test-model-view-history')),
+  (select count(*)::integer from public.get_personalized_recommendations('[]'::jsonb, 'test-model-view-history')),
   0,
   '조회 기록이 비어 있으면 결과가 없다'
 );
 
 -- 잘못된 입력은 22023(invalid_parameter_value)으로 거부한다.
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('{}'::jsonb, 'test-model-view-history')$$,
+  $$select * from public.get_personalized_recommendations('{}'::jsonb, 'test-model-view-history')$$,
   '22023', null, '조회 기록이 배열이 아니면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     (select jsonb_agg(jsonb_build_object('sourceType', 'recipe', 'sourceId', gen_random_uuid()::text))
      from generate_series(1, 21)),
     'test-model-view-history'
@@ -328,44 +334,44 @@ select extensions.throws_ok(
   '22023', null, '조회 기록이 20개를 넘으면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     '[{"sourceType":"post","sourceId":"95100000-0000-4000-8000-0000000000a1"}]'::jsonb, 'test-model-view-history')$$,
   '22023', null, '지원하지 않는 종류는 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"not-a-uuid"}]'::jsonb, 'test-model-view-history')$$,
   '22023', null, 'UUID가 아닌 ID는 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":"3"}]'::jsonb,
     'test-model-view-history')$$,
   '22023', null, '본 횟수가 숫자가 아니면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history(
+  $$select * from public.get_personalized_recommendations(
     '[{"sourceType":"recipe","sourceId":"95100000-0000-4000-8000-0000000000a1","viewCount":1.5}]'::jsonb,
     'test-model-view-history')$$,
   '22023', null, '본 횟수가 정수가 아니면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('[]'::jsonb, '  ')$$,
+  $$select * from public.get_personalized_recommendations('[]'::jsonb, '  ')$$,
   '22023', null, '임베딩 모델 ID가 비어 있으면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('[]'::jsonb, 'test-model-view-history', null, array['post'])$$,
+  $$select * from public.get_personalized_recommendations('[]'::jsonb, 'test-model-view-history', null, array['post'])$$,
   '22023', null, '추천 종류에 지원하지 않는 값이 있으면 거부한다'
 );
 select extensions.throws_ok(
-  $$select * from public.recommend_from_view_history('[]'::jsonb, 'test-model-view-history', null, array[]::text[])$$,
+  $$select * from public.get_personalized_recommendations('[]'::jsonb, 'test-model-view-history', null, array[]::text[])$$,
   '22023', null, '추천 종류가 비어 있으면 거부한다'
 );
 
 -- 결과 개수는 1~20으로 보정한다(후보 24개).
 select extensions.is(
   (
-    select count(*)::integer from public.recommend_from_view_history(
+    select count(*)::integer from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95200000-0000-4000-8000-000000000001"}]'::jsonb,
       'test-model-clamp', null, array['recipe'], 100
     )
@@ -375,7 +381,7 @@ select extensions.is(
 );
 select extensions.is(
   (
-    select count(*)::integer from public.recommend_from_view_history(
+    select count(*)::integer from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95200000-0000-4000-8000-000000000001"}]'::jsonb,
       'test-model-clamp', null, array['recipe'], 0
     )
@@ -385,7 +391,7 @@ select extensions.is(
 );
 select extensions.is(
   (
-    select count(*)::integer from public.recommend_from_view_history(
+    select count(*)::integer from public.get_personalized_recommendations(
       '[{"sourceType":"recipe","sourceId":"95200000-0000-4000-8000-000000000001"}]'::jsonb,
       'test-model-clamp', null, array['recipe'], null
     )
