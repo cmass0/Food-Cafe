@@ -68,7 +68,7 @@ export function RecommendSidebar({
             ) : (
               <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500">
                 {tab.value === "popular"
-                  ? "최근 30일간 추천된 레시피가 아직 없어요."
+                  ? "최근 30일간 추천된 메뉴가 아직 없어요."
                   : "추천 데이터가 여기에 표시됩니다."}
               </p>
             )}

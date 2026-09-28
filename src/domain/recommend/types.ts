@@ -194,7 +194,16 @@ export type RecommendationCardItem = Pick<
   "sourceType" | "id" | "title" | "summary"
 >;
 
-export type PopularRecipeCardRow = Pick<RecipeRow, "id" | "title" | "summary">;
+/** 인기·맞춤 추천 RPC가 돌려주는 순위 한 칸. 화면 정보는 원본 테이블에서 다시 읽는다. */
+export type RecommendationRef = {
+  sourceType: RecommendSourceType;
+  sourceId: string;
+};
+
+export type RecommendationCardRows = {
+  recipes: Pick<RecipeRow, "id" | "title" | "summary">[];
+  combos: Pick<ComboRow, "id" | "title" | "summary">[];
+};
 
 export type RecommendationSearchResult = {
   items: RecommendationCandidate[];
