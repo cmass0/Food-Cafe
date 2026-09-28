@@ -33,7 +33,12 @@ test.describe("통합검색", () => {
     const recipeSection = page.locator("section").filter({
       has: page.getByRole("heading", { name: "레시피", exact: true }),
     });
-    await expect(recipeSection.getByText("검색 결과가 없습니다.")).toBeVisible();
+    // 범위 밖 페이지는 '결과 없음'이 아니라 첫 페이지로 돌아가는 안내를 보여 준다(노션 ID 37).
+    await expect(recipeSection.getByText("이 페이지에는 표시할 항목이 없습니다.")).toBeVisible();
+    await expect(recipeSection.getByRole("link", { name: "첫 페이지로" })).toHaveAttribute(
+      "href",
+      "/search"
+    );
     await expect(page.getByRole("heading", { name: "레시피 조합" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "커뮤니티" })).toBeVisible();
     await expect(page.getByText("페이지를 불러오지 못했습니다")).toHaveCount(0);

@@ -1,0 +1,164 @@
+// E2E 테스트 계정을 로컬 Supabase에 만든다. 여러 번 실행해도 같은 상태가 된다.
+// 계정 이메일·비밀번호는 .env.e2e.local(Git 제외)에서 읽고, 로컬이 아닌 DB에는 실행하지 않는다.
+//   npx tsx tools/e2e/seed-accounts.ts
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { config as loadEnv } from "dotenv";
+import { Client } from "pg";
+
+// playwright.config.ts와 같은 순서: 앱 설정은 .env.local, E2E 전용 값은 .env.e2e.local이 덮어쓴다.
+loadEnv({ path: ".env.local", quiet: true });
+loadEnv({ path: ".env.e2e.local", override: true, quiet: true });
+
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
+const DEFAULT_LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+
+type AccountSpec = {
+  prefix: "E2E_AUTHOR" | "E2E_OTHER" | "E2E_ADMIN";
+  displayName: string;
+  // 프로필 URL을 고정해야 하는 계정만 ID를 정한다.
+  fixedId?: string;
+};
+
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name}이 .env.local 또는 .env.e2e.local에 필요합니다.`);
+  return value;
+}
+
+// 비밀번호는 앞뒤 공백까지 그대로 쓴다. E2E 로그인(e2e/support/environment.ts)도 원문을 입력하기 때문이다.
+function requirePassword(name: string): string {
+  const value = process.env[name];
+  if (!value?.trim()) throw new Error(`${name}이 .env.local 또는 .env.e2e.local에 필요합니다.`);
+  return value;
+}
+
+function assertLocal(url: string, label: string) {
+  const { hostname } = new URL(url);
+  if (!LOCAL_HOSTS.has(hostname)) {
+    throw new Error(
+      `${label}이 로컬 주소가 아닙니다(${hostname}). 원격 DB에는 테스트 계정을 만들지 않습니다.`
+    );
+  }
+}
+
+// pg는 connection string의 host·hostaddr 등 쿼리 매개변수가 주소 부분보다 우선한다.
+// 문자열을 그대로 넘기지 않고, 로컬임을 확인한 값만 골라 접속 설정을 만든다.
+function localDbConfig(url: string) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
+    throw new Error("E2E_DB_URL은 postgres:// 또는 postgresql:// 주소여야 합니다.");
+  }
+  if (parsed.search) {
+    throw new Error("E2E_DB_URL에는 쿼리 매개변수를 쓰지 않습니다(접속 host를 바꿀 수 있어 거부).");
+  }
+  assertLocal(url, "E2E_DB_URL");
+
+  return {
+    host: parsed.hostname.replace(/^\[(.*)\]$/, "$1"),
+    port: Number(parsed.port || 5432),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: decodeURIComponent(parsed.pathname.slice(1)) || "postgres",
+  };
+}
+
+async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw error;
+    const found = data.users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+    if (found) return found.id;
+    if (data.users.length < 200) return null;
+  }
+}
+
+async function upsertAccount(admin: SupabaseClient, spec: AccountSpec): Promise<string> {
+  const email = requireEnv(`${spec.prefix}_EMAIL`);
+  const password = requirePassword(`${spec.prefix}_PASSWORD`);
+  const attributes = {
+    password,
+    email_confirm: true,
+    user_metadata: { display_name: spec.displayName },
+  };
+
+  const existingId = await findUserIdByEmail(admin, email);
+  if (existingId) {
+    const { error } = await admin.auth.admin.updateUserById(existingId, attributes);
+    if (error) throw error;
+    return existingId;
+  }
+
+  const { data, error } = await admin.auth.admin.createUser({
+    ...attributes,
+    email,
+    ...(spec.fixedId ? { id: spec.fixedId } : {}),
+  });
+  if (error) throw error;
+  return data.user.id;
+}
+
+async function main() {
+  const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+  assertLocal(supabaseUrl, "NEXT_PUBLIC_SUPABASE_URL");
+  const dbConfig = localDbConfig(process.env.E2E_DB_URL?.trim() || DEFAULT_LOCAL_DB_URL);
+
+  const admin = createClient(supabaseUrl, requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const otherId = requireEnv("E2E_OTHER_USER_ID");
+  // 멘션 E2E는 선택 사항이다. 값이 없으면 기본 이름을 쓰고, 멘션 시나리오만 건너뛴다.
+  const mentionName = process.env.E2E_MENTION_EXPECTED_NAME?.trim() || "e2e-other";
+
+  const authorId = await upsertAccount(admin, { prefix: "E2E_AUTHOR", displayName: "e2e-author" });
+  const actualOtherId = await upsertAccount(admin, {
+    prefix: "E2E_OTHER",
+    displayName: mentionName,
+    fixedId: otherId,
+  });
+  const adminId = await upsertAccount(admin, { prefix: "E2E_ADMIN", displayName: "e2e-admin" });
+
+  if (actualOtherId !== otherId) {
+    throw new Error(
+      "E2E_OTHER 계정이 이미 다른 ID로 있습니다. 로컬 DB를 초기화한 뒤 다시 실행하세요."
+    );
+  }
+
+  const db = new Client(dbConfig);
+  await db.connect();
+  try {
+    // 프로필 이름은 가입 트리거(INSERT)에서만 채워지므로, 이미 있던 계정도 여기서 맞춘다.
+    // 멘션 E2E가 E2E_MENTION_EXPECTED_NAME으로 다른 사용자를 찾는다.
+    await db.query(
+      `update public.profiles as profile
+       set display_name = names.display_name
+       from (values ($1::uuid, 'e2e-author'), ($2::uuid, $3::text), ($4::uuid, 'e2e-admin'))
+         as names (id, display_name)
+       where profile.id = names.id`,
+      [authorId, otherId, mentionName, adminId]
+    );
+    // 관리자 역할은 API로 노출하지 않는 private 스키마라 SQL로 지정한다.
+    await db.query(
+      `insert into private.user_roles (user_id, role) values ($1, 'admin')
+       on conflict (user_id) do update set role = excluded.role`,
+      [adminId]
+    );
+    // 에디터 멘션 후보는 팔로잉 목록이므로 작성자가 다른 사용자를 팔로우해 둔다.
+    await db.query(
+      `insert into public.user_follows (follower_id, following_id) values ($1, $2)
+       on conflict do nothing`,
+      [authorId, otherId]
+    );
+  } finally {
+    await db.end();
+  }
+
+  console.log(
+    "E2E 계정 준비 완료: 작성자·다른 사용자·관리자, 관리자 역할, 작성자 → 다른 사용자 팔로우"
+  );
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});

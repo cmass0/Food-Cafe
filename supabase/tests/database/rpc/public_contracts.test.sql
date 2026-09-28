@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(58);
+select extensions.plan(61);
 
 -- 외부에서 사용하는 RPC 목록과 실행 권한을 계약으로 고정합니다.
 select extensions.is(
@@ -87,6 +87,33 @@ select extensions.ok(
       )
   ),
   '익명 사용자도 기간별 트렌딩 RPC를 실행할 수 있다'
+);
+
+-- 추천 검색 RPC는 서버 전용이다. 실제 anon·로그인 세션에서 호출이 거부되는지 확인한다.
+set local role anon;
+select extensions.throws_ok(
+  $$select * from public.search_recommendations('김치', array_fill(0::real, array[768])::extensions.vector, 'test-model')$$,
+  '42501',
+  null,
+  '익명 세션이 추천 검색 RPC를 호출하면 권한 오류가 난다'
+);
+reset role;
+
+select set_config('request.jwt.claims', '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+select extensions.throws_ok(
+  $$select * from public.search_recommendations('김치', array_fill(0::real, array[768])::extensions.vector, 'test-model')$$,
+  '42501',
+  null,
+  '로그인 세션도 추천 검색 RPC를 직접 호출하면 권한 오류가 난다(채팅 API는 서버 권한으로 호출)'
+);
+reset role;
+select set_config('request.jwt.claims', null, true);
+
+-- 서버 호출 경로가 끊기지 않았는지는 권한 카탈로그로만 확인한다(서버 역할로 권한 결과를 검증하지 않는다).
+select extensions.ok(
+  has_function_privilege('service_role', 'public.search_recommendations(text, extensions.vector, text, text[], text, text, integer, boolean, text[], text[], integer)', 'EXECUTE'),
+  '서버의 service_role에는 추천 검색 RPC 실행 권한이 남아 있다'
 );
 
 select extensions.is(
