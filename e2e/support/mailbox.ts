@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // 로컬 Supabase는 메일을 밖으로 보내지 않고 Mailpit이 받는다. 로컬 주소가 아니면 쓰지 않는다.
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
@@ -68,13 +68,23 @@ export async function restorePassword(email: string, password: string): Promise<
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  if (error) throw error;
-  const user = data.users.find(
-    (candidate) => candidate.email?.toLowerCase() === email.toLowerCase()
-  );
-  if (!user) throw new Error(`${email} 계정을 찾지 못했습니다.`);
+  const userId = await findUserIdByEmail(admin, email);
+  if (!userId) throw new Error(`${email} 계정을 찾지 못했습니다.`);
 
-  const { error: updateError } = await admin.auth.admin.updateUserById(user.id, { password });
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, { password });
   if (updateError) throw updateError;
+}
+
+// 사용자가 많아도 복원 대상을 놓치지 않도록 모든 페이지를 순회한다.
+async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
+  const perPage = 200;
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const found = data.users.find(
+      (candidate) => candidate.email?.toLowerCase() === email.toLowerCase()
+    );
+    if (found) return found.id;
+    if (data.users.length < perPage) return null;
+  }
 }
