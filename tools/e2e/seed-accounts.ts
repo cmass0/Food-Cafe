@@ -1,11 +1,13 @@
 // E2E 테스트 계정을 로컬 Supabase에 만든다. 여러 번 실행해도 같은 상태가 된다.
-// 계정 이메일·비밀번호는 .env.e2e.local(Git 제외)에서만 읽고, 로컬이 아닌 DB에는 실행하지 않는다.
+// 계정 이메일·비밀번호는 .env.e2e.local(Git 제외)에서 읽고, 로컬이 아닌 DB에는 실행하지 않는다.
 //   npx tsx tools/e2e/seed-accounts.ts
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
-loadEnv({ path: ".env.e2e.local", quiet: true });
+// playwright.config.ts와 같은 순서: 앱 설정은 .env.local, E2E 전용 값은 .env.e2e.local이 덮어쓴다.
+loadEnv({ path: ".env.local", quiet: true });
+loadEnv({ path: ".env.e2e.local", override: true, quiet: true });
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const DEFAULT_LOCAL_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -19,7 +21,7 @@ type AccountSpec = {
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name}이 .env.e2e.local에 필요합니다.`);
+  if (!value) throw new Error(`${name}이 .env.local 또는 .env.e2e.local에 필요합니다.`);
   return value;
 }
 
@@ -78,7 +80,8 @@ async function main() {
   });
 
   const otherId = requireEnv("E2E_OTHER_USER_ID");
-  const mentionName = requireEnv("E2E_MENTION_EXPECTED_NAME");
+  // 멘션 E2E는 선택 사항이다. 값이 없으면 기본 이름을 쓰고, 멘션 시나리오만 건너뛴다.
+  const mentionName = process.env.E2E_MENTION_EXPECTED_NAME?.trim() || "e2e-other";
 
   const authorId = await upsertAccount(admin, { prefix: "E2E_AUTHOR", displayName: "e2e-author" });
   const actualOtherId = await upsertAccount(admin, {
