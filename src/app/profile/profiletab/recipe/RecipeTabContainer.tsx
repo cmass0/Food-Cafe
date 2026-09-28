@@ -47,21 +47,20 @@ export default function RecipeTabContainer({
   return (
     <div>
       <Tabs value={activeTab}>
-        <TabsList className="flex h-auto w-full justify-start gap-8 rounded-none border-b border-zinc-200 bg-transparent p-0">
-          <TabsTrigger value="written" className={tabTriggerClass} asChild>
-            <Link href={buildTabHref("written", search)}>작성 레시피</Link>
-          </TabsTrigger>
-          {showActivityTabs ? (
-            <>
-              <TabsTrigger value="bookmark" className={tabTriggerClass} asChild>
-                <Link href={buildTabHref("bookmark", search)}>북마크</Link>
-              </TabsTrigger>
-              <TabsTrigger value="like" className={tabTriggerClass} asChild>
-                <Link href={buildTabHref("like", search)}>좋아요</Link>
-              </TabsTrigger>
-            </>
-          ) : null}
-        </TabsList>
+        {/* 공개 프로필은 작성 목록 하나뿐이라, 항목 하나짜리 탭 줄을 그리지 않는다. */}
+        {showActivityTabs ? (
+          <TabsList className="flex h-auto w-full justify-start gap-8 rounded-none border-b border-zinc-200 bg-transparent p-0">
+            <TabsTrigger value="written" className={tabTriggerClass} asChild>
+              <Link href={buildTabHref("written", search)}>작성 레시피</Link>
+            </TabsTrigger>
+            <TabsTrigger value="bookmark" className={tabTriggerClass} asChild>
+              <Link href={buildTabHref("bookmark", search)}>북마크</Link>
+            </TabsTrigger>
+            <TabsTrigger value="like" className={tabTriggerClass} asChild>
+              <Link href={buildTabHref("like", search)}>좋아요</Link>
+            </TabsTrigger>
+          </TabsList>
+        ) : null}
         {toolbar}
         <TabsContent value="written" className="mt-8">
           {activeTab === "written" ? (
