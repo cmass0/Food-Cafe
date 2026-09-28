@@ -14,7 +14,6 @@ import { getServerSupabase } from "@/lib/supabase/server";
 
 import { ZodError } from "zod";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, props: contentParams) {

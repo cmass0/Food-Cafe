@@ -3,7 +3,6 @@ import * as userService from "@/domain/user/service";
 import { internalError, json, respondWithSupabaseError } from "@/lib/errors/api-response";
 import { isPostgrestError } from "@/lib/errors/supabase";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {

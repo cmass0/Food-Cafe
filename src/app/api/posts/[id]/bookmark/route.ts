@@ -13,7 +13,6 @@ import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(_: Request, props: contentParams) {
