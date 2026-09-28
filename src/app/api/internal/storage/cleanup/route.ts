@@ -1,6 +1,5 @@
 import { cleanupOrphanedStorage } from "@/lib/storage/server";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAuthorized(request: Request): boolean {

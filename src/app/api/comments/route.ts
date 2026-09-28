@@ -11,7 +11,6 @@ import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // 값이 없거나 비어 있으면 서비스 기본값(1페이지, 기본 개수)을 쓰도록 undefined로 넘긴다.

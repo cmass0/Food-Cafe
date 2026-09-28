@@ -14,7 +14,6 @@ import {
 import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(_: Request, props: contentParams) {

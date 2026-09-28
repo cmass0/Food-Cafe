@@ -5,8 +5,6 @@ import { createRecommendAgent } from "@/features/recommend/agent";
 import { createAgentUIStreamResponse } from "ai";
 import { z } from "zod";
 
-export const runtime = "nodejs";
-
 const recommendChatRequestSchema = z.object({
   messages: z.array(z.unknown()).min(1).max(30),
 });

@@ -10,7 +10,6 @@ import {
 } from "@/lib/errors/api-response";
 import { isPostgrestError } from "@/lib/errors/supabase";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
