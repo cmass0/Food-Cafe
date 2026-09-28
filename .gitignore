@@ -92,6 +92,8 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+# Playwright CLI로 브라우저를 점검할 때 남는 임시 스냅샷·콘솔 로그
+/.playwright-cli/
 
 # 문서 산출물은 로컬에서만 관리
 /docs/*.pdf
