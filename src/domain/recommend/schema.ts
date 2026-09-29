@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RECIPE_CATEGORIES } from "@/domain/recipe/category";
+
 import { RECOMMEND_RECIPE_SORTS, RECOMMEND_SOURCE_TYPES } from "./types";
 import { VIEW_HISTORY_LIMIT } from "./view-history";
 
@@ -84,7 +86,8 @@ export const recommendationSearchSchema = z
       .default([...RECOMMEND_SOURCE_TYPES])
       .transform((sourceTypes) => [...new Set(sourceTypes)]),
     // 아래 값들은 사용자가 명시했을 때만 넣는 정확한 DB 필터다. 없으면 의미 검색만 수행한다.
-    category: recommendationTextFilterSchema.optional(),
+    // DB는 카테고리 이름이 정확히 같아야 걸러지므로, AI가 목록에 없는 이름을 만들지 못하게 한다.
+    category: z.enum(RECIPE_CATEGORIES).optional(),
     difficulty: recommendationTextFilterSchema.optional(),
     maxTimeMinutes: z
       .number({ invalid_type_error: "최대 조리 시간은 숫자여야 합니다." })
