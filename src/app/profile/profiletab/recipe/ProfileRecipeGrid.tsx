@@ -37,7 +37,7 @@ export default function ProfileRecipeGrid({ recipes, view = "grid" }: Props) {
 
   return (
     <div className={cn("grid gap-4", isList ? "grid-cols-1" : "md:grid-cols-2 xl:grid-cols-3")}>
-      {recipes.map((recipe) => {
+      {recipes.map((recipe, index) => {
         const tags = visibleTags(recipe);
 
         return (
@@ -67,6 +67,8 @@ export default function ProfileRecipeGrid({ recipes, view = "grid" }: Props) {
                     alt={recipe.title || "레시피 이미지"}
                     fill
                     sizes={capImageDensity(isList ? "190px" : "150px")}
+                    // 첫 카드 사진은 지연 로딩하면 JS 실행이 끝난 뒤에야 요청된다. 첫 화면에 보이므로 미리 받는다.
+                    preload={index === 0}
                     className="object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
