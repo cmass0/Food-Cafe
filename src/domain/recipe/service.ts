@@ -129,15 +129,19 @@ export async function listRecipes(
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
-  const { items: rows, total: rowtotal } = await repo.fetchRecipes(client, {
-    limit,
-    offset,
-    writerUid: parsed.writerUid,
-    category: parsed.category,
-    search: parsed.search,
-    searchField: parsed.searchField,
-    sort: parsed.sort,
-  });
+  // 목록 조회와 로그인 확인은 서로 기다릴 필요가 없어 함께 보낸다.
+  const [{ items: rows, total: rowtotal }, auth] = await Promise.all([
+    repo.fetchRecipes(client, {
+      limit,
+      offset,
+      writerUid: parsed.writerUid,
+      category: parsed.category,
+      search: parsed.search,
+      searchField: parsed.searchField,
+      sort: parsed.sort,
+    }),
+    client.auth.getUser(),
+  ]);
 
   let items = rows.map(mapRowToRecipe);
   const total = Math.max(rowtotal, offset + items.length);
@@ -145,14 +149,14 @@ export async function listRecipes(
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
   let bookmarkedSet = new Set<string>();
-  const {
-    data: { user },
-  } = await client.auth.getUser();
+  const user = auth.data.user;
 
-  if (user) {
+  if (user && rows.length > 0) {
     const ids = rows.map((row) => row.id);
-    likedSet = await buildLikedSetRecipe(client, ids);
-    bookmarkedSet = await buildBookmarkedSetRecipe(client, ids);
+    [likedSet, bookmarkedSet] = await Promise.all([
+      buildLikedSetRecipe(client, user.id, ids),
+      buildBookmarkedSetRecipe(client, user.id, ids),
+    ]);
   }
   items = items.map((item) => ({
     ...item,

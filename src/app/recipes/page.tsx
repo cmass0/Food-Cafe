@@ -1,253 +1,58 @@
-"use client";
-
-import { Bookmark, Eye, Heart, Plus, Search } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
 
-import { useAuth } from "@/components/auth/AuthProvider";
+import { PaginationComponent } from "@/components/Pagination";
 import Section from "@/components/status/Section";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { useSingleFlight } from "@/hooks/useSingleFlight";
-import { listRecipes } from "@/domain/recipe/api";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
-import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
+import * as recipeService from "@/domain/recipe/service";
 import type {
   Recipe,
   RecipeListResult,
   RecipeSearchField,
   RecipeSort,
 } from "@/domain/recipe/types";
-import type { ApiError } from "@/lib/errors/api-client";
-import { PaginationComponent } from "@/components/Pagination";
+import { loadSection } from "@/lib/errors/section";
+import { getServerSupabase } from "@/lib/supabase/server";
 
-const SORT_OPTIONS: { key: RecipeSort; title: string }[] = [
-  { key: "recent", title: "최신" },
-  { key: "like", title: "좋아요" },
-  { key: "view", title: "조회" },
-];
-
-const SEARCH_FIELD_OPTIONS: { value: RecipeSearchField; label: string }[] = [
-  { value: "title", label: "제목" },
-  { value: "tag", label: "태그" },
-  { value: "tag_title", label: "태그 + 제목" },
-  { value: "writer", label: "작성자" },
-];
+import RecipeListCard from "./ui/RecipeListCard";
+import RecipesToolbar from "./ui/RecipesToolbar";
+import ShareRecipeButton from "./ui/ShareRecipeButton";
 
 const DEFAULT_LIMIT = 12;
 
-function parseRecipeSearchField(value: string | null): RecipeSearchField {
+type SearchParamValue = string | string[] | undefined;
+
+type RecipesPageProps = {
+  searchParams?: Promise<{
+    page?: SearchParamValue;
+    limit?: SearchParamValue;
+    search?: SearchParamValue;
+    searchField?: SearchParamValue;
+    category?: SearchParamValue;
+    sort?: SearchParamValue;
+  }>;
+};
+
+function firstValue(value: SearchParamValue): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parseRecipeSearchField(value: string | undefined): RecipeSearchField {
   if (value === "tag" || value === "title" || value === "tag_title" || value === "writer") {
     return value;
   }
   return "title";
 }
 
-function formatCount(value: number | null | undefined): string {
-  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
+function parseRecipeSort(value: string | undefined): RecipeSort {
+  return value === "like" || value === "view" ? value : "recent";
 }
 
-function formatRecipeDate(value: Date | string | null | undefined): string {
-  if (!value) return "날짜 없음";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "날짜 없음";
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+function positiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function initials(name: string): string {
-  return name.trim().slice(0, 1).toUpperCase() || "U";
-}
-
-function RecipesPageCard({ recipe }: { recipe: Recipe }) {
-  const [liked, setLiked] = useState(recipe.liked ?? false);
-  const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
-  const [bookmarked, setBookmarked] = useState(recipe.bookmarked ?? false);
-  const [bookmarkCount, setBookmarkCount] = useState(recipe.bookmarkCount ?? 0);
-  const { user } = useAuth();
-  const { openAuthModal } = useAuthModal();
-  const likeFlight = useSingleFlight();
-  const bookmarkFlight = useSingleFlight();
-
-  useEffect(() => {
-    setLiked(recipe.liked ?? false);
-    setLikeCount(recipe.likeCount ?? 0);
-    setBookmarked(recipe.bookmarked ?? false);
-    setBookmarkCount(recipe.bookmarkCount ?? 0);
-  }, [recipe]);
-
-  function requireAuth() {
-    const current = new URL(window.location.href);
-    openAuthModal({ next: `${current.pathname}${current.search}` });
-  }
-
-  async function handleLike() {
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await likeFlight.run(async () => {
-      try {
-        const next = await setRecipeLike(recipe.id, !liked);
-        setLiked(next.liked);
-        if (typeof next.likeCount === "number") {
-          setLikeCount(next.likeCount);
-        }
-      } catch (error) {
-        console.error("좋아요 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
-  async function handleBookmark() {
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await bookmarkFlight.run(async () => {
-      try {
-        const next = await setRecipeBookmark(recipe.id, !bookmarked);
-        setBookmarked(next.bookmarked);
-        if (typeof next.bookmarkCount === "number") {
-          setBookmarkCount(next.bookmarkCount);
-        }
-      } catch (error) {
-        console.error("북마크 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
-  const writerName = recipe.writerName ?? "무명 셰프";
-  const tag = recipe.category ?? recipe.tags[0] ?? "레시피";
-
-  return (
-    <article className="group overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative aspect-[4/2.5] overflow-hidden bg-emerald-50">
-        <Link
-          href={`/recipes/${recipe.id}`}
-          prefetch={false}
-          aria-label={`${recipe.title} 상세 보기`}
-          className="relative block h-full w-full"
-        >
-          {recipe.image ? (
-            <Image
-              src={recipe.image}
-              alt={recipe.title || "레시피 이미지"}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-cover transition duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm font-medium text-emerald-700">
-              이미지 준비 중
-            </div>
-          )}
-        </Link>
-
-        <button
-          type="button"
-          aria-label={`북마크 ${formatCount(bookmarkCount)}`}
-          onClick={handleBookmark}
-          disabled={bookmarkFlight.isRunning}
-          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-        >
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
-            <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-[#438e4d]" : ""}`} />
-          </span>
-        </button>
-
-        <button
-          type="button"
-          aria-label={`좋아요 ${formatCount(likeCount)}`}
-          onClick={handleLike}
-          disabled={likeFlight.isRunning}
-          className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
-        >
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
-            <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
-          </span>
-        </button>
-      </div>
-
-      <div className="space-y-3 p-4">
-        <div className="space-y-2">
-          <Link href={`/recipes/${recipe.id}`} prefetch={false}>
-            <h2 className="line-clamp-1 text-base font-bold tracking-tight text-zinc-950">
-              {recipe.title}
-            </h2>
-          </Link>
-          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
-              {initials(writerName)}
-            </span>
-            <span>{writerName}</span>
-            <span>·</span>
-            <span>{formatRecipeDate(recipe.createdAt)}</span>
-          </div>
-        </div>
-
-        <p className="line-clamp-1 text-sm text-zinc-500">
-          {recipe.summary || "설명이 준비되지 않았어요"}
-        </p>
-
-        <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-xs text-zinc-500">
-          <div className="flex items-center gap-5">
-            <span className="inline-flex items-center gap-1.5">
-              <Heart className="h-4 w-4" />
-              {formatCount(likeCount)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Bookmark className="h-4 w-4" />
-              {formatCount(bookmarkCount)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Eye className="h-4 w-4" />
-              {formatCount(recipe.viewCount)}
-            </span>
-          </div>
-          <Link
-            href={`/recipes?search=${encodeURIComponent(tag)}&searchField=tag_title`}
-            className="rounded-full bg-emerald-50 px-3 py-1 font-bold text-[#34783f] transition hover:bg-emerald-100"
-          >
-            #{tag}
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function RecipesGrid({ recipes, loading }: { recipes: Recipe[]; loading: boolean }) {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
-          <div
-            key={index}
-            className="h-[330px] animate-pulse rounded-lg border border-zinc-200 bg-zinc-50"
-          />
-        ))}
-      </div>
-    );
-  }
-
+function RecipesGrid({ recipes }: { recipes: Recipe[] }) {
   if (!recipes.length) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center">
@@ -259,134 +64,57 @@ function RecipesGrid({ recipes, loading }: { recipes: Recipe[]; loading: boolean
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {recipes.map((recipe) => (
-        <RecipesPageCard key={recipe.id} recipe={recipe} />
+      {recipes.map((recipe, index) => (
+        // 모바일에서 첫 화면에 보이는 카드는 첫 번째뿐이다. 더 미리 받으면 첫 이미지와 회선을 나눠 쓴다.
+        <RecipeListCard key={recipe.id} recipe={recipe} preload={index === 0} />
       ))}
     </div>
   );
 }
 
-function RecipesPageInner() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [sort, setSort] = useState<RecipeSort>("recent");
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [outOfRange, setOutOfRange] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [pageMeta, setPageMeta] = useState<Pick<RecipeListResult, "limit" | "offset" | "total">>({
-    limit: DEFAULT_LIMIT,
-    offset: 0,
-    total: 0,
-  });
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { user } = useAuth();
-  const { openAuthModal } = useAuthModal();
-
-  const pageParam = searchParams.get("page");
-  const limitParam = searchParams.get("limit");
-  const searchQuery = searchParams.get("search");
-  const fieldParam = parseRecipeSearchField(searchParams.get("searchField"));
-  const categoryParam = searchParams.get("category");
+// 목록은 서버에서 조회해 HTML에 담아 보낸다. 브라우저가 JS를 실행한 뒤에야 목록을 요청하면
+// 느린 회선에서 카드 이미지 요청이 몇 초씩 늦어진다. 정렬·검색·페이지 조건은 모두 주소로 받는다.
+export default async function RecipesPage(props: RecipesPageProps) {
+  const searchParams = await props.searchParams;
+  const page = positiveInteger(firstValue(searchParams?.page), 1);
+  const limit = positiveInteger(firstValue(searchParams?.limit), DEFAULT_LIMIT);
+  const searchQuery = firstValue(searchParams?.search)?.trim() || undefined;
+  const searchField = parseRecipeSearchField(firstValue(searchParams?.searchField));
+  const categoryParam = firstValue(searchParams?.category);
   const category = isRecipeCategoryKey(categoryParam) ? categoryParam : undefined;
   const categoryLabel = category ? getRecipeCategoryLabel(category) : undefined;
+  const sort = parseRecipeSort(firstValue(searchParams?.sort));
 
-  const [searchText, setSearchText] = useState(searchQuery ?? "");
-  const [searchField, setSearchField] = useState<RecipeSearchField>(fieldParam);
+  const supabase = await getServerSupabase();
+  const emptyList: RecipeListResult = {
+    items: [],
+    total: 0,
+    limit,
+    offset: (page - 1) * limit,
+    hasMore: false,
+  };
+  const listResult = await loadSection(
+    "recipes.list",
+    () =>
+      recipeService.listRecipes(supabase, {
+        page,
+        limit,
+        sort,
+        category,
+        ...(searchQuery ? { search: searchQuery, searchField } : {}),
+      }),
+    emptyList
+  );
+  // 서비스가 상한을 적용한 실제 페이지 크기로 페이지 번호를 계산한다.
+  const { items, total, limit: pageSize } = listResult.data;
 
-  const parsedPage = Number(pageParam);
-  const parsedLimit = Number(limitParam);
-  const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
-
-  useEffect(() => {
-    setSearchText(searchQuery ?? "");
-    setSearchField(fieldParam);
-  }, [searchQuery, fieldParam]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchRecipes() {
-      setLoading(true);
-      setLoadError(false);
-      setOutOfRange(false);
-      try {
-        const data = await listRecipes({
-          limit: safeLimit,
-          page: safePage,
-          sort,
-          category,
-          ...(searchQuery ? { search: searchQuery, searchField: fieldParam } : {}),
-        });
-        const items = (data?.items ?? []).map((item: Recipe) => ({
-          ...item,
-          createdAt: item?.createdAt ? new Date(item.createdAt) : null,
-          updatedAt: item?.updatedAt ? new Date(item.updatedAt) : null,
-        })) as Recipe[];
-        if (mounted) {
-          setRecipes(items);
-          setPageMeta({
-            limit: data.limit,
-            offset: data.offset,
-            total: data.total,
-          });
-        }
-      } catch (error) {
-        // 목록 API의 404는 범위를 벗어난 page뿐이다. 장애가 아니므로 첫 페이지 안내로 처리한다.
-        const pageOutOfRange = (error as ApiError).status === 404;
-        if (!pageOutOfRange) console.error("레시피 목록을 불러오지 못했습니다.", error);
-        if (mounted) {
-          setOutOfRange(pageOutOfRange);
-          setLoadError(!pageOutOfRange);
-          setRecipes([]);
-          setPageMeta({ limit: safeLimit, offset: 0, total: 0 });
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    fetchRecipes();
-    return () => {
-      mounted = false;
-    };
-  }, [safeLimit, safePage, user?.id, searchQuery, fieldParam, sort, category, reloadKey]);
-
-  function handleShare(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    if (!user) {
-      openAuthModal({ next: "/recipes/new" });
-      return;
-    }
-    router.push("/recipes/new");
-  }
-
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = searchText.trim();
-    const params = new URLSearchParams();
-    if (category) {
-      params.set("category", category);
-    }
-    if (trimmed) {
-      params.set("search", trimmed);
-      params.set("searchField", searchField);
-    }
-    router.push(params.size ? `/recipes?${params.toString()}` : "/recipes");
-  }
-
-  const currentPage = safePage;
-  const pageSize = pageMeta.limit > 0 ? pageMeta.limit : safeLimit;
   const paginationQuery: Record<string, string> = {};
   if (searchQuery) {
     paginationQuery.search = searchQuery;
-    paginationQuery.searchField = fieldParam;
+    paginationQuery.searchField = searchField;
   }
-  if (category) {
-    paginationQuery.category = category;
-  }
+  if (category) paginationQuery.category = category;
+  if (sort !== "recent") paginationQuery.sort = sort;
 
   return (
     <main className="min-h-screen bg-white text-zinc-950">
@@ -411,109 +139,33 @@ function RecipesPageInner() {
                 다양한 레시피를 찾아보고, 나만의 레시피도 공유해보세요!
               </p>
             </div>
-            <Button
-              className="h-12 rounded-full bg-[#34783f] px-7 text-base font-bold text-white shadow-sm hover:bg-[#2f6f39]"
-              onClick={handleShare}
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              레시피 공유하기
-            </Button>
+            <ShareRecipeButton />
           </div>
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <Tabs
-              value={sort}
-              onValueChange={(value) => setSort(value as RecipeSort)}
-              className="w-full md:w-auto"
-            >
-              <TabsList className="h-12 w-full max-w-[260px] rounded-full bg-zinc-100 p-1.5 md:w-auto">
-                {SORT_OPTIONS.map(({ key, title }) => (
-                  <TabsTrigger
-                    key={key}
-                    value={key}
-                    className="h-9 rounded-full px-5 text-sm font-bold text-zinc-500 data-[state=active]:bg-[#34783f] data-[state=active]:text-white data-[state=active]:shadow-none"
-                  >
-                    {title}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-
-            <form
-              onSubmit={handleSearchSubmit}
-              className="flex h-12 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition focus-within:border-[#438e4d] focus-within:ring-2 focus-within:ring-[#438e4d]/30 md:max-w-[470px]"
-            >
-              <Select
-                value={searchField}
-                onValueChange={(value) => setSearchField(value as RecipeSearchField)}
-              >
-                <SelectTrigger
-                  size="lg"
-                  aria-label="검색 범위"
-                  className="h-12 w-32 rounded-none border-0 border-r border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-800 shadow-none focus:ring-0"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEARCH_FIELD_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
-                <Input
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="레시피 검색..."
-                  className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-sm shadow-none outline-none placeholder:text-zinc-400 focus-visible:ring-0"
-                />
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="검색"
-                  className="h-11 w-11 shrink-0 rounded-md text-zinc-500 hover:text-zinc-900"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              </div>
-            </form>
-          </div>
+          <RecipesToolbar
+            sort={sort}
+            category={category}
+            searchQuery={searchQuery}
+            searchField={searchField}
+          />
         </section>
 
         <Section
           name="recipes.list"
-          failed={!loading && loadError}
-          outOfRange={!loading && outOfRange}
+          failed={listResult.error}
+          outOfRange={listResult.outOfRange}
           title="레시피 목록을 표시하지 못했습니다."
-          resetKeys={[
-            safePage,
-            safeLimit,
-            searchQuery,
-            fieldParam,
-            sort,
-            category,
-            user?.id,
-            loading,
-          ]}
-          onRetry={() => {
-            // useEffect의 재조회가 끝날 때까지 기존 카드 대신 로딩 화면을 유지한다.
-            setLoading(true);
-            setLoadError(false);
-            setReloadKey((current) => current + 1);
-          }}
+          resetKeys={[page, limit, searchQuery, searchField, sort, category]}
         >
-          <RecipesGrid recipes={recipes} loading={loading} />
+          <RecipesGrid recipes={items} />
 
-          {!loading && !loadError && pageMeta.total > 0 ? (
+          {total > 0 ? (
             <footer className="mt-10 flex justify-center">
               <PaginationComponent
                 basePath="/recipes"
-                page={currentPage}
+                page={page}
                 pageItemSize={pageSize}
-                total={pageMeta.total}
+                total={total}
                 query={paginationQuery}
               />
             </footer>
@@ -521,13 +173,5 @@ function RecipesPageInner() {
         </Section>
       </div>
     </main>
-  );
-}
-
-export default function RecipesPage() {
-  return (
-    <Suspense fallback={<div className="mx-auto w-full max-w-7xl px-5 py-10 lg:px-8" />}>
-      <RecipesPageInner />
-    </Suspense>
   );
 }

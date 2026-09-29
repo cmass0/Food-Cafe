@@ -99,7 +99,7 @@ export default function RecipeDetail({
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 560px"
-                priority
+                preload
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-medium text-emerald-700">
