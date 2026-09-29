@@ -25,6 +25,7 @@ import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
 import { setComboLike } from "@/domain/combo/combo_like/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
 import type { ApiError } from "@/lib/errors/api-client";
+import { capImageDensity } from "@/lib/image-sizes";
 import { PaginationComponent } from "@/components/Pagination";
 
 const DEFAULT_LIMIT = 9;
@@ -224,7 +225,7 @@ function ComboGridCard({
             src={combo.image}
             alt={combo.title || "레시피 조합 이미지"}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 280px"
+            sizes={capImageDensity("(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 280px")}
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
@@ -314,7 +315,7 @@ function ComboPreviewPanel({
             src={combo.image}
             alt={combo.title || "레시피 조합 미리보기 이미지"}
             fill
-            sizes="(max-width: 1024px) 100vw, 380px"
+            sizes={capImageDensity("(max-width: 1024px) 100vw, 380px")}
             className="object-cover"
           />
         ) : (

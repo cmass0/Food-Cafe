@@ -5,6 +5,7 @@ import Link from "next/link";
 import Section from "@/components/status/Section";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { PaginationComponent } from "@/components/Pagination";
+import { capImageDensity } from "@/lib/image-sizes";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -65,11 +66,11 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
             src={recipe.image}
             alt={recipe.title || "레시피 이미지"}
             fill
-            sizes={
+            sizes={capImageDensity(
               viewMode === "list"
                 ? "(max-width: 767px) 50vw, 260px"
                 : "(max-width: 767px) 50vw, (max-width: 1280px) 50vw, 25vw"
-            }
+            )}
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (

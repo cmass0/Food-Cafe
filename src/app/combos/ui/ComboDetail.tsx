@@ -20,6 +20,7 @@ import ViewCount from "@/components/ViewCount.client";
 import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Combos } from "@/domain/combo/types";
+import { capImageDensity } from "@/lib/image-sizes";
 import ComboToolsPanel from "./ComboToolsPanel";
 
 function formatMinutes(value: number | null | undefined) {
@@ -94,7 +95,7 @@ export default function ComboDetail({
                 alt={combo.title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 560px"
+                sizes={capImageDensity("(max-width: 1024px) 100vw, 560px")}
                 priority
               />
             ) : (
