@@ -12,15 +12,30 @@ const DENSITY_CAPS = [
 // "(max-width: 640px) 100vw" → 조건 "(max-width: 640px)", 폭 "100vw". 조건 없는 "25vw"도 받는다.
 const ENTRY = /^(?:(.*\))\s+)?(\S+)$/;
 
+// 괄호 밖의 쉼표로만 항목을 나눈다. min(100vw, 500px)처럼 함수 안의 쉼표는 항목을 가르지 않는다.
+function splitEntries(sizes: string): string[] {
+  const entries: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < sizes.length; index += 1) {
+    const char = sizes[index];
+    if (char === "(") depth += 1;
+    else if (char === ")") depth = Math.max(0, depth - 1);
+    else if (char === "," && depth === 0) {
+      entries.push(sizes.slice(start, index));
+      start = index + 1;
+    }
+  }
+  entries.push(sizes.slice(start));
+  return entries.map((entry) => entry.trim()).filter(Boolean);
+}
+
 /**
  * sizes의 각 항목 앞에 "고배율 화면이면 같은 폭을 줄여 계산한다"는 항목을 배율 구간별로 덧붙인다.
  * 2배 이하 화면은 원래 항목을 그대로 쓴다. 해석할 수 없는 항목은 바꾸지 않고 남긴다.
  */
 export function capImageDensity(sizes: string): string {
-  return sizes
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
+  return splitEntries(sizes)
     .flatMap((entry) => {
       const match = ENTRY.exec(entry);
       if (!match) return [entry];

@@ -37,6 +37,16 @@ test.describe("레시피 목록", () => {
     expect(await page.locator("article").count()).toBeLessThanOrEqual(50);
   });
 
+  test("기본이 아닌 limit은 페이지 이동 링크에도 남는다", async ({ page }) => {
+    // 링크에서 limit이 빠지면 2페이지가 기본 크기(12)로 계산돼 6~12번째 항목을 건너뛴다.
+    await page.goto("/recipes?limit=5");
+    const secondPage = page.locator('a[href*="page=2"]').first();
+    test.skip((await secondPage.count()) === 0, "두 페이지 이상 표시할 레시피가 없는 DB입니다.");
+
+    const href = (await secondPage.getAttribute("href")) ?? "";
+    expect(new URL(href, page.url()).searchParams.get("limit")).toBe("5");
+  });
+
   test("정렬 탭을 바꾸면 주소의 sort가 바뀌고 첫 페이지로 돌아간다", async ({ page }) => {
     await page.goto("/recipes?page=1");
 
