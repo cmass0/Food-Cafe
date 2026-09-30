@@ -5,9 +5,29 @@ import {
   MAX_RECOMMEND_QUERY_LENGTH,
   MAX_RECOMMEND_RESULTS,
   personalRecommendationRequestSchema,
+  recommendationSearchSchema,
   recommendRecipeSearchSchema,
 } from "./schema";
 import { VIEW_HISTORY_LIMIT } from "./view-history";
+
+describe("AI 추천 검색 입력의 카테고리", () => {
+  test("작성 폼과 같은 카테고리 이름은 그대로 받는다", () => {
+    expect(
+      recommendationSearchSchema.parse({ query: "고기 요리", category: "고기·구이" })
+    ).toMatchObject({ category: "고기·구이" });
+  });
+
+  test("카테고리를 정하지 않으면 거르지 않는다", () => {
+    expect(recommendationSearchSchema.parse({ query: "얼큰한 국물" }).category).toBeUndefined();
+  });
+
+  test.each(["디저트", "Korean", "찌개", ""])("목록에 없는 카테고리 %s는 거부한다", (category) => {
+    const result = recommendationSearchSchema.safeParse({ query: "추천", category });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["category"]);
+  });
+});
 
 describe("추천 레시피 검색 입력", () => {
   test("값이 없으면 인기순과 기본 검색 개수를 사용한다", () => {
