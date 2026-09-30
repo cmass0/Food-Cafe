@@ -45,6 +45,27 @@ describe("capImageDensity", () => {
     );
   });
 
+  test("함수 안의 쉼표로는 항목을 가르지 않고, 공백이 든 함수 폭은 그대로 둔다", () => {
+    expect(capImageDensity("(max-width: 640px) 100vw, min(100vw, 500px)")).toBe(
+      [
+        `(max-width: 640px) and ${X4} calc(100vw * 1 / 2)`,
+        `(max-width: 640px) and ${X3} calc(100vw * 2 / 3)`,
+        "(max-width: 640px) 100vw",
+        "min(100vw, 500px)",
+      ].join(", ")
+    );
+  });
+
+  test("공백 없는 함수 폭은 고배율 항목을 붙인다", () => {
+    expect(capImageDensity("(max-width: 640px) clamp(200px,50vw,600px)")).toBe(
+      [
+        `(max-width: 640px) and ${X4} calc(clamp(200px,50vw,600px) * 1 / 2)`,
+        `(max-width: 640px) and ${X3} calc(clamp(200px,50vw,600px) * 2 / 3)`,
+        "(max-width: 640px) clamp(200px,50vw,600px)",
+      ].join(", ")
+    );
+  });
+
   test.each([
     ["공백이 든 calc 폭", "calc(100vw - 40px)"],
     ["조건 뒤 공백이 든 calc 폭", "(max-width: 640px) calc(100vw - 40px)"],
