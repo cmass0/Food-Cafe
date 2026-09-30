@@ -1,4 +1,5 @@
 "use client";
+import { AuthChangeRefresher } from "@/components/auth/AuthChangeRefresher";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import type { Session } from "@supabase/supabase-js";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -14,6 +15,7 @@ export default function Providers({
   return (
     <AuthProvider initialSession={initialSession}>
       <AuthModalProvider>
+        <AuthChangeRefresher />
         {children}
         <Toaster position="top-center" richColors />
       </AuthModalProvider>

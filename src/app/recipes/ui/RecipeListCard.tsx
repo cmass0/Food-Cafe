@@ -128,6 +128,7 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
         <button
           type="button"
           aria-label={`북마크 ${formatCount(bookmarkCount)}`}
+          aria-pressed={bookmarked}
           onClick={handleBookmark}
           disabled={bookmarkFlight.isRunning}
           className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
@@ -140,6 +141,7 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
         <button
           type="button"
           aria-label={`좋아요 ${formatCount(likeCount)}`}
+          aria-pressed={liked}
           onClick={handleLike}
           disabled={likeFlight.isRunning}
           className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
