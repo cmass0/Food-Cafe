@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { RecipeCategoryKey } from "@/domain/recipe/category";
+import { toRecipeListQuery, type RecipeListQuery } from "@/domain/recipe/list-params";
 import type { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
 
 const SORT_OPTIONS: { key: RecipeSort; title: string }[] = [
@@ -35,28 +36,13 @@ type RecipesToolbarProps = {
   category?: RecipeCategoryKey;
   searchQuery?: string;
   searchField: RecipeSearchField;
+  limit: number;
 };
 
 // 목록 조건은 모두 주소에 담는다. 주소가 바뀌면 서버가 그 조건으로 목록을 다시 그린다.
 // 정렬·검색 조건을 바꾸면 결과 범위가 달라지므로 page는 1로 돌아간다.
-function buildRecipesHref({
-  sort,
-  category,
-  search,
-  searchField,
-}: {
-  sort: RecipeSort;
-  category?: RecipeCategoryKey;
-  search?: string;
-  searchField: RecipeSearchField;
-}): string {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (search) {
-    params.set("search", search);
-    params.set("searchField", searchField);
-  }
-  if (sort !== "recent") params.set("sort", sort);
+function buildRecipesHref(query: RecipeListQuery): string {
+  const params = new URLSearchParams(toRecipeListQuery(query));
   return params.size ? `/recipes?${params.toString()}` : "/recipes";
 }
 
@@ -65,6 +51,7 @@ export default function RecipesToolbar({
   category,
   searchQuery,
   searchField: currentSearchField,
+  limit,
 }: RecipesToolbarProps) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(searchQuery ?? "");
@@ -82,15 +69,14 @@ export default function RecipesToolbar({
         category,
         search: searchQuery,
         searchField: currentSearchField,
+        limit,
       })
     );
   }
 
   function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push(
-      buildRecipesHref({ sort, category, search: searchText.trim() || undefined, searchField })
-    );
+    router.push(buildRecipesHref({ sort, category, search: searchText, searchField, limit }));
   }
 
   return (
