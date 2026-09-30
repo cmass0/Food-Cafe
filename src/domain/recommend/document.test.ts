@@ -50,21 +50,14 @@ describe("buildRecipeRecommendationDocument", () => {
       sourceId: "recipe-1",
       title: "김치볶음밥",
       searchText: [
-        "문서 버전: recommendation-document-v1",
-        "콘텐츠 유형: 레시피",
         "제목: 김치볶음밥",
         "설명: 남은 재료로 만드는 한 끼",
         "카테고리: 한식",
         "태그: 자취요리, 간단",
-        "재료: 김치 100 g, 밥 1 공기",
-        "재료 수: 2",
+        "재료: 김치, 밥",
         "조리 도구: 프라이팬",
-        "특별한 조리 도구 필요: 예",
-        "난이도: 쉬움",
-        "조리 시간: 10분",
-        "인분: 1인분",
-        "조리 순서: 김치를 볶는다, 밥을 넣는다",
-        "요리 팁: 마지막에 참기름을 넣는다",
+        "조리 순서: 김치를 볶는다 밥을 넣는다",
+        "팁: 마지막에 참기름을 넣는다",
       ].join("\n"),
       category: "한식",
       difficulty: "쉬움",
@@ -89,16 +82,30 @@ describe("buildRecipeRecommendationDocument", () => {
       servings: null,
     });
 
-    expect(result.searchText).toBe(
-      [
-        "문서 버전: recommendation-document-v1",
-        "콘텐츠 유형: 레시피",
-        "제목: 김치볶음밥",
-        "재료 수: 0",
-        "특별한 조리 도구 필요: 예",
-      ].join("\n")
-    );
+    expect(result.searchText).toBe("제목: 김치볶음밥");
     expect(result.ingredientNames).toEqual([]);
+  });
+
+  test("같은 재료가 여러 번 나와도 검색 문서에는 이름을 한 번만 적는다", () => {
+    const result = buildRecipeRecommendationDocument({
+      ...RECIPE_SOURCE,
+      ingredients: [
+        { name: " 대파 ", amount: "1", unit: "custom", unitCustom: "대" },
+        { name: "대파", amount: "0.5", unit: "custom", unitCustom: "대" },
+        { name: "Egg", amount: "2", unit: "개", unitCustom: "" },
+        { name: "egg", amount: "1", unit: "개", unitCustom: "" },
+      ],
+    });
+
+    expect(result.searchText).toContain("\n재료: 대파, Egg\n");
+    expect(result.ingredientNames).toEqual(["대파", "egg"]);
+  });
+
+  test("수량·난이도·시간·인분은 검색 문서에 쓰지 않고 필터 값으로만 남긴다", () => {
+    const result = buildRecipeRecommendationDocument(RECIPE_SOURCE);
+
+    expect(result.searchText).not.toMatch(/[0-9]|공기|쉬움|인분|필요/);
+    expect(result).toMatchObject({ difficulty: "쉬움", timeMinutes: 10, toolsRequired: true });
   });
 
   test("공백 제목은 검색 문서로 만들지 않는다", () => {
@@ -109,7 +116,7 @@ describe("buildRecipeRecommendationDocument", () => {
 });
 
 describe("buildComboRecommendationDocument", () => {
-  test("콤보 구성과 0분 준비 시간을 검색 문서에 포함한다", () => {
+  test("콤보 구성은 검색 문서에, 0분 준비 시간은 필터 값에 담는다", () => {
     const result = buildComboRecommendationDocument(COMBO_SOURCE);
 
     expect(result).toEqual({
@@ -117,16 +124,10 @@ describe("buildComboRecommendationDocument", () => {
       sourceId: "combo-1",
       title: "토스트 아침 세트",
       searchText: [
-        "문서 버전: recommendation-document-v1",
-        "콘텐츠 유형: 레시피 콤보",
         "제목: 토스트 아침 세트",
         "설명: 가벼운 아침 식사",
         "태그: 아침, 간단",
         "구성: 토스트 - 바삭한 토스트, 그릭요거트 - 150g",
-        "구성 수: 2",
-        "특별한 조리 도구 필요: 아니오",
-        "난이도: 하",
-        "준비 시간: 0분",
         "준비 순서: 접시에 함께 담는다",
       ].join("\n"),
       category: null,

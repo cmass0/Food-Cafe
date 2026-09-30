@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPostCategoryOption } from "@/domain/post/category";
 import type { Post } from "@/domain/post/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import type { ProfileView } from "../../profile-types";
 
@@ -14,11 +15,7 @@ type Props = {
 };
 
 function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(value);
+  return formatInKoreanTime(value, { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
 function summary(post: Post): string {

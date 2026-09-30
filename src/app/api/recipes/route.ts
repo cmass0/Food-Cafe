@@ -1,7 +1,12 @@
 import { isRecipeCategoryKey } from "@/domain/recipe/category";
+import {
+  parseRecipeListLimit,
+  parseRecipeListPage,
+  parseRecipeSearchField,
+  parseRecipeSort,
+} from "@/domain/recipe/list-params";
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
-import type { RecipeSearchField, RecipeSort } from "@/domain/recipe/types";
 import {
   AuthErrorHelper,
   badRequest,
@@ -14,30 +19,18 @@ import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ZodError } from "zod";
 
-function parseRecipeSearchField(value: string | null): RecipeSearchField | undefined {
-  if (value === "tag" || value === "title" || value === "tag_title" || value === "writer") {
-    return value;
-  }
-  return undefined;
-}
-
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const limitParam = Number(url.searchParams.get("limit"));
-    const pageParam = Number(url.searchParams.get("page"));
-    const limit = Number.isFinite(limitParam) ? limitParam : undefined;
-    const page = Number.isFinite(pageParam) ? pageParam : undefined;
+    // page·limit이 없거나 잘못되면 서비스 기본값을 쓴다. 예전에는 없는 값을 0으로 읽어 500이 났다.
+    const limit = parseRecipeListLimit(url.searchParams.get("limit"));
+    const page = parseRecipeListPage(url.searchParams.get("page"));
     const writerUid = url.searchParams.get("writerUid") || undefined;
     const categoryParam = url.searchParams.get("category");
     const category = isRecipeCategoryKey(categoryParam) ? categoryParam : undefined;
     const search = url.searchParams.get("search") || undefined;
     const searchField = parseRecipeSearchField(url.searchParams.get("searchField"));
-    const sortParam = url.searchParams.get("sort");
-    const sort =
-      sortParam === "recent" || sortParam === "like" || sortParam === "view"
-        ? (sortParam as RecipeSort)
-        : undefined;
+    const sort = parseRecipeSort(url.searchParams.get("sort"));
     const supabase = await getServerSupabase();
 
     const recipes = await recipeService.listRecipes(supabase, {

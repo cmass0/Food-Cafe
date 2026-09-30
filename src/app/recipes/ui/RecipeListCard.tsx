@@ -11,6 +11,7 @@ import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 import { capImageDensity } from "@/lib/image-sizes";
 
 function formatCount(value: number | null | undefined): string {
@@ -21,11 +22,7 @@ function formatRecipeDate(value: Date | string | null | undefined): string {
   if (!value) return "날짜 없음";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "날짜 없음";
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatInKoreanTime(date, { year: "numeric", month: "long", day: "numeric" });
 }
 
 function initials(name: string): string {
@@ -129,6 +126,7 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
         <button
           type="button"
           aria-label={`북마크 ${formatCount(bookmarkCount)}`}
+          aria-pressed={bookmarked}
           onClick={handleBookmark}
           disabled={bookmarkFlight.isRunning}
           className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
@@ -141,6 +139,7 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
         <button
           type="button"
           aria-label={`좋아요 ${formatCount(likeCount)}`}
+          aria-pressed={liked}
           onClick={handleLike}
           disabled={likeFlight.isRunning}
           className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
