@@ -3,13 +3,15 @@ import { expect, test } from "@playwright/test";
 const CATEGORIES = [
   ["전체", "/recipes"],
   ["한식", "/recipes?category=korean"],
+  ["고기·구이", "/recipes?category=meat"],
+  ["분식", "/recipes?category=bunsik"],
   ["중식", "/recipes?category=chinese"],
   ["일식", "/recipes?category=japanese"],
   ["양식", "/recipes?category=western"],
-  ["디저트", "/recipes?category=dessert"],
-  ["샐러드", "/recipes?category=salad"],
-  ["간식", "/recipes?category=snack"],
-  ["다이어트", "/recipes?category=diet"],
+  ["아시안", "/recipes?category=asian"],
+  ["샐러드·건강식", "/recipes?category=salad"],
+  ["디저트·베이킹", "/recipes?category=dessert"],
+  ["간식·야식", "/recipes?category=snack"],
 ] as const;
 
 test.describe("홈 발견 영역", () => {

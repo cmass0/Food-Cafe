@@ -9,15 +9,16 @@ import PostBookmarkButton from "@/app/posts/ui/PostBookmarkButton";
 import PostLikeButton from "@/app/posts/ui/PostLikeButton";
 import { renderPostContentHtml } from "@/domain/post/content";
 import type { Post } from "@/domain/post/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 
 function formatPostDate(date: Date) {
-  return new Intl.DateTimeFormat("ko-KR", {
+  return formatInKoreanTime(date, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+  });
 }
 
 function initials(name: string) {

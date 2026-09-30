@@ -3,6 +3,7 @@
 import { useAuth } from "@/components/auth/AuthProvider";
 import ConfirmModal from "@/components/ConfirmModal";
 import type { CommentDisplayItem } from "@/domain/comment/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 import { MessageCircle, TriangleAlert } from "lucide-react";
 
 type CommentListProps = {
@@ -14,7 +15,15 @@ type CommentListProps = {
 const formatDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("ko-KR");
+  // toLocaleString("ko-KR")과 같은 항목(연·월·일·시·분·초)을 한국 시간으로 표시한다.
+  return formatInKoreanTime(date, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+  });
 };
 
 export function CommentList({ items, loading, onDelete }: CommentListProps) {
