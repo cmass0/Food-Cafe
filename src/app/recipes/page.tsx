@@ -4,10 +4,12 @@ import { PaginationComponent } from "@/components/Pagination";
 import Section from "@/components/status/Section";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
 import {
+  DEFAULT_RECIPE_LIST_LIMIT,
   parseRecipeListLimit,
   parseRecipeListPage,
   parseRecipeSearchField,
   parseRecipeSort,
+  toRecipeListQuery,
 } from "@/domain/recipe/list-params";
 import * as recipeService from "@/domain/recipe/service";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
@@ -17,8 +19,6 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import RecipeListCard from "./ui/RecipeListCard";
 import RecipesToolbar from "./ui/RecipesToolbar";
 import ShareRecipeButton from "./ui/ShareRecipeButton";
-
-const DEFAULT_LIMIT = 12;
 
 type SearchParamValue = string | string[] | undefined;
 
@@ -65,7 +65,7 @@ function RecipesGrid({ recipes }: { recipes: Recipe[] }) {
 export default async function RecipesPage(props: RecipesPageProps) {
   const searchParams = await props.searchParams;
   const page = parseRecipeListPage(firstValue(searchParams?.page)) ?? 1;
-  const limit = parseRecipeListLimit(firstValue(searchParams?.limit)) ?? DEFAULT_LIMIT;
+  const limit = parseRecipeListLimit(firstValue(searchParams?.limit)) ?? DEFAULT_RECIPE_LIST_LIMIT;
   const searchQuery = firstValue(searchParams?.search)?.trim() || undefined;
   const searchField = parseRecipeSearchField(firstValue(searchParams?.searchField)) ?? "title";
   const categoryParam = firstValue(searchParams?.category);
@@ -96,13 +96,13 @@ export default async function RecipesPage(props: RecipesPageProps) {
   // 서비스가 상한을 적용한 실제 페이지 크기로 페이지 번호를 계산한다.
   const { items, total, limit: pageSize } = listResult.data;
 
-  const paginationQuery: Record<string, string> = {};
-  if (searchQuery) {
-    paginationQuery.search = searchQuery;
-    paginationQuery.searchField = searchField;
-  }
-  if (category) paginationQuery.category = category;
-  if (sort !== "recent") paginationQuery.sort = sort;
+  const paginationQuery = toRecipeListQuery({
+    sort,
+    category,
+    search: searchQuery,
+    searchField,
+    limit: pageSize,
+  });
 
   return (
     <main className="min-h-screen bg-white text-zinc-950">
@@ -135,6 +135,7 @@ export default async function RecipesPage(props: RecipesPageProps) {
             category={category}
             searchQuery={searchQuery}
             searchField={searchField}
+            limit={pageSize}
           />
         </section>
 
