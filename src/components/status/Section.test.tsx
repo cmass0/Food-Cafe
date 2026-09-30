@@ -26,6 +26,8 @@ function renderWithRouter(content: ReactNode, refresh = vi.fn()) {
     replace() {},
     prefetch() {},
     refresh,
+    // Next 16.3에서 라우터에 추가된 필수 값. 이 테스트는 쓰지 않는다.
+    bfcacheId: "test",
   };
   return <AppRouterContext.Provider value={router}>{content}</AppRouterContext.Provider>;
 }
