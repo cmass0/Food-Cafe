@@ -3,13 +3,14 @@ import Link from "next/link";
 import { PaginationComponent } from "@/components/Pagination";
 import Section from "@/components/status/Section";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
+import {
+  parseRecipeListLimit,
+  parseRecipeListPage,
+  parseRecipeSearchField,
+  parseRecipeSort,
+} from "@/domain/recipe/list-params";
 import * as recipeService from "@/domain/recipe/service";
-import type {
-  Recipe,
-  RecipeListResult,
-  RecipeSearchField,
-  RecipeSort,
-} from "@/domain/recipe/types";
+import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -36,22 +37,6 @@ function firstValue(value: SearchParamValue): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function parseRecipeSearchField(value: string | undefined): RecipeSearchField {
-  if (value === "tag" || value === "title" || value === "tag_title" || value === "writer") {
-    return value;
-  }
-  return "title";
-}
-
-function parseRecipeSort(value: string | undefined): RecipeSort {
-  return value === "like" || value === "view" ? value : "recent";
-}
-
-function positiveInteger(value: string | undefined, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 function RecipesGrid({ recipes }: { recipes: Recipe[] }) {
   if (!recipes.length) {
     return (
@@ -62,11 +47,14 @@ function RecipesGrid({ recipes }: { recipes: Recipe[] }) {
     );
   }
 
+  // 모바일 첫 화면에는 카드가 하나만 보인다. 사진이 있는 첫 카드만 미리 받는다.
+  // 더 미리 받으면 사진끼리 회선을 나눠 첫 사진이 늦어지고, 첫 카드에 사진이 없으면 인덱스 0은 효과가 없다.
+  const preloadIndex = recipes.findIndex((recipe) => recipe.image);
+
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {recipes.map((recipe, index) => (
-        // 모바일에서 첫 화면에 보이는 카드는 첫 번째뿐이다. 더 미리 받으면 첫 이미지와 회선을 나눠 쓴다.
-        <RecipeListCard key={recipe.id} recipe={recipe} preload={index === 0} />
+        <RecipeListCard key={recipe.id} recipe={recipe} preload={index === preloadIndex} />
       ))}
     </div>
   );
@@ -76,14 +64,14 @@ function RecipesGrid({ recipes }: { recipes: Recipe[] }) {
 // 느린 회선에서 카드 이미지 요청이 몇 초씩 늦어진다. 정렬·검색·페이지 조건은 모두 주소로 받는다.
 export default async function RecipesPage(props: RecipesPageProps) {
   const searchParams = await props.searchParams;
-  const page = positiveInteger(firstValue(searchParams?.page), 1);
-  const limit = positiveInteger(firstValue(searchParams?.limit), DEFAULT_LIMIT);
+  const page = parseRecipeListPage(firstValue(searchParams?.page)) ?? 1;
+  const limit = parseRecipeListLimit(firstValue(searchParams?.limit)) ?? DEFAULT_LIMIT;
   const searchQuery = firstValue(searchParams?.search)?.trim() || undefined;
-  const searchField = parseRecipeSearchField(firstValue(searchParams?.searchField));
+  const searchField = parseRecipeSearchField(firstValue(searchParams?.searchField)) ?? "title";
   const categoryParam = firstValue(searchParams?.category);
   const category = isRecipeCategoryKey(categoryParam) ? categoryParam : undefined;
   const categoryLabel = category ? getRecipeCategoryLabel(category) : undefined;
-  const sort = parseRecipeSort(firstValue(searchParams?.sort));
+  const sort = parseRecipeSort(firstValue(searchParams?.sort)) ?? "recent";
 
   const supabase = await getServerSupabase();
   const emptyList: RecipeListResult = {

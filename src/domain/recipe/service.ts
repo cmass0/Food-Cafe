@@ -6,7 +6,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildBookmarkedSetRecipe } from "./recipe_bookmark/service";
 import { buildLikedSetRecipe } from "./recipe_like/service";
 import * as repo from "./repository";
-import { recipeInsertSchema, recipeListOptionsSchema, recipeUpdateSchema } from "./schema";
+import {
+  MAX_RECIPE_LIST_LIMIT,
+  recipeInsertSchema,
+  recipeListOptionsSchema,
+  recipeUpdateSchema,
+} from "./schema";
 import type {
   Recipe,
   RecipeInsertDB,
@@ -24,7 +29,7 @@ import {
 } from "./normalization";
 
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
+const MAX_LIMIT = MAX_RECIPE_LIST_LIMIT;
 
 // DB 행을 Recipe 도메인 객체로 변환
 function mapRowToRecipe(row: RecipeRow): Recipe {

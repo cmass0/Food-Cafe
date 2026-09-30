@@ -150,8 +150,10 @@ export const recipeUpdateSchema = z
     message: "수정할 필드를 한 가지 이상 입력해 주세요.",
   });
 
+export const MAX_RECIPE_LIST_LIMIT = 50;
+
 export const recipeListOptionsSchema = z.object({
-  limit: z.number().int().min(1).max(50).optional(),
+  limit: z.number().int().min(1).max(MAX_RECIPE_LIST_LIMIT).optional(),
   page: z.number().int().min(1).optional(),
   writerUid: z.string().uuid().optional(),
   category: z.enum(RECIPE_CATEGORY_KEYS).optional(),
