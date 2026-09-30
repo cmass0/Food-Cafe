@@ -24,6 +24,8 @@ function visibleTags(combo: Combos) {
 
 export default function ProfileComboGrid({ combos, view = "grid" }: Props) {
   const isList = view === "list";
+  // 첫 카드에 사진이 없을 수 있으므로 사진이 있는 첫 카드를 고른다.
+  const preloadIndex = combos.findIndex((combo) => combo.image);
 
   if (combos.length === 0) {
     return (
@@ -66,8 +68,8 @@ export default function ProfileComboGrid({ combos, view = "grid" }: Props) {
                     alt={combo.title || "조합 이미지"}
                     fill
                     sizes={capImageDensity(isList ? "190px" : "150px")}
-                    // 첫 카드 사진은 지연 로딩하면 JS 실행이 끝난 뒤에야 요청된다. 첫 화면에 보이므로 미리 받는다.
-                    preload={index === 0}
+                    // 지연 로딩이면 JS 실행이 끝난 뒤에야 요청된다. 첫 화면에 보이는 사진 한 장만 미리 받는다.
+                    preload={index === preloadIndex}
                     className="object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
