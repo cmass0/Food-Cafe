@@ -20,6 +20,7 @@ import ViewCount from "@/components/ViewCount.client";
 import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Recipe } from "@/domain/recipe/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -33,10 +34,7 @@ function formatMinutes(value: number | null | undefined) {
 }
 
 function formatDate(value: Date) {
-  return value.toLocaleDateString("ko-KR", {
-    month: "long",
-    day: "numeric",
-  });
+  return formatInKoreanTime(value, { month: "long", day: "numeric" });
 }
 
 function initials(name: string | null | undefined) {
@@ -99,7 +97,7 @@ export default function RecipeDetail({
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 560px"
-                priority
+                preload
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm font-medium text-emerald-700">

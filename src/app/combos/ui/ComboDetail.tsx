@@ -20,6 +20,7 @@ import ViewCount from "@/components/ViewCount.client";
 import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Combos } from "@/domain/combo/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 import ComboToolsPanel from "./ComboToolsPanel";
 
 function formatMinutes(value: number | null | undefined) {
@@ -32,10 +33,7 @@ function formatMinutes(value: number | null | undefined) {
 }
 
 function formatDate(value: Date) {
-  return value.toLocaleDateString("ko-KR", {
-    month: "long",
-    day: "numeric",
-  });
+  return formatInKoreanTime(value, { month: "long", day: "numeric" });
 }
 
 function initials(name: string | null | undefined) {
