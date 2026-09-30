@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  DEFAULT_RECIPE_LIST_LIMIT,
   parseRecipeListLimit,
   parseRecipeListPage,
   parseRecipeSearchField,
   parseRecipeSort,
+  toRecipeListQuery,
 } from "./list-params";
 
 const INVALID_NUMBERS = [
@@ -78,4 +80,38 @@ describe("parseRecipeSearchField", () => {
       expect(parseRecipeSearchField(value)).toBeUndefined();
     }
   );
+});
+
+describe("toRecipeListQuery", () => {
+  const DEFAULTS = {
+    sort: "recent",
+    searchField: "title",
+    limit: DEFAULT_RECIPE_LIST_LIMIT,
+  } as const;
+
+  test("기본값만 있으면 주소에 남길 조건이 없다", () => {
+    expect(toRecipeListQuery(DEFAULTS)).toEqual({});
+  });
+
+  test("최신순이 아닌 정렬과 카테고리를 남긴다", () => {
+    expect(toRecipeListQuery({ ...DEFAULTS, sort: "like", category: "korean" })).toEqual({
+      sort: "like",
+      category: "korean",
+    });
+  });
+
+  test("검색어가 있으면 앞뒤 공백을 자른 검색어와 검색 대상을 함께 남긴다", () => {
+    expect(toRecipeListQuery({ ...DEFAULTS, search: "  김치 ", searchField: "tag" })).toEqual({
+      search: "김치",
+      searchField: "tag",
+    });
+  });
+
+  test("검색어가 공백뿐이면 검색 대상도 남기지 않는다", () => {
+    expect(toRecipeListQuery({ ...DEFAULTS, search: "   ", searchField: "tag" })).toEqual({});
+  });
+
+  test("기본 크기가 아닌 limit은 남겨 다음 페이지도 같은 크기로 계산한다", () => {
+    expect(toRecipeListQuery({ ...DEFAULTS, limit: 30 })).toEqual({ limit: "30" });
+  });
 });
