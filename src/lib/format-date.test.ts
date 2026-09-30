@@ -11,8 +11,10 @@ beforeAll(() => {
   process.env.TZ = "UTC";
 });
 
+// process.env에 undefined를 넣으면 문자열 "undefined"가 들어가므로, 원래 없던 값은 지운다.
 afterAll(() => {
-  process.env.TZ = originalTimeZone;
+  if (originalTimeZone === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTimeZone;
 });
 
 describe("formatInKoreanTime", () => {
