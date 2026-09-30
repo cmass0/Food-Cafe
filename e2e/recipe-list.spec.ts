@@ -21,6 +21,22 @@ test.describe("레시피 목록", () => {
     expect(html).toContain("상세 보기");
   });
 
+  test("목록 API는 page·limit 없이도 첫 페이지를 돌려준다", async ({ request }) => {
+    // 예전에는 없는 page·limit을 0으로 읽어 입력 검증에서 500이 났다.
+    const response = await request.get("/api/recipes");
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as { data: { items: unknown[]; offset: number } };
+    expect(Array.isArray(body.data.items)).toBe(true);
+    expect(body.data.offset).toBe(0);
+  });
+
+  test("상한을 넘는 limit은 오류 대신 상한으로 줄여 보여준다", async ({ page }) => {
+    // 예전에는 limit=100이 입력 검증(최대 50)에서 막혀 목록 대신 오류 화면이 나왔다.
+    await page.goto("/recipes?limit=100");
+    await expect(page.getByText("레시피 목록을 표시하지 못했습니다.")).toHaveCount(0);
+    expect(await page.locator("article").count()).toBeLessThanOrEqual(50);
+  });
+
   test("정렬 탭을 바꾸면 주소의 sort가 바뀌고 첫 페이지로 돌아간다", async ({ page }) => {
     await page.goto("/recipes?page=1");
 
