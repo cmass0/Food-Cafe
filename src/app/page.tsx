@@ -7,20 +7,23 @@ import {
   ChefHat,
   ChevronRight,
   Cookie,
+  CookingPot,
+  Earth,
   Eye,
+  Fish,
   Flame,
   Grid3X3,
   Heart,
-  Leaf,
+  type LucideIcon,
   MessageCircle,
   PencilLine,
+  Pizza,
   Salad,
-  Sandwich,
   Search,
   Soup,
   Sparkles,
   Target,
-  Utensils,
+  UtensilsCrossed,
 } from "lucide-react";
 
 import breadImage from "@/assets/bread.jpg";
@@ -32,6 +35,11 @@ import chickenImage from "@/assets/spicy-braised-chicken.jpeg";
 import tteokImage from "@/assets/tteok-bokki.jpeg";
 import SectionErrorState from "@/components/status/SectionErrorState";
 import Section from "@/components/status/Section";
+import {
+  getRecipeCategoryLabel,
+  RECIPE_CATEGORY_KEYS,
+  type RecipeCategoryKey,
+} from "@/domain/recipe/category";
 import type { Recipe } from "@/domain/recipe/types";
 import * as recipeService from "@/domain/recipe/service";
 import * as trendingService from "@/features/trending/service";
@@ -67,17 +75,28 @@ const fallbackImages = [
   tteokImage,
 ];
 
-const categoryItems = [
+const CATEGORY_ICONS: Record<RecipeCategoryKey, LucideIcon> = {
+  korean: Soup,
+  meat: Beef,
+  bunsik: CookingPot,
+  chinese: UtensilsCrossed,
+  japanese: Fish,
+  western: Pizza,
+  asian: Earth,
+  salad: Salad,
+  dessert: CakeSlice,
+  snack: Cookie,
+};
+
+// 카테고리 목록과 이름은 domain/recipe/category.ts 한 곳에서 가져오고, 여기서는 아이콘만 붙인다.
+const categoryItems: { key: RecipeCategoryKey | null; label: string; icon: LucideIcon }[] = [
   { key: null, label: "전체", icon: Grid3X3 },
-  { key: "korean", label: "한식", icon: Soup },
-  { key: "chinese", label: "중식", icon: Beef },
-  { key: "japanese", label: "일식", icon: Utensils },
-  { key: "western", label: "양식", icon: Sandwich },
-  { key: "dessert", label: "디저트", icon: CakeSlice },
-  { key: "salad", label: "샐러드", icon: Salad },
-  { key: "snack", label: "간식", icon: Cookie },
-  { key: "diet", label: "다이어트", icon: Leaf },
-] as const;
+  ...RECIPE_CATEGORY_KEYS.map((key) => ({
+    key,
+    label: getRecipeCategoryLabel(key),
+    icon: CATEGORY_ICONS[key],
+  })),
+];
 
 function fallbackImage(index: number): StaticImageData {
   return fallbackImages[index % fallbackImages.length] ?? breadImage;
