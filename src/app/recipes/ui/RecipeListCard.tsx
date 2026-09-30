@@ -1,16 +1,8 @@
-"use client";
-
 import { Bookmark, Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-import { useAuth } from "@/components/auth/AuthProvider";
-import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/category";
-import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
-import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
 import { capImageDensity } from "@/lib/image-sizes";
@@ -36,66 +28,8 @@ type RecipeListCardProps = {
   preload?: boolean;
 };
 
+// 목록 카드는 보여주기만 한다. 좋아요·북마크는 상세 화면에서 누른다.
 export default function RecipeListCard({ recipe, preload = false }: RecipeListCardProps) {
-  const [liked, setLiked] = useState(recipe.liked ?? false);
-  const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
-  const [bookmarked, setBookmarked] = useState(recipe.bookmarked ?? false);
-  const [bookmarkCount, setBookmarkCount] = useState(recipe.bookmarkCount ?? 0);
-  const { user } = useAuth();
-  const { openAuthModal } = useAuthModal();
-  const likeFlight = useSingleFlight();
-  const bookmarkFlight = useSingleFlight();
-
-  useEffect(() => {
-    setLiked(recipe.liked ?? false);
-    setLikeCount(recipe.likeCount ?? 0);
-    setBookmarked(recipe.bookmarked ?? false);
-    setBookmarkCount(recipe.bookmarkCount ?? 0);
-  }, [recipe]);
-
-  function requireAuth() {
-    const current = new URL(window.location.href);
-    openAuthModal({ next: `${current.pathname}${current.search}` });
-  }
-
-  async function handleLike() {
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await likeFlight.run(async () => {
-      try {
-        const next = await setRecipeLike(recipe.id, !liked);
-        setLiked(next.liked);
-        if (typeof next.likeCount === "number") {
-          setLikeCount(next.likeCount);
-        }
-      } catch (error) {
-        console.error("좋아요 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
-  async function handleBookmark() {
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await bookmarkFlight.run(async () => {
-      try {
-        const next = await setRecipeBookmark(recipe.id, !bookmarked);
-        setBookmarked(next.bookmarked);
-        if (typeof next.bookmarkCount === "number") {
-          setBookmarkCount(next.bookmarkCount);
-        }
-      } catch (error) {
-        console.error("북마크 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
   const writerName = recipe.writerName ?? "무명 셰프";
   // 카테고리는 태그가 아니라서 태그 검색으로는 찾을 수 없다. 필터가 있는 카테고리는 카테고리 목록으로,
   // 없으면("기타" 등) 첫 태그 검색으로 보낸다.
@@ -134,32 +68,6 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
             </div>
           )}
         </Link>
-
-        <button
-          type="button"
-          aria-label={`북마크 ${formatCount(bookmarkCount)}`}
-          aria-pressed={bookmarked}
-          onClick={handleBookmark}
-          disabled={bookmarkFlight.isRunning}
-          className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full text-[#438e4d] disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-        >
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
-            <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-[#438e4d]" : ""}`} />
-          </span>
-        </button>
-
-        <button
-          type="button"
-          aria-label={`좋아요 ${formatCount(likeCount)}`}
-          aria-pressed={liked}
-          onClick={handleLike}
-          disabled={likeFlight.isRunning}
-          className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full text-red-500 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
-        >
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/95 shadow-sm transition hover:bg-white">
-            <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
-          </span>
-        </button>
       </div>
 
       <div className="space-y-3 p-4">
@@ -187,11 +95,11 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
           <div className="flex items-center gap-5">
             <span className="inline-flex items-center gap-1.5">
               <Heart className="h-4 w-4" />
-              {formatCount(likeCount)}
+              {formatCount(recipe.likeCount)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Bookmark className="h-4 w-4" />
-              {formatCount(bookmarkCount)}
+              {formatCount(recipe.bookmarkCount)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Eye className="h-4 w-4" />

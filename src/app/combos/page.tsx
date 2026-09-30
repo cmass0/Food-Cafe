@@ -19,10 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { type KeyedSingleFlight, useKeyedSingleFlight } from "@/hooks/useSingleFlight";
 import { listCombos } from "@/domain/combo/api";
-import { setComboBookmark } from "@/domain/combo/combo_bookmark/api";
-import { setComboLike } from "@/domain/combo/combo_like/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
 import type { ApiError } from "@/lib/errors/api-client";
 import { capImageDensity } from "@/lib/image-sizes";
@@ -75,130 +72,15 @@ function itemImage(item: NonNullable<Combos["items"]>[number]): string | null {
   return item.image ?? null;
 }
 
-type ComboStats = {
-  liked: boolean;
-  likeCount: number;
-  bookmarked: boolean;
-  bookmarkCount: number;
-};
-
-function ComboActionButtons({
-  combo,
-  stats,
-  onStatsChange,
-  flight,
-  compact = false,
-}: {
-  combo: Combos;
-  stats: ComboStats;
-  onStatsChange: (comboId: string, next: Partial<ComboStats>) => void;
-  flight: KeyedSingleFlight;
-  compact?: boolean;
-}) {
-  const { user } = useAuth();
-  const { openAuthModal } = useAuthModal();
-  // 같은 조합의 버튼이 목록 카드와 미리보기 패널에 동시에 보이므로, 잠금은 부모가 조합·관계별로 공유한다.
-  // 카드 전체가 클릭 영역이라 disabled 대신 클릭을 받아 전파를 막고, 요청 중인 클릭은 무시한다.
-  const likeKey = `${combo.id}:like`;
-  const bookmarkKey = `${combo.id}:bookmark`;
-
-  function requireAuth() {
-    const current = new URL(window.location.href);
-    openAuthModal({ next: `${current.pathname}${current.search}` });
-  }
-
-  async function handleLike(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await flight.run(likeKey, async () => {
-      try {
-        const next = await setComboLike(combo.id, !stats.liked);
-        onStatsChange(combo.id, {
-          liked: next.liked,
-          likeCount: next.likeCount,
-        });
-      } catch (error) {
-        console.error("조합 좋아요 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
-  async function handleBookmark(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!user) {
-      requireAuth();
-      return;
-    }
-
-    await flight.run(bookmarkKey, async () => {
-      try {
-        const next = await setComboBookmark(combo.id, !stats.bookmarked);
-        onStatsChange(combo.id, {
-          bookmarked: next.bookmarked,
-          bookmarkCount: next.bookmarkCount,
-        });
-      } catch (error) {
-        console.error("조합 저장 처리에 실패했습니다.", error);
-      }
-    });
-  }
-
-  const buttonSurfaceClass = compact
-    ? "grid h-8 w-8 place-items-center rounded-full bg-white text-zinc-500 shadow-sm transition hover:text-[#438e4d]"
-    : "grid h-9 w-9 place-items-center rounded-full bg-white/95 text-zinc-500 shadow-sm transition hover:bg-white";
-
-  return (
-    <div className="flex items-center">
-      <button
-        type="button"
-        aria-label={`저장 ${formatCount(stats.bookmarkCount)}`}
-        onClick={handleBookmark}
-        aria-disabled={flight.isRunning(bookmarkKey)}
-        className="grid h-11 w-11 aria-disabled:cursor-wait place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-      >
-        <span className={buttonSurfaceClass}>
-          <Bookmark
-            className={`h-4 w-4 ${stats.bookmarked ? "fill-amber-400 text-amber-400" : ""}`}
-          />
-        </span>
-      </button>
-      <button
-        type="button"
-        aria-label={`좋아요 ${formatCount(stats.likeCount)}`}
-        onClick={handleLike}
-        aria-disabled={flight.isRunning(likeKey)}
-        className="grid h-11 w-11 aria-disabled:cursor-wait place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
-      >
-        <span className={buttonSurfaceClass}>
-          <Heart
-            className={`h-4 w-4 ${stats.liked ? "fill-red-400 text-red-400" : "text-red-500"}`}
-          />
-        </span>
-      </button>
-    </div>
-  );
-}
-
+// 목록 카드와 미리보기는 보여주기만 한다. 좋아요·저장은 상세 화면에서 누른다.
 function ComboGridCard({
   combo,
   isActive,
-  stats,
   onSelect,
-  onStatsChange,
-  flight,
 }: {
   combo: Combos;
   isActive: boolean;
-  stats: ComboStats;
   onSelect: () => void;
-  onStatsChange: (comboId: string, next: Partial<ComboStats>) => void;
-  flight: KeyedSingleFlight;
 }) {
   const writerName = combo.writerName ?? "무명 셰프";
   const timeLabel = combo.timeMinutes ? `${combo.timeMinutes}분` : "시간 미정";
@@ -260,42 +142,25 @@ function ComboGridCard({
           <div className="flex items-center gap-5">
             <span className="inline-flex items-center gap-1.5">
               <Heart className="h-4 w-4 fill-red-400 text-red-400" />
-              {formatCount(stats.likeCount)}
+              {formatCount(combo.likeCount)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Bookmark className="h-4 w-4 fill-amber-400 text-amber-400" />
-              {formatCount(stats.bookmarkCount)}
+              {formatCount(combo.bookmarkCount)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Eye className="h-4 w-4 text-zinc-800" />
               {formatCount(combo.viewCount)}
             </span>
           </div>
-          <ComboActionButtons
-            combo={combo}
-            stats={stats}
-            onStatsChange={onStatsChange}
-            flight={flight}
-            compact
-          />
         </div>
       </div>
     </article>
   );
 }
 
-function ComboPreviewPanel({
-  combo,
-  stats,
-  onStatsChange,
-  flight,
-}: {
-  combo: Combos | null;
-  stats: ComboStats | null;
-  onStatsChange: (comboId: string, next: Partial<ComboStats>) => void;
-  flight: KeyedSingleFlight;
-}) {
-  if (!combo || !stats) {
+function ComboPreviewPanel({ combo }: { combo: Combos | null }) {
+  if (!combo) {
     return (
       <aside className="hidden h-full items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-500 lg:flex">
         조합을 선택하면 상세 미리보기가 표시됩니다.
@@ -326,15 +191,6 @@ function ComboPreviewPanel({
         <span className="absolute left-5 top-5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-800">
           {combo.difficulty ?? "보통"}
         </span>
-        <div className="absolute right-5 top-5">
-          <ComboActionButtons
-            combo={combo}
-            stats={stats}
-            onStatsChange={onStatsChange}
-            flight={flight}
-            compact
-          />
-        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-5 px-5 py-5">
@@ -353,12 +209,12 @@ function ComboPreviewPanel({
         <div className="grid grid-cols-4 rounded-lg border border-zinc-200 bg-white text-center text-xs text-zinc-500">
           <div className="p-3">
             <Heart className="mx-auto mb-1 h-4 w-4 fill-red-400 text-red-400" />
-            <p className="font-bold text-zinc-900">{formatCount(stats.likeCount)}</p>
+            <p className="font-bold text-zinc-900">{formatCount(combo.likeCount)}</p>
             <p className="mt-1">좋아요</p>
           </div>
           <div className="p-3">
             <Bookmark className="mx-auto mb-1 h-4 w-4 fill-amber-400 text-amber-400" />
-            <p className="font-bold text-zinc-900">{formatCount(stats.bookmarkCount)}</p>
+            <p className="font-bold text-zinc-900">{formatCount(combo.bookmarkCount)}</p>
             <p className="mt-1">저장</p>
           </div>
           <div className="p-3">
@@ -468,8 +324,6 @@ function CombosPageInner() {
   });
   const [searchText, setSearchText] = useState(searchQuery ?? "");
   const [searchField, setSearchField] = useState<ComboSearchField>(fieldParam);
-  const [comboStats, setComboStats] = useState<Record<string, ComboStats>>({});
-  const relationFlight = useKeyedSingleFlight();
 
   useEffect(() => {
     setSearchText(searchQuery ?? "");
@@ -498,21 +352,6 @@ function CombosPageInner() {
 
         if (mounted) {
           setCombos(items);
-          setComboStats((previous) => {
-            const next = { ...previous };
-            for (const combo of items) {
-              next[combo.id] = {
-                liked: (combo as { liked?: boolean }).liked ?? next[combo.id]?.liked ?? false,
-                likeCount: combo.likeCount ?? next[combo.id]?.likeCount ?? 0,
-                bookmarked:
-                  (combo as { bookmarked?: boolean }).bookmarked ??
-                  next[combo.id]?.bookmarked ??
-                  false,
-                bookmarkCount: combo.bookmarkCount ?? next[combo.id]?.bookmarkCount ?? 0,
-              };
-            }
-            return next;
-          });
           setPageMeta({
             limit: data.limit,
             offset: data.offset,
@@ -538,7 +377,7 @@ function CombosPageInner() {
     return () => {
       mounted = false;
     };
-  }, [requestedPageSize, currentPage, searchQuery, fieldParam, user?.id, sort, reloadKey]);
+  }, [requestedPageSize, currentPage, searchQuery, fieldParam, sort, reloadKey]);
 
   useEffect(() => {
     if (combos.length === 0) {
@@ -554,30 +393,6 @@ function CombosPageInner() {
     if (combos.length === 0) return null;
     return combos.find((combo) => combo.id === activeComboId) ?? combos[0] ?? null;
   }, [combos, activeComboId]);
-
-  function updateComboStats(comboId: string, nextStats: Partial<ComboStats>) {
-    setComboStats((previous) => ({
-      ...previous,
-      [comboId]: {
-        liked: previous[comboId]?.liked ?? false,
-        likeCount: previous[comboId]?.likeCount ?? 0,
-        bookmarked: previous[comboId]?.bookmarked ?? false,
-        bookmarkCount: previous[comboId]?.bookmarkCount ?? 0,
-        ...nextStats,
-      },
-    }));
-  }
-
-  function getStats(combo: Combos): ComboStats {
-    return (
-      comboStats[combo.id] ?? {
-        liked: (combo as { liked?: boolean }).liked ?? false,
-        likeCount: combo.likeCount ?? 0,
-        bookmarked: (combo as { bookmarked?: boolean }).bookmarked ?? false,
-        bookmarkCount: combo.bookmarkCount ?? 0,
-      }
-    );
-  }
 
   function handleCreate() {
     if (!user) {
@@ -731,10 +546,7 @@ function CombosPageInner() {
                       key={combo.id}
                       combo={combo}
                       isActive={combo.id === activeCombo?.id}
-                      stats={getStats(combo)}
                       onSelect={() => setActiveComboId(combo.id)}
-                      onStatsChange={updateComboStats}
-                      flight={relationFlight}
                     />
                   ))}
                 </div>
@@ -770,12 +582,7 @@ function CombosPageInner() {
               resetKeys={[activeCombo.id]}
               onRetry={retryCombos}
             >
-              <ComboPreviewPanel
-                combo={activeCombo}
-                stats={getStats(activeCombo)}
-                onStatsChange={updateComboStats}
-                flight={relationFlight}
-              />
+              <ComboPreviewPanel combo={activeCombo} />
             </Section>
           ) : null}
         </div>
