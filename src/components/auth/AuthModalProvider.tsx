@@ -112,9 +112,12 @@ function AuthQueryParamListener({
   const searchParams = useSearchParams();
 
   React.useEffect(() => {
-    if (searchParams.get("auth") !== "login") return;
-
+    // searchParams는 주소가 바뀌었을 때 다시 확인하는 계기로만 쓰고, 판단은 실제 주소로 한다.
+    // Next 16.3에서는 아래 replaceState로 auth·next를 지운 뒤에도 useSearchParams가 예전 값을 돌려준다.
+    // 그 값으로 다시 판단하면 로그인 직후 한 번 더 replaceState("/")를 불러, 로그인 후 돌아갈 주소로 가던 이동이 취소된다.
     const url = new URL(window.location.href);
+    if (url.searchParams.get("auth") !== "login") return;
+
     const notice = url.searchParams.get("notice");
     onLoginRequested({
       next: normalizeReturnTo(url.searchParams.get("next")),
