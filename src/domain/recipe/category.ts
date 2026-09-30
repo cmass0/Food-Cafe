@@ -51,6 +51,19 @@ export function isRecipeCategoryKey(value: string | null | undefined): value is 
   return RECIPE_CATEGORY_KEYS.some((category) => category === value);
 }
 
+export function isRecipeCategory(value: string | null | undefined): value is RecipeCategory {
+  return RECIPE_CATEGORIES.some((category) => category === value);
+}
+
+// 저장된 카테고리 값에서 목록 필터 키를 찾는다. 필터가 없는 "기타"와 목록 밖 값은 undefined다.
+export function getRecipeCategoryKey(
+  category: string | null | undefined
+): RecipeCategoryKey | undefined {
+  return RECIPE_CATEGORY_KEYS.find((key) =>
+    RECIPE_CATEGORY_FILTERS[key].values.some((value) => value === category)
+  );
+}
+
 export function getRecipeCategoryLabel(category: RecipeCategoryKey): string {
   return RECIPE_CATEGORY_FILTERS[category].label;
 }
