@@ -49,3 +49,35 @@ describe("레시피 태그와 조리도구 개수", () => {
     expectFieldFailure(result, field);
   });
 });
+
+describe("레시피 카테고리", () => {
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 스키마는 목록 밖 카테고리를 거부한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, category: "디저트" });
+
+    expectFieldFailure(result, "category");
+  });
+
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 스키마는 카테고리를 고르지 않은 빈 값을 받는다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, category: "" });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("필터가 없는 기타도 작성 카테고리로 받는다", () => {
+    expect(recipeInsertSchema.safeParse({ ...BASE_RECIPE, category: "기타" }).success).toBe(true);
+  });
+
+  test("앞뒤 공백을 잘라 목록 값으로 받는다", () => {
+    const result = recipeInsertSchema.safeParse({ ...BASE_RECIPE, category: "  고기·구이 " });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.category).toBe("고기·구이");
+  });
+});

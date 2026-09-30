@@ -19,6 +19,7 @@ import LikeBookmarkButton from "@/app/recipes/ui/likebookmarkButton";
 import ViewCount from "@/components/ViewCount.client";
 import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
+import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/category";
 import type { Recipe } from "@/domain/recipe/types";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
@@ -43,10 +44,21 @@ function initials(name: string | null | undefined) {
   return name?.trim().slice(0, 1).toUpperCase() || "U";
 }
 
-function uniqueChips(recipe: Recipe) {
-  const tags = recipe.tags?.filter((tag) => typeof tag === "string" && tag.trim().length > 0) ?? [];
-  const chips = recipe.category ? [recipe.category, ...tags] : tags;
-  return Array.from(new Set(chips.map((chip) => chip.trim()).filter(Boolean)));
+// 카테고리는 태그가 아니라 태그 검색으로 찾을 수 없다. 카테고리 칩은 카테고리 목록으로, 태그 칩은 태그 검색으로 보낸다.
+// 필터가 없는 카테고리("기타" 등)는 칩으로 보여주지 않는다.
+function recipeChips(recipe: Recipe) {
+  const chips = new Map<string, string>();
+  const categoryKey = getRecipeCategoryKey(recipe.category);
+  if (categoryKey) {
+    chips.set(getRecipeCategoryLabel(categoryKey), `/recipes?category=${categoryKey}`);
+  }
+  for (const tag of recipe.tags ?? []) {
+    const label = typeof tag === "string" ? tag.trim() : "";
+    if (label && !chips.has(label)) {
+      chips.set(label, `/recipes?search=${encodeURIComponent(label)}&searchField=tag_title`);
+    }
+  }
+  return Array.from(chips, ([label, href]) => ({ label, href }));
 }
 
 function recipeImages(recipe: Recipe) {
@@ -63,7 +75,7 @@ export default function RecipeDetail({
   canEdit?: boolean;
   canDelete?: boolean;
 }) {
-  const chips = uniqueChips(recipe);
+  const chips = recipeChips(recipe);
   const images = recipeImages(recipe);
   const mainImage = images[0] ?? null;
   const steps =
@@ -197,11 +209,11 @@ export default function RecipeDetail({
               <div className="flex flex-wrap gap-2">
                 {chips.slice(0, 5).map((chip) => (
                   <Link
-                    key={chip}
-                    href={`/recipes?search=${encodeURIComponent(chip)}&searchField=tag_title`}
+                    key={chip.label}
+                    href={chip.href}
                     className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
                   >
-                    {chip}
+                    {chip.label}
                   </Link>
                 ))}
                 {chips.length > 5 ? (

@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  getRecipeCategoryKey,
   getRecipeCategoryLabel,
   getRecipeCategoryValues,
+  isRecipeCategory,
   isRecipeCategoryKey,
   RECIPE_CATEGORIES,
   RECIPE_CATEGORY_KEYS,
@@ -33,4 +35,39 @@ describe("레시피 카테고리 필터", () => {
       expect(isRecipeCategoryKey(value)).toBe(false);
     }
   );
+});
+
+describe("저장된 카테고리 값", () => {
+  test.each([
+    ["한식", "korean"],
+    ["고기·구이", "meat"],
+    ["디저트·베이킹", "dessert"],
+    ["간식·야식", "snack"],
+  ] as const)("%s는 필터 키 %s로 찾는다", (category, key) => {
+    expect(getRecipeCategoryKey(category)).toBe(key);
+  });
+
+  test("기타를 뺀 작성 카테고리는 모두 같은 표시명의 필터 키로 돌아간다", () => {
+    const withoutKey = RECIPE_CATEGORIES.filter((category) => {
+      const key = getRecipeCategoryKey(category);
+      return !key || getRecipeCategoryLabel(key) !== category;
+    });
+
+    expect(withoutKey).toEqual(["기타"]);
+  });
+
+  test.each([undefined, null, "", "기타", "디저트", "korean"])(
+    "필터가 없는 %s는 키를 찾지 않는다",
+    (value) => {
+      expect(getRecipeCategoryKey(value)).toBeUndefined();
+    }
+  );
+
+  test.each(["한식", "기타"])("작성 카테고리 %s는 목록 값이다", (value) => {
+    expect(isRecipeCategory(value)).toBe(true);
+  });
+
+  test.each([undefined, null, "", "디저트", "korean"])("%s는 목록 값이 아니다", (value) => {
+    expect(isRecipeCategory(value)).toBe(false);
+  });
 });

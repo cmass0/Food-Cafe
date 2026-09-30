@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useSingleFlight } from "@/hooks/useSingleFlight";
+import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/category";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
@@ -98,7 +99,18 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
   }
 
   const writerName = recipe.writerName ?? "무명 셰프";
-  const tag = recipe.category ?? recipe.tags[0] ?? "레시피";
+  // 카테고리는 태그가 아니라서 태그 검색으로는 찾을 수 없다. 필터가 있는 카테고리는 카테고리 목록으로,
+  // 없으면("기타" 등) 첫 태그 검색으로 보낸다.
+  const categoryKey = getRecipeCategoryKey(recipe.category);
+  const firstTag = recipe.tags[0];
+  const badge = categoryKey
+    ? { label: getRecipeCategoryLabel(categoryKey), href: `/recipes?category=${categoryKey}` }
+    : firstTag
+      ? {
+          label: firstTag,
+          href: `/recipes?search=${encodeURIComponent(firstTag)}&searchField=tag_title`,
+        }
+      : null;
 
   return (
     <article className="group overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -186,12 +198,14 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
               {formatCount(recipe.viewCount)}
             </span>
           </div>
-          <Link
-            href={`/recipes?search=${encodeURIComponent(tag)}&searchField=tag_title`}
-            className="rounded-full bg-emerald-50 px-3 py-1 font-bold text-[#34783f] transition hover:bg-emerald-100"
-          >
-            #{tag}
-          </Link>
+          {badge ? (
+            <Link
+              href={badge.href}
+              className="rounded-full bg-emerald-50 px-3 py-1 font-bold text-[#34783f] transition hover:bg-emerald-100"
+            >
+              #{badge.label}
+            </Link>
+          ) : null}
         </div>
       </div>
     </article>

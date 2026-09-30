@@ -1,9 +1,20 @@
 ﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
-import { RECIPE_CATEGORY_KEYS } from "./category";
+import { isRecipeCategory, RECIPE_CATEGORY_KEYS } from "./category";
 
 export const MAX_RECIPE_TAGS = 10;
 export const MAX_RECIPE_TOOLS = 10;
+
+// 카테고리는 고르지 않아도 된다(빈 문자열). 고르면 작성 폼 목록의 값만 받는다.
+// 목록 밖 값이 저장되면 홈 카테고리 필터에서 그 레시피를 찾을 수 없다.
+const recipeCategorySchema = z
+  .string()
+  .trim()
+  // 반환 타입을 boolean으로 적어 타입 좁히기로 추론되지 않게 한다. 좁혀지면 폼 기본값(string)과 타입이 어긋난다.
+  .refine(
+    (value): boolean => value === "" || isRecipeCategory(value),
+    "카테고리는 목록에서 골라 주세요."
+  );
 
 const recipeTagsSchema = z
   .array(tagSchema)
@@ -61,7 +72,7 @@ export const recipeInsertSchema = z.object({
     .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
   image: imageFieldSchema,
   images: imageListSchema,
-  category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
+  category: recipeCategorySchema,
   tags: recipeTagsSchema.optional(),
   tools: recipeToolsSchema.nullable().optional(),
   tools_required: z.boolean().optional(),
@@ -120,7 +131,7 @@ export const recipeUpdateSchema = z
     image: imageFieldSchema,
     images: imageListSchema,
 
-    category: z.string().trim().max(120, "카테고리는 120자 이하만 가능합니다."),
+    category: recipeCategorySchema,
     tags: recipeTagsSchema.optional(),
     tools: recipeToolsSchema.nullable().optional(),
     tools_required: z.boolean().optional(),
