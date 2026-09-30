@@ -67,13 +67,8 @@ export function RecommendSidebar({
                 {TAB_MESSAGES[tab.value].error}
               </p>
             ) : items.length > 0 ? (
-              items.map((item, index) => (
+              items.map((item) => (
                 <div key={`${item.sourceType}-${item.id}`} className="flex items-start gap-3">
-                  {tab.value === "popular" ? (
-                    <span className="w-5 pt-4 text-center text-sm font-bold text-zinc-700">
-                      {index + 1}
-                    </span>
-                  ) : null}
                   <div className="min-w-0 flex-1">
                     <RecommendResultCard item={item} />
                   </div>
