@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import type { TrendingContentItem } from "@/features/trending/types";
+import { capImageDensity } from "@/lib/image-sizes";
 import { Bookmark, Eye, Heart, MessageCircle, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,7 +47,9 @@ export default function RankingGrid({ items, emptyMessage }: RankingGridProps) {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     src={item.image}
                     alt={item.title}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                    sizes={capImageDensity(
+                      "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                    )}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-muted-foreground">

@@ -45,6 +45,7 @@ import * as recipeService from "@/domain/recipe/service";
 import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem, TrendingRecipeTag } from "@/features/trending/types";
 import { loadSection } from "@/lib/errors/section";
+import { capImageDensity } from "@/lib/image-sizes";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -240,7 +241,7 @@ function RecipeCard({ item, index }: { item: FeedItem; index: number }) {
           src={item.image}
           alt={item.title}
           fill
-          sizes="(max-width: 768px) 50vw, 220px"
+          sizes={capImageDensity("(max-width: 768px) 50vw, 220px")}
           priority={index < 2}
           className="object-cover transition duration-300 group-hover:scale-105"
         />
@@ -404,7 +405,7 @@ export default async function Home() {
               alt="레시피 노트와 신선한 재료"
               fill
               priority
-              sizes="50vw"
+              sizes={capImageDensity("50vw")}
               className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#fbfaf7] via-white/20 to-transparent" />

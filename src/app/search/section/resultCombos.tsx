@@ -5,6 +5,7 @@ import Link from "next/link";
 import Section from "@/components/status/Section";
 import type { ComboItems, ComboListResult, Combos } from "@/domain/combo/types";
 import { PaginationComponent } from "@/components/Pagination";
+import { capImageDensity } from "@/lib/image-sizes";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -64,7 +65,7 @@ function ComboImageStrip({ combo }: { combo: Combos }) {
             src={image}
             alt={`${combo.title} 이미지 ${index + 1}`}
             fill
-            sizes="(max-width: 767px) 50vw, 33vw"
+            sizes={capImageDensity("(max-width: 767px) 50vw, 33vw")}
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         </div>

@@ -21,6 +21,7 @@ import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
+import { capImageDensity } from "@/lib/image-sizes";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -96,7 +97,7 @@ export default function RecipeDetail({
                 alt={recipe.title}
                 fill
                 className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 560px"
+                sizes={capImageDensity("(max-width: 1024px) 100vw, 560px")}
                 preload
               />
             ) : (
@@ -127,7 +128,7 @@ export default function RecipeDetail({
                     src={image}
                     alt={`${recipe.title} 미리보기 ${index + 1}`}
                     fill
-                    sizes="160px"
+                    sizes={capImageDensity("160px")}
                     className="object-cover"
                   />
                   {index === 0 ? (
@@ -269,7 +270,7 @@ export default function RecipeDetail({
                           src={stepImage}
                           alt={`Step ${index + 1}`}
                           fill
-                          sizes="190px"
+                          sizes={capImageDensity("190px")}
                           className="object-cover"
                         />
                       ) : (
@@ -307,7 +308,7 @@ export default function RecipeDetail({
                 src={mainImage}
                 alt=""
                 fill
-                sizes="600px"
+                sizes={capImageDensity("600px")}
                 className="object-cover opacity-20"
               />
             ) : null}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { normaliseTextArray } from "@/domain/recipe/normalization";
 import type { Recipe } from "@/domain/recipe/types";
+import { capImageDensity } from "@/lib/image-sizes";
 import { cn } from "@/lib/utils";
 import type { ProfileView } from "../../profile-types";
 
@@ -65,7 +66,7 @@ export default function ProfileRecipeGrid({ recipes, view = "grid" }: Props) {
                     src={recipe.image}
                     alt={recipe.title || "레시피 이미지"}
                     fill
-                    sizes={isList ? "190px" : "150px"}
+                    sizes={capImageDensity(isList ? "190px" : "150px")}
                     className="object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (

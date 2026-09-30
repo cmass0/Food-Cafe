@@ -12,6 +12,7 @@ import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
+import { capImageDensity } from "@/lib/image-sizes";
 
 function formatCount(value: number | null | undefined): string {
   return new Intl.NumberFormat("ko-KR").format(value ?? 0);
@@ -111,7 +112,7 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
               src={recipe.image}
               alt={recipe.title || "레시피 이미지"}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              sizes={capImageDensity("(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw")}
               preload={preload}
               className="object-cover transition duration-300 group-hover:scale-105"
             />
