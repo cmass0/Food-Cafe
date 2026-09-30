@@ -11,8 +11,6 @@ import type {
   RecommendationRecipeDocumentSource,
 } from "./types";
 
-export const RECOMMENDATION_DOCUMENT_VERSION = "recommendation-document-v1";
-
 function normalizeOptionalText(value: string | null | undefined): string | null {
   const normalized = value?.trim() ?? "";
   return normalized.length > 0 ? normalized : null;
@@ -61,19 +59,6 @@ function appendListLine(lines: string[], label: string, values: string[]) {
   if (values.length > 0) lines.push(`${label}: ${values.join(", ")}`);
 }
 
-function formatIngredient({
-  name,
-  amount,
-  unit,
-  unitCustom,
-}: ReturnType<typeof toArrayIngredient>[number]): string {
-  const resolvedUnit = unit === "custom" ? unitCustom : unit;
-  return [name, amount, resolvedUnit]
-    .map((value) => value?.trim())
-    .filter(Boolean)
-    .join(" ");
-}
-
 export function buildRecipeRecommendationDocument(
   source: RecommendationRecipeDocumentSource
 ): RecommendationDocument {
@@ -85,24 +70,22 @@ export function buildRecipeRecommendationDocument(
   const tags = normalizeSearchList(source.tags);
   const tools = normalizeSearchList(source.tools);
   const ingredients = toArrayIngredient(source.ingredients);
-  const ingredientNames = normalizeExactNames(ingredients.map((ingredient) => ingredient.name));
-  const ingredientDescriptions = ingredients.map(formatIngredient).filter(Boolean);
+  const ingredientLabels = normalizeSearchList(ingredients.map((ingredient) => ingredient.name));
+  const ingredientNames = normalizeExactNames(ingredientLabels);
   const steps = toArrayRecipeSteps(source.steps).map((step) => step.description);
-  const lines = [`문서 버전: ${RECOMMENDATION_DOCUMENT_VERSION}`, "콘텐츠 유형: 레시피"];
+  const lines: string[] = [];
 
+  // 검색 문서에는 요리를 서로 구별하는 내용만 담는다. 모든 문서에 공통으로 붙는 줄(유형 표시,
+  // 개수, 예/아니오)과 수량·난이도·시간·인분은 문서끼리 비슷하게 만들어 유사도의 구별력을 떨어뜨린다.
+  // 난이도·시간·도구 필요 여부는 아래 필드로 따로 저장해 검색 필터가 쓴다.
   appendTextLine(lines, "제목", identity.title);
   appendTextLine(lines, "설명", summary);
   appendTextLine(lines, "카테고리", category);
   appendListLine(lines, "태그", tags);
-  appendListLine(lines, "재료", ingredientDescriptions);
-  lines.push(`재료 수: ${ingredientNames.length}`);
+  appendListLine(lines, "재료", ingredientLabels);
   appendListLine(lines, "조리 도구", tools);
-  lines.push(`특별한 조리 도구 필요: ${source.tools_required ? "예" : "아니오"}`);
-  appendTextLine(lines, "난이도", difficulty);
-  if (source.time_minutes !== null) lines.push(`조리 시간: ${source.time_minutes}분`);
-  if (source.servings !== null) lines.push(`인분: ${source.servings}인분`);
-  appendListLine(lines, "조리 순서", steps);
-  appendTextLine(lines, "요리 팁", chefTip);
+  appendTextLine(lines, "조리 순서", steps.join(" "));
+  appendTextLine(lines, "팁", chefTip);
 
   return {
     sourceType: "recipe",
@@ -140,18 +123,15 @@ export function buildComboRecommendationDocument(
     )
   );
   const steps = toArrayComboSteps(source.steps).map((step) => step.description);
-  const lines = [`문서 버전: ${RECOMMENDATION_DOCUMENT_VERSION}`, "콘텐츠 유형: 레시피 콤보"];
+  const lines: string[] = [];
 
+  // 레시피 문서와 같은 기준으로 서로 구별되는 내용만 담는다.
   appendTextLine(lines, "제목", identity.title);
   appendTextLine(lines, "설명", summary);
   appendListLine(lines, "태그", tags);
   appendListLine(lines, "구성", itemDescriptions);
-  lines.push(`구성 수: ${items.length}`);
   appendListLine(lines, "조리 도구", tools);
-  lines.push(`특별한 조리 도구 필요: ${source.tools_required ? "예" : "아니오"}`);
-  appendTextLine(lines, "난이도", difficulty);
-  if (source.time_minutes !== null) lines.push(`준비 시간: ${source.time_minutes}분`);
-  appendListLine(lines, "준비 순서", steps);
+  appendTextLine(lines, "준비 순서", steps.join(" "));
 
   return {
     sourceType: "combo",
