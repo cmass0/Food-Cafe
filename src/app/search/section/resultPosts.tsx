@@ -4,6 +4,7 @@ import Link from "next/link";
 import Section from "@/components/status/Section";
 import type { Post, PostListResult } from "@/domain/post/types";
 import { PaginationComponent } from "@/components/Pagination";
+import { formatInKoreanTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -35,7 +36,7 @@ function formatTime(value: Date | string): string {
   if (diffMins < 60) return `${diffMins}분 전`;
   if (diffHours < 24) return `${diffHours}시간 전`;
   if (diffDays < 7) return `${diffDays}일 전`;
-  return date.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
+  return formatInKoreanTime(date, { month: "2-digit", day: "2-digit" });
 }
 
 function buildMoreHref(queryText: string): string {

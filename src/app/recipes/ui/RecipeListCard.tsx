@@ -11,6 +11,7 @@ import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
+import { formatInKoreanTime } from "@/lib/format-date";
 
 function formatCount(value: number | null | undefined): string {
   return new Intl.NumberFormat("ko-KR").format(value ?? 0);
@@ -20,11 +21,7 @@ function formatRecipeDate(value: Date | string | null | undefined): string {
   if (!value) return "날짜 없음";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "날짜 없음";
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatInKoreanTime(date, { year: "numeric", month: "long", day: "numeric" });
 }
 
 function initials(name: string): string {
