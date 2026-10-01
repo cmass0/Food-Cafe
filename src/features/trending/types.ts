@@ -32,6 +32,9 @@ export interface TrendingContentItem {
   recentActivityCount: number;
   trendScore: number;
   lastActivityAt: string;
+  // 화면에서 로그인 사용자가 누른 좋아요·북마크인지 붙인 값(features/my-reactions). 집계 결과에는 없다.
+  liked?: boolean;
+  bookmarked?: boolean;
 }
 
 export interface TrendingRecipeTag {

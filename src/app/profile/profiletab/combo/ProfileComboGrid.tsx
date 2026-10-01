@@ -1,7 +1,8 @@
-import { ChefHat, Clock3, Eye, Heart, MoreVertical } from "lucide-react";
+import { ChefHat, Clock3, Eye, MoreVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Combos } from "@/domain/combo/types";
@@ -112,10 +113,7 @@ export default function ProfileComboGrid({ combos, view = "grid" }: Props) {
                   ))}
                 </div>
                 <div className="mt-5 flex items-center gap-4 text-sm text-zinc-600">
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="h-4 w-4 fill-pink-400 text-pink-400" aria-hidden="true" />
-                    <span>{combo.likeCount ?? 0}</span>
-                  </span>
+                  <ReactionCount kind="like" count={combo.likeCount} mine={combo.liked} />
                   <span className="flex items-center gap-1.5">
                     <Eye className="h-4 w-4 text-zinc-700" aria-hidden="true" />
                     <span>{combo.viewCount ?? 0}</span>

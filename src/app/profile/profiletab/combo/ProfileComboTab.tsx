@@ -1,6 +1,7 @@
 import Section from "@/components/status/Section";
 import { listBookmarkedCombos, listLikedCombos, listCombos } from "@/domain/combo/service";
 import type { ComboListResult } from "@/domain/combo/types";
+import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -57,6 +58,13 @@ export default async function ProfileComboTab({
     { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
   );
 
+  // 내가 누른 좋아요는 카드 아이콘을 채워 표시한다.
+  const reactions = await loadMyReactions(
+    supabase,
+    result.data.items.map(({ id }) => ({ type: "combo", id })),
+    user?.id ?? null
+  );
+
   return (
     <Section
       name="profile.combos"
@@ -65,7 +73,10 @@ export default async function ProfileComboTab({
       title="조합을 불러오지 못했습니다."
       resetKeys={[currentUid, type, currentPage, safeLimit, trimmedSearch, sort, view]}
     >
-      <ProfileComboGrid combos={result.data.items} view={view} />
+      <ProfileComboGrid
+        combos={withMyReactions(result.data.items, "combo", reactions)}
+        view={view}
+      />
       <ProfileComboPagination
         type={type}
         page={currentPage}

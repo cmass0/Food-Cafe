@@ -1,7 +1,8 @@
-import { Bookmark, Eye, Heart, Puzzle, SearchX } from "lucide-react";
+import { Eye, Puzzle, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import Section from "@/components/status/Section";
 import type { ComboItems, ComboListResult, Combos } from "@/domain/combo/types";
 import { PaginationComponent } from "@/components/Pagination";
@@ -110,20 +111,24 @@ function ComboResultCard({ combo, viewMode }: { combo: Combos; viewMode: ViewMod
         </p>
         <div className="mt-auto flex items-center justify-between gap-3 text-xs font-medium text-zinc-500">
           <span className="flex items-center gap-4">
-            <span className="inline-flex items-center gap-1">
-              <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
-              <span className="sr-only">좋아요 </span>
-              {formatCount(combo.likeCount)}
-            </span>
+            <ReactionCount
+              kind="like"
+              count={combo.likeCount}
+              mine={combo.liked}
+              className="gap-1"
+              iconClassName="h-3.5 w-3.5 md:h-4 md:w-4"
+            />
             <span className="hidden items-center gap-1 md:inline-flex">
               <Eye className="h-4 w-4" />
               {formatCount(combo.viewCount)}
             </span>
           </span>
-          <span className="hidden items-center gap-1 rounded-md border border-zinc-200 px-2.5 py-1 font-bold text-zinc-600 md:inline-flex">
-            <Bookmark className="h-4 w-4" />
-            {formatCount(combo.bookmarkCount)}
-          </span>
+          <ReactionCount
+            kind="bookmark"
+            count={combo.bookmarkCount}
+            mine={combo.bookmarked}
+            className="hidden gap-1 rounded-md border border-zinc-200 px-2.5 py-1 font-bold text-zinc-600 md:inline-flex"
+          />
         </div>
       </div>
     </article>

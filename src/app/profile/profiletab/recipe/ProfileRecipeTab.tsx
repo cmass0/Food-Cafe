@@ -1,6 +1,7 @@
 import Section from "@/components/status/Section";
 import { listBookmarkedRecipes, listLikedRecipes, listRecipes } from "@/domain/recipe/service";
 import type { RecipeListResult } from "@/domain/recipe/types";
+import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -57,6 +58,13 @@ export default async function ProfileRecipeTab({
     { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
   );
 
+  // 내가 누른 좋아요는 카드 아이콘을 채워 표시한다.
+  const reactions = await loadMyReactions(
+    supabase,
+    result.data.items.map(({ id }) => ({ type: "recipe", id })),
+    user?.id ?? null
+  );
+
   return (
     <Section
       name="profile.recipes"
@@ -65,7 +73,10 @@ export default async function ProfileRecipeTab({
       title="레시피를 불러오지 못했습니다."
       resetKeys={[currentUid, type, currentPage, safeLimit, trimmedSearch, sort, view]}
     >
-      <ProfileRecipeGrid recipes={result.data.items} view={view} />
+      <ProfileRecipeGrid
+        recipes={withMyReactions(result.data.items, "recipe", reactions)}
+        view={view}
+      />
       <ProfileRecipePagination
         type={type}
         page={currentPage}

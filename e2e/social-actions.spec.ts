@@ -210,6 +210,13 @@ test.describe("좋아요·북마크·댓글", () => {
         .filter({ has: page.getByRole("heading", { name: comboTitle, exact: true }) });
       await expect(comboCard.getByText("북마크(내가 누름)", { exact: true })).toHaveCount(1);
       await expect(comboCard.getByText("좋아요", { exact: true })).toHaveCount(1);
+
+      // 검색 결과 카드도 같은 규칙을 따른다.
+      await page.goto(`/search?query=${encodeURIComponent(recipeTitle)}`);
+      const searchCard = page
+        .locator("article")
+        .filter({ has: page.getByRole("link", { name: recipeTitle, exact: true }) });
+      await expect(searchCard.getByText("좋아요(내가 누름)", { exact: true })).toHaveCount(1);
     } finally {
       await cleanupResource(page, "recipes", recipeId);
       await cleanupResource(page, "combos", comboId);

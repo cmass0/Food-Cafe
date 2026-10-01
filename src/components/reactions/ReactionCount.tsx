@@ -13,13 +13,20 @@ type Props = {
   count: number | null | undefined;
   mine?: boolean;
   className?: string;
+  iconClassName?: string;
 };
 
-export default function ReactionCount({ kind, count, mine = false, className }: Props) {
+export default function ReactionCount({
+  kind,
+  count,
+  mine = false,
+  className,
+  iconClassName = "h-4 w-4",
+}: Props) {
   const { label, Icon, mineClassName } = KINDS[kind];
   return (
     <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <Icon className={cn("h-4 w-4", mine && mineClassName)} aria-hidden="true" />
+      <Icon className={cn(iconClassName, mine && mineClassName)} aria-hidden="true" />
       <span className="sr-only">{mine ? `${label}(내가 누름)` : label}</span>
       {new Intl.NumberFormat("ko-KR").format(count ?? 0)}
     </span>
