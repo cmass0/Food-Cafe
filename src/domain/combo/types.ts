@@ -23,6 +23,9 @@ export interface Combos {
   viewCount: number;
   commentCount: number;
   bookmarkCount: number;
+  // 목록 조회에서 로그인 사용자가 누른 좋아요·북마크인지. 비로그인이면 없다.
+  liked?: boolean;
+  bookmarked?: boolean;
   writerUid: string | null;
   writerName: string | null;
   createdAt: Date;
