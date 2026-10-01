@@ -211,11 +211,10 @@ test.describe("좋아요·북마크·댓글", () => {
       await expect(comboCard.getByText("북마크(내가 누름)", { exact: true })).toHaveCount(1);
       await expect(comboCard.getByText("좋아요", { exact: true })).toHaveCount(1);
 
-      // 검색 결과 카드도 같은 규칙을 따른다.
-      await page.goto(`/search?query=${encodeURIComponent(recipeTitle)}`);
-      const searchCard = page
-        .locator("article")
-        .filter({ has: page.getByRole("link", { name: recipeTitle, exact: true }) });
+      // 검색 결과 카드도 같은 규칙을 따른다. 검색어는 특수문자를 지우므로 제목의 숫자 부분으로 찾는다.
+      const recipeStamp = recipeTitle.match(/\d{10,}/)?.[0] ?? recipeTitle;
+      await page.goto(`/search?query=${recipeStamp}`);
+      const searchCard = page.locator("article").filter({ hasText: recipeTitle });
       await expect(searchCard.getByText("좋아요(내가 누름)", { exact: true })).toHaveCount(1);
     } finally {
       await cleanupResource(page, "recipes", recipeId);
