@@ -33,6 +33,7 @@ import sandwichImage from "@/assets/sandwich.jpeg";
 import soupImage from "@/assets/soup.jpeg";
 import chickenImage from "@/assets/spicy-braised-chicken.jpeg";
 import tteokImage from "@/assets/tteok-bokki.jpeg";
+import ReactionCount from "@/components/reactions/ReactionCount";
 import SectionErrorState from "@/components/status/SectionErrorState";
 import Section from "@/components/status/Section";
 import {
@@ -63,7 +64,6 @@ type FeedItem = {
   views: number;
   likes: number;
   createdAt: Date;
-  recentParticipantCount: number;
 };
 
 const fallbackImages = [
@@ -139,7 +139,6 @@ function recipeToFeedItem(recipe: Recipe, index: number): FeedItem {
     views: recipe.viewCount ?? 0,
     likes: recipe.likeCount ?? 0,
     createdAt: recipe.createdAt,
-    recentParticipantCount: 0,
   };
 }
 
@@ -164,7 +163,6 @@ function trendingToFeedItem(item: TrendingContentItem, index: number): FeedItem 
     views: item.viewCount,
     likes: item.likeCount,
     createdAt: new Date(item.createdAt),
-    recentParticipantCount: item.recentParticipantCount,
   };
 }
 
@@ -342,9 +340,11 @@ function TrendingPanel({ items, hasError }: { items: FeedItem[]; hasError: boole
                   <p className="line-clamp-1 text-sm font-bold text-zinc-900">{item.title}</p>
                   <p className="line-clamp-1 text-xs text-zinc-500">{item.category}</p>
                 </div>
-                <span className="shrink-0 text-xs font-bold text-emerald-700">
-                  참여 {item.recentParticipantCount}명
-                </span>
+                <ReactionCount
+                  kind="like"
+                  count={item.likes}
+                  className="shrink-0 text-xs font-medium text-zinc-500"
+                />
               </Link>
             ))
           ) : (
