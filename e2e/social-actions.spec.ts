@@ -2,7 +2,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 
 import { expectLoginModal, login } from "./support/auth";
 import { AUTHOR_ACCOUNT, MUTATING_E2E_ENABLED, uniqueTitle } from "./support/environment";
-import { createPostThroughUi } from "./support/forms";
+import { createComboThroughUi, createPostThroughUi } from "./support/forms";
 import { cleanupResource, resourceIdFromPage } from "./support/resources";
 
 test.describe("좋아요·북마크·댓글", () => {
@@ -125,6 +125,47 @@ test.describe("좋아요·북마크·댓글", () => {
       );
     } finally {
       await cleanupResource(page, "posts", postId);
+    }
+  });
+
+  test("조합 상세의 좋아요·북마크는 레시피와 같은 버튼으로 바로 반영되고 새로고침 후 유지된다", async ({
+    page,
+  }) => {
+    test.skip(
+      !AUTHOR_ACCOUNT || !MUTATING_E2E_ENABLED,
+      "격리 DB의 작성자 계정과 E2E_ENABLE_MUTATIONS=true가 필요합니다."
+    );
+    if (!AUTHOR_ACCOUNT) return;
+
+    let comboId: string | null = null;
+    await login(page, AUTHOR_ACCOUNT);
+    try {
+      await createComboThroughUi(page, uniqueTitle("반응 조합"));
+      comboId = resourceIdFromPage(page, "combos");
+
+      const likeButton = page.getByRole("button", { name: /^좋아요 / });
+      const bookmarkButton = page.getByRole("button", { name: /^북마크 / });
+      await expect(likeButton).toHaveAttribute("aria-pressed", "false");
+      await expect(bookmarkButton).toHaveAttribute("aria-pressed", "false");
+
+      await likeButton.click();
+      await expect(likeButton).toHaveAttribute("aria-pressed", "true");
+      await expect(likeButton).toHaveAccessibleName("좋아요 1");
+      await bookmarkButton.click();
+      await expect(bookmarkButton).toHaveAttribute("aria-pressed", "true");
+      await expect(bookmarkButton).toHaveAccessibleName("북마크 1");
+
+      await page.reload();
+      await expect(page.getByRole("button", { name: "좋아요 1" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+      await expect(page.getByRole("button", { name: "북마크 1" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+    } finally {
+      await cleanupResource(page, "combos", comboId);
     }
   });
 });
