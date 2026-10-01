@@ -1,23 +1,20 @@
 "use client";
 
-import { Bookmark, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import LikeBookmarkButtons from "@/components/reactions/LikeBookmarkButtons";
 import { useSingleFlight } from "@/hooks/useSingleFlight";
 import { fetchRecipeStatus } from "@/domain/recipe/api";
 import { setRecipeBookmark } from "@/domain/recipe/recipe_bookmark/api";
 import { setRecipeLike } from "@/domain/recipe/recipe_like/api";
 import type { Recipe } from "@/domain/recipe/types";
+import { isUnauthorizedApiError } from "@/lib/errors/api-client";
 
 type Props = {
   recipe: Recipe;
 };
-
-function formatCount(value: number | null | undefined) {
-  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
-}
 
 export default function LikeBookmarkButton({ recipe }: Props) {
   const [liked, setLiked] = useState(recipe.liked ?? false);
@@ -77,6 +74,11 @@ export default function LikeBookmarkButton({ recipe }: Props) {
           setBookmarkCount(next.bookmarkCount);
         }
       } catch (error) {
+        // 요청 중에 로그인이 만료됐으면 다시 로그인하게 한다.
+        if (isUnauthorizedApiError(error)) {
+          requireAuth();
+          return;
+        }
         console.error("북마크 처리 실패", error);
       }
     });
@@ -96,35 +98,25 @@ export default function LikeBookmarkButton({ recipe }: Props) {
           setLikeCount(next.likeCount);
         }
       } catch (error) {
+        if (isUnauthorizedApiError(error)) {
+          requireAuth();
+          return;
+        }
         console.error("좋아요 처리 실패", error);
       }
     });
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={handleBookmark}
-        disabled={bookmarkFlight.isRunning}
-        aria-pressed={bookmarked}
-        className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50"
-        aria-label={`북마크 ${formatCount(bookmarkCount)}`}
-      >
-        <Bookmark className={`h-5 w-5 text-amber-400 ${bookmarked ? "fill-amber-400" : ""}`} />
-        {formatCount(bookmarkCount)}
-      </button>
-      <button
-        type="button"
-        onClick={handleLike}
-        disabled={likeFlight.isRunning}
-        aria-pressed={liked}
-        className="inline-flex h-12 min-w-[72px] items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 text-sm font-bold text-zinc-700 shadow-sm transition hover:border-red-200 hover:bg-red-50"
-        aria-label={`좋아요 ${formatCount(likeCount)}`}
-      >
-        <Heart className={`h-5 w-5 text-red-400 ${liked ? "fill-red-400" : ""}`} />
-        {formatCount(likeCount)}
-      </button>
-    </div>
+    <LikeBookmarkButtons
+      liked={liked}
+      likeCount={likeCount}
+      onLike={handleLike}
+      likeBusy={likeFlight.isRunning}
+      bookmarked={bookmarked}
+      bookmarkCount={bookmarkCount}
+      onBookmark={handleBookmark}
+      bookmarkBusy={bookmarkFlight.isRunning}
+    />
   );
 }
