@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import type { TrendingContentItem } from "@/features/trending/types";
 import { capImageDensity } from "@/lib/image-sizes";
-import { Bookmark, Eye, Heart, MessageCircle, Users } from "lucide-react";
+import { Bookmark, Eye, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -81,6 +81,7 @@ export default function RankingGrid({ items, emptyMessage }: RankingGridProps) {
               ) : (
                 <p className="text-xs text-muted-foreground">{item.writerName ?? "Unknown"}</p>
               )}
+              {/* 카드에는 알아보기 쉬운 좋아요·북마크·조회수만 둔다. 댓글·참여자 수는 순위 계산에만 쓴다. */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Heart className="h-3 w-3 text-rose-500" /> {item.recentLikeCount}
@@ -88,15 +89,6 @@ export default function RankingGrid({ items, emptyMessage }: RankingGridProps) {
                 <span className="inline-flex items-center gap-1">
                   <Bookmark className="h-3 w-3 text-amber-500" /> {item.recentBookmarkCount}
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <MessageCircle className="h-3 w-3 text-sky-500" /> {item.recentCommentCount}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Users className="h-3 w-3 text-emerald-600" /> {item.recentParticipantCount}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80">
-                <span>누적 좋아요 {item.likeCount}</span>
                 <span className="inline-flex items-center gap-1">
                   <Eye className="h-3 w-3" /> {item.viewCount}
                 </span>
