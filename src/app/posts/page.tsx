@@ -1,21 +1,11 @@
-import {
-  BookOpenText,
-  ChefHat,
-  Flame,
-  Grid2X2,
-  HelpCircle,
-  MessageCircle,
-  Sprout,
-  UtensilsCrossed,
-} from "lucide-react";
+import { ChefHat, Flame, Heart, MessageCircle, Sprout, UtensilsCrossed } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import Section from "@/components/status/Section";
-import SectionErrorState from "@/components/status/SectionErrorState";
 import * as postService from "@/domain/post/service";
-import { normalizePostCategory, type PostCategory } from "@/domain/post/category";
+import { normalizePostCategory } from "@/domain/post/category";
 import type { PostListResult, PostSearchField } from "@/domain/post/types";
 import PostList from "@/app/posts/ui/PostList";
 import * as trendingService from "@/features/trending/service";
@@ -34,11 +24,11 @@ export const fetchCache = "force-no-store";
 const DEFAULT_LIMIT = 10;
 
 const POST_CATEGORIES = [
-  { value: "all", label: "전체", icon: Grid2X2 },
-  { value: "free", label: "자유게시판", icon: MessageCircle },
-  { value: "recipe_tip", label: "레시피 팁", icon: UtensilsCrossed },
-  { value: "question", label: "질문&답변", icon: HelpCircle },
-  { value: "review", label: "후기", icon: BookOpenText },
+  { value: "all", label: "전체" },
+  { value: "free", label: "자유게시판" },
+  { value: "recipe_tip", label: "레시피 팁" },
+  { value: "question", label: "질문&답변" },
+  { value: "review", label: "후기" },
 ] as const;
 
 type SearchParamValue = string | string[] | undefined;
@@ -58,27 +48,6 @@ type PostsPageProps = {
 function firstValue(value: SearchParamValue): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
-}
-
-function buildCategoryHref({
-  category,
-  search,
-  searchField,
-}: {
-  category: PostCategory;
-  search?: string;
-  searchField?: PostSearchField;
-}) {
-  const params = new URLSearchParams();
-
-  params.set("category", category);
-  if (search) {
-    params.set("search", search);
-    params.set("searchField", searchField ?? "title");
-  }
-
-  const queryString = params.toString();
-  return queryString ? `/posts?${queryString}` : "/posts";
 }
 
 export default async function PostsPage(props: PostsPageProps) {
@@ -109,7 +78,7 @@ export default async function PostsPage(props: PostsPageProps) {
     offset: (currentPage - 1) * limit,
   };
 
-  const [postListResult, popularPostListResult, categoryPostListsResult] = await Promise.all([
+  const [postListResult, popularPostListResult] = await Promise.all([
     loadSection(
       "posts.list",
       () =>
@@ -127,34 +96,12 @@ export default async function PostsPage(props: PostsPageProps) {
       () => trendingService.listTrendingPosts(supabase, 5),
       []
     ),
-    loadSection<PostListResult[]>(
-      "posts.category-totals",
-      () =>
-        Promise.all(
-          POST_CATEGORIES.map((category) =>
-            postService.listPosts(supabase, {
-              page: 1,
-              limit: 1,
-              ...(category.value === "all" ? {} : { category: category.value }),
-            })
-          )
-        ),
-      []
-    ),
   ]);
 
   // 게시판 목록이 이 화면의 본문이므로, 없는 페이지 요청은 페이지 자체를 404로 처리한다.
   if (postListResult.outOfRange) notFound();
 
   const { items, total } = postListResult.data;
-  // 집계에 실패하면 실제 0건과 구분되도록 null로 두고 "—"로 표시한다.
-  const categoryTotals = new Map<string, number | null>(
-    POST_CATEGORIES.map((category, index) => [
-      category.value,
-      categoryPostListsResult.error ? null : (categoryPostListsResult.data[index]?.total ?? 0),
-    ])
-  );
-
   const pageSize = limit > 0 ? limit : 1;
 
   const paginationQuery: Record<string, string> = {};
@@ -275,8 +222,10 @@ export default async function PostsPage(props: PostsPageProps) {
                         >
                           {post.title}
                         </Link>
-                        <span className="shrink-0 text-xs font-medium text-rose-500">
-                          활동 {post.recentActivityCount}
+                        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-rose-500">
+                          <Heart className="h-3 w-3 fill-rose-400" aria-hidden="true" />
+                          <span className="sr-only">좋아요</span>
+                          {post.likeCount}
                         </span>
                       </li>
                     ))
@@ -287,39 +236,6 @@ export default async function PostsPage(props: PostsPageProps) {
                   )}
                 </ol>
               </Section>
-            </section>
-
-            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-black text-zinc-950">카테고리</h2>
-              {/* 카테고리 링크는 건수와 무관하게 동작하므로, 집계가 실패해도 링크는 두고 건수만 "—"로 표시한다. */}
-              {categoryPostListsResult.error ? (
-                <SectionErrorState
-                  title="카테고리별 글 수를 불러오지 못했습니다."
-                  compact
-                  className="mt-4"
-                />
-              ) : null}
-              <ul className="mt-4 space-y-3">
-                {POST_CATEGORIES.slice(1).map((category) => {
-                  const CategoryIcon = category.icon;
-                  return (
-                    <li key={category.value}>
-                      <Link
-                        href={buildCategoryHref({
-                          category: normalizePostCategory(category.value)!,
-                        })}
-                        className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-[#16883d]"
-                      >
-                        <CategoryIcon className="h-4 w-4 text-[#67b979]" />
-                        <span className="flex-1">{category.label}</span>
-                        <span className="text-zinc-500">
-                          ({categoryTotals.get(category.value) ?? "—"})
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
             </section>
           </aside>
         </div>
