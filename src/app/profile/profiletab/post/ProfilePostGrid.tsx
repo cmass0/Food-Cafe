@@ -1,6 +1,7 @@
-import { Bookmark, Eye, Heart, MessageCircle, MessagesSquare } from "lucide-react";
+import { Eye, MessageCircle, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPostCategoryOption } from "@/domain/post/category";
@@ -67,14 +68,8 @@ export default function ProfilePostGrid({ posts, view = "grid" }: Props) {
                 </p>
               </div>
               <div className={cn("mt-5 flex flex-wrap items-center gap-4 text-xs font-medium text-zinc-500", isList && "sm:mt-0 sm:w-[260px] sm:justify-end")}>
-                <span className="flex items-center gap-1.5" title="좋아요">
-                  <Heart className="h-4 w-4 text-pink-500" aria-hidden="true" />
-                  {post.likeCount}
-                </span>
-                <span className="flex items-center gap-1.5" title="북마크">
-                  <Bookmark className="h-4 w-4 text-amber-500" aria-hidden="true" />
-                  {post.bookmarkCount}
-                </span>
+                <ReactionCount kind="like" count={post.likeCount} mine={post.liked} />
+                <ReactionCount kind="bookmark" count={post.bookmarkCount} mine={post.bookmarked} />
                 <span className="flex items-center gap-1.5" title="댓글">
                   <MessageCircle className="h-4 w-4 text-sky-500" aria-hidden="true" />
                   {post.commentCount}

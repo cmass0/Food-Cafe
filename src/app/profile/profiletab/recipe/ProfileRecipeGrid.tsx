@@ -1,7 +1,8 @@
-import { ChefHat, Eye, Heart, MoreVertical } from "lucide-react";
+import { ChefHat, Eye, MoreVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { normaliseTextArray } from "@/domain/recipe/normalization";
@@ -107,10 +108,7 @@ export default function ProfileRecipeGrid({ recipes, view = "grid" }: Props) {
                   ))}
                 </div>
                 <div className="mt-5 flex items-center gap-4 text-sm text-zinc-600">
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="h-4 w-4 fill-pink-400 text-pink-400" aria-hidden="true" />
-                    <span>{recipe.likeCount ?? 0}</span>
-                  </span>
+                  <ReactionCount kind="like" count={recipe.likeCount} mine={recipe.liked} />
                   <span className="flex items-center gap-1.5">
                     <Eye className="h-4 w-4 text-zinc-700" aria-hidden="true" />
                     <span>{recipe.viewCount ?? 0}</span>

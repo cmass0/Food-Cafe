@@ -1,7 +1,8 @@
-import { Bookmark, Eye, Heart } from "lucide-react";
+import { Eye } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/category";
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
@@ -93,14 +94,8 @@ export default function RecipeListCard({ recipe, preload = false }: RecipeListCa
 
         <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-xs text-zinc-500">
           <div className="flex items-center gap-5">
-            <span className="inline-flex items-center gap-1.5">
-              <Heart className="h-4 w-4" />
-              {formatCount(recipe.likeCount)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Bookmark className="h-4 w-4" />
-              {formatCount(recipe.bookmarkCount)}
-            </span>
+            <ReactionCount kind="like" count={recipe.likeCount} mine={recipe.liked} />
+            <ReactionCount kind="bookmark" count={recipe.bookmarkCount} mine={recipe.bookmarked} />
             <span className="inline-flex items-center gap-1.5">
               <Eye className="h-4 w-4" />
               {formatCount(recipe.viewCount)}

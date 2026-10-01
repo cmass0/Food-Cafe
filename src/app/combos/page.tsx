@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import ReactionCount from "@/components/reactions/ReactionCount";
 import { listCombos } from "@/domain/combo/api";
 import type { ComboListResult, ComboSearchField, ComboSort, Combos } from "@/domain/combo/types";
 import type { ApiError } from "@/lib/errors/api-client";
 import { capImageDensity } from "@/lib/image-sizes";
+import { cn } from "@/lib/utils";
 import { PaginationComponent } from "@/components/Pagination";
 
 const DEFAULT_LIMIT = 9;
@@ -140,16 +142,10 @@ function ComboGridCard({
 
         <div className="flex items-center justify-between text-xs text-zinc-500">
           <div className="flex items-center gap-5">
+            <ReactionCount kind="like" count={combo.likeCount} mine={combo.liked} />
+            <ReactionCount kind="bookmark" count={combo.bookmarkCount} mine={combo.bookmarked} />
             <span className="inline-flex items-center gap-1.5">
-              <Heart className="h-4 w-4 fill-red-400 text-red-400" />
-              {formatCount(combo.likeCount)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Bookmark className="h-4 w-4 fill-amber-400 text-amber-400" />
-              {formatCount(combo.bookmarkCount)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Eye className="h-4 w-4 text-zinc-800" />
+              <Eye className="h-4 w-4" />
               {formatCount(combo.viewCount)}
             </span>
           </div>
@@ -208,14 +204,31 @@ function ComboPreviewPanel({ combo }: { combo: Combos | null }) {
 
         <div className="grid grid-cols-4 rounded-lg border border-zinc-200 bg-white text-center text-xs text-zinc-500">
           <div className="p-3">
-            <Heart className="mx-auto mb-1 h-4 w-4 fill-red-400 text-red-400" />
+            {/* 목록 카드와 같은 규칙: 내가 누른 것만 색을 채운다. */}
+            <Heart
+              className={cn(
+                "mx-auto mb-1 h-4 w-4 text-zinc-800",
+                combo.liked && "fill-red-400 text-red-400"
+              )}
+              aria-hidden="true"
+            />
             <p className="font-bold text-zinc-900">{formatCount(combo.likeCount)}</p>
-            <p className="mt-1">좋아요</p>
+            <p className="mt-1">
+              좋아요{combo.liked ? <span className="sr-only">(내가 누름)</span> : null}
+            </p>
           </div>
           <div className="p-3">
-            <Bookmark className="mx-auto mb-1 h-4 w-4 fill-amber-400 text-amber-400" />
+            <Bookmark
+              className={cn(
+                "mx-auto mb-1 h-4 w-4 text-zinc-800",
+                combo.bookmarked && "fill-amber-400 text-amber-400"
+              )}
+              aria-hidden="true"
+            />
             <p className="font-bold text-zinc-900">{formatCount(combo.bookmarkCount)}</p>
-            <p className="mt-1">저장</p>
+            <p className="mt-1">
+              저장{combo.bookmarked ? <span className="sr-only">(내가 누름)</span> : null}
+            </p>
           </div>
           <div className="p-3">
             <Eye className="mx-auto mb-1 h-4 w-4 text-zinc-800" />
@@ -377,7 +390,8 @@ function CombosPageInner() {
     return () => {
       mounted = false;
     };
-  }, [requestedPageSize, currentPage, searchQuery, fieldParam, sort, reloadKey]);
+    // 로그인 사용자가 바뀌면 내가 누른 좋아요·북마크 표시가 달라지므로 다시 받는다.
+  }, [requestedPageSize, currentPage, searchQuery, fieldParam, sort, reloadKey, user?.id]);
 
   useEffect(() => {
     if (combos.length === 0) {

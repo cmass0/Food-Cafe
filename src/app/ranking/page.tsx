@@ -5,6 +5,7 @@ import {
   trendingWindowLabel,
   type TrendingPeriod,
 } from "@/features/trending/period";
+import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
 import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem } from "@/features/trending/types";
 import { loadSection } from "@/lib/errors/section";
@@ -44,9 +45,17 @@ function parseRankingType(value: string | undefined): RankingType {
 async function getRankingItems(period: TrendingPeriod, rankingType: RankingType) {
   const supabase = await getServerSupabase();
 
-  return rankingType === "combo"
-    ? trendingService.listTrendingCombos(supabase, 50, period)
-    : trendingService.listTrendingRecipes(supabase, 50, period);
+  const items =
+    rankingType === "combo"
+      ? await trendingService.listTrendingCombos(supabase, 50, period)
+      : await trendingService.listTrendingRecipes(supabase, 50, period);
+
+  // 인기 집계에는 사용자 정보가 없어 내가 누른 좋아요·북마크를 따로 붙인다.
+  const reactions = await loadMyReactions(
+    supabase,
+    items.map(({ resourceType, id }) => ({ type: resourceType, id }))
+  );
+  return withMyReactions(items, (item) => item.resourceType, reactions);
 }
 
 export default async function RankingPage({ searchParams }: RankingPageProps) {

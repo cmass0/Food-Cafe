@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
+import ReactionCount from "@/components/reactions/ReactionCount";
 import type { TrendingContentItem } from "@/features/trending/types";
 import { capImageDensity } from "@/lib/image-sizes";
-import { Bookmark, Eye, Heart } from "lucide-react";
+import { Eye } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -83,12 +84,20 @@ export default function RankingGrid({ items, emptyMessage }: RankingGridProps) {
               )}
               {/* 카드에는 알아보기 쉬운 좋아요·북마크·조회수만 둔다. 댓글·참여자 수는 순위 계산에만 쓴다. */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="h-3 w-3 text-rose-500" /> {item.recentLikeCount}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Bookmark className="h-3 w-3 text-amber-500" /> {item.recentBookmarkCount}
-                </span>
+                <ReactionCount
+                  kind="like"
+                  count={item.recentLikeCount}
+                  mine={item.liked}
+                  className="gap-1"
+                  iconClassName="h-3 w-3"
+                />
+                <ReactionCount
+                  kind="bookmark"
+                  count={item.recentBookmarkCount}
+                  mine={item.bookmarked}
+                  className="gap-1"
+                  iconClassName="h-3 w-3"
+                />
                 <span className="inline-flex items-center gap-1">
                   <Eye className="h-3 w-3" /> {item.viewCount}
                 </span>

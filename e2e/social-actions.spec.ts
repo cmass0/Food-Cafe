@@ -2,7 +2,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 
 import { expectLoginModal, login } from "./support/auth";
 import { AUTHOR_ACCOUNT, MUTATING_E2E_ENABLED, uniqueTitle } from "./support/environment";
-import { createComboThroughUi, createPostThroughUi } from "./support/forms";
+import { createComboThroughUi, createPostThroughUi, createRecipeThroughUi } from "./support/forms";
 import { cleanupResource, resourceIdFromPage } from "./support/resources";
 
 test.describe("좋아요·북마크·댓글", () => {
@@ -165,6 +165,59 @@ test.describe("좋아요·북마크·댓글", () => {
         "true"
       );
     } finally {
+      await cleanupResource(page, "combos", comboId);
+    }
+  });
+
+  test("목록 카드는 내가 좋아요·북마크한 레시피·조합만 아이콘을 채워 표시한다", async ({
+    page,
+  }) => {
+    test.skip(
+      !AUTHOR_ACCOUNT || !MUTATING_E2E_ENABLED,
+      "격리 DB의 작성자 계정과 E2E_ENABLE_MUTATIONS=true가 필요합니다."
+    );
+    if (!AUTHOR_ACCOUNT) return;
+
+    let recipeId: string | null = null;
+    let comboId: string | null = null;
+    const recipeTitle = uniqueTitle("내 반응 레시피");
+    const comboTitle = uniqueTitle("내 반응 조합");
+    await login(page, AUTHOR_ACCOUNT);
+    try {
+      await createRecipeThroughUi(page, recipeTitle);
+      recipeId = resourceIdFromPage(page, "recipes");
+      const recipeLike = page.getByRole("button", { name: /^좋아요 / });
+      await recipeLike.click();
+      await expect(recipeLike).toHaveAttribute("aria-pressed", "true");
+
+      await createComboThroughUi(page, comboTitle);
+      comboId = resourceIdFromPage(page, "combos");
+      const comboBookmark = page.getByRole("button", { name: /^북마크 / });
+      await comboBookmark.click();
+      await expect(comboBookmark).toHaveAttribute("aria-pressed", "true");
+
+      // 방금 만든 글은 최신순 첫 페이지에 있다. 내가 누른 것만 "내가 누름"으로 읽힌다.
+      await page.goto("/recipes");
+      const recipeCard = page
+        .locator("article")
+        .filter({ has: page.getByRole("heading", { name: recipeTitle, exact: true }) });
+      await expect(recipeCard.getByText("좋아요(내가 누름)", { exact: true })).toHaveCount(1);
+      await expect(recipeCard.getByText("북마크", { exact: true })).toHaveCount(1);
+
+      await page.goto("/combos");
+      const comboCard = page
+        .locator("article")
+        .filter({ has: page.getByRole("heading", { name: comboTitle, exact: true }) });
+      await expect(comboCard.getByText("북마크(내가 누름)", { exact: true })).toHaveCount(1);
+      await expect(comboCard.getByText("좋아요", { exact: true })).toHaveCount(1);
+
+      // 검색 결과 카드도 같은 규칙을 따른다. 검색어는 특수문자를 지우므로 제목의 숫자 부분으로 찾는다.
+      const recipeStamp = recipeTitle.match(/\d{10,}/)?.[0] ?? recipeTitle;
+      await page.goto(`/search?query=${recipeStamp}`);
+      const searchCard = page.locator("article").filter({ hasText: recipeTitle });
+      await expect(searchCard.getByText("좋아요(내가 누름)", { exact: true })).toHaveCount(1);
+    } finally {
+      await cleanupResource(page, "recipes", recipeId);
       await cleanupResource(page, "combos", comboId);
     }
   });

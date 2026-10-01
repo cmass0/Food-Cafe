@@ -13,7 +13,6 @@ import {
   Fish,
   Flame,
   Grid3X3,
-  Heart,
   type LucideIcon,
   MessageCircle,
   PencilLine,
@@ -33,6 +32,7 @@ import sandwichImage from "@/assets/sandwich.jpeg";
 import soupImage from "@/assets/soup.jpeg";
 import chickenImage from "@/assets/spicy-braised-chicken.jpeg";
 import tteokImage from "@/assets/tteok-bokki.jpeg";
+import ReactionCount from "@/components/reactions/ReactionCount";
 import SectionErrorState from "@/components/status/SectionErrorState";
 import Section from "@/components/status/Section";
 import {
@@ -42,6 +42,7 @@ import {
 } from "@/domain/recipe/category";
 import type { Recipe } from "@/domain/recipe/types";
 import * as recipeService from "@/domain/recipe/service";
+import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
 import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem, TrendingRecipeTag } from "@/features/trending/types";
 import { loadSection } from "@/lib/errors/section";
@@ -63,7 +64,7 @@ type FeedItem = {
   views: number;
   likes: number;
   createdAt: Date;
-  recentParticipantCount: number;
+  liked: boolean;
 };
 
 const fallbackImages = [
@@ -139,7 +140,7 @@ function recipeToFeedItem(recipe: Recipe, index: number): FeedItem {
     views: recipe.viewCount ?? 0,
     likes: recipe.likeCount ?? 0,
     createdAt: recipe.createdAt,
-    recentParticipantCount: 0,
+    liked: recipe.liked ?? false,
   };
 }
 
@@ -164,7 +165,7 @@ function trendingToFeedItem(item: TrendingContentItem, index: number): FeedItem 
     views: item.viewCount,
     likes: item.likeCount,
     createdAt: new Date(item.createdAt),
-    recentParticipantCount: item.recentParticipantCount,
+    liked: item.liked ?? false,
   };
 }
 
@@ -199,7 +200,24 @@ async function getHomeData() {
       ),
     ]);
 
-  return { popularRecipes, recentRecipes, trendingCombos, communityPosts, trendingTags };
+  // 인기 집계에는 사용자 정보가 없어 내가 누른 좋아요를 따로 붙인다.
+  const myReactions = await loadMyReactions(
+    supabase,
+    [...popularRecipes.data, ...trendingCombos.data].map(({ resourceType, id }) => ({
+      type: resourceType,
+      id,
+    }))
+  );
+  const markReactions = (items: TrendingContentItem[]) =>
+    withMyReactions(items, (item) => item.resourceType, myReactions);
+
+  return {
+    popularRecipes: { ...popularRecipes, data: markReactions(popularRecipes.data) },
+    recentRecipes,
+    trendingCombos: { ...trendingCombos, data: markReactions(trendingCombos.data) },
+    communityPosts,
+    trendingTags,
+  };
 }
 
 function HomeSectionStatus({
@@ -260,10 +278,13 @@ function RecipeCard({ item, index }: { item: FeedItem; index: number }) {
             <Eye className="h-3.5 w-3.5" />
             {formatCount(item.views)}
           </span>
-          <span className="flex items-center gap-1">
-            <Heart className="h-3.5 w-3.5" />
-            {formatCount(item.likes)}
-          </span>
+          <ReactionCount
+            kind="like"
+            count={item.likes}
+            mine={item.liked}
+            className="gap-1"
+            iconClassName="h-3.5 w-3.5"
+          />
         </div>
       </div>
     </Link>
@@ -342,9 +363,12 @@ function TrendingPanel({ items, hasError }: { items: FeedItem[]; hasError: boole
                   <p className="line-clamp-1 text-sm font-bold text-zinc-900">{item.title}</p>
                   <p className="line-clamp-1 text-xs text-zinc-500">{item.category}</p>
                 </div>
-                <span className="shrink-0 text-xs font-bold text-emerald-700">
-                  참여 {item.recentParticipantCount}명
-                </span>
+                <ReactionCount
+                  kind="like"
+                  count={item.likes}
+                  mine={item.liked}
+                  className="shrink-0 text-xs font-medium text-zinc-500"
+                />
               </Link>
             ))
           ) : (

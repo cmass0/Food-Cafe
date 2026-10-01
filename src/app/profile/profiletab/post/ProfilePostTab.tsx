@@ -1,6 +1,7 @@
 import Section from "@/components/status/Section";
 import { listBookmarkedPosts, listLikedPosts, listPosts } from "@/domain/post/service";
 import type { PostListOptions, PostListResult } from "@/domain/post/types";
+import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
 import { loadSection } from "@/lib/errors/section";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -42,10 +43,10 @@ export default async function ProfilePostTab({
     sort: serviceSort,
   };
 
+  const supabase = await getServerSupabase();
   const result = await loadSection<PostListResult>(
     "profile.posts",
     async () => {
-      const supabase = await getServerSupabase();
       return type === "written"
         ? await listPosts(supabase, { ...options, writerUid: userId })
         : type === "bookmark"
@@ -53,6 +54,12 @@ export default async function ProfilePostTab({
           : await listLikedPosts(supabase, userId, options);
     },
     { items: [], total: 0, limit: safeLimit, offset: (currentPage - 1) * safeLimit, hasMore: false }
+  );
+
+  // 내가 누른 좋아요·북마크는 카드 아이콘을 채워 표시한다.
+  const reactions = await loadMyReactions(
+    supabase,
+    result.data.items.map(({ id }) => ({ type: "post", id }))
   );
 
   return (
@@ -63,7 +70,7 @@ export default async function ProfilePostTab({
       title="게시글을 불러오지 못했습니다."
       resetKeys={[userId, type, currentPage, safeLimit, trimmedSearch, sort, view]}
     >
-      <ProfilePostGrid posts={result.data.items} view={view} />
+      <ProfilePostGrid posts={withMyReactions(result.data.items, "post", reactions)} view={view} />
       <ProfilePostPagination
         type={type}
         page={currentPage}

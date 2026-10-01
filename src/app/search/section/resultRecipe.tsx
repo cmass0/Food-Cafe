@@ -1,7 +1,8 @@
-import { ChefHat, Eye, Heart, SearchX } from "lucide-react";
+import { ChefHat, Eye, SearchX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import ReactionCount from "@/components/reactions/ReactionCount";
 import Section from "@/components/status/Section";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { PaginationComponent } from "@/components/Pagination";
@@ -103,11 +104,13 @@ function RecipeResultCard({ recipe, viewMode }: { recipe: Recipe; viewMode: View
         <div className="mt-auto flex items-center justify-between gap-3 text-xs font-medium text-zinc-500">
           <span className="hidden min-w-0 truncate md:inline">{writerLabel(recipe)}</span>
           <span className="flex shrink-0 items-center gap-4">
-            <span className="inline-flex items-center gap-1">
-              <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
-              <span className="sr-only">좋아요 </span>
-              {formatCount(recipe.likeCount)}
-            </span>
+            <ReactionCount
+              kind="like"
+              count={recipe.likeCount}
+              mine={recipe.liked}
+              className="gap-1"
+              iconClassName="h-3.5 w-3.5 md:h-4 md:w-4"
+            />
             <span className="hidden items-center gap-1 md:inline-flex">
               <Eye className="h-4 w-4" />
               {formatCount(recipe.viewCount)}
