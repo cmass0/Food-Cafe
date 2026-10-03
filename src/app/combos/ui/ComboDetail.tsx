@@ -1,5 +1,4 @@
 import {
-  Bookmark,
   ChefHat,
   ChevronRight,
   Clock3,
@@ -101,16 +100,6 @@ export default function ComboDetail({
                 이미지가 없습니다.
               </div>
             )}
-
-            <div className="absolute inset-0 grid place-items-center bg-black/5">
-              <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white/90 bg-white/20 text-white shadow-sm backdrop-blur-sm">
-                <Layers className="h-7 w-7" />
-              </span>
-            </div>
-
-            <span className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full bg-white text-[#15933d] shadow-sm">
-              <Bookmark className="h-5 w-5" />
-            </span>
           </div>
         </div>
 
