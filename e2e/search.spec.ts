@@ -12,6 +12,22 @@ test.describe("통합검색", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("김치볶음밥");
   });
 
+  test("모바일은 상단 돋보기로 검색창을 열어 통합검색한다", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    const header = page.getByRole("banner");
+
+    // 모바일 상단바에는 검색창이 없고, 돋보기를 눌러야 열린다.
+    await expect(header.getByRole("textbox", { name: "사이트 검색어" })).toHaveCount(0);
+    await header.getByRole("button", { name: "검색창 열기" }).click();
+    await header.getByRole("textbox", { name: "사이트 검색어" }).fill("파스타");
+    await header.getByRole("button", { name: "검색", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/search\?query=/);
+    expect(new URL(page.url()).searchParams.get("query")).toBe("파스타");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("파스타");
+  });
+
   test("정렬과 보기 방식을 바꾸면 검색어는 유지하고 페이지 번호는 초기화한다", async ({ page }) => {
     await page.goto("/search?query=test&recipePage=1&comboPage=1&postPage=1");
 
