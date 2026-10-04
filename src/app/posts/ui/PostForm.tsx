@@ -6,6 +6,7 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import { useAuth } from "@/components/auth/AuthProvider";
 import type { PostActionState } from "@/app/posts/actions";
 import { Editor } from "@/components/blocks/editor-x/editor";
+import { exportPostHtml } from "@/components/blocks/editor-x/export-html";
 import { FormActionBar, type FormMode } from "@/components/forms/FormActionBar";
 import { FormStatusAlert } from "@/components/forms/FormStatusAlert";
 import { useFormSuccess } from "@/components/forms/useFormSuccess";
@@ -171,6 +172,8 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
       const finalState = replacePendingImageSources(serializedState, replacements);
       formData.set("id", postId);
       formData.set("content_json", JSON.stringify(finalState));
+      // 이미지 경로까지 확정된 최종 JSON으로 본문 HTML을 만든다. 서버는 정제만 한다.
+      formData.set("content_html", exportPostHtml(finalState));
       formData.set("uploaded_paths", JSON.stringify(uploadedPaths));
 
       actionStarted = true;

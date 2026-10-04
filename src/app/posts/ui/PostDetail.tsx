@@ -76,7 +76,7 @@ export default function PostDetail({ post }: { post: Post }) {
 
       {contentHtml ? (
         <section
-          className="prose prose-zinc max-w-none py-9 text-[15px] leading-8"
+          className="post-content py-9 text-[15px] leading-8"
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
       ) : (

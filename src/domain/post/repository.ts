@@ -4,11 +4,11 @@ import { normalizeSearchTerm } from "@/lib/domain/repo/querypattern";
 import type { Database } from "@/types/supabase";
 import type { FetchPostsParams, PostInsertDB, PostRow, PostUpdateDB } from "./types";
 
-const POST_COLUMNS = [
+// 목록·검색·프로필 카드용 컬럼. 본문 JSON(수정용)과 HTML(상세 화면용)은 목록에서 쓰지 않아 빼고,
+// 카드 미리보기에 쓰는 본문 텍스트만 가져온다.
+const POST_LIST_COLUMNS = [
   "id",
   "title",
-  "content_json",
-  "content_html",
   "content_text",
   "writer_uid",
   "writer_name",
@@ -21,6 +21,8 @@ const POST_COLUMNS = [
   "created_at",
   "updated_at",
 ].join(", ");
+// 상세·수정 화면과 저장 결과에 쓰는 전체 컬럼.
+const POST_COLUMNS = `${POST_LIST_COLUMNS}, content_json, content_html`;
 
 function mapRows(rows: unknown): PostRow[] {
   return Array.isArray(rows) ? (rows as PostRow[]) : [];
@@ -42,7 +44,7 @@ export async function fetchPosts(
   const safeLimit = Math.max(params.limit, 1);
   const safeOffset = Math.max(params.offset, 0);
   const rangeEnd = safeOffset + safeLimit - 1;
-  let query = (client as any).from("posts").select(POST_COLUMNS, { count: "exact" });
+  let query = (client as any).from("posts").select(POST_LIST_COLUMNS, { count: "exact" });
 
   if (params.sort === "likes") {
     query = query.order("like_count", { ascending: false });
@@ -114,7 +116,7 @@ export async function fetchPostsByEngagement(
   const rangeEnd = safeOffset + safeLimit - 1;
   let query = (client as any)
     .from(relation)
-    .select(`created_at, posts:post_id!inner(${POST_COLUMNS})`, { count: "exact" })
+    .select(`created_at, posts:post_id!inner(${POST_LIST_COLUMNS})`, { count: "exact" })
     .eq("user_id", userId);
 
   if (params.sort === "likes") {

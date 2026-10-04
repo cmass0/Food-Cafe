@@ -17,6 +17,8 @@ export type PostCreateInput = {
   id?: string;
   title: string;
   content_json: Json | string;
+  // 브라우저 에디터가 만든 본문 HTML. 서버가 저장 전에 정제한다.
+  content_html: string;
   category: PostCategory;
 };
 
@@ -31,6 +33,7 @@ export type PostUpdateDB = Partial<{
 export type PostUpdateInput = Partial<{
   title: string;
   content_json: Json | string;
+  content_html: string;
   category: PostCategory;
 }>;
 
