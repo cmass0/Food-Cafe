@@ -8,7 +8,7 @@ import * as postService from "@/domain/post/service";
 import { normalizePostCategory } from "@/domain/post/category";
 import type { PostListResult, PostSearchField } from "@/domain/post/types";
 import PostList from "@/app/posts/ui/PostList";
-import * as trendingService from "@/features/trending/service";
+import { listCachedTrendingPosts } from "@/features/trending/cache";
 import type { TrendingContentItem } from "@/features/trending/types";
 import { PaginationComponent } from "@/components/Pagination";
 import { loadSection } from "@/lib/errors/section";
@@ -91,11 +91,7 @@ export default async function PostsPage(props: PostsPageProps) {
         }),
       emptyPostList
     ),
-    loadSection<TrendingContentItem[]>(
-      "posts.popular",
-      () => trendingService.listTrendingPosts(supabase, 5),
-      []
-    ),
+    loadSection<TrendingContentItem[]>("posts.popular", () => listCachedTrendingPosts(5), []),
   ]);
 
   // 게시판 목록이 이 화면의 본문이므로, 없는 페이지 요청은 페이지 자체를 404로 처리한다.

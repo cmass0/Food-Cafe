@@ -7,6 +7,7 @@ import { z } from "zod";
 import { POST_USER_FACING_ERRORS } from "@/domain/post/messages";
 import { postCategorySchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { DEFAULT_ACTION_ERROR, toActionErrorMessage } from "@/lib/errors/action";
 import { uploadedPathsFromFormData } from "@/lib/api/form-data";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -147,6 +148,7 @@ export async function deletePostAction(id: string): Promise<PostActionState> {
     return { ok: false, message: DEFAULT_ACTION_ERROR };
   }
 
+  clearTrendingCache();
   revalidatePath("/posts");
   revalidatePath(`/posts/${id}`);
   redirect("/posts");

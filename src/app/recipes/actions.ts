@@ -2,6 +2,7 @@
 
 import * as recipeService from "@/domain/recipe/service";
 import type { RecipeInsertDB, RecipeUpdateDB } from "@/domain/recipe/types";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { requireAuthContext } from "@/lib/auth/session";
 import { safeDiscardFailedUploads } from "@/lib/storage/server";
 import { storagePrefix } from "@/lib/storage/paths";
@@ -81,6 +82,7 @@ export async function deleteRecipeAction(id: string) {
     handleError(error);
   }
 
+  clearTrendingCache();
   revalidatePath("/recipes");
   revalidatePath("/search");
   redirect("/recipes");
