@@ -16,6 +16,10 @@ export const json = (body: unknown, status = 200, headers?: HeadersInit) =>
     },
   });
 
+// 요청이 잘못된 게 아니라 DB 쪽이 지금 답할 수 없는 상태를 뜻하는 코드.
+// PGRST00x: PostgREST가 DB에 연결하지 못함·연결 대기 초과 / 08: 연결 끊김 / 53: 연결 수·자원 부족 / 57: 쿼리 시간 초과·DB 재시작 중
+const DB_UNAVAILABLE_CODE = /^(PGRST00\d|08|53|57)/;
+
 export const respondWithSupabaseError = (error: PostgrestError) => {
   // 목록 범위를 벗어난 page는 잘못된 요청이 아니라 "없는 페이지"다.
   // 레시피·조합 목록 화면은 이 404를 보고 첫 페이지 안내를 띄운다.
@@ -24,6 +28,12 @@ export const respondWithSupabaseError = (error: PostgrestError) => {
       { error: "PAGE_OUT_OF_RANGE", message: "요청한 페이지에 표시할 항목이 없습니다." },
       404
     );
+  }
+  // 코드가 없으면 DB 서버에 닿지 못한 것이다(연결 실패, 게이트웨이 응답).
+  // 사용자 잘못이 아니므로 400이 아니라 503이고, details에 담긴 서버 내부 스택은 응답에 싣지 않고 로그에만 남긴다.
+  if (!error.code || DB_UNAVAILABLE_CODE.test(error.code)) {
+    console.error("DB 요청 실패", error);
+    return json({ error: "SERVICE_UNAVAILABLE", message: "잠시 후 다시 시도해 주세요." }, 503);
   }
   const status = error.code === "42501" ? 403 : 400;
   return json(
