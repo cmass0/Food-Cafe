@@ -1,5 +1,6 @@
 import { ComboUpdateSchema } from "@/domain/combo/schema";
 import * as comboService from "@/domain/combo/service";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
@@ -77,6 +78,7 @@ export async function DELETE(_: Request, props: contentParams) {
 
     const deleted = await comboService.removeCombo(supabase, params.id);
     if (!deleted) return notFound("삭제할 수 있는 조합");
+    clearTrendingCache();
 
     return json({ message: "레시피 조합이 삭제되었습니다." }, 200);
   } catch (error) {

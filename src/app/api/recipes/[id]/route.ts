@@ -1,6 +1,7 @@
 // src/app/api/recipes/[id]/route.ts
 import { recipeUpdateSchema } from "@/domain/recipe/schema";
 import * as service from "@/domain/recipe/service";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
@@ -78,6 +79,7 @@ export async function DELETE(_: Request, props: contentParams) {
 
     const deleted = await service.removeRecipe(supabase, params.id);
     if (!deleted) return notFound("삭제할 수 있는 레시피");
+    clearTrendingCache();
 
     return json({ message: "레시피가 삭제되었습니다." }, 200);
   } catch (error) {

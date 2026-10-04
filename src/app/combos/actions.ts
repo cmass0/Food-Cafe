@@ -2,6 +2,7 @@
 
 import * as comboService from "@/domain/combo/service";
 import type { ComboInsertDb, ComboUpdateDb } from "@/domain/combo/types";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { requireAuthContext } from "@/lib/auth/session";
 import { storagePrefix } from "@/lib/storage/paths";
 import { safeDiscardFailedUploads } from "@/lib/storage/server";
@@ -81,6 +82,7 @@ export async function deleteComboAction(id: string) {
     handleError(error);
   }
 
+  clearTrendingCache();
   revalidatePath("/combos");
   revalidatePath("/search");
   redirect("/combos");
