@@ -1,0 +1,16 @@
+# k6 공식 대시보드(grafana.com 18030 "k6 Prometheus (Native Histograms)")를 불러온다.
+# 응답 시간 백분위를 전체 요청 기준으로 계산하는 판이다. 요청 종류별 p95를 평균 내는 19665판은
+# 준비 단계(setup)의 느린 요청 하나에도 값이 크게 왜곡돼 쓰지 않는다.
+# 원본에서 바꾼 것: 데이터 소스 참조를 위 Prometheus(uid: prometheus)로, 백분위 기본값을 0.99 → 0.95로,
+# 실패 요청 수가 없을 때 "No data" 대신 0으로 표시, Peak RPS를 마지막 값 → 최댓값으로,
+# HTTP Request Duration 칸을 마지막 구간 → 선택한 기간 전체의 백분위로(k6 요약의 p95와 같은 기준),
+# HTTP Latency Stats의 성공·실패 선이 이름과 달리 waiting만 그리던 것을 응답 시간(duration)으로.
+apiVersion: 1
+
+providers:
+  - name: k6
+    folder: 부하 테스트
+    type: file
+    disableDeletion: true
+    options:
+      path: /etc/grafana/dashboards
