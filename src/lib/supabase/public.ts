@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Database } from "@/types/supabase";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseServerFetch } from "./server-fetch";
 
 let publicClient: SupabaseClient<Database> | null = null;
 
@@ -18,6 +19,7 @@ export function getPublicSupabase(): SupabaseClient<Database> {
   }
 
   publicClient = createClient<Database>(url, anon, {
+    global: { fetch: getSupabaseServerFetch() },
     auth: {
       autoRefreshToken: false,
       persistSession: false,

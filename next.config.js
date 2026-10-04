@@ -17,7 +17,7 @@ const supabaseImagePattern = (() => {
 })();
 
 const nextConfig = {
-  serverExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
+  serverExternalPackages: ["@supabase/ssr", "@supabase/supabase-js", "undici"],
   images: {
     remotePatterns: supabaseImagePattern ? [supabaseImagePattern] : [],
   },

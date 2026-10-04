@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
+import { getSupabaseServerFetch } from "./server-fetch";
 
 type ServerClient = SupabaseClient<Database>;
 
@@ -16,6 +17,7 @@ export async function getServerSupabase(): Promise<ServerClient> {
   }
 
   return createServerClient<Database>(url, anon, {
+    global: { fetch: getSupabaseServerFetch() },
     cookies: {
       getAll() {
         return cookieStore.getAll();
