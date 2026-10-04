@@ -6,7 +6,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import * as followService from "@/domain/follow/service";
 import { collectMentionTargetIds } from "./mentions";
 import * as repository from "./repository";
-import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
+import {
+  POST_CONTENT_MAX_CHARS,
+  POST_CONTENT_TOO_LARGE_MESSAGE,
+  postInsertSchema,
+  postListOptionsSchema,
+  postUpdateSchema,
+} from "./schema";
 import type {
   Post,
   PostCreateInput,
@@ -17,11 +23,10 @@ import type {
   PostUpdateDB,
   PostUpdateInput,
 } from "./types";
-import { buildPostContentHtml, buildPostContentText } from "./content";
+import { extractPostText, sanitizePostHtmlForStorage } from "./content";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 10;
-const MAX_JSON_CHARS = 200_000;
 const RICH_CONTENT_PATTERN = /<(?:img|iframe)\b|class="youtube-link-card"/i;
 
 // 작성자 이름은 DB Trigger(private.set_content_writer)가 프로필에서 채운다.
@@ -96,8 +101,8 @@ export async function createPost(
   const parsed = postInsertSchema.parse({ ...input, content_json: contentJson });
   const mentionTargetIds = collectMentionTargetIds(parsed.content_json);
   await followService.assertMentionTargetsAreFollowed(client, author.uid, mentionTargetIds);
-  const contentHtml = buildPostContentHtml(parsed.content_json);
-  const contentText = buildPostContentText(parsed.content_json);
+  const contentHtml = sanitizePostHtmlForStorage(parsed.content_html);
+  const contentText = extractPostText(parsed.content_json);
   assertPostContentIsNotEmpty(contentText, contentHtml);
 
   if (!author.uid) {
@@ -137,8 +142,9 @@ export async function updatePost(
   if (storedContentJson !== undefined) {
     const mentionTargetIds = collectMentionTargetIds(storedContentJson);
     await followService.assertMentionTargetsAreFollowed(client, writerUid, mentionTargetIds);
-    const contentHtml = buildPostContentHtml(storedContentJson);
-    const contentText = buildPostContentText(storedContentJson);
+    // 스키마가 JSON과 HTML을 함께 받도록 강제한다.
+    const contentHtml = sanitizePostHtmlForStorage(parsed.content_html ?? "");
+    const contentText = extractPostText(storedContentJson);
     assertPostContentIsNotEmpty(contentText, contentHtml);
     payload.content_html = contentHtml;
     payload.content_text = contentText;
@@ -211,8 +217,8 @@ function parseContentJson(contentJson: PostCreateInput["content_json"]) {
   if (!serialized.trim()) {
     throw new Error("내용을 입력해 주세요.");
   }
-  if (serialized.length > MAX_JSON_CHARS) {
-    throw new Error("본문은 200KB 이하로 작성해 주세요.");
+  if (serialized.length > POST_CONTENT_MAX_CHARS) {
+    throw new Error(POST_CONTENT_TOO_LARGE_MESSAGE);
   }
 
   if (typeof contentJson !== "string") return contentJson;

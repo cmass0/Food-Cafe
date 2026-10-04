@@ -1,14 +1,22 @@
 import { describe, expect, test } from "vitest";
 
-import { postInsertSchema, postListOptionsSchema, postUpdateSchema } from "./schema";
+import {
+  POST_CONTENT_MAX_CHARS,
+  POST_CONTENT_TOO_LARGE_MESSAGE,
+  postInsertSchema,
+  postListOptionsSchema,
+  postUpdateSchema,
+} from "./schema";
 
 const CONTENT = { root: { children: [] } };
+const HTML = "<p>본문</p>";
 
 describe("postInsertSchema", () => {
   test("제목의 바깥 공백을 제거하고 정상 게시글을 허용한다", () => {
     const result = postInsertSchema.parse({
       title: "  첫 게시글  ",
       content_json: CONTENT,
+      content_html: HTML,
       category: "free",
     });
 
@@ -16,12 +24,29 @@ describe("postInsertSchema", () => {
   });
 
   test.each([
-    ["빈 제목", { title: "   ", content_json: CONTENT, category: "free" }, "title"],
-    ["151자 제목", { title: "가".repeat(151), content_json: CONTENT, category: "free" }, "title"],
-    ["없는 카테고리", { title: "게시글", content_json: CONTENT, category: "notice" }, "category"],
+    [
+      "빈 제목",
+      { title: "   ", content_json: CONTENT, content_html: HTML, category: "free" },
+      "title",
+    ],
+    [
+      "151자 제목",
+      { title: "가".repeat(151), content_json: CONTENT, content_html: HTML, category: "free" },
+      "title",
+    ],
+    [
+      "본문 HTML 없음",
+      { title: "게시글", content_json: CONTENT, category: "free" },
+      "content_html",
+    ],
+    [
+      "없는 카테고리",
+      { title: "게시글", content_json: CONTENT, content_html: HTML, category: "notice" },
+      "category",
+    ],
     [
       "문자열 본문",
-      { title: "게시글", content_json: "plain text", category: "free" },
+      { title: "게시글", content_json: "plain text", content_html: HTML, category: "free" },
       "content_json",
     ],
   ] as const)("%s은 %s 오류로 거부한다", (_label, input, field) => {
@@ -37,9 +62,37 @@ describe("postInsertSchema", () => {
       postInsertSchema.safeParse({
         title: "가".repeat(150),
         content_json: CONTENT,
+        content_html: HTML,
         category: "free",
       }).success
     ).toBe(true);
+  });
+
+  test("본문 HTML은 상한 글자 수까지 허용한다", () => {
+    expect(
+      postInsertSchema.safeParse({
+        title: "게시글",
+        content_json: CONTENT,
+        content_html: "가".repeat(POST_CONTENT_MAX_CHARS),
+        category: "free",
+      }).success
+    ).toBe(true);
+  });
+
+  test("본문 HTML이 상한을 넘으면 크기 안내 문구로 거부한다", () => {
+    const result = postInsertSchema.safeParse({
+      title: "게시글",
+      content_json: CONTENT,
+      content_html: "가".repeat(POST_CONTENT_MAX_CHARS + 1),
+      category: "free",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues[0]).toMatchObject({
+      path: ["content_html"],
+      message: POST_CONTENT_TOO_LARGE_MESSAGE,
+    });
   });
 });
 
@@ -54,6 +107,24 @@ describe("postUpdateSchema", () => {
 
   test("일부 필드만 수정할 수 있다", () => {
     expect(postUpdateSchema.parse({ category: "review" })).toEqual({ category: "review" });
+  });
+
+  test("본문 JSON과 HTML을 함께 수정할 수 있다", () => {
+    expect(postUpdateSchema.parse({ content_json: CONTENT, content_html: HTML })).toEqual({
+      content_json: CONTENT,
+      content_html: HTML,
+    });
+  });
+
+  test.each([
+    ["JSON만", { content_json: CONTENT }],
+    ["HTML만", { content_html: HTML }],
+  ] as const)("본문을 %s 바꾸면 거부한다", (_label, input) => {
+    const result = postUpdateSchema.safeParse(input);
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues[0]?.message).toBe("유효하지 않은 게시글 형식입니다.");
   });
 });
 
