@@ -17,6 +17,9 @@ const supabaseImagePattern = (() => {
 })();
 
 const nextConfig = {
+  // 부하 테스트용 빌드는 로컬 Supabase 주소로 따로 만들어 build/loadtest에 둔다(tools/k6/build-app.mjs).
+  // 평소 빌드(.next)와 섞이면 원격 DB를 가리키는 빌드로 부하 테스트를 하게 될 수 있다.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   serverExternalPackages: ["@supabase/ssr", "@supabase/supabase-js"],
   images: {
     remotePatterns: supabaseImagePattern ? [supabaseImagePattern] : [],

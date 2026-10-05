@@ -1,4 +1,5 @@
-# k6 결과는 remote write로 들어오므로 따로 수집할 대상은 Prometheus 자신뿐이다.
+# k6 결과는 remote write로 들어온다. 그 밖의 서버·DB 지표는 아래 대상에서 5초마다 가져온다.
+# 부하 테스트 때만 켜는 대상들이라 평소에는 꺼져 있다(꺼진 대상은 up=0으로만 남는다).
 global:
   scrape_interval: 15s
 
@@ -6,3 +7,39 @@ scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ["localhost:9090"]
+
+  # 이 PC 전체 CPU·메모리와 k6·앱 서버 프로세스 CPU(tools/k6/host-metrics.mjs, run.mjs가 실행 중에만 연다).
+  - job_name: host
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["host.docker.internal:9101"]
+
+  # 컨테이너별 CPU·메모리(cAdvisor). 필요한 지표만 남기고 짧은 이름표(container)를 붙인다.
+  - job_name: containers
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["cadvisor:8080"]
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: container_(cpu_usage_seconds_total|memory_working_set_bytes)
+        action: keep
+      - source_labels: [name]
+        regex: supabase_(.+)_[^_]+
+        target_label: container
+        replacement: supabase-$1
+      - source_labels: [name]
+        regex: food-cafe-loadtest-(.+)-[0-9]+
+        target_label: container
+        replacement: $1
+
+  # Supabase REST 서버(PostgREST)의 DB 연결 풀: 최대 연결 수, 남은 연결, 연결을 기다리는 요청 수.
+  - job_name: postgrest
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["postgrest-metrics:8080"]
+
+  # DB(Postgres) 안쪽 상태(postgres_exporter).
+  - job_name: postgres
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["postgres-exporter:9187"]

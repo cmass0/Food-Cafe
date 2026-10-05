@@ -1,6 +1,11 @@
 # 부하 테스트 결과 저장(Prometheus)과 대시보드(Grafana). 두 포트 모두 내 PC(127.0.0.1)에서만 열린다.
 #   켜기: docker compose -f tools/k6/docker-compose.yml up -d
 #   끄기: docker compose -f tools/k6/docker-compose.yml down   (결과 기록은 볼륨에 남는다)
+#
+# 서버·DB 지표 수집기(profile: metrics)는 부하 테스트 때만 켠다. 로컬 Supabase가 먼저 켜져 있어야 한다.
+#   켜기: docker compose --env-file .env.loadtest.local -f tools/k6/docker-compose.yml --profile metrics up -d
+#   끄기: docker compose -f tools/k6/docker-compose.yml --profile metrics stop cadvisor postgres-exporter postgrest-metrics
+#   (.env.loadtest.local의 SUPABASE_PROJECT_ID로 로컬 Supabase 네트워크 이름을 찾는다)
 name: food-cafe-loadtest
 
 services:
@@ -48,6 +53,61 @@ services:
       - "127.0.0.1:3402:3402"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  # ── 서버·DB 지표 수집기 ──────────────────────────────────────────────
+  # 앱 서버(Node) 프로세스와 이 PC 전체 CPU는 run.mjs가 바깥에서 잰다. 여기서는 Docker 안쪽만 모은다.
+
+  # 컨테이너마다 CPU·메모리(Supabase 게이트웨이·REST 서버·DB, 분배기). Google이 만든 표준 수집기.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.54.1
+    profiles: ["metrics"]
+    privileged: true
+    devices:
+      - /dev/kmsg
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=5s
+      - --enable_metrics=cpu,memory
+      - --store_container_labels=false
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+
+  # DB 안쪽 상태(연결 수·상태별 연결, 트랜잭션, 잠금, 쿼리별 시간). Prometheus 커뮤니티 공식 수집기.
+  # 로컬 Supabase DB의 기본 계정(postgres/postgres)으로 붙는다. 원격 DB에는 붙지 않는다.
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.18.1
+    profiles: ["metrics"]
+    environment:
+      DATA_SOURCE_URI: db:5432/postgres?sslmode=disable
+      DATA_SOURCE_USER: postgres
+      DATA_SOURCE_PASS: postgres
+    command:
+      - --collector.stat_statements
+      - --collector.stat_statements.include_query
+    networks:
+      - default
+      - supabase
+
+  # Supabase REST 서버(PostgREST)는 DB 연결 풀 상태를 관리용 포트(3001)에 이미 내놓는다.
+  # 그 포트는 Supabase 네트워크 안에서만 열려 있어, Prometheus가 가져갈 수 있게 이어 준다.
+  postgrest-metrics:
+    image: nginx:1.29-alpine
+    profiles: ["metrics"]
+    volumes:
+      - ./nginx/postgrest-metrics.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - default
+      - supabase
+
+networks:
+  # supabase start가 만든 네트워크. 이름 끝은 로컬 Supabase의 프로젝트 ID다.
+  supabase:
+    external: true
+    name: supabase_network_${SUPABASE_PROJECT_ID:-Food-Cafe}
 
 volumes:
   prometheus-data:
