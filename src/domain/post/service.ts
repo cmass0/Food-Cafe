@@ -1,4 +1,5 @@
 ﻿import { resolveLimit, resolveOffset } from "@/lib/pagination";
+import { managedPathsFromHtml } from "@/lib/storage/html-paths";
 import { normalizeStoredImageReference } from "@/lib/storage/paths";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
 import type { Database } from "@/types/supabase";
@@ -155,7 +156,11 @@ export async function updatePost(
 
   const post = mapRowToPost(row);
   if (storedContentJson !== undefined && row.writer_uid) {
-    await safePruneContentImages("posts", row.writer_uid, row.id, [storedContentJson]);
+    // 본문 HTML은 브라우저가 만들어 보내므로, HTML에만 있는 이미지도 사용 중으로 남긴다.
+    await safePruneContentImages("posts", row.writer_uid, row.id, [
+      storedContentJson,
+      [...managedPathsFromHtml(row.content_html)],
+    ]);
   }
   return post;
 }
