@@ -18,7 +18,6 @@ import {
   PencilLine,
   Pizza,
   Salad,
-  Search,
   Soup,
   Sparkles,
   Target,
@@ -415,19 +414,7 @@ export default async function Home() {
               <br />
               요리로 소통해보세요.
             </p>
-            <form action="/search" className="mt-6 flex max-w-xl gap-3">
-              <label className="relative flex-1">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <input
-                  name="query"
-                  className="h-11 w-full rounded-lg border border-zinc-200 bg-white pl-11 pr-4 text-sm outline-none transition placeholder:text-zinc-400 focus-visible:border-[#438e4d] focus-visible:ring-2 focus-visible:ring-[#438e4d]/30"
-                  placeholder="오늘 뭐 먹지? 레시피를 검색해보세요!"
-                />
-              </label>
-              <button className="h-11 rounded-lg bg-[#34783f] px-8 text-sm font-bold text-white transition hover:bg-[#2f6f39]">
-                검색
-              </button>
-            </form>
+            {/* 통합 검색은 상단바 한 곳에서만 한다. */}
           </div>
           <div className="relative hidden min-h-[280px] overflow-hidden rounded-lg md:block">
             <Image
@@ -553,42 +540,39 @@ export default async function Home() {
           </section>
 
           <section>
+            {/* 태그 목록 페이지가 없어 "전체 보기" 링크를 두지 않는다. 각 태그가 검색으로 이어진다. */}
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-zinc-900">
                 <Target className="h-5 w-5 text-red-500" />
-                이번 주 인기 태그
+                최근 7일 인기 태그
               </h2>
-              <Link
-                href="/search"
-                className="flex items-center gap-1 text-sm font-medium text-zinc-500"
-              >
-                전체 태그 보기 <ChevronRight className="h-4 w-4" />
-              </Link>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {/* 칸을 나누면 좁은 화면에서 글자가 꺾이므로 태그 길이만큼만 차지하게 흘려 놓는다. */}
+            <div className="flex flex-wrap gap-2.5">
               <Section
                 name="home.trending-recipe-tags"
                 failed={trendingTags.error}
                 title="인기 태그를 표시하지 못했습니다."
                 compact
-                errorClassName="col-span-full"
+                errorClassName="w-full"
               >
                 {trendingTags.data.length === 0 ? (
                   <HomeSectionStatus
                     emptyMessage="최근 7일 동안 집계된 인기 태그가 없습니다."
-                    className="col-span-full rounded-full bg-zinc-50 px-5 py-4 text-center text-sm text-zinc-500"
+                    className="w-full rounded-full bg-zinc-50 px-5 py-4 text-center text-sm text-zinc-500"
                   />
                 ) : (
                   trendingTags.data.map((tag) => (
                     <Link
                       key={tag.tag}
                       href={`/search?query=${encodeURIComponent(tag.tag)}`}
-                      className="rounded-full bg-[#f2f7f1] px-5 py-4 text-center transition hover:bg-emerald-100"
+                      className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-[#f2f7f1] px-4 py-2.5 transition hover:bg-emerald-100"
                     >
-                      <p className="text-sm font-bold text-zinc-900">#{tag.tag}</p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {compactCount(tag.totalRecipeCount)}개 레시피
-                      </p>
+                      <span className="text-sm font-bold text-zinc-900">#{tag.tag}</span>
+                      {/* 순위는 최근 7일 반응으로 정하지만, 이 숫자는 태그가 붙은 전체 레시피 수다. */}
+                      <span className="text-xs text-zinc-500">
+                        전체 레시피 {compactCount(tag.totalRecipeCount)}개
+                      </span>
                     </Link>
                   ))
                 )}

@@ -1,15 +1,28 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { expect, type Page } from "@playwright/test";
 
 const TEST_IMAGE_PATH = path.resolve("src/app/favicon.png");
 
-export async function createRecipeThroughUi(page: Page, title: string): Promise<void> {
+// imageCount장을 한 번에 올린다(첫 장이 대표 사진). 파일 이름만 달리 해 서로 다른 사진으로 저장되게 한다.
+export async function createRecipeThroughUi(
+  page: Page,
+  title: string,
+  imageCount = 1
+): Promise<void> {
   await page.goto("/recipes/new");
   await expect(page.getByRole("heading", { name: "레시피 등록" })).toBeVisible();
 
   await page.getByLabel("레시피 제목").fill(title);
-  await page.getByLabel("레시피 이미지").setInputFiles(TEST_IMAGE_PATH);
+  const image = readFileSync(TEST_IMAGE_PATH);
+  await page.getByLabel("레시피 이미지").setInputFiles(
+    Array.from({ length: imageCount }, (_, index) => ({
+      name: `e2e-${index + 1}.png`,
+      mimeType: "image/png",
+      buffer: image,
+    }))
+  );
   await page.getByLabel("재료명").fill("테스트 재료");
   await page.getByLabel("용량").fill("1");
   await page

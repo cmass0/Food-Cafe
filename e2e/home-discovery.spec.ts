@@ -22,7 +22,7 @@ test.describe("홈 발견 영역", () => {
       "최근 7일 인기 레시피",
       "새로 올라온 레시피",
       "커뮤니티 인기 이야기",
-      "이번 주 인기 태그",
+      "최근 7일 인기 태그",
       "지금 뜨는 레시피·조합",
     ]) {
       await expect(page.getByRole("heading", { name: heading })).toBeVisible();
@@ -38,17 +38,5 @@ test.describe("홈 발견 영역", () => {
         href
       );
     }
-  });
-
-  test("홈 검색어를 통합검색에 전달한다", async ({ page }) => {
-    await page.goto("/");
-    const searchForm = page.locator("form").filter({
-      has: page.getByPlaceholder("오늘 뭐 먹지? 레시피를 검색해보세요!"),
-    });
-    await searchForm.getByPlaceholder("오늘 뭐 먹지? 레시피를 검색해보세요!").fill("파스타");
-    await searchForm.getByRole("button", { name: "검색", exact: true }).click();
-
-    await expect(page).toHaveURL(/\/search\?query=%ED%8C%8C%EC%8A%A4%ED%83%80$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("파스타");
   });
 });

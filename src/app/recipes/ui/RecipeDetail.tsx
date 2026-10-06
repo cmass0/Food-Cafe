@@ -1,5 +1,4 @@
 import {
-  Bookmark,
   ChefHat,
   ChevronRight,
   Clock3,
@@ -23,6 +22,7 @@ import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/ca
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
 import { capImageDensity } from "@/lib/image-sizes";
+import RecipeImageGallery from "./RecipeImageGallery";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
 
@@ -101,58 +101,7 @@ export default function RecipeDetail({
       </nav>
 
       <section className="grid gap-8 lg:grid-cols-[minmax(0,1.02fr)_minmax(420px,0.98fr)]">
-        <div className="space-y-5">
-          <div className="relative aspect-[4/2.7] overflow-hidden rounded-lg bg-emerald-50">
-            {mainImage ? (
-              <Image
-                src={mainImage}
-                alt={recipe.title}
-                fill
-                className="object-cover"
-                sizes={capImageDensity("(max-width: 1024px) 100vw, 560px")}
-                preload
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm font-medium text-emerald-700">
-                이미지가 없습니다.
-              </div>
-            )}
-
-            <div className="absolute inset-0 grid place-items-center bg-black/5">
-              <span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white/90 bg-white/20 text-white shadow-sm backdrop-blur-sm">
-                <ChefHat className="h-7 w-7" />
-              </span>
-            </div>
-
-            <span className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full bg-white text-[#15933d] shadow-sm">
-              <Bookmark className="h-5 w-5" />
-            </span>
-          </div>
-
-          {images.length > 1 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {images.map((image, index) => (
-                <div
-                  key={`${image}-${index}`}
-                  className="relative aspect-[4/2.5] overflow-hidden rounded-md border border-zinc-200 bg-emerald-50"
-                >
-                  <Image
-                    src={image}
-                    alt={`${recipe.title} 미리보기 ${index + 1}`}
-                    fill
-                    sizes={capImageDensity("160px")}
-                    className="object-cover"
-                  />
-                  {index === 0 ? (
-                    <span className="absolute left-2 top-2 rounded bg-white/90 px-2 py-0.5 text-[10px] font-bold text-zinc-700">
-                      대표
-                    </span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <RecipeImageGallery images={images} title={recipe.title} />
 
         <div className="flex flex-col justify-center">
           <div className="flex flex-wrap gap-2">
