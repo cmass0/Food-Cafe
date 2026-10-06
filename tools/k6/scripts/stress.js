@@ -19,7 +19,9 @@ export const options = {
     { duration: "30s", target: 0 },
   ],
   thresholds: {
-    // 실패율 30%가 1분 넘게 이어지면 멈춘다(처음 1분은 판단하지 않는다).
+    // 시작 1분 뒤부터, 처음부터 쌓인 실패율이 30%를 넘으면 그 즉시 멈춘다.
+    // k6의 rate는 실행 전체 누적 값이고 delayAbortEval은 판단 시작만 늦춘다. 그래서 "최근 1분" 기준이 아니며,
+    // 초반에 잠깐 몰린 실패도 누적에 남는다. 서버가 완전히 무너졌을 때 PC를 지키려는 안전장치로만 쓴다.
     http_req_failed: [{ threshold: "rate<0.3", abortOnFail: true, delayAbortEval: "1m" }],
     "http_req_duration{kind:page}": ["p(95)<2000"],
   },

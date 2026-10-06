@@ -61,7 +61,8 @@ function k6Binary() {
 
 await assertPrometheusReady();
 
-const testId = `${path.basename(script, ".js")}-${timestamp()}`;
+// 같은 초에 두 실행을 시작해도 기록·보고서가 섞이지 않게 프로세스 번호를 붙인다.
+const testId = `${path.basename(script, ".js")}-${timestamp()}-${process.pid}`;
 mkdirSync(REPORT_DIR, { recursive: true });
 const reportPath = path.join(REPORT_DIR, `${testId}.html`);
 
