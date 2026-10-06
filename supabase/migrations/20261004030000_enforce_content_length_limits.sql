@@ -36,8 +36,8 @@ alter table public.recipes
   add constraint recipes_chef_tip_length check (char_length(chef_tip) <= 500),
   add constraint recipes_difficulty_length check (char_length(difficulty) <= 50),
   add constraint recipes_steps_count check (jsonb_typeof(steps) <> 'array' or jsonb_array_length(steps) <= 50),
-  add constraint recipes_steps_size check (char_length(steps::text) <= 40000),
-  add constraint recipes_ingredients_size check (char_length(ingredients::text) <= 300000);
+  add constraint recipes_steps_size check (char_length(steps::text) <= 160000),
+  add constraint recipes_ingredients_size check (char_length(ingredients::text) <= 600000);
 
 comment on constraint recipes_title_length on public.recipes is '레시피 제목 200자 이하. 앱 규칙(domain/recipe/schema.ts)과 같은 값.';
 comment on constraint recipes_summary_length on public.recipes is '레시피 요약 500자 이하. 앱 규칙과 같은 값.';
@@ -46,21 +46,24 @@ comment on constraint recipes_difficulty_length on public.recipes is '난이도 
 comment on constraint recipes_steps_count on public.recipes is
   '조리 단계 50개 이하. 앱 규칙(domain/recipe/schema.ts MAX_RECIPE_STEPS)과 같은 값.';
 comment on constraint recipes_steps_size on public.recipes is
-  '조리 단계 JSON 크기 상한(남용 방지 안전선). 앱 규칙 최대치(50단계 × 500자, JSON 약 2.6만 자)의 약 1.5배. 단계별 500자는 앱이 검사한다.';
+  '조리 단계 JSON 크기 상한(남용 방지 안전선). JSON 글자로 세므로 따옴표는 2자, 제어 문자는 6자(\uXXXX)로 늘어난다. 앱이 허용하는 가장 긴 저장 형태(50단계 × 500자 × 6배 ≈ 15.1만 자)도 받도록 16만 자. 단계별 500자는 앱이 검사한다.';
 comment on constraint recipes_ingredients_size on public.recipes is
-  '재료 JSON 크기 상한(남용 방지 안전선). 앱은 재료 200개·항목별 길이로 더 좁게 검사한다.';
+  '재료 JSON 크기 상한(남용 방지 안전선). 앱이 허용하는 가장 긴 저장 형태(재료 200개 × 항목 최대 450자 × 6배 ≈ 55만 자)도 받도록 60만 자. 개수·항목 길이는 앱이 검사한다.';
 
 alter table public.combos
   add constraint combos_title_length check (char_length(title) <= 200),
   add constraint combos_summary_length check (char_length(summary) <= 500),
   add constraint combos_difficulty_length check (char_length(difficulty) <= 50),
   add constraint combos_items_size check (char_length(items::text) <= 300000),
-  add constraint combos_steps_size check (char_length(steps::text) <= 300000);
+  add constraint combos_steps_count check (jsonb_typeof(steps) <> 'array' or jsonb_array_length(steps) <= 50),
+  add constraint combos_steps_size check (char_length(steps::text) <= 160000);
 
 comment on constraint combos_title_length on public.combos is '조합 제목 200자 이하. 앱 규칙(domain/combo/schema.ts)과 같은 값.';
 comment on constraint combos_summary_length on public.combos is '조합 요약 500자 이하. 앱 규칙과 같은 값.';
 comment on constraint combos_difficulty_length on public.combos is '난이도 50자 이하. 앱 규칙과 같은 값.';
 comment on constraint combos_items_size on public.combos is
-  '조합 항목 JSON 크기 상한(남용 방지 안전선). 앱은 항목 수와 항목별 길이로 더 좁게 검사한다.';
+  '조합 항목 JSON 크기 상한(남용 방지 안전선). 앱이 허용하는 가장 긴 저장 형태(항목 10개 × 제목·요약·이미지 경로 최대 × 6배 ≈ 17만 자)보다 넉넉하다. 개수·항목 길이는 앱이 검사한다.';
 comment on constraint combos_steps_size on public.combos is
-  '조합 단계 JSON 크기 상한(남용 방지 안전선). 앱은 단계별 길이로 더 좁게 검사한다.';
+  '조합 단계 JSON 크기 상한(남용 방지 안전선). 레시피 단계와 같은 기준(50단계 × 500자 × 6배 ≈ 15.1만 자)으로 16만 자. 단계별 500자는 앱이 검사한다.';
+comment on constraint combos_steps_count on public.combos is
+  '조합 단계 50개 이하. 앱 규칙(domain/combo/schema.ts MAX_COMBO_STEPS)과 같은 값.';

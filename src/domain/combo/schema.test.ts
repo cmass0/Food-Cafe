@@ -27,6 +27,54 @@ function expectItemsFailure(result: {
   expect(result.error?.issues.some((issue) => issue.path[0] === "items")).toBe(true);
 }
 
+describe("조합 조리 단계 개수와 길이", () => {
+  const steps = (count: number, length = 10) =>
+    Array.from({ length: count }, () => ({ description: "가".repeat(length) }));
+  const FORM_BASE = { ...BASE_COMBO, image: "/combos/cover.png", items: createItems(2) };
+
+  test.each([
+    ["생성", ComboInsertSchema, { ...BASE_COMBO, items: createItems(2) }],
+    ["수정", ComboUpdateSchema, {}],
+    ["폼", ComboFormSchema, FORM_BASE],
+  ] as const)("%s 규칙은 단계 50개·단계당 500자까지 허용한다", (_label, schema, base) => {
+    expect(schema.safeParse({ ...base, steps: steps(50, 500) }).success).toBe(true);
+  });
+
+  test.each([
+    ["생성", ComboInsertSchema, { ...BASE_COMBO, items: createItems(2) }],
+    ["수정", ComboUpdateSchema, {}],
+    ["폼", ComboFormSchema, FORM_BASE],
+  ] as const)("%s 규칙은 단계 51개를 거부한다", (_label, schema, base) => {
+    const result = schema.safeParse({ ...base, steps: steps(51) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["steps"]]);
+  });
+
+  test.each([
+    ["생성", ComboInsertSchema, { ...BASE_COMBO, items: createItems(2) }],
+    ["수정", ComboUpdateSchema, {}],
+    ["폼", ComboFormSchema, FORM_BASE],
+  ] as const)("%s 규칙은 501자 단계를 거부한다", (_label, schema, base) => {
+    const result = schema.safeParse({ ...base, steps: steps(1, 501) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["steps", 0, "description"]]);
+  });
+
+  test("앞뒤 공백은 빼고 세며, 공백뿐인 단계는 거부한다", () => {
+    const base = { ...BASE_COMBO, items: createItems(2) };
+
+    expect(
+      ComboInsertSchema.safeParse({ ...base, steps: [{ description: ` ${"가".repeat(500)} ` }] })
+        .success
+    ).toBe(true);
+    expect(ComboInsertSchema.safeParse({ ...base, steps: [{ description: "   " }] }).success).toBe(
+      false
+    );
+  });
+});
+
 describe("조합 구성 항목 개수", () => {
   test.each([
     ["생성", ComboInsertSchema, BASE_COMBO],

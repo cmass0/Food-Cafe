@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form";
+import { MAX_COMBO_STEP_CHARS, MAX_COMBO_STEPS } from "@/domain/combo/schema";
 import { ComboFormValues } from "@/domain/combo/types";
 
 type StepsFieldsProps = {
@@ -27,12 +28,14 @@ export function ComboStepsFields({ form, stepsArray }: StepsFieldsProps) {
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <FormLabel className="text-base">조리 단계</FormLabel>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{stepsArray.fields.length} / 15단계</span>
+                <span>
+                  {stepsArray.fields.length} / {MAX_COMBO_STEPS}단계
+                </span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={stepsArray.fields.length >= 15}
+                  disabled={stepsArray.fields.length >= MAX_COMBO_STEPS}
                   onClick={() => stepsArray.append({ description: "" })}
                 >
                   단계 추가
@@ -86,6 +89,7 @@ export function ComboStepsFields({ form, stepsArray }: StepsFieldsProps) {
                           <Textarea
                             placeholder="이 단계에서 해야 할 일을 구체적으로 적어 주세요."
                             rows={3}
+                            maxLength={MAX_COMBO_STEP_CHARS}
                             {...field}
                           />
                         </FormControl>
