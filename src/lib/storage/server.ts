@@ -12,6 +12,7 @@ import {
   storagePrefix,
   type ContentImageType,
 } from "./paths";
+import { managedPathsFromHtml } from "./html-paths";
 
 const LIST_PAGE_SIZE = 100;
 const REMOVE_BATCH_SIZE = 1_000;
@@ -223,7 +224,7 @@ export async function safeRemoveAvatarImages(userId: string): Promise<void> {
 // ⚠ 여기 적힌 컬럼만 "사용 중"으로 인정된다.
 //   이미지 URL이 들어가는 컬럼을 새로 만들면 반드시 이 함수에도 추가할 것.
 //   누락하면 그 이미지들이 고아로 판정되어 cleanupOrphanedStorage가 삭제한다.
-//   (posts.content_html은 content_json에서 생성되는 파생 컬럼이라 별도로 읽지 않는다.)
+//   posts.content_html은 브라우저가 만들어 보내므로 JSON에 없는 이미지가 있을 수 있어 함께 읽는다.
 async function collectDatabaseReferences(client: SupabaseClient<Database>): Promise<Set<string>> {
   const references = new Set<string>();
   const pageSize = 500;
@@ -251,10 +252,13 @@ async function collectDatabaseReferences(client: SupabaseClient<Database>): Prom
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await client
       .from("posts")
-      .select("content_json")
+      .select("content_json, content_html")
       .range(offset, offset + pageSize - 1);
     if (error) throw error;
-    for (const row of data ?? []) collectManagedPaths(row.content_json, references);
+    for (const row of data ?? []) {
+      collectManagedPaths(row.content_json, references);
+      for (const path of managedPathsFromHtml(row.content_html)) references.add(path);
+    }
     if ((data?.length ?? 0) < pageSize) break;
   }
 
