@@ -43,6 +43,12 @@ import {
 import type { Recipe } from "@/domain/recipe/types";
 import * as recipeService from "@/domain/recipe/service";
 import { loadMyReactions, withMyReactions } from "@/features/my-reactions/service";
+import {
+  listCachedTrendingCombos,
+  listCachedTrendingPosts,
+  listCachedTrendingRecipes,
+  listCachedTrendingRecipeTags,
+} from "@/features/trending/cache";
 import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem, TrendingRecipeTag } from "@/features/trending/types";
 import { loadSection } from "@/lib/errors/section";
@@ -175,7 +181,7 @@ async function getHomeData() {
     await Promise.all([
       loadSection(
         "home.popular-recipes",
-        () => trendingService.listTrendingRecipes(supabase, 4),
+        () => listCachedTrendingRecipes(4),
         [] as TrendingContentItem[]
       ),
       loadSection(
@@ -185,17 +191,17 @@ async function getHomeData() {
       ),
       loadSection(
         "home.trending-combos",
-        () => trendingService.listTrendingCombos(supabase, 5),
+        () => listCachedTrendingCombos(5),
         [] as TrendingContentItem[]
       ),
       loadSection(
         "home.community-posts",
-        () => trendingService.listTrendingPosts(supabase, 4),
+        () => listCachedTrendingPosts(4),
         [] as TrendingContentItem[]
       ),
       loadSection(
         "home.trending-recipe-tags",
-        () => trendingService.listTrendingRecipeTags(supabase, 6),
+        () => listCachedTrendingRecipeTags(6),
         [] as TrendingRecipeTag[]
       ),
     ]);

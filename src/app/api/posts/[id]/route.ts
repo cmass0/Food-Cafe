@@ -1,5 +1,6 @@
 import { postUpdateSchema } from "@/domain/post/schema";
 import * as postService from "@/domain/post/service";
+import { clearTrendingCache } from "@/features/trending/cache";
 import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
@@ -74,6 +75,7 @@ export async function DELETE(_: Request, props: contentParams) {
     }
     const deleted = await postService.removePost(supabase, params.id);
     if (!deleted) return notFound("삭제할 수 있는 게시글");
+    clearTrendingCache();
     return json({ message: "게시글이 삭제되었습니다." }, 200);
   } catch (error) {
     if (isPostgrestError(error)) {
