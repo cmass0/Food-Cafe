@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(10);
+select extensions.plan(13);
 
 -- 규칙: 로그인 사용자가 앱 서버를 거치지 않고 Supabase API로 직접 써도 앱과 같은 길이·크기 상한에서 막힌다.
 -- 로컬 테스트 DB에서만 실행한다. 모든 변경은 끝에서 롤백한다.
@@ -99,6 +99,44 @@ select extensions.throws_ok(
   '23514',
   null,
   '레시피 제목 201자는 거절한다'
+);
+
+select extensions.lives_ok(
+  $$
+    insert into public.recipes (title, steps, image, writer_uid)
+    select '단계 상한 레시피',
+      jsonb_agg(jsonb_build_object('description', repeat('가', 500))),
+      'test-image', '97000000-0000-4000-8000-000000000001'
+    from generate_series(1, 50)
+  $$,
+  '레시피 단계 50개·단계당 500자는 허용한다'
+);
+
+select extensions.throws_ok(
+  $$
+    insert into public.recipes (title, steps, image, writer_uid)
+    select '단계 51개 레시피',
+      jsonb_agg(jsonb_build_object('description', '볶는다')),
+      'test-image', '97000000-0000-4000-8000-000000000001'
+    from generate_series(1, 51)
+  $$,
+  '23514',
+  null,
+  '레시피 단계 51개는 거절한다'
+);
+
+select extensions.throws_ok(
+  $$
+    insert into public.recipes (title, steps, image, writer_uid)
+    values (
+      '단계가 큰 레시피',
+      jsonb_build_array(jsonb_build_object('description', repeat('가', 40001))),
+      'test-image', '97000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  '23514',
+  null,
+  '레시피 단계 JSON 4만 자 초과는 거절한다'
 );
 
 select extensions.throws_ok(

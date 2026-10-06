@@ -4,6 +4,9 @@ import { isRecipeCategory, RECIPE_CATEGORY_KEYS } from "./category";
 
 export const MAX_RECIPE_TAGS = 10;
 export const MAX_RECIPE_TOOLS = 10;
+// 조리 단계 상한. 작성 화면(StepsFields)과 DB 제약(recipes_steps_count·recipes_steps_size)도 이 값을 따른다.
+export const MAX_RECIPE_STEPS = 50;
+export const MAX_RECIPE_STEP_CHARS = 500;
 
 // 카테고리는 고르지 않아도 된다(빈 문자열). 고르면 작성 폼 목록의 값만 받는다.
 // 목록 밖 값이 저장되면 홈 카테고리 필터에서 그 레시피를 찾을 수 없다.
@@ -48,8 +51,15 @@ const ingredientItemSchema = z
   });
 
 const recipeStepSchema = z.object({
-  description: z.string().trim().min(1, "내용을 입력해 주세요."),
+  description: z
+    .string()
+    .trim()
+    .min(1, "내용을 입력해 주세요.")
+    .max(MAX_RECIPE_STEP_CHARS, `단계는 ${MAX_RECIPE_STEP_CHARS}자 이하로 입력해 주세요.`),
 });
+const recipeStepsSchema = z
+  .array(recipeStepSchema)
+  .max(MAX_RECIPE_STEPS, `조리 단계는 최대 ${MAX_RECIPE_STEPS}개까지 입력할 수 있습니다.`);
 
 export const recipeInsertSchema = z.object({
   id: z.string().uuid().optional(),
@@ -65,7 +75,7 @@ export const recipeInsertSchema = z.object({
     .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
     .nullable()
     .optional(),
-  steps: z.array(recipeStepSchema).min(1, "단계를 한 개 이상 입력해 주세요."),
+  steps: recipeStepsSchema.min(1, "단계를 한 개 이상 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
     .min(1, "재료를 한 개 이상 입력해 주세요.")
@@ -123,7 +133,7 @@ export const recipeUpdateSchema = z
       .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
       .nullable()
       .optional(),
-    steps: z.array(recipeStepSchema),
+    steps: recipeStepsSchema,
     ingredients: z
       .array(ingredientItemSchema)
       .min(1, "재료를 한 개 이상 입력해 주세요.")

@@ -35,15 +35,18 @@ alter table public.recipes
   add constraint recipes_summary_length check (char_length(summary) <= 500),
   add constraint recipes_chef_tip_length check (char_length(chef_tip) <= 500),
   add constraint recipes_difficulty_length check (char_length(difficulty) <= 50),
-  add constraint recipes_steps_size check (char_length(steps::text) <= 300000),
+  add constraint recipes_steps_count check (jsonb_typeof(steps) <> 'array' or jsonb_array_length(steps) <= 50),
+  add constraint recipes_steps_size check (char_length(steps::text) <= 40000),
   add constraint recipes_ingredients_size check (char_length(ingredients::text) <= 300000);
 
 comment on constraint recipes_title_length on public.recipes is '레시피 제목 200자 이하. 앱 규칙(domain/recipe/schema.ts)과 같은 값.';
 comment on constraint recipes_summary_length on public.recipes is '레시피 요약 500자 이하. 앱 규칙과 같은 값.';
 comment on constraint recipes_chef_tip_length on public.recipes is '셰프의 팁 500자 이하. 앱 규칙과 같은 값.';
 comment on constraint recipes_difficulty_length on public.recipes is '난이도 50자 이하. 앱 규칙과 같은 값.';
+comment on constraint recipes_steps_count on public.recipes is
+  '조리 단계 50개 이하. 앱 규칙(domain/recipe/schema.ts MAX_RECIPE_STEPS)과 같은 값.';
 comment on constraint recipes_steps_size on public.recipes is
-  '조리 단계 JSON 크기 상한(남용 방지 안전선). 앱은 단계 수와 단계별 길이로 더 좁게 검사한다.';
+  '조리 단계 JSON 크기 상한(남용 방지 안전선). 앱 규칙 최대치(50단계 × 500자, JSON 약 2.6만 자)의 약 1.5배. 단계별 500자는 앱이 검사한다.';
 comment on constraint recipes_ingredients_size on public.recipes is
   '재료 JSON 크기 상한(남용 방지 안전선). 앱은 재료 200개·항목별 길이로 더 좁게 검사한다.';
 
