@@ -39,10 +39,12 @@ export async function createPostAction(
   const uploadedPaths = uploadedPathsFromFormData(formData);
   const title = (formData.get("title") as string | null)?.trim() ?? "";
   const rawJson = formData.get("content_json");
+  // 본문 HTML은 브라우저 에디터가 만들어 보낸다. 서비스가 저장 전에 정제한다.
+  const rawHtml = formData.get("content_html");
   const category = (formData.get("category") as string | null)?.trim() ?? "";
 
   try {
-    if (typeof rawJson !== "string") {
+    if (typeof rawJson !== "string" || typeof rawHtml !== "string") {
       throw new Error("유효하지 않은 게시글 형식입니다.");
     }
 
@@ -52,6 +54,7 @@ export async function createPostAction(
         id: postId,
         title,
         content_json: rawJson,
+        content_html: rawHtml,
         category: postCategorySchema.parse(category),
       },
       { uid: user.id }
@@ -89,18 +92,20 @@ export async function updatePostAction(
 
   const uploadedPaths = uploadedPathsFromFormData(formData);
   const rawJson = formData.get("content_json");
+  const rawHtml = formData.get("content_html");
   const title = (formData.get("title") as string | null)?.trim() || undefined;
   const category = (formData.get("category") as string | null)?.trim() ?? "";
   let persisted = false;
 
   try {
-    if (typeof rawJson !== "string") {
+    if (typeof rawJson !== "string" || typeof rawHtml !== "string") {
       throw new Error("유효하지 않은 게시글 형식입니다.");
     }
 
     const post = await postService.updatePost(supabase, id, user.id, {
       title,
       content_json: rawJson,
+      content_html: rawHtml,
       category: postCategorySchema.parse(category),
     });
 

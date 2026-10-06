@@ -195,3 +195,173 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* 게시글 본문. 브라우저 에디터가 만든 HTML을 서버가 허용 목록으로 정제한 뒤 여기에 그린다.
+   허용 목록(domain/post/content.ts)과 짝이라, 허용하는 서식을 늘리면 여기 모양도 함께 정한다.
+   Tailwind 기본 스타일이 제목·목록 모양을 지우므로 본문 안에서만 되살린다. */
+.post-content {
+  overflow-wrap: anywhere;
+}
+
+.post-content :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.4em 0 0.4em;
+  color: oklch(0.17 0.02 260);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.post-content h1 {
+  font-size: 1.75rem;
+}
+
+.post-content h2 {
+  font-size: 1.4rem;
+}
+
+.post-content h3 {
+  font-size: 1.15rem;
+}
+
+.post-content :is(h4, h5, h6) {
+  font-size: 1rem;
+}
+
+.post-content a {
+  color: #16883d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.post-content a.mention {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.post-content blockquote {
+  margin: 1em 0;
+  padding-left: 1rem;
+  border-left: 3px solid oklch(0.87 0.01 260);
+  color: oklch(0.45 0.02 260);
+}
+
+.post-content :is(ul, ol) {
+  margin: 0.75em 0;
+  padding-left: 1.5rem;
+}
+
+.post-content ul {
+  list-style: disc;
+}
+
+.post-content ol {
+  list-style: decimal;
+}
+
+.post-content ul.post-checklist {
+  padding-left: 0.25rem;
+  list-style: none;
+}
+
+.post-content ul.post-checklist > li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.post-content ul.post-checklist > li::before {
+  position: absolute;
+  top: 0.45em;
+  left: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid oklch(0.7 0.01 260);
+  border-radius: 0.25rem;
+  content: "";
+}
+
+.post-content ul.post-checklist > li[aria-checked="true"] {
+  color: oklch(0.55 0.01 260);
+  text-decoration: line-through;
+}
+
+.post-content ul.post-checklist > li[aria-checked="true"]::before {
+  border-color: #16883d;
+  background: #16883d;
+  color: white;
+  content: "✓";
+  font-size: 0.7rem;
+  line-height: 0.9rem;
+  text-align: center;
+}
+
+.post-content code {
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  background: oklch(0.96 0.005 260);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+}
+
+.post-content pre {
+  margin: 1em 0;
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: oklch(0.22 0.01 260);
+  color: oklch(0.95 0 0);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.post-content hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid oklch(0.9 0.005 260);
+}
+
+.post-content table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+}
+
+.post-content :is(th, td) {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid oklch(0.87 0.01 260);
+  vertical-align: top;
+}
+
+.post-content th {
+  background: oklch(0.97 0.004 260);
+  font-weight: 600;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.post-content iframe {
+  width: 100%;
+  max-width: 42rem;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin: 1em 0;
+  border: 0;
+  border-radius: 0.75rem;
+}
+
+/* 에디터의 열 나누기. 열 비율은 정제를 통과한 grid-template-columns 값을 그대로 쓴다. */
+.post-content .post-layout {
+  display: grid;
+  gap: 1rem;
+  margin: 1em 0;
+}
+
+@media (max-width: 640px) {
+  .post-content .post-layout {
+    grid-template-columns: 1fr !important;
+  }
+}

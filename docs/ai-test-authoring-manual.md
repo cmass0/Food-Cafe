@@ -22,16 +22,16 @@ AI가 테스트를 쓰기 전에 반드시 알아야 하는 사실이다.
 
 ### 실행 환경
 
-| 항목          | 값                                                                          |
-| ------------- | --------------------------------------------------------------------------- |
-| 러너          | Vitest 5.0.0                                                                |
-| 설정 파일     | `vitest.config.mts`                                                         |
-| 실행 명령     | `npm test` (= `vitest run`)                                                 |
-| `globals`     | **비활성** — `describe`/`test`/`expect`를 항상 명시적으로 import            |
-| `environment` | `node` — DOM이 필요하면 `@/lib/dom-shim`의 `ensureDom()`을 쓰는 모듈만 해당 |
-| 경로 별칭     | `@` → `./src`                                                               |
-| Node          | 24.x                                                                        |
-| 포매팅        | Prettier — 큰따옴표, 세미콜론, 들여쓰기 2칸, 최대 100자                     |
+| 항목          | 값                                                               |
+| ------------- | ---------------------------------------------------------------- |
+| 러너          | Vitest 5.0.0                                                     |
+| 설정 파일     | `vitest.config.mts`                                              |
+| 실행 명령     | `npm test` (= `vitest run`)                                      |
+| `globals`     | **비활성** — `describe`/`test`/`expect`를 항상 명시적으로 import |
+| `environment` | `node` — DOM이 필요한 브라우저 코드만 파일별로 jsdom (§6)        |
+| 경로 별칭     | `@` → `./src`                                                    |
+| Node          | 24.x                                                             |
+| 포매팅        | Prettier — 큰따옴표, 세미콜론, 들여쓰기 2칸, 최대 100자          |
 
 ### 이 매뉴얼의 적용 범위
 
@@ -210,15 +210,19 @@ AI는 happy path만 만드는 경향이 있다. **아래 항목 중 대상 함�
 
 ### 보안 함수는 "무엇이 제거되어야 하는가"를 테스트한다
 
-`sanitizePostHtml`처럼 방어가 목적인 함수는 통과 케이스보다 **차단 케이스**가 본체다.
+`sanitizePostHtmlForStorage`처럼 방어가 목적인 함수는 통과 케이스보다 **차단 케이스**가 본체다.
 
 ```ts
 test("javascript: 스킴 링크는 허용하지 않는다", () => {
-  expect(sanitizePostHtml('<a href="javascript:alert(1)">클릭</a>')).not.toContain("javascript:");
+  expect(sanitizePostHtmlForStorage('<a href="javascript:alert(1)">클릭</a>')).not.toContain(
+    "javascript:"
+  );
 });
 
 test("https가 아닌 iframe은 제거한다", () => {
-  expect(sanitizePostHtml('<iframe src="http://evil.com"></iframe>')).not.toContain("evil.com");
+  expect(sanitizePostHtmlForStorage('<iframe src="http://evil.com"></iframe>')).not.toContain(
+    "evil.com"
+  );
 });
 ```
 
@@ -283,17 +287,26 @@ afterEach(() => {
 
 ### DOM이 필요한 모듈
 
-`environment: "node"`지만 `content.ts`는 `ensureDom()`으로 jsdom을 직접 띄운다. 테스트에서 `environment`를 바꾸지 말고 그대로 쓴다. 첫 로드가 느리므로 `beforeAll`에 타임아웃 여유를 준다.
+서버 코드는 DOM을 쓰지 않는다(전역 가짜 DOM은 서버 메모리 누수의 원인이라 없앴다). DOM이 필요한 건 브라우저에서 도는 코드뿐이다.
+
+- 브라우저 코드만 다루면 파일 맨 위에 `// @vitest-environment jsdom`을 쓴다(예: `Section.test.tsx`).
+- 브라우저 코드와 `server-only` 모듈을 함께 불러야 하면 jsdom 환경을 쓰지 않는다. `server-only`는 설치된 패키지가 아니라서 jsdom 환경에서는 `vi.mock`이 바꿔치기하기 전에 주소 해석에서 실패한다. Node 환경을 유지하고 브라우저 객체를 그 파일 안에서만 흉내 낸다(예: `export-html.test.ts`).
 
 ```ts
-beforeAll(async () => {
-  /* ... */
-}, 15_000);
+beforeAll(() => {
+  const dom = new JSDOM("<!doctype html><html><body></body></html>");
+  vi.stubGlobal("window", dom.window);
+  vi.stubGlobal("document", dom.window.document);
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 ```
 
 ### export되지 않은 함수
 
-`content.ts`의 `getYouTubeVideoId`처럼 내부 함수는 직접 부를 수 없다. **테스트를 위해 `export`를 추가하지 마라.** 그 함수를 사용하는 공개 함수(`enhanceStandaloneYouTubeLinks`)를 통해 검증한다.
+`export-html.ts`의 `getYouTubeVideoId`처럼 내부 함수는 직접 부를 수 없다. **테스트를 위해 `export`를 추가하지 마라.** 그 함수를 사용하는 공개 함수(`exportPostHtml`)를 통해 검증한다.
 
 ---
 
