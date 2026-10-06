@@ -20,13 +20,27 @@ async function range(query, start, end) {
 }
 
 // 실행 시간 범위는 사용자 수 기록이 있는 구간으로 잡는다.
-// 그냥 timestamp()로 물으면 최근 5분 안의 기록만 찾으므로, 지난 실행도 찾도록 하루 범위에서 마지막 기록을 찾는다.
+// testid에는 시작 시각이 들어 있다(run.mjs: 이름-YYYYMMDD-HHMMSS[-프로세스 번호]). 그 시각부터 6시간 안에서
+// 마지막 기록을 찾으므로, 보존 기간(180일) 안의 지난 실행도 찾는다. 시각을 못 읽으면 최근 하루에서 찾는다.
+const LOOKAHEAD_S = 6 * 3600;
+const startedAt = (() => {
+  const m = testId.match(/-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})(?:-\d+)?$/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi, s] = m.map(Number);
+  return new Date(y, mo - 1, d, h, mi, s).getTime() / 1000;
+})();
+const evalAt = startedAt ? Math.min(startedAt + LOOKAHEAD_S, Date.now() / 1000) : Date.now() / 1000;
+const lookback = startedAt ? `${LOOKAHEAD_S}s` : "1d";
 const bounds = await (
   await fetch(
-    `${PROMETHEUS}/api/v1/query?query=${encodeURIComponent(`max_over_time(timestamp(k6_vus{${T}})[1d:5s])`)}`
+    `${PROMETHEUS}/api/v1/query?query=${encodeURIComponent(`max_over_time(timestamp(k6_vus{${T}})[${lookback}:5s])`)}&time=${evalAt}`
   )
 ).json();
 const lastAt = Number(bounds.data.result[0]?.value[1]);
+if (!Number.isFinite(lastAt)) {
+  console.error(`${testId}의 기록을 찾지 못했습니다(Prometheus 보존 기간이 지났거나 testid가 다름).`);
+  process.exit(1);
+}
 const firstJson = await (
   await fetch(
     `${PROMETHEUS}/api/v1/query?query=${encodeURIComponent(`min_over_time(timestamp(k6_vus{${T}})[2h:5s])`)}&time=${lastAt}`
@@ -44,20 +58,30 @@ const [vus, rps, failRps, p95] = await Promise.all([
   range(`histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds{${T}}[${w}])))`, start, end),
 ]);
 
-// CSV의 "HH:mm:ss"를 같은 날짜의 초로 바꿔 가장 가까운 기록을 붙인다.
+// CSV의 "HH:mm:ss"를 실행 시작 날짜의 초로 바꿔 가장 가까운 기록을 붙인다.
+// 시각이 앞 행보다 작아지면 자정을 넘긴 것이므로 다음 날로 넘긴다.
 function loadCsv(path, pick) {
   if (!path || !existsSync(path)) return [];
   const day = new Date(start * 1000);
+  let dayOffset = 0;
+  let previousSeconds = -1;
   return readFileSync(path, "utf8")
     .replace(/^﻿/, "")
     .trim()
     .split(/\r?\n/)
     .slice(1)
     .map((line) => line.split(","))
-    .filter(pick.filter)
     .map((cols) => {
       const [h, m, s] = cols[0].split(":").map(Number);
+      const seconds = h * 3600 + m * 60 + s;
+      if (previousSeconds >= 0 && seconds < previousSeconds) dayOffset += 1;
+      previousSeconds = seconds;
+      return { cols, h, m, s, offset: dayOffset };
+    })
+    .filter(({ cols }) => pick.filter(cols))
+    .map(({ cols, h, m, s, offset }) => {
       const at = new Date(day);
+      at.setDate(at.getDate() + offset);
       at.setHours(h, m, s, 0);
       return { at: at.getTime() / 1000, value: pick.value(cols) };
     });

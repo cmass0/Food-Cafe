@@ -1,6 +1,8 @@
 -- 부하 테스트용 대량 데이터. 로컬 Supabase DB에서만 실행한다(원격 DB 금지).
---   넣기:   docker exec -i supabase_db_vtkcngubofjqddqvcufp psql -U postgres -v ON_ERROR_STOP=1 < tools/k6/seed/bulk-data.sql
---   지우기: docker exec -i supabase_db_vtkcngubofjqddqvcufp psql -U postgres -v ON_ERROR_STOP=1 < tools/k6/seed/cleanup.sql
+--   넣기:   docker exec -i supabase_db_<프로젝트 ID> psql -U postgres -v ON_ERROR_STOP=1 < tools/k6/seed/bulk-data.sql
+--   지우기: docker exec -i supabase_db_<프로젝트 ID> psql -U postgres -v ON_ERROR_STOP=1 < tools/k6/seed/cleanup.sql
+--   <프로젝트 ID>: supabase start 때 SUPABASE_PROJECT_ID를 줬다면 그 값, 아니면 supabase/config.toml의 project_id(기본 Food-Cafe).
+--   docker ps --format '{{.Names}}' | grep supabase_db_ 로 확인할 수 있다.
 --
 -- 만드는 양: 사용자 1,000 · 레시피 10,000 · 조합 1,000 · 레시피 좋아요 약 9만 · 레시피 북마크 약 2.4만
 --            · 조합 좋아요·북마크 약 1.8만 · 레시피·조합 댓글 3.5만
@@ -106,11 +108,15 @@ $$;
 create temp table lt_users on commit drop as
 select n, gen_random_uuid() as id from generate_series(1, 1000) as n;
 
+-- 더미 사진은 이미 있는 레시피·조합의 사진을 돌려 쓴다. DB를 막 초기화해 하나도 없으면 사진 필수 규칙에
+-- 걸리므로, 앱이 Storage 경로로 읽는 모양의 자리표시 경로를 쓴다(파일은 없어 화면에서는 빈 사진, k6는 사진을 받지 않음).
 create temp table lt_recipe_images on commit drop as
-select array_agg(distinct image) as images from public.recipes where image is not null;
+select coalesce(array_agg(distinct image), array['recipes/loadtest/placeholder/cover.jpg']) as images
+from public.recipes where image is not null;
 
 create temp table lt_combo_images on commit drop as
-select array_agg(distinct image) as images from public.combos where image is not null;
+select coalesce(array_agg(distinct image), array['combos/loadtest/placeholder/cover.jpg']) as images
+from public.combos where image is not null;
 
 -- 1. 사용자 1,000명. 가입 Trigger가 profiles·user_roles를 만든다.
 -- 인증 서버(GoTrue)는 토큰 컬럼을 빈 문자열로 가정하고 사용자 목록을 읽는다. NULL이 섞이면
