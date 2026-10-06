@@ -1,7 +1,7 @@
 import { personalRecommendationRequestSchema } from "@/domain/recommend/schema";
 import { listPersonalizedRecommendationCards } from "@/domain/recommend/service";
 import { getRecommendEmbeddingModelId } from "@/lib/ai/model";
-import { badRequest, json, respondWithError } from "@/lib/errors/api-response";
+import { badRequest, json, respondWithServerQueryError } from "@/lib/errors/api-response";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -35,6 +35,10 @@ export async function POST(request: Request) {
     });
     return json({ items });
   } catch (error) {
-    return respondWithError(error, "맞춤 추천 조회 실패", "맞춤 추천을 불러오지 못했습니다.");
+    return respondWithServerQueryError(
+      error,
+      "맞춤 추천 조회 실패",
+      "맞춤 추천을 불러오지 못했습니다."
+    );
   }
 }

@@ -25,6 +25,10 @@ export const json = (body: unknown, status = 200, headers?: HeadersInit) =>
 // PGRST00x: PostgREST가 DB에 연결하지 못함·연결 대기 초과 / 08: 연결 끊김 / 53: 연결 수·자원 부족 / 57: 쿼리 시간 초과·DB 재시작 중
 const DB_UNAVAILABLE_CODE = /^(PGRST00\d|08|53|57)/;
 
+// 코드가 없으면 DB 서버에 닿지 못한 것이다(연결 실패, 게이트웨이 응답).
+const isDbUnavailable = (error: PostgrestError) =>
+  !error.code || DB_UNAVAILABLE_CODE.test(error.code);
+
 /** Supabase 오류를 응답으로 바꾼다. context는 서버 로그에 붙일 설명이다. */
 export const respondWithSupabaseError = (error: PostgrestError, context = "DB 요청 실패") => {
   // 목록 범위를 벗어난 page는 잘못된 요청이 아니라 "없는 페이지"다.
@@ -37,9 +41,9 @@ export const respondWithSupabaseError = (error: PostgrestError, context = "DB �
   }
   // 없는 페이지 말고는 원인을 로그에 남긴다. 400으로 답하는 오류도 우리 쿼리의 실수일 수 있다.
   console.error(context, error);
-  // 코드가 없으면 DB 서버에 닿지 못한 것이다(연결 실패, 게이트웨이 응답).
-  // 사용자 잘못이 아니므로 400이 아니라 503이고, details에 담긴 서버 내부 스택은 응답에 싣지 않는다.
-  if (!error.code || DB_UNAVAILABLE_CODE.test(error.code)) {
+  // DB에 닿지 못한 것은 사용자 잘못이 아니므로 400이 아니라 503이고,
+  // details에 담긴 서버 내부 스택은 응답에 싣지 않는다.
+  if (isDbUnavailable(error)) {
     return json({ error: "SERVICE_UNAVAILABLE", message: "잠시 후 다시 시도해 주세요." }, 503);
   }
   const status = error.code === "42501" ? 403 : 400;
@@ -111,4 +115,21 @@ export function respondWithError(error: unknown, context: string, message?: stri
   if (isPostgrestError(error)) return respondWithSupabaseError(error, context);
   console.error(context, error);
   return internalError(message);
+}
+
+/**
+ * 서버 권한(service_role)으로 부른 조회가 섞인 API용. 그 조회의 실패는 요청자의 입력·권한과 무관한
+ * 서버 쪽 실패이고, DB 오류 내용(함수·컬럼 이름 등)을 익명 사용자에게 보여 주면 안 된다.
+ * 그래서 DB에 닿지 못한 경우(503)와 입력 검증 실패(400) 말고는 내용을 숨기고 500으로 답한다.
+ */
+export function respondWithServerQueryError(
+  error: unknown,
+  context: string,
+  message?: string
+): Response {
+  if (isPostgrestError(error) && !isDbUnavailable(error)) {
+    console.error(context, error);
+    return internalError(message);
+  }
+  return respondWithError(error, context, message);
 }

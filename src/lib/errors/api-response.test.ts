@@ -2,7 +2,11 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { z } from "zod";
 
-import { respondWithError, respondWithSupabaseError } from "./api-response";
+import {
+  respondWithError,
+  respondWithServerQueryError,
+  respondWithSupabaseError,
+} from "./api-response";
 
 function postgrestError(code: string): PostgrestError {
   return {
@@ -193,5 +197,52 @@ describe("respondWithError", () => {
     respondWithError(error, CONTEXT);
 
     expect(log).toHaveBeenCalledWith(CONTEXT, error);
+  });
+});
+
+describe("respondWithServerQueryError", () => {
+  const CONTEXT = "인기 추천 조회 실패";
+  const MESSAGE = "인기 추천을 불러오지 못했습니다.";
+
+  test.each([["42883"], ["P0001"], ["22P02"], ["42501"], ["PGRST116"]] as const)(
+    "서버 권한 조회의 DB 오류 %s는 내용을 숨기고 500으로 응답한다",
+    async (code) => {
+      silenceErrorLog();
+      const res = respondWithServerQueryError(postgrestError(code), CONTEXT, MESSAGE);
+
+      expect(res.status).toBe(500);
+      await expect(res.json()).resolves.toEqual({ error: "INTERNAL_ERROR", message: MESSAGE });
+    }
+  );
+
+  test("숨긴 DB 오류는 API 설명을 붙여 로그에 남긴다", () => {
+    const log = silenceErrorLog();
+    const error = postgrestError("42883");
+    respondWithServerQueryError(error, CONTEXT, MESSAGE);
+
+    expect(log).toHaveBeenCalledWith(CONTEXT, error);
+  });
+
+  test("DB에 닿지 못한 오류는 503으로 응답한다", async () => {
+    silenceErrorLog();
+    const res = respondWithServerQueryError(GATEWAY_FAILURE, CONTEXT, MESSAGE);
+
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toEqual(UNAVAILABLE_BODY);
+  });
+
+  test("입력 검증 실패는 400으로 응답한다", () => {
+    const result = z.object({ items: z.array(z.string()) }).safeParse({});
+    if (result.success) throw new Error("검증이 실패해야 하는 입력이다");
+
+    expect(respondWithServerQueryError(result.error, CONTEXT, MESSAGE).status).toBe(400);
+  });
+
+  test("코드가 던진 오류는 넘긴 문구의 500으로 응답한다", async () => {
+    silenceErrorLog();
+    const res = respondWithServerQueryError(new Error("boom"), CONTEXT, MESSAGE);
+
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "INTERNAL_ERROR", message: MESSAGE });
   });
 });
