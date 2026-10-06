@@ -45,7 +45,15 @@ function* walk(dir) {
   }
 }
 
-/** 부하 테스트용 빌드가 있고, 로컬 Supabase 주소로 만들어졌는지 확인한다. */
+// 원격 Supabase 프로젝트 주소(<프로젝트>.supabase.co·.supabase.in). supabase.com 같은 문서 주소는 고르지 않는다.
+const REMOTE_PROJECT_URL = /[a-z0-9-]+\.supabase\.(?:co|in)(?![a-z0-9-])/i;
+
+/**
+ * 부하 테스트용 빌드가 있고, 로컬 Supabase 주소로 만들어졌는지 확인한다.
+ * NEXT_PUBLIC_* 값은 브라우저용(static)과 서버용(server) 코드에 모두 박힌다. 부하 테스트의 DB 요청은 대부분
+ * 서버에서 나가므로 둘 다 본다. 원격 프로젝트 주소가 하나라도 있거나, 어느 쪽에서든 로컬 주소를 못 찾으면 멈춘다.
+ * 사용자 지정 도메인은 모양으로 알아볼 수 없어서, 로컬 주소가 실제로 박혀 있는지로 대신 확인한다.
+ */
 export function assertLocalBuild() {
   const distDir = path.join(ROOT, LOADTEST_DIST_DIR);
   if (!existsSync(path.join(distDir, "BUILD_ID"))) {
@@ -54,19 +62,22 @@ export function assertLocalBuild() {
     );
   }
   const localUrl = readLoadTestEnv().NEXT_PUBLIC_SUPABASE_URL;
-  let hasLocalUrl = false;
-  for (const file of walk(path.join(distDir, "static"))) {
-    const code = readFileSync(file, "utf8");
-    if (/[a-z0-9]{20}\.supabase\.co/.test(code)) {
+  for (const area of ["static", "server"]) {
+    let hasLocalUrl = false;
+    for (const file of walk(path.join(distDir, area))) {
+      const code = readFileSync(file, "utf8");
+      // 29MB 남짓을 매번 정규식으로 훑으면 느려서, 후보 파일만 정규식으로 본다.
+      if (code.includes(".supabase.") && REMOTE_PROJECT_URL.test(code)) {
+        throw new Error(
+          `부하 테스트용 빌드에 원격 Supabase 주소가 들어 있습니다(${path.relative(ROOT, file)}). 다시 빌드하세요.`
+        );
+      }
+      hasLocalUrl ||= code.includes(localUrl);
+    }
+    if (!hasLocalUrl) {
       throw new Error(
-        `부하 테스트용 빌드에 원격 Supabase 주소가 들어 있습니다(${path.relative(ROOT, file)}). 다시 빌드하세요.`
+        `부하 테스트용 빌드(${area})에서 로컬 Supabase 주소를 찾지 못했습니다. 다시 빌드하세요.`
       );
     }
-    hasLocalUrl ||= code.includes(localUrl);
-  }
-  if (!hasLocalUrl) {
-    throw new Error(
-      "부하 테스트용 빌드에서 로컬 Supabase 주소를 찾지 못했습니다. 다시 빌드하세요."
-    );
   }
 }
