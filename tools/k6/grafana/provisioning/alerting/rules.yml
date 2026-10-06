@@ -1,0 +1,114 @@
+# 부하·장애 테스트용 알림 규칙. 장애가 나면 몇 초 만에 알아채는지 보려고 둔다.
+# 알림을 밖으로 보내는 곳(메일·메신저)은 연결하지 않았다. Grafana 알림 화면에서 울림(Firing)·꺼짐(Normal) 기록만 본다.
+# 10초마다 검사한다. 실패율·p95는 10초 넘게 이어질 때만 울려 순간적인 튐을 거른다.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: 부하·장애 테스트
+    folder: 부하 테스트
+    interval: 10s
+    rules:
+      - uid: lt-failure-rate
+        title: 요청 실패율 5% 초과
+        condition: B
+        for: 10s
+        noDataState: OK
+        execErrState: OK
+        annotations:
+          summary: k6 요청 중 실패(응답 못 받음·4xx·5xx) 비율이 최근 20초 동안 5%를 넘었다.
+        data:
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                (sum(rate(k6_http_reqs_total{expected_response="false"}[20s])) or vector(0))
+                / sum(rate(k6_http_reqs_total[20s]))
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0.05] }
+
+      - uid: lt-latency-p95
+        title: 응답 p95 2초 초과
+        condition: B
+        for: 10s
+        noDataState: OK
+        execErrState: OK
+        annotations:
+          summary: 최근 20초 동안 k6 응답 시간 p95가 2초를 넘었다. 응답이 끝나야 기록되므로 매달린 요청은 늦게 잡힌다.
+        data:
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds[20s])))
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [2] }
+
+      - uid: lt-db-down
+        title: DB 연결 안 됨
+        condition: B
+        for: 0s
+        # DB가 얼면 수집기가 답을 못 받아 값 자체가 사라진다. 값이 없을 때도 울린다
+        # (그래서 수집기를 꺼 둔 평소에도 울려 있다).
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: postgres_exporter가 DB에 붙지 못한다(pg_up이 0이거나 값이 없음).
+        data:
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: max(pg_up)
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: lt-postgrest-pool-timeout
+        title: REST 서버 DB 연결 대기 시간 초과
+        condition: B
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        annotations:
+          summary: REST 서버(PostgREST)가 DB 연결을 얻지 못하고 시간 초과로 돌려보낸 요청이 최근 30초 안에 있다.
+        data:
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum(increase(pgrst_db_pool_timeouts_total[30s]))
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [0] }

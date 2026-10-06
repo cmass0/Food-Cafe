@@ -16,7 +16,21 @@
     "list": []
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "name": "장애 주입",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "enable": true,
+        "iconColor": "red",
+        "expr": "max by (type) (fault_active) > 0",
+        "step": "5s",
+        "titleFormat": "장애: {{type}}",
+        "tagKeys": "type"
+      }
+    ]
   },
   "links": [
     {
@@ -100,8 +114,8 @@
     {
       "type": "timeseries",
       "id": 3,
-      "title": "초당 요청 수",
-      "description": "k6가 보내고 응답을 받은 요청 수. 사용자를 늘려도 더 오르지 않으면 어딘가가 한계다.",
+      "title": "초당 요청 수 (응답 상태별)",
+      "description": "k6가 받은 응답을 상태 코드별로 쌓았다. 0은 응답을 못 받음(시간 초과·연결 끊김), 503은 앱이 \"잠시 후 다시\"로 답함.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -118,8 +132,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(k6_http_reqs_total[$__rate_interval]))",
-          "legendFormat": "초당 요청",
+          "expr": "sum by (status) (rate(k6_http_reqs_total[$__rate_interval]))",
+          "legendFormat": "{{status}}",
           "refId": "A",
           "range": true
         }
@@ -131,11 +145,11 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "showPoints": "never",
             "spanNulls": false,
             "stacking": {
-              "mode": "none",
+              "mode": "normal",
               "group": "A"
             }
           }

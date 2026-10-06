@@ -14,6 +14,12 @@ scrape_configs:
     static_configs:
       - targets: ["host.docker.internal:9101"]
 
+  # 장애 테스트에서 지금 장애를 넣은 상태인지(tools/k6/inject-fault.mjs, 실행 중에만 연다).
+  - job_name: fault
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["host.docker.internal:9102"]
+
   # 컨테이너별 CPU·메모리(cAdvisor). 필요한 지표만 남기고 짧은 이름표(container)를 붙인다.
   - job_name: containers
     scrape_interval: 5s
