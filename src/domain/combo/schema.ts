@@ -4,6 +4,9 @@ import { imageFileSchema } from "./../../lib/domain/schema";
 
 export const MIN_COMBO_ITEMS = 2;
 export const MAX_COMBO_ITEMS = 10;
+// 조리 단계 상한. 레시피(domain/recipe/schema.ts)와 같은 값이고, 작성 화면과 DB 제약도 이 값을 따른다.
+export const MAX_COMBO_STEPS = 50;
+export const MAX_COMBO_STEP_CHARS = 500;
 
 const comboItemsMinMessage = `조합 항목은 최소 ${MIN_COMBO_ITEMS}개 이상 추가해 주세요.`;
 const comboItemsMaxMessage = `조합 항목은 최대 ${MAX_COMBO_ITEMS}개까지 추가할 수 있습니다.`;
@@ -18,8 +21,15 @@ export const comboListOptionsSchema = z.object({
 });
 
 export const ComboSetpsSchema = z.object({
-  description: z.string().min(1, "조리 단계를 입력해주세요.").max(1000),
+  description: z
+    .string()
+    .trim()
+    .min(1, "조리 단계를 입력해주세요.")
+    .max(MAX_COMBO_STEP_CHARS, `단계는 ${MAX_COMBO_STEP_CHARS}자 이하로 입력해 주세요.`),
 });
+const ComboStepsSchema = z
+  .array(ComboSetpsSchema)
+  .max(MAX_COMBO_STEPS, `조리 단계는 최대 ${MAX_COMBO_STEPS}개까지 입력할 수 있습니다.`);
 
 // comboitem의 image는 product에서만 파일 업로드를 위해 사용
 export const ComboItemsSchema = z
@@ -74,7 +84,7 @@ export const ComboInsertSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1, "제목을 입력해주세요.").max(200, "제목은 200자 이하만 가능합니다."),
   summary: z.string().max(500, "요약은 500자 이하만 가능합니다.").optional(),
-  steps: z.array(ComboSetpsSchema).min(1, "조리 단계를 한 개 이상 입력해주세요."),
+  steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요."),
   items: ComboItemsSchema,
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
   tools: z.array(tagSchema).max(20).nullable().optional(),
@@ -115,7 +125,7 @@ export const ComboUpdateSchema = z
       .max(200, "제목은 200자 이하만 가능합니다.")
       .optional(),
     summary: z.string().max(500, "요약은 500자 이하만 가능합니다.").optional(),
-    steps: z.array(ComboSetpsSchema).min(1, "조리 단계를 한 개 이상 입력해주세요.").optional(),
+    steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요.").optional(),
     items: ComboItemsSchema.optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
     tools: z.array(tagSchema).max(20).nullable().optional(),

@@ -50,6 +50,49 @@ describe("레시피 태그와 조리도구 개수", () => {
   });
 });
 
+describe("레시피 조리 단계 개수와 길이", () => {
+  const steps = (count: number, length = 10) =>
+    Array.from({ length: count }, () => ({ description: "가".repeat(length) }));
+
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 규칙은 단계 50개·단계당 500자까지 허용한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, steps: steps(50, 500) });
+
+    expect(result.success).toBe(true);
+  });
+
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 규칙은 단계 51개를 거부한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, steps: steps(51) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["steps"]]);
+  });
+
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 규칙은 501자 단계를 거부한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, steps: steps(1, 501) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["steps", 0, "description"]]);
+  });
+
+  test("앞뒤 공백은 빼고 센다", () => {
+    const result = recipeInsertSchema.safeParse({
+      ...BASE_RECIPE,
+      steps: [{ description: `  ${"가".repeat(500)}  ` }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("레시피 카테고리", () => {
   test.each([
     ["생성", recipeInsertSchema],

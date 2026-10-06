@@ -2,6 +2,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form";
+import { MAX_RECIPE_STEP_CHARS, MAX_RECIPE_STEPS } from "@/domain/recipe/schema";
 import { type FormValues } from "@/domain/recipe/types";
 
 type StepsFieldsProps = {
@@ -20,12 +21,12 @@ export function StepsFields({ form, stepsArray }: StepsFieldsProps) {
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <FormLabel className="text-base">조리 단계</FormLabel>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{stepsArray.fields.length} / 15단계</span>
+                <span>{stepsArray.fields.length} / {MAX_RECIPE_STEPS}단계</span>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={stepsArray.fields.length >= 15}
+                  disabled={stepsArray.fields.length >= MAX_RECIPE_STEPS}
                   onClick={() => stepsArray.append({ description: "" })}
                 >
                   단계 추가
@@ -58,6 +59,7 @@ export function StepsFields({ form, stepsArray }: StepsFieldsProps) {
                           <Textarea
                             placeholder="이 단계에서 해야 할 일을 구체적으로 적어 주세요."
                             rows={3}
+                            maxLength={MAX_RECIPE_STEP_CHARS}
                             {...field}
                           />
                         </FormControl>
