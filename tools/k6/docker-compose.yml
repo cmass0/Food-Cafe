@@ -1,0 +1,54 @@
+# 부하 테스트 결과 저장(Prometheus)과 대시보드(Grafana). 두 포트 모두 내 PC(127.0.0.1)에서만 열린다.
+#   켜기: docker compose -f tools/k6/docker-compose.yml up -d
+#   끄기: docker compose -f tools/k6/docker-compose.yml down   (결과 기록은 볼륨에 남는다)
+name: food-cafe-loadtest
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    # Docker Desktop을 켜면 함께 켜져서 지난 결과를 언제든 볼 수 있다.
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=180d
+      # k6가 실행 결과를 직접 밀어 넣을 수 있게 한다(remote write 수신).
+      - --web.enable-remote-write-receiver
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:13.2.3
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      # 로컬 전용이라 로그인 없이 바로 대시보드를 연다(보기 권한). 데이터 소스·대시보드는 파일로 등록한다.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/k6-prometheus.json
+    ports:
+      # 3000번은 Next 앱이 쓰므로 3200번으로 연다.
+      - "127.0.0.1:3200:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+  # 서버 여러 대 실험용 분배기. 평소에는 꺼 두고 필요할 때만 켠다.
+  #   켜기: docker compose -f tools/k6/docker-compose.yml --profile scale up -d lb
+  lb:
+    image: nginx:1.29-alpine
+    profiles: ["scale"]
+    ports:
+      - "127.0.0.1:3400:3400"
+      - "127.0.0.1:3402:3402"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  prometheus-data:
+  grafana-data:
