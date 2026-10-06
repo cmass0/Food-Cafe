@@ -1,13 +1,6 @@
 import { followListQuerySchema, followTargetSchema } from "@/domain/follow/schema";
 import * as followService from "@/domain/follow/service";
-import {
-  badRequest,
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { badRequest, json, respondWithError, validationError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 type FollowListParams = { params: Promise<{ targetId: string }> };
@@ -35,8 +28,6 @@ export async function GET(request: Request, props: FollowListParams) {
 
     return json({ ...result, type });
   } catch (error) {
-    if (isPostgrestError(error)) return respondWithSupabaseError(error);
-    console.error("팔로우 목록 조회 실패", error);
-    return internalError("팔로우 목록을 불러오지 못했습니다.");
+    return respondWithError(error, "팔로우 목록 조회 실패", "팔로우 목록을 불러오지 못했습니다.");
   }
 }

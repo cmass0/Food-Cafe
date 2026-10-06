@@ -5,13 +5,11 @@ import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
   notFound,
-  respondWithSupabaseError,
+  respondWithError,
   validationError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(_: Request, props: contentParams) {
@@ -25,12 +23,7 @@ export async function GET(_: Request, props: contentParams) {
 
     return json({ data: combo });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 조합을 가져오지 못했습니다.", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 조합을 가져오지 못했습니다.", error);
-    return internalError();
+    return respondWithError(error, "레시피 조합을 가져오지 못했습니다.");
   }
 }
 
@@ -57,12 +50,7 @@ export async function PUT(req: Request, props: contentParams) {
     if (!updated) return notFound("수정할 수 있는 조합");
     return json({ data: updated });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 조합 수정에 실패했습니다.", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 조합 수정에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "레시피 조합 수정에 실패했습니다.");
   }
 }
 
@@ -82,11 +70,6 @@ export async function DELETE(_: Request, props: contentParams) {
 
     return json({ message: "레시피 조합이 삭제되었습니다." }, 200);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 조합 삭제에 실패했습니다.", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 조합 삭제에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "레시피 조합 삭제에 실패했습니다.");
   }
 }

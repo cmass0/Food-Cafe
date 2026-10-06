@@ -1,16 +1,7 @@
 import * as comboService from "@/domain/combo/service";
 import { ComboSearchField, ComboSort } from "@/domain/combo/types";
-import {
-  AuthErrorHelper,
-  badRequest,
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { AuthErrorHelper, badRequest, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ZodError } from "zod";
 
 export async function GET(req: Request) {
   try {
@@ -39,12 +30,7 @@ export async function GET(req: Request) {
     });
     return json({ data: combos });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("조합을 가져오는데 실패했습니다.", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("조합을 가져오는데 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "조합을 가져오는데 실패했습니다.");
   }
 }
 
@@ -67,15 +53,6 @@ export async function POST(req: Request) {
     });
     return json({ data: combo }, 201);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-
-    if (error instanceof ZodError) {
-      console.error("레시피 생성 실패 - zod검증 오류", error);
-      return validationError(error.errors);
-    }
-    console.error("조합 생성에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "조합 생성에 실패했습니다.");
   }
 }

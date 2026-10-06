@@ -1,6 +1,5 @@
 import { contentParams } from "@/lib/api/prams-type";
-import { internalError, json, notFound, respondWithSupabaseError } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { json, notFound, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function POST(_: Request, props: contentParams) {
@@ -12,16 +11,11 @@ export async function POST(_: Request, props: contentParams) {
       p_combo_id: params.id,
     });
 
-    if (error) return respondWithSupabaseError(error);
+    if (error) throw error;
     if (!view_count) return notFound();
 
     return json({ viewCount: view_count }, 200);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 조합 조회수 증가 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 조합 조회수 증가 실패", error);
-    return internalError();
+    return respondWithError(error, "레시피 조합 조회수 증가 실패");
   }
 }

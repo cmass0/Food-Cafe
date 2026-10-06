@@ -7,17 +7,8 @@ import {
 } from "@/domain/recipe/list-params";
 import { recipeInsertSchema } from "@/domain/recipe/schema";
 import * as recipeService from "@/domain/recipe/service";
-import {
-  AuthErrorHelper,
-  badRequest,
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { AuthErrorHelper, badRequest, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ZodError } from "zod";
 
 export async function GET(req: Request) {
   try {
@@ -45,12 +36,7 @@ export async function GET(req: Request) {
 
     return json({ data: recipes });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 조회 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 조회 실패", error);
-    return internalError();
+    return respondWithError(error, "레시피 조회 실패");
   }
 }
 
@@ -74,14 +60,6 @@ export async function POST(req: Request) {
     });
     return json({ data: recipe }, 201);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 생성 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    if (error instanceof ZodError) {
-      console.error("레시피 생성 실패 - zod검증 오류", error);
-      return validationError(error.errors);
-    }
-    return internalError();
+    return respondWithError(error, "레시피 생성 실패");
   }
 }

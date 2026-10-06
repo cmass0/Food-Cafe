@@ -1,12 +1,10 @@
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
   notFound,
-  respondWithSupabaseError,
+  respondWithError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 import { readRelationState } from "@/lib/api/relation-state";
 import * as followService from "@/domain/follow/service";
 import { followTargetSchema } from "@/domain/follow/schema";
@@ -27,9 +25,7 @@ export async function GET(_req: Request, props: FollowParams) {
     const following = await followService.checkIsFollowing(supabase, user.id, parsedTarget.data);
     return json({ following });
   } catch (error) {
-    if (isPostgrestError(error)) return respondWithSupabaseError(error);
-    console.error("팔로우 상태 조회 실패", error);
-    return internalError();
+    return respondWithError(error, "팔로우 상태 조회 실패");
   }
 }
 
@@ -51,19 +47,11 @@ export async function POST(req: Request, props: FollowParams) {
     const { data, error } = await supabase
       .rpc("set_follow", { p_target_id: parsedTarget.data, p_following: following })
       .maybeSingle();
-    if (error) {
-      console.error("팔로우 처리 실패", error);
-      return respondWithSupabaseError(error);
-    }
+    if (error) throw error;
     if (!data) return notFound("사용자");
 
     return json({ following: data.following, followerCount: data.follower_count });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("팔로우 처리 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("팔로우 처리 실패", error);
-    return internalError();
+    return respondWithError(error, "팔로우 처리 실패");
   }
 }

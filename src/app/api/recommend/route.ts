@@ -1,4 +1,4 @@
-import { badRequest, internalError } from "@/lib/errors/api-response";
+import { badRequest, respondWithError } from "@/lib/errors/api-response";
 import { getRecommendLanguageModel } from "@/lib/ai/model";
 import { getAdminSupabase } from "@/lib/supabase/admin";
 import { createRecommendAgent } from "@/features/recommend/agent";
@@ -38,7 +38,6 @@ export async function POST(request: Request) {
       timeout: { totalMs: 30_000 },
     });
   } catch (error) {
-    console.error("레시피 추천 요청 실패", error);
-    return internalError();
+    return respondWithError(error, "레시피 추천 요청 실패");
   }
 }
