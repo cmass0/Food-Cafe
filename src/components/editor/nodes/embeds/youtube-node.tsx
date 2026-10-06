@@ -17,6 +17,8 @@ import type {
   Spread,
 } from "lexical"
 
+import { youtubeWatchUrl } from "@/domain/post/embed-links"
+
 type YouTubeComponentProps = Readonly<{
   className: Readonly<{
     base: string
@@ -148,7 +150,7 @@ export class YouTubeNode extends DecoratorBlockNode {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _includeDirectionless?: false | undefined
   ): string {
-    return `https://www.youtube.com/watch?v=${this.__id}`
+    return youtubeWatchUrl(this.__id)
   }
 
   decorate(_editor: LexicalEditor, config: EditorConfig): JSX.Element {

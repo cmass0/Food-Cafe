@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
+import { POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
+
 vi.mock("server-only", () => ({}));
 
 const PUBLIC_PREFIX = "https://project.supabase.co/storage/v1/object/public/food-images/";
@@ -195,6 +197,21 @@ describe("게시글 이미지 주소", () => {
 const text = (value: string, type = "text") => ({ type, text: value });
 const element = (type: string, children: unknown[]) => ({ type, children });
 
+describe("저장할 HTML 길이", () => {
+  test("정제하며 문자 참조로 늘어나 20만 자를 넘으면 본문 크기 안내로 거절한다", () => {
+    // 6만 자의 맨 &는 정제 후 &amp;(5자)가 되어 30만 자가 된다. 정제 전 길이만 보면 앱은 통과시킨다.
+    const html = `<p>${"&".repeat(60_000)}</p>`;
+
+    expect(() => content.sanitizePostHtmlForStorage(html)).toThrow(POST_CONTENT_TOO_LARGE_MESSAGE);
+  });
+
+  test("정제 후 20만 자까지는 저장한다", () => {
+    const html = `<p>${"가".repeat(199_993)}</p>`;
+
+    expect(content.sanitizePostHtmlForStorage(html)).toHaveLength(200_000);
+  });
+});
+
 describe("extractPostText", () => {
   test("문단·제목·목록 항목을 줄바꿈으로 나눠 글자만 뽑는다", () => {
     const state = {
@@ -240,6 +257,31 @@ describe("extractPostText", () => {
     };
 
     expect(content.extractPostText(state)).toBe("김치");
+  });
+
+  test("유튜브·트윗 임베드는 에디터와 같은 링크로 바꿔 따로 줄을 나눈다", () => {
+    const state = {
+      root: element("root", [
+        element("paragraph", [text("앞")]),
+        { type: "youtube", videoID: "abc123", version: 1 },
+        { type: "tweet", id: "1234567890", version: 1 },
+        element("paragraph", [text("뒤")]),
+      ]),
+    };
+
+    expect(content.extractPostText(state)).toBe(
+      "앞\nhttps://www.youtube.com/watch?v=abc123\nhttps://x.com/i/web/status/1234567890\n뒤"
+    );
+  });
+
+  test.each([
+    ["ID 없는 유튜브", { type: "youtube" }],
+    ["빈 ID 트윗", { type: "tweet", id: "" }],
+    ["숫자 ID 트윗", { type: "tweet", id: 1234 }],
+  ] as const)("%s 임베드는 글자를 만들지 않는다", (_label, node) => {
+    const state = { root: element("root", [node]) };
+
+    expect(content.extractPostText(state)).toBe("");
   });
 
   test("이미지·영상만 있는 문서는 빈 문자열을 돌려준다", () => {

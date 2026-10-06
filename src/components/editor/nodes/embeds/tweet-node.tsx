@@ -16,6 +16,8 @@ import type {
 } from "lexical";
 import { JSX, useCallback, useEffect, useRef, useState } from "react";
 
+import { tweetUrl } from "@/domain/post/embed-links";
+
 const WIDGET_SCRIPT_URL = "https://platform.twitter.com/widgets.js";
 
 type TweetComponentProps = Readonly<{
@@ -175,7 +177,7 @@ export class TweetNode extends DecoratorBlockNode {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _includeDirectionless?: false | undefined
   ): string {
-    return `https://x.com/i/web/status/${this.__id}`;
+    return tweetUrl(this.__id);
   }
 
   decorate(editor: LexicalEditor, config: EditorConfig): JSX.Element {

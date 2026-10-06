@@ -4,6 +4,8 @@ import type { SerializedEditorState } from "lexical";
 import sanitizeHtml from "sanitize-html";
 
 import { managedStoragePathFromValue, resolveStorageImageUrl } from "@/lib/storage/paths";
+import { tweetUrl, youtubeWatchUrl } from "./embed-links";
+import { POST_CONTENT_MAX_CHARS, POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
 
 // 게시글 본문 HTML은 브라우저 에디터가 만들어 보낸다(components/blocks/editor-x/export-html.ts).
 // 글쓴이가 Supabase API로 DB에 직접 쓸 수도 있는 값이라 믿지 않고, 저장할 때와 보여 줄 때 모두
@@ -167,7 +169,11 @@ function sanitize(html: string, resolveImage: (src: string | undefined) => strin
 
 /** 저장할 HTML을 정제한다. 우리 Storage 이미지는 상대 경로로 바꿔 둔다. */
 export function sanitizePostHtmlForStorage(html: string): string {
-  return sanitize(html, storedImageSource);
+  const sanitized = sanitize(html, storedImageSource);
+  // 입력 검사는 정제 전 길이를 본다. 정제하며 문자 참조(& → &amp; 등)로 늘어나면 DB 상한에 걸릴 수 있어,
+  // 실제로 저장할 값으로 한 번 더 확인해 DB 오류 대신 같은 안내로 거절한다.
+  if (sanitized.length > POST_CONTENT_MAX_CHARS) throw new Error(POST_CONTENT_TOO_LARGE_MESSAGE);
+  return sanitized;
 }
 
 /** 보여 줄 HTML을 정제한다. DB의 값도 믿지 않고 다시 거르며, 이미지 상대 경로를 공개 주소로 바꾼다. */
@@ -187,6 +193,12 @@ function isSerializedEditorState(value: unknown): value is SerializedEditorState
 const INLINE_ELEMENT_TYPES = new Set(["link", "autolink"]);
 // 입력 중에만 보이는 자동 완성 제안은 본문이 아니다.
 const IGNORED_NODE_TYPES = new Set(["autocomplete"]);
+// 임베드는 JSON에 ID만 있다. 예전 서버(에디터 노드의 getTextContent)처럼 링크를 글자로 내야
+// 임베드만 있는 글도 검색되고 "내용 비었음"으로 거절되지 않는다. 블록이라 앞뒤 글과 줄을 나눈다.
+const EMBED_NODE_LINKS: Record<string, { idKey: string; link: (id: string) => string }> = {
+  youtube: { idKey: "videoID", link: youtubeWatchUrl },
+  tweet: { idKey: "id", link: tweetUrl },
+};
 
 function nodeText(node: unknown): string {
   if (!node || typeof node !== "object") return "";
@@ -194,6 +206,11 @@ function nodeText(node: unknown): string {
   if (typeof type === "string" && IGNORED_NODE_TYPES.has(type)) return "";
   if (type === "linebreak") return "\n";
   if (type === "tab") return "\t";
+  if (typeof type === "string" && type in EMBED_NODE_LINKS) {
+    const { idKey, link } = EMBED_NODE_LINKS[type]!;
+    const id = (node as Record<string, unknown>)[idKey];
+    return typeof id === "string" && id ? link(id) : "";
+  }
   if (typeof text === "string") return text;
   if (!Array.isArray(children)) return "";
 
@@ -201,11 +218,13 @@ function nodeText(node: unknown): string {
     .map((child) => {
       const childText = nodeText(child);
       const childType = (child as { type?: unknown })?.type;
+      const isEmbed = typeof childType === "string" && childType in EMBED_NODE_LINKS;
       const isBlock =
-        !!child &&
-        typeof child === "object" &&
-        Array.isArray((child as { children?: unknown }).children) &&
-        !(typeof childType === "string" && INLINE_ELEMENT_TYPES.has(childType));
+        isEmbed ||
+        (!!child &&
+          typeof child === "object" &&
+          Array.isArray((child as { children?: unknown }).children) &&
+          !(typeof childType === "string" && INLINE_ELEMENT_TYPES.has(childType)));
       return isBlock ? `${childText}\n` : childText;
     })
     .join("");
