@@ -21,6 +21,9 @@ const child = spawn(process.execPath, [next, "build"], {
   env: { ...process.env, ...readLoadTestEnv(), NEXT_DIST_DIR: LOADTEST_DIST_DIR },
 });
 
+// Ctrl+C·종료 신호를 받아도 바로 끝내지 않고, 빌드를 멈춘 뒤 아래에서 설정 파일을 되돌리고 끝낸다.
+for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill(signal));
+
 child.on("exit", (code) => {
   for (const { file, content } of touchedFiles) writeFileSync(file, content);
   if (code !== 0) process.exit(code ?? 1);

@@ -19,8 +19,10 @@ function cpuSecondsByMode() {
 /**
  * 다른 프로세스의 누적 CPU 시간을 2초마다 읽는다. Node는 남의 프로세스 CPU를 못 읽어서 PowerShell을 하나 띄워 둔다.
  * findProcess는 그 프로세스를 찾는 PowerShell 식이다. 프로세스가 끝나면 마지막 값을 그대로 둔다.
+ * PowerShell이 없는 OS(리눅스·맥)에서는 건너뛰고 PC 전체 지표만 낸다. 수집기가 실패해도 부하 테스트는 계속한다.
  */
 function watchProcess(findProcess, onSample) {
+  if (process.platform !== "win32") return null;
   const script =
     `$p = ${findProcess}; ` +
     `while (-not $p.HasExited) { $p.Refresh(); ` +
@@ -28,6 +30,7 @@ function watchProcess(findProcess, onSample) {
   const child = spawn("powershell", ["-NoProfile", "-Command", script], {
     stdio: ["ignore", "pipe", "ignore"],
   });
+  child.on("error", (error) => console.error("프로세스 지표를 읽지 못했습니다:", error.message));
   child.stdout.setEncoding("utf8");
   child.stdout.on("data", (chunk) => {
     for (const line of chunk.split(/\r?\n/)) {
@@ -95,7 +98,7 @@ export function startHostMetrics(port = HOST_METRICS_PORT) {
       watchers.push(watchProcess(find, (sample) => processes.set(`app-${port}`, sample)));
     },
     close() {
-      for (const watcher of watchers) watcher.kill();
+      for (const watcher of watchers) watcher?.kill();
       server.close();
     },
   };
