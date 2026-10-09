@@ -236,7 +236,8 @@ function parseContentJson(contentJson: PostCreateInput["content_json"]) {
 }
 
 function assertPostContentIsNotEmpty(contentText: string, contentHtml: string): void {
-  if (!contentText && !RICH_CONTENT_PATTERN.test(contentHtml)) {
+  // 본문 글자는 에디터처럼 공백·빈 줄도 그대로 담으므로, 공백뿐인 글은 비었다고 본다.
+  if (!contentText.trim() && !RICH_CONTENT_PATTERN.test(contentHtml)) {
     throw new Error("내용을 입력해 주세요.");
   }
 }

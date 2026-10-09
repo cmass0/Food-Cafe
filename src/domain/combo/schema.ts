@@ -7,6 +7,9 @@ export const MAX_COMBO_ITEMS = 10;
 // 조리 단계 상한. 레시피(domain/recipe/schema.ts)와 같은 값이고, 작성 화면과 DB 제약도 이 값을 따른다.
 export const MAX_COMBO_STEPS = 50;
 export const MAX_COMBO_STEP_CHARS = 500;
+// 글자 수 상한. 작성 화면 입력칸과 DB 제약(combos_*_length)도 이 값을 따른다.
+export const COMBO_TEXT_LIMITS = { title: 200, summary: 500, difficulty: 50 } as const;
+export const COMBO_ITEM_TEXT_LIMITS = { title: 200, summary: 500, productName: 200 } as const;
 
 const comboItemsMinMessage = `조합 항목은 최소 ${MIN_COMBO_ITEMS}개 이상 추가해 주세요.`;
 const comboItemsMaxMessage = `조합 항목은 최대 ${MAX_COMBO_ITEMS}개까지 추가할 수 있습니다.`;
@@ -38,14 +41,17 @@ export const ComboItemsSchema = z
       z.object({
         type: z.literal("recipe"),
         recipeid: z.string().uuid(),
-        title: z.string().max(200).optional(),
-        summary: z.string().max(500).optional(),
+        title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
+        summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: imageFieldSchema,
       }),
       z.object({
         type: z.literal("product"),
-        productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
-        summary: z.string().max(500).optional(),
+        productName: z
+          .string()
+          .min(1, "상품명을 입력해주세요.")
+          .max(COMBO_ITEM_TEXT_LIMITS.productName),
+        summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: imageFieldSchema,
       }),
     ])
@@ -65,14 +71,17 @@ export const ComboItemsSchemaAtForm = z
       z.object({
         type: z.literal("recipe"),
         recipeid: z.string().uuid(),
-        title: z.string().max(200).optional(),
-        summary: z.string().max(500).optional(),
+        title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
+        summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: imageFieldSchema,
       }),
       z.object({
         type: z.literal("product"),
-        productName: z.string().min(1, "상품명을 입력해주세요.").max(200),
-        summary: z.string().max(500).optional(),
+        productName: z
+          .string()
+          .min(1, "상품명을 입력해주세요.")
+          .max(COMBO_ITEM_TEXT_LIMITS.productName),
+        summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: comboItemImageFormSchema,
       }),
     ])
@@ -82,8 +91,14 @@ export const ComboItemsSchemaAtForm = z
 
 export const ComboInsertSchema = z.object({
   id: z.string().uuid(),
-  title: z.string().min(1, "제목을 입력해주세요.").max(200, "제목은 200자 이하만 가능합니다."),
-  summary: z.string().max(500, "요약은 500자 이하만 가능합니다.").optional(),
+  title: z
+    .string()
+    .min(1, "제목을 입력해주세요.")
+    .max(COMBO_TEXT_LIMITS.title, `제목은 ${COMBO_TEXT_LIMITS.title}자 이하만 가능합니다.`),
+  summary: z
+    .string()
+    .max(COMBO_TEXT_LIMITS.summary, `요약은 ${COMBO_TEXT_LIMITS.summary}자 이하만 가능합니다.`)
+    .optional(),
   steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요."),
   items: ComboItemsSchema,
   tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
@@ -91,7 +106,10 @@ export const ComboInsertSchema = z.object({
   difficulty: z
     .string()
     .min(1, "난이도를 입력해주세요.")
-    .max(50, "난이도는 50자 이하만 가능합니다."),
+    .max(
+      COMBO_TEXT_LIMITS.difficulty,
+      `난이도는 ${COMBO_TEXT_LIMITS.difficulty}자 이하만 가능합니다.`
+    ),
   time_minutes: z
     .number({ invalid_type_error: "소요 시간은 숫자여야 합니다." })
     .int()
@@ -122,9 +140,12 @@ export const ComboUpdateSchema = z
     title: z
       .string()
       .min(1, "제목을 입력해주세요.")
-      .max(200, "제목은 200자 이하만 가능합니다.")
+      .max(COMBO_TEXT_LIMITS.title, `제목은 ${COMBO_TEXT_LIMITS.title}자 이하만 가능합니다.`)
       .optional(),
-    summary: z.string().max(500, "요약은 500자 이하만 가능합니다.").optional(),
+    summary: z
+      .string()
+      .max(COMBO_TEXT_LIMITS.summary, `요약은 ${COMBO_TEXT_LIMITS.summary}자 이하만 가능합니다.`)
+      .optional(),
     steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요.").optional(),
     items: ComboItemsSchema.optional(),
     tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
@@ -132,7 +153,10 @@ export const ComboUpdateSchema = z
     difficulty: z
       .string()
       .min(1, "난이도를 입력해주세요.")
-      .max(50, "난이도는 50자 이하만 가능합니다.")
+      .max(
+        COMBO_TEXT_LIMITS.difficulty,
+        `난이도는 ${COMBO_TEXT_LIMITS.difficulty}자 이하만 가능합니다.`
+      )
       .optional(),
     time_minutes: z
       .number({ invalid_type_error: "소요 시간은 숫자여야 합니다." })

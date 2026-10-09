@@ -93,6 +93,35 @@ describe("레시피 조리 단계 개수와 길이", () => {
   });
 });
 
+describe("레시피 재료 개수", () => {
+  const ingredients = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      name: `재료${index + 1}`,
+      amount: "1",
+      unit: "개",
+    }));
+
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 규칙은 재료 200개까지 허용한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, ingredients: ingredients(200) });
+
+    expect(result.success).toBe(true);
+  });
+
+  // 수정할 때는 개수를 보지 않아, 작성 때 막은 201개를 수정으로 저장할 수 있었다.
+  test.each([
+    ["생성", recipeInsertSchema],
+    ["수정", recipeUpdateSchema],
+  ] as const)("%s 규칙은 재료 201개를 거부한다", (_label, schema) => {
+    const result = schema.safeParse({ ...BASE_RECIPE, ingredients: ingredients(201) });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["ingredients"]]);
+  });
+});
+
 describe("레시피 카테고리", () => {
   test.each([
     ["생성", recipeInsertSchema],

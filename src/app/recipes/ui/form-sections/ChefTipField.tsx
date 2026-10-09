@@ -1,6 +1,7 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { type UseFormReturn } from "react-hook-form";
+import { RECIPE_TEXT_LIMITS } from "@/domain/recipe/schema";
 import { type FormValues } from "@/domain/recipe/types";
 
 type ChefTipFieldProps = {
@@ -23,7 +24,7 @@ export function ChefTipField({ form, chefTipLength }: ChefTipFieldProps) {
             <FormControl>
               <Textarea
                 placeholder="조리할 때 알면 좋은 팁이 있다면 적어 주세요."
-                maxLength={500}
+                maxLength={RECIPE_TEXT_LIMITS.chefTip}
                 className="bg-background"
                 {...field}
                 value={field.value ?? ""}

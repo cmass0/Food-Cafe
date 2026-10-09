@@ -15,10 +15,16 @@ const jsonValueSchema: z.ZodType<Json> = z.lazy(() =>
   ])
 );
 
-// 제목·본문 크기 상한. DB 제약 조건(posts_*_length 마이그레이션)과 같은 값이라, 앱을 거치지 않고 써도 같은 선에서 막힌다.
+// 제목·본문 크기 상한. 제목은 DB 제약과 같은 값이라 앱을 거치지 않고 써도 같은 선에서 막힌다.
+// 본문 JSON·HTML 크기는 DB가 표기 차이(jsonb 공백 등)를 감안해 1.5배를 안전선으로 둔다.
 export const POST_TITLE_MAX_CHARS = 150;
+export const POST_TITLE_TOO_LONG_MESSAGE = `제목은 ${POST_TITLE_MAX_CHARS}자 이하로 입력해 주세요.`;
 export const POST_CONTENT_MAX_CHARS = 200_000;
 export const POST_CONTENT_TOO_LARGE_MESSAGE = "본문은 200KB 이하로 작성해 주세요.";
+// 본문 글자 수 상한. 에디터의 글자 수 제한, 서버(extractPostText), DB 제약(posts_content_text_size)이 같은 값이다.
+// 위 크기 상한은 서식·구조까지 담은 JSON·HTML 크기를, 이 값은 사용자가 쓴 글자 수를 막는다.
+export const POST_TEXT_MAX_CHARS = 5_000;
+export const POST_TEXT_TOO_LONG_MESSAGE = `본문은 ${POST_TEXT_MAX_CHARS.toLocaleString("ko-KR")}자 이하로 작성해 주세요.`;
 
 const postContentJsonSchema = z.union([z.record(jsonValueSchema), z.array(jsonValueSchema)]);
 // 본문 HTML은 브라우저가 만들어 보낸다. 서버가 저장 전에 정제한다.
@@ -33,7 +39,7 @@ export const postInsertSchema = z.object({
     .string()
     .trim()
     .min(1, "제목을 입력해 주세요.")
-    .max(POST_TITLE_MAX_CHARS, `제목은 ${POST_TITLE_MAX_CHARS}자 이하로 입력해 주세요.`),
+    .max(POST_TITLE_MAX_CHARS, POST_TITLE_TOO_LONG_MESSAGE),
   content_json: postContentJsonSchema,
   content_html: postContentHtmlSchema,
   category: postCategorySchema,
@@ -41,7 +47,12 @@ export const postInsertSchema = z.object({
 
 export const postUpdateSchema = z
   .object({
-    title: z.string().trim().min(1).max(POST_TITLE_MAX_CHARS).optional(),
+    title: z
+      .string()
+      .trim()
+      .min(1)
+      .max(POST_TITLE_MAX_CHARS, POST_TITLE_TOO_LONG_MESSAGE)
+      .optional(),
     content_json: postContentJsonSchema.optional(),
     content_html: postContentHtmlSchema.optional(),
     category: postCategorySchema.optional(),

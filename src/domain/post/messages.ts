@@ -1,5 +1,5 @@
 import { INVALID_MENTION_MESSAGE, MENTION_LIMIT_MESSAGE } from "./mentions";
-import { POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
+import { POST_CONTENT_TOO_LARGE_MESSAGE, POST_TEXT_TOO_LONG_MESSAGE } from "./schema";
 
 /**
  * 사용자에게 그대로 보여줘도 되는 게시글 오류 문구.
@@ -10,6 +10,7 @@ import { POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
 export const POST_USER_FACING_ERRORS: ReadonlySet<string> = new Set([
   "내용을 입력해 주세요.",
   POST_CONTENT_TOO_LARGE_MESSAGE,
+  POST_TEXT_TOO_LONG_MESSAGE,
   "유효하지 않은 게시글 형식입니다.",
   "유효하지 않은 형식입니다.",
   "작성자 정보를 확인할 수 없습니다.",

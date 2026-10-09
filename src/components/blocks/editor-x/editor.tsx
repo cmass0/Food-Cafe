@@ -21,12 +21,15 @@ const editorConfig: InitialConfigType = {
 };
 
 export function Editor({
+  maxLength,
   editorState,
   editorSerializedState,
   onChange,
   onSerializedChange,
   onImageFileSelect,
 }: {
+  /** 본문 글자 수 상한. 이보다 길게 입력하면 넘친 글자를 지운다. */
+  maxLength: number;
   editorState?: EditorState;
   editorSerializedState?: SerializedEditorState;
   onChange?: (editorState: EditorState) => void;
@@ -44,7 +47,7 @@ export function Editor({
       >
         <PendingImageProvider register={onImageFileSelect}>
           <TooltipProvider>
-            <Plugins />
+            <Plugins maxLength={maxLength} />
 
             <OnChangePlugin
               ignoreSelectionChange={true}

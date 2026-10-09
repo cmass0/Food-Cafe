@@ -5,7 +5,12 @@ import sanitizeHtml from "sanitize-html";
 
 import { managedStoragePathFromValue, resolveStorageImageUrl } from "@/lib/storage/paths";
 import { tweetUrl, youtubeWatchUrl } from "./embed-links";
-import { POST_CONTENT_MAX_CHARS, POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
+import {
+  POST_CONTENT_MAX_CHARS,
+  POST_CONTENT_TOO_LARGE_MESSAGE,
+  POST_TEXT_MAX_CHARS,
+  POST_TEXT_TOO_LONG_MESSAGE,
+} from "./schema";
 
 // 게시글 본문 HTML은 브라우저 에디터가 만들어 보낸다(components/blocks/editor-x/export-html.ts).
 // 글쓴이가 Supabase API로 DB에 직접 쓸 수도 있는 값이라 믿지 않고, 저장할 때와 보여 줄 때 모두
@@ -189,53 +194,57 @@ function isSerializedEditorState(value: unknown): value is SerializedEditorState
   );
 }
 
-// 글 안에서 문단을 나누지 않는 요소. 나머지 요소(문단·제목·목록·표 등)는 줄을 바꿔 잇는다.
+// 본문 글자는 에디터(Lexical)의 getTextContent와 같은 규칙으로 만든다. 에디터는 이 글자 수로 본문 길이를 막으므로,
+// 서버와 DB 제약이 같은 글자를 세야 에디터가 허용한 글을 거절하지 않는다(components/blocks/editor-x/post-text.test.ts).
+
+// 글 안에 들어가는 요소(Lexical의 isInline()이 true). 나머지 요소(문단·제목·목록·표·단·넘침 표시 등)는 블록이다.
 const INLINE_ELEMENT_TYPES = new Set(["link", "autolink"]);
-// 입력 중에만 보이는 자동 완성 제안은 본문이 아니다.
+// 입력 중에만 보이는 자동 완성 제안은 본문이 아니다. 에디터는 이 글자도 세므로 서버가 더 적게 셀 뿐이다.
 const IGNORED_NODE_TYPES = new Set(["autocomplete"]);
-// 임베드는 JSON에 ID만 있다. 예전 서버(에디터 노드의 getTextContent)처럼 링크를 글자로 내야
-// 임베드만 있는 글도 검색되고 "내용 비었음"으로 거절되지 않는다. 블록이라 앞뒤 글과 줄을 나눈다.
-const EMBED_NODE_LINKS: Record<string, { idKey: string; link: (id: string) => string }> = {
-  youtube: { idKey: "videoID", link: youtubeWatchUrl },
-  tweet: { idKey: "id", link: tweetUrl },
+// 자식이 없는 꾸밈 노드(DecoratorNode)의 글자. 임베드는 JSON에 ID만 있어 에디터 노드처럼 링크를 만든다.
+// 목록에 없는 꾸밈 노드(이미지 등)는 글자가 없다.
+const DECORATOR_TEXT: Record<string, (node: Record<string, unknown>) => string> = {
+  youtube: ({ videoID }) =>
+    typeof videoID === "string" && videoID ? youtubeWatchUrl(videoID) : "",
+  tweet: ({ id }) => (typeof id === "string" && id ? tweetUrl(id) : ""),
+  horizontalrule: () => "\n",
 };
+
+function isBlockElement(node: unknown): boolean {
+  if (!node || typeof node !== "object") return false;
+  const { type, children } = node as { type?: unknown; children?: unknown };
+  return Array.isArray(children) && !(typeof type === "string" && INLINE_ELEMENT_TYPES.has(type));
+}
 
 function nodeText(node: unknown): string {
   if (!node || typeof node !== "object") return "";
-  const { type, text, children } = node as { type?: unknown; text?: unknown; children?: unknown };
+  const record = node as Record<string, unknown>;
+  const { type, text, children } = record;
   if (typeof type === "string" && IGNORED_NODE_TYPES.has(type)) return "";
   if (type === "linebreak") return "\n";
   if (type === "tab") return "\t";
-  if (typeof type === "string" && type in EMBED_NODE_LINKS) {
-    const { idKey, link } = EMBED_NODE_LINKS[type]!;
-    const id = (node as Record<string, unknown>)[idKey];
-    return typeof id === "string" && id ? link(id) : "";
-  }
+  if (typeof type === "string" && type in DECORATOR_TEXT) return DECORATOR_TEXT[type]!(record);
   if (typeof text === "string") return text;
   if (!Array.isArray(children)) return "";
 
+  // 요소는 자식 글자를 잇고, 마지막이 아닌 블록 요소 뒤에만 빈 줄을 넣는다(꾸밈 블록 뒤에는 넣지 않음).
   return children
-    .map((child) => {
-      const childText = nodeText(child);
-      const childType = (child as { type?: unknown })?.type;
-      const isEmbed = typeof childType === "string" && childType in EMBED_NODE_LINKS;
-      const isBlock =
-        isEmbed ||
-        (!!child &&
-          typeof child === "object" &&
-          Array.isArray((child as { children?: unknown }).children) &&
-          !(typeof childType === "string" && INLINE_ELEMENT_TYPES.has(childType)));
-      return isBlock ? `${childText}\n` : childText;
+    .map((child, index) => {
+      const separator = index < children.length - 1 && isBlockElement(child) ? "\n\n" : "";
+      return nodeText(child) + separator;
     })
     .join("");
 }
 
-/** 검색용 본문 텍스트를 에디터 JSON에서 뽑는다. 문단·제목·목록 항목은 줄바꿈으로 나눈다. */
+/**
+ * 본문 글자를 에디터 JSON에서 뽑는다. 검색과 미리보기에 쓰고, 에디터와 같은 글자 수 상한을 여기서 확인해
+ * 에디터를 거치지 않은 요청도 같은 선에서 막는다.
+ */
 export function extractPostText(contentJson: unknown): string {
   if (!isSerializedEditorState(contentJson)) {
     throw new Error("유효하지 않은 형식입니다.");
   }
-  return nodeText(contentJson.root)
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  const text = nodeText(contentJson.root);
+  if (text.length > POST_TEXT_MAX_CHARS) throw new Error(POST_TEXT_TOO_LONG_MESSAGE);
+  return text;
 }

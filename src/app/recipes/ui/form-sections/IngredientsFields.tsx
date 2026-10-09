@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form";
+import { INGREDIENT_TEXT_LIMITS } from "@/domain/recipe/schema";
 import { type FormValues } from "@/domain/recipe/types";
 
 type IngredientsFieldsProps = {
@@ -87,7 +88,11 @@ export function IngredientsFields({ form, ingredientsArray }: IngredientsFieldsP
                         <FormItem className="md:col-span-2">
                           <FormLabel className="text-xs text-muted-foreground">재료명</FormLabel>
                           <FormControl>
-                            <Input placeholder="예) 돼지고기 앞다리" {...field} />
+                            <Input
+                              placeholder="예) 돼지고기 앞다리"
+                              maxLength={INGREDIENT_TEXT_LIMITS.name}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -168,7 +173,11 @@ export function IngredientsFields({ form, ingredientsArray }: IngredientsFieldsP
                               단위 직접 입력
                             </FormLabel>
                             <FormControl>
-                              <Input placeholder="예) 한 컵, 한 줌" {...field} />
+                              <Input
+                                placeholder="예) 한 컵, 한 줌"
+                                maxLength={INGREDIENT_TEXT_LIMITS.unitCustom}
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

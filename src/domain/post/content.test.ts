@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
-import { POST_CONTENT_TOO_LARGE_MESSAGE } from "./schema";
+import { toActionErrorMessage } from "@/lib/errors/action";
+import { POST_USER_FACING_ERRORS } from "./messages";
+import {
+  POST_CONTENT_TOO_LARGE_MESSAGE,
+  POST_TEXT_MAX_CHARS,
+  POST_TEXT_TOO_LONG_MESSAGE,
+} from "./schema";
 
 vi.mock("server-only", () => ({}));
 
@@ -213,7 +219,7 @@ describe("저장할 HTML 길이", () => {
 });
 
 describe("extractPostText", () => {
-  test("문단·제목·목록 항목을 줄바꿈으로 나눠 글자만 뽑는다", () => {
+  test("문단·제목·목록 항목 사이에 에디터처럼 빈 줄을 넣어 글자만 뽑는다", () => {
     const state = {
       root: element("root", [
         element("heading", [text("소제목")]),
@@ -222,7 +228,7 @@ describe("extractPostText", () => {
       ]),
     };
 
-    expect(content.extractPostText(state)).toBe("소제목\n첫 문단\n하나\n둘");
+    expect(content.extractPostText(state)).toBe("소제목\n\n첫 문단\n\n하나\n\n둘");
   });
 
   test("링크 안의 글자는 문단을 나누지 않는다", () => {
@@ -259,7 +265,7 @@ describe("extractPostText", () => {
     expect(content.extractPostText(state)).toBe("김치");
   });
 
-  test("유튜브·트윗 임베드는 에디터와 같은 링크로 바꿔 따로 줄을 나눈다", () => {
+  test("유튜브·트윗 임베드는 에디터와 같은 링크로 세고, 꾸밈 블록이라 앞뒤에 줄을 넣지 않는다", () => {
     const state = {
       root: element("root", [
         element("paragraph", [text("앞")]),
@@ -270,8 +276,42 @@ describe("extractPostText", () => {
     };
 
     expect(content.extractPostText(state)).toBe(
-      "앞\nhttps://www.youtube.com/watch?v=abc123\nhttps://x.com/i/web/status/1234567890\n뒤"
+      "앞\n\nhttps://www.youtube.com/watch?v=abc123https://x.com/i/web/status/1234567890뒤"
     );
+  });
+
+  test("수평선은 줄바꿈 하나로 센다", () => {
+    const state = {
+      root: element("root", [
+        element("paragraph", [text("위")]),
+        { type: "horizontalrule", version: 1 },
+        element("paragraph", [text("아래")]),
+      ]),
+    };
+
+    expect(content.extractPostText(state)).toBe("위\n\n\n아래");
+  });
+
+  test("글 앞뒤 공백과 빈 문단도 에디터처럼 그대로 센다", () => {
+    const state = {
+      root: element("root", [
+        element("paragraph", [text(" 가 ")]),
+        element("paragraph", []),
+        element("paragraph", [text("나")]),
+      ]),
+    };
+
+    expect(content.extractPostText(state)).toBe(" 가 \n\n\n\n나");
+  });
+
+  test("넘침 표시 요소는 에디터처럼 블록으로 세어 뒤에 빈 줄을 넣는다", () => {
+    const state = {
+      root: element("root", [
+        element("paragraph", [text("앞"), element("overflow", [text("넘침")]), text("뒤")]),
+      ]),
+    };
+
+    expect(content.extractPostText(state)).toBe("앞넘침\n\n뒤");
   });
 
   test.each([
@@ -297,5 +337,58 @@ describe("extractPostText", () => {
     ["배열", []],
   ] as const)("%s 형식은 거부한다", (_label, value) => {
     expect(() => content.extractPostText(value)).toThrow("유효하지 않은 형식입니다.");
+  });
+});
+
+describe("extractPostText — 본문 글자 상한", () => {
+  const paragraphs = (...values: string[]) => ({
+    root: element(
+      "root",
+      values.map((value) => element("paragraph", [text(value)]))
+    ),
+  });
+
+  test("상한과 같은 글자 수는 그대로 돌려준다", () => {
+    const state = paragraphs("가".repeat(POST_TEXT_MAX_CHARS));
+
+    expect(content.extractPostText(state)).toHaveLength(POST_TEXT_MAX_CHARS);
+  });
+
+  test("상한을 한 글자 넘으면 거절한다", () => {
+    const state = paragraphs("가".repeat(POST_TEXT_MAX_CHARS + 1));
+
+    expect(() => content.extractPostText(state)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("문단 사이 빈 줄도 에디터처럼 글자 수에 넣는다", () => {
+    const half = (POST_TEXT_MAX_CHARS - 2) / 2;
+    const fits = paragraphs("가".repeat(half), "나".repeat(half));
+    const over = paragraphs("가".repeat(half + 1), "나".repeat(half));
+
+    expect(content.extractPostText(fits)).toHaveLength(POST_TEXT_MAX_CHARS);
+    expect(() => content.extractPostText(over)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("상한 초과 안내는 기본 오류 문구로 바뀌지 않고 사용자에게 그대로 보인다", () => {
+    const error = (() => {
+      try {
+        content.extractPostText(paragraphs("가".repeat(POST_TEXT_MAX_CHARS + 1)));
+      } catch (caught) {
+        return caught;
+      }
+    })();
+
+    expect(toActionErrorMessage(error, POST_USER_FACING_ERRORS)).toBe(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("이모지는 에디터처럼 2자로 센다", () => {
+    const emojis = (count: number) => paragraphs("😀".repeat(count));
+
+    expect(content.extractPostText(emojis(POST_TEXT_MAX_CHARS / 2))).toHaveLength(
+      POST_TEXT_MAX_CHARS
+    );
+    expect(() => content.extractPostText(emojis(POST_TEXT_MAX_CHARS / 2 + 1))).toThrow(
+      POST_TEXT_TOO_LONG_MESSAGE
+    );
   });
 });
