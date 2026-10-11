@@ -178,7 +178,29 @@ export function sanitizePostHtmlForStorage(html: string): string {
   // 입력 검사는 정제 전 길이를 본다. 정제하며 문자 참조(& → &amp; 등)로 늘어나면 DB 상한에 걸릴 수 있어,
   // 실제로 저장할 값으로 한 번 더 확인해 DB 오류 대신 같은 안내로 거절한다.
   if (sanitized.length > POST_CONTENT_MAX_CHARS) throw new Error(POST_CONTENT_TOO_LARGE_MESSAGE);
+  // 본문 JSON과 HTML은 따로 들어온다. JSON 글자만 세면 짧은 JSON에 긴 HTML을 붙여 상한을 피할 수 있어,
+  // 화면에 보일 글자도 같은 상한으로 확인한다. 에디터가 만든 HTML은 문단 사이 빈 줄이 없고 임베드를
+  // 짧은 카드로 바꾸므로 에디터 글자보다 길지 않다(components/blocks/editor-x/post-text.test.ts).
+  if (visibleTextLength(sanitized) > POST_TEXT_MAX_CHARS) {
+    throw new Error(POST_TEXT_TOO_LONG_MESSAGE);
+  }
   return sanitized;
+}
+
+// 정제한 HTML에서 화면에 보이는 글자 수를 센다. 태그·속성은 빼고, 정제가 다시 적은 문자 참조(&amp; 등)는 한 글자로 센다.
+const ESCAPED_CHARACTER = /&(?:amp|lt|gt|quot);/g;
+
+function visibleTextLength(sanitizedHtml: string): number {
+  let length = 0;
+  sanitizeHtml(sanitizedHtml, {
+    allowedTags: [],
+    allowedAttributes: {},
+    textFilter: (text) => {
+      length += text.replace(ESCAPED_CHARACTER, "_").length;
+      return "";
+    },
+  });
+  return length;
 }
 
 /** 보여 줄 HTML을 정제한다. DB의 값도 믿지 않고 다시 거르며, 이미지 상대 경로를 공개 주소로 바꾼다. */

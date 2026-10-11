@@ -212,9 +212,44 @@ describe("저장할 HTML 길이", () => {
   });
 
   test("정제 후 20만 자까지는 저장한다", () => {
-    const html = `<p>${"가".repeat(199_993)}</p>`;
+    // 보이는 글자는 상한(5,000자) 안이고, 나머지는 빈 문단 태그로 크기만 채운다.
+    const html = "<p></p>".repeat(27_856) + `<p>${"가".repeat(POST_TEXT_MAX_CHARS)}</p>`;
 
-    expect(content.sanitizePostHtmlForStorage(html)).toHaveLength(200_000);
+    expect(content.sanitizePostHtmlForStorage(html)).toHaveLength(199_999);
+  });
+});
+
+// 본문 JSON과 HTML은 따로 들어온다. JSON만 세면 짧은 JSON에 긴 HTML을 붙여 글자 수 상한을 피할 수 있어,
+// 화면에 보일 HTML의 글자도 같은 상한으로 확인한다.
+describe("저장할 HTML의 보이는 글자 수", () => {
+  test("보이는 글자가 상한과 같으면 저장한다", () => {
+    const html = `<p>${"가".repeat(POST_TEXT_MAX_CHARS)}</p>`;
+
+    expect(content.sanitizePostHtmlForStorage(html)).toBe(html);
+  });
+
+  test("보이는 글자가 상한을 넘으면 본문 글자 안내로 거절한다", () => {
+    const html = `<p>${"가".repeat(POST_TEXT_MAX_CHARS - 1)}</p><p><strong>나</strong>다</p>`;
+
+    expect(() => content.sanitizePostHtmlForStorage(html)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("태그와 속성은 글자로 세지 않는다", () => {
+    const html = `<p><a href="https://example.com/${"x".repeat(100)}">${"가".repeat(POST_TEXT_MAX_CHARS)}</a></p>`;
+
+    expect(content.sanitizePostHtmlForStorage(html)).toContain("가".repeat(POST_TEXT_MAX_CHARS));
+  });
+
+  test("문자 참조(&amp; 등)는 화면처럼 한 글자로 센다", () => {
+    const html = `<p>${"&amp;".repeat(POST_TEXT_MAX_CHARS / 2)}${"&lt;".repeat(POST_TEXT_MAX_CHARS / 2)}</p>`;
+
+    expect(content.sanitizePostHtmlForStorage(html)).toBe(html);
+  });
+
+  test("문자 참조로 적어도 화면 글자가 상한을 넘으면 거절한다", () => {
+    const html = `<p>${"&amp;".repeat(POST_TEXT_MAX_CHARS + 1)}</p>`;
+
+    expect(() => content.sanitizePostHtmlForStorage(html)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
   });
 });
 
