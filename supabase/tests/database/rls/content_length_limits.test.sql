@@ -162,17 +162,18 @@ select extensions.lives_ok(
   '앱이 허용하는 단계(50개·500자)는 JSON에서 6배로 늘어나도 저장한다'
 );
 
+-- 단계 하나의 글자 수는 recipes_steps_item_length가 막으므로, 앱이 쓰지 않는 키에 큰 값을 넣어 전체 크기 상한만 확인한다.
 select extensions.throws_ok(
   $$
     insert into public.recipes (title, steps, image, writer_uid)
     values (
       '단계가 큰 레시피',
-      jsonb_build_array(jsonb_build_object('description', repeat('가', 160001))),
+      jsonb_build_array(jsonb_build_object('description', '볶는다', 'memo', repeat('가', 160001))),
       'test-image', '97000000-0000-4000-8000-000000000001'
     )
   $$,
   '23514',
-  null,
+  'new row for relation "recipes" violates check constraint "recipes_steps_size"',
   '레시피 단계 JSON 16만 자 초과는 거절한다'
 );
 

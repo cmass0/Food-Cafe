@@ -19,11 +19,11 @@ values
   ('95000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'tag-u3@test.local', '{"display_name":"태그 사용자3"}', now(), now()),
   ('95000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'tag-u4@test.local', '{"display_name":"태그 사용자4"}', now(), now());
 
--- 태그 앞뒤 공백은 같은 태그로 합치고, 빈 태그는 세지 않는다.
+-- 태그 앞뒤 공백은 같은 태그로 합친다. 공백뿐인 태그는 recipes_tags_items 제약이 저장부터 막는다.
 insert into public.recipes (id, title, steps, image, tags)
 values
   ('95000000-0000-4000-8000-000000000011', '태그 레시피1', '[]'::jsonb, 'test-image', array['태그검증가', '태그검증나']),
-  ('95000000-0000-4000-8000-000000000012', '태그 레시피2', '[]'::jsonb, 'test-image', array['태그검증가', '  ']),
+  ('95000000-0000-4000-8000-000000000012', '태그 레시피2', '[]'::jsonb, 'test-image', array['태그검증가']),
   ('95000000-0000-4000-8000-000000000013', '태그 레시피3', '[]'::jsonb, 'test-image', array[' 태그검증나 ']),
   ('95000000-0000-4000-8000-000000000014', '태그 레시피4', '[]'::jsonb, 'test-image', array['태그검증다']),
   ('95000000-0000-4000-8000-000000000015', '태그 레시피5', '[]'::jsonb, 'test-image', array['태그검증라']),
