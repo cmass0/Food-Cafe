@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select extensions.plan(11);
 
+-- 앱 서버를 거친 요청처럼 서버 확인 헤더를 붙인다. 헤더 없는 직접 요청 차단은 rls/app_server_content_writes.test.sql이 확인한다.
+delete from vault.secrets where name = 'app_server_key';
+select vault.create_secret('pgtap-app-server-key', 'app_server_key');
+select set_config('request.headers', '{"x-app-server-key":"pgtap-app-server-key"}', true);
+
 -- 규칙: public 테이블의 사용자 쓰기는 테이블 전체가 아니라 허용한 컬럼 단위로만 연다.
 -- 새 테이블이 Supabase 기본값처럼 전체 쓰기 권한을 가지면 이 테스트가 실패한다.
 select extensions.is(

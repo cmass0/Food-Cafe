@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select extensions.plan(35);
 
+-- 앱 서버를 거친 요청처럼 서버 확인 헤더를 붙인다. 헤더 없는 직접 요청 차단은 rls/app_server_content_writes.test.sql이 확인한다.
+delete from vault.secrets where name = 'app_server_key';
+select vault.create_secret('pgtap-app-server-key', 'app_server_key');
+select set_config('request.headers', '{"x-app-server-key":"pgtap-app-server-key"}', true);
+
 -- 구조 검증: 앱 테이블과 핵심 정책이 빠지지 않았는지 먼저 확인합니다.
 select extensions.is(
   (

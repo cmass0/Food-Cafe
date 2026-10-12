@@ -4,8 +4,13 @@ create extension if not exists pgtap with schema extensions;
 
 select extensions.plan(28);
 
--- 규칙: 로그인 사용자가 앱 서버를 거치지 않고 Supabase API로 직접 써도 레시피·조합의 개수·항목 길이·카테고리·
--- 숫자 범위는 앱과 같은 상한에서 막힌다. 거절 메시지로 어느 제약이 막았는지까지 확인한다.
+-- 앱 서버를 거친 요청처럼 서버 확인 헤더를 붙인다. 헤더 없는 직접 요청 차단은 rls/app_server_content_writes.test.sql이 확인한다.
+delete from vault.secrets where name = 'app_server_key';
+select vault.create_secret('pgtap-app-server-key', 'app_server_key');
+select set_config('request.headers', '{"x-app-server-key":"pgtap-app-server-key"}', true);
+
+-- 규칙: 앱 서버를 거친 쓰기라도(서버 검사가 빠지거나 틀려도) 레시피·조합의 개수·항목 길이·카테고리·
+-- 숫자 범위는 DB가 앱과 같은 상한에서 막는다. 거절 메시지로 어느 제약이 막았는지까지 확인한다.
 -- 로컬 테스트 DB에서만 실행한다. 모든 변경은 끝에서 롤백한다.
 
 insert into auth.users (id, aud, role, email, raw_user_meta_data, created_at, updated_at)
