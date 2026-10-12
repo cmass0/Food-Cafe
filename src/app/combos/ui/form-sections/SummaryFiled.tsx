@@ -1,6 +1,7 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { type UseFormReturn } from "react-hook-form";
+import { COMBO_TEXT_LIMITS } from "@/domain/combo/schema";
 import { ComboFormValues } from "@/domain/combo/types";
 
 type SummaryFieldProps = {
@@ -23,7 +24,7 @@ export function ComboSummaryField({ form, summaryLength }: SummaryFieldProps) {
             <FormControl>
               <Textarea
                 placeholder="이 레시피를 한 줄로 소개해 주세요."
-                maxLength={500}
+                maxLength={COMBO_TEXT_LIMITS.summary}
                 className="bg-background"
                 {...field}
                 value={field.value ?? ""}

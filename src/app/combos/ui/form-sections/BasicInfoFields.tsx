@@ -22,6 +22,7 @@ import { Info } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { difficultyLabels, getComboDifficultyMeta } from "@/domain/combo/difficulty";
+import { COMBO_TEXT_LIMITS } from "@/domain/combo/schema";
 import { ComboFormValues } from "@/domain/combo/types";
 
 type BasicInfoFieldsProps = {
@@ -67,7 +68,11 @@ export function ComboBasicInfoFields({
             <FormItem className="md:col-span-2">
               <FormLabel>조합 제목</FormLabel>
               <FormControl>
-                <Input placeholder="예) 10분 완성 새우 크림 파스타" {...field} />
+                <Input
+                  placeholder="예) 10분 완성 새우 크림 파스타"
+                  maxLength={COMBO_TEXT_LIMITS.title}
+                  {...field}
+                />
               </FormControl>
               <FormDescription>검색이 잘 되도록 핵심 키워드를 넣어 주세요.</FormDescription>
               <FormMessage />

@@ -4,8 +4,16 @@ import { COMMENT_PARENT_TYPES } from "./types";
 
 const parentTypeEnum = z.enum(COMMENT_PARENT_TYPES);
 
+// 댓글 글자 수 상한. 작성 화면과 DB 제약(comments_content_length)도 이 값을 따른다.
+export const COMMENT_MAX_CHARS = 1000;
+const commentTooLongMessage = `댓글은 최대 ${COMMENT_MAX_CHARS}자입니다.`;
+
 export const commentBodySchema = z.object({
-  content: z.string().trim().min(1, "댓글을 입력해주세요.").max(1000, "댓글은 최대 1000자입니다."),
+  content: z
+    .string()
+    .trim()
+    .min(1, "댓글을 입력해주세요.")
+    .max(COMMENT_MAX_CHARS, commentTooLongMessage),
 });
 
 export const commentContextSchema = z.object({
@@ -23,7 +31,7 @@ export const commentUpdateSchema = z
       .string()
       .trim()
       .min(1, "댓글을 입력해주세요.")
-      .max(1000, "댓글은 최대 1000자입니다.")
+      .max(COMMENT_MAX_CHARS, commentTooLongMessage)
       .optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {

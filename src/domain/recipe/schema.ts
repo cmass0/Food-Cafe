@@ -7,6 +7,20 @@ export const MAX_RECIPE_TOOLS = 10;
 // 조리 단계 상한. 작성 화면(StepsFields)과 DB 제약(recipes_steps_count·recipes_steps_size)도 이 값을 따른다.
 export const MAX_RECIPE_STEPS = 50;
 export const MAX_RECIPE_STEP_CHARS = 500;
+// 글자 수·재료 개수 상한. 작성 화면 입력칸과 DB 제약(recipes_*_length)도 이 값을 따른다.
+export const RECIPE_TEXT_LIMITS = {
+  title: 200,
+  summary: 500,
+  chefTip: 500,
+  difficulty: 50,
+} as const;
+export const MAX_RECIPE_INGREDIENTS = 200;
+export const INGREDIENT_TEXT_LIMITS = {
+  name: 200,
+  amount: 100,
+  unit: 50,
+  unitCustom: 100,
+} as const;
 
 // 카테고리는 고르지 않아도 된다(빈 문자열). 고르면 작성 폼 목록의 값만 받는다.
 // 목록 밖 값이 저장되면 홈 카테고리 필터에서 그 레시피를 찾을 수 없다.
@@ -32,12 +46,14 @@ const imageListSchema = z
   .max(10, "이미지는 최대 10장까지 추가할 수 있습니다.")
   .optional();
 
+const recipeIngredientsMaxMessage = `재료는 최대 ${MAX_RECIPE_INGREDIENTS}개까지 입력할 수 있습니다.`;
+
 const ingredientItemSchema = z
   .object({
-    name: z.string().trim().min(1, "재료명을 입력해 주세요.").max(200),
-    amount: z.string().trim().min(1, "수량을 입력해 주세요.").max(100),
-    unit: z.string().trim().min(1, "단위를 선택해 주세요.").max(50),
-    unitCustom: z.string().trim().max(100).optional(),
+    name: z.string().trim().min(1, "재료명을 입력해 주세요.").max(INGREDIENT_TEXT_LIMITS.name),
+    amount: z.string().trim().min(1, "수량을 입력해 주세요.").max(INGREDIENT_TEXT_LIMITS.amount),
+    unit: z.string().trim().min(1, "단위를 선택해 주세요.").max(INGREDIENT_TEXT_LIMITS.unit),
+    unitCustom: z.string().trim().max(INGREDIENT_TEXT_LIMITS.unitCustom).optional(),
   })
   // 단위가 custom일 때는 unitCustom이 반드시 필요하도록 검사
   .superRefine((value, ctx) => {
@@ -67,26 +83,40 @@ export const recipeInsertSchema = z.object({
     .string()
     .trim()
     .min(1, "제목을 입력해 주세요.")
-    .max(200, "제목은 200자 이하만 가능합니다."),
-  summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+    .max(RECIPE_TEXT_LIMITS.title, `제목은 ${RECIPE_TEXT_LIMITS.title}자 이하만 가능합니다.`),
+  summary: z
+    .string()
+    .trim()
+    .max(RECIPE_TEXT_LIMITS.summary, `요약은 ${RECIPE_TEXT_LIMITS.summary}자 이하만 가능합니다.`)
+    .nullable()
+    .optional(),
   chef_tip: z
     .string()
     .trim()
-    .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
+    .max(
+      RECIPE_TEXT_LIMITS.chefTip,
+      `셰프의 팁은 ${RECIPE_TEXT_LIMITS.chefTip}자 이하만 가능합니다.`
+    )
     .nullable()
     .optional(),
   steps: recipeStepsSchema.min(1, "단계를 한 개 이상 입력해 주세요."),
   ingredients: z
     .array(ingredientItemSchema)
     .min(1, "재료를 한 개 이상 입력해 주세요.")
-    .max(200, "재료는 최대 200개까지 입력할 수 있습니다."),
+    .max(MAX_RECIPE_INGREDIENTS, recipeIngredientsMaxMessage),
   image: imageFieldSchema,
   images: imageListSchema,
   category: recipeCategorySchema,
   tags: recipeTagsSchema.optional(),
   tools: recipeToolsSchema.nullable().optional(),
   tools_required: z.boolean().optional(),
-  difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
+  difficulty: z
+    .string()
+    .trim()
+    .max(
+      RECIPE_TEXT_LIMITS.difficulty,
+      `난이도는 ${RECIPE_TEXT_LIMITS.difficulty}자 이하만 가능합니다.`
+    ),
   time_minutes: z
     .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
     .int("소요 시간은 정수로 입력해 주세요.")
@@ -125,18 +155,27 @@ export const recipeUpdateSchema = z
       .string()
       .trim()
       .min(1, "제목을 입력해 주세요.")
-      .max(200, "제목은 200자 이하만 가능합니다."),
-    summary: z.string().trim().max(500, "요약은 500자 이하만 가능합니다.").nullable().optional(),
+      .max(RECIPE_TEXT_LIMITS.title, `제목은 ${RECIPE_TEXT_LIMITS.title}자 이하만 가능합니다.`),
+    summary: z
+      .string()
+      .trim()
+      .max(RECIPE_TEXT_LIMITS.summary, `요약은 ${RECIPE_TEXT_LIMITS.summary}자 이하만 가능합니다.`)
+      .nullable()
+      .optional(),
     chef_tip: z
       .string()
       .trim()
-      .max(500, "셰프의 팁은 500자 이하만 가능합니다.")
+      .max(
+        RECIPE_TEXT_LIMITS.chefTip,
+        `셰프의 팁은 ${RECIPE_TEXT_LIMITS.chefTip}자 이하만 가능합니다.`
+      )
       .nullable()
       .optional(),
     steps: recipeStepsSchema,
     ingredients: z
       .array(ingredientItemSchema)
       .min(1, "재료를 한 개 이상 입력해 주세요.")
+      .max(MAX_RECIPE_INGREDIENTS, recipeIngredientsMaxMessage)
       .optional(),
     image: imageFieldSchema,
     images: imageListSchema,
@@ -145,7 +184,13 @@ export const recipeUpdateSchema = z
     tags: recipeTagsSchema.optional(),
     tools: recipeToolsSchema.nullable().optional(),
     tools_required: z.boolean().optional(),
-    difficulty: z.string().trim().max(50, "난이도는 50자 이하만 가능합니다."),
+    difficulty: z
+      .string()
+      .trim()
+      .max(
+        RECIPE_TEXT_LIMITS.difficulty,
+        `난이도는 ${RECIPE_TEXT_LIMITS.difficulty}자 이하만 가능합니다.`
+      ),
     time_minutes: z
       .number({ invalid_type_error: "소요 시간은 숫자로 입력해 주세요." })
       .int("소요 시간은 정수로 입력해 주세요.")

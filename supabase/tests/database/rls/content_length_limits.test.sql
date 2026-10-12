@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(16);
+select extensions.plan(19);
 
 -- 규칙: 로그인 사용자가 앱 서버를 거치지 않고 Supabase API로 직접 써도 앱과 같은 길이·크기 상한에서 막힌다.
 -- 로컬 테스트 DB에서만 실행한다. 모든 변경은 끝에서 롤백한다.
@@ -71,6 +71,31 @@ select extensions.is(
   (select content_html from public.posts where id = '97000000-0000-4000-8000-000000000011'),
   '<p>본문</p>',
   '거절된 수정은 저장된 본문을 바꾸지 않는다'
+);
+
+-- 본문 글자는 에디터·서버와 같은 5,000자 상한(앱 규칙 POST_TEXT_MAX_CHARS)이다.
+select extensions.lives_ok(
+  $$
+    update public.posts set content_text = repeat('가', 5000)
+    where id = '97000000-0000-4000-8000-000000000011'
+  $$,
+  '본문 글자 5,000자는 저장할 수 있다'
+);
+
+select extensions.throws_ok(
+  $$
+    update public.posts set content_text = repeat('가', 5001)
+    where id = '97000000-0000-4000-8000-000000000011'
+  $$,
+  '23514',
+  null,
+  '본문 글자 5,001자는 거절한다'
+);
+
+select extensions.is(
+  (select char_length(content_text) from public.posts where id = '97000000-0000-4000-8000-000000000011'),
+  5000,
+  '거절된 본문 글자 수정은 저장된 값을 바꾸지 않는다'
 );
 
 select extensions.lives_ok(

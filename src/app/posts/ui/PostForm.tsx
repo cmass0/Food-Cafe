@@ -24,6 +24,11 @@ import {
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isPostCategory, POST_CATEGORY_OPTIONS, type PostCategory } from "@/domain/post/category";
 import {
+  POST_TEXT_MAX_CHARS,
+  POST_TITLE_MAX_CHARS,
+  POST_TITLE_TOO_LONG_MESSAGE,
+} from "@/domain/post/schema";
+import {
   collectPendingImageSources,
   replacePendingImageSources,
 } from "@/domain/post/pendingImages";
@@ -77,8 +82,8 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
   const finish = useFormSuccess();
   const titleError = !title.trim()
     ? "제목을 입력해 주세요."
-    : title.trim().length > 150
-      ? "제목은 150자 이하로 입력해 주세요."
+    : title.trim().length > POST_TITLE_MAX_CHARS
+      ? POST_TITLE_TOO_LONG_MESSAGE
       : "";
   const contentError = hasMeaningfulEditorContent(serializedState) ? "" : "내용을 입력해 주세요.";
 
@@ -97,7 +102,8 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
 
   function handleEditorStateChange(editorState: EditorState) {
     editorState.read(() => {
-      setContentLength($getRoot().getTextContent().trim().length);
+      // 에디터·서버가 상한을 확인하는 것과 같은 글자 수(공백·문단 사이 빈 줄 포함)를 보여 준다.
+      setContentLength($getRoot().getTextContent().length);
     });
   }
 
@@ -243,7 +249,7 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
                   제목
                 </Label>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {title.length} / 150
+                  {title.length} / {POST_TITLE_MAX_CHARS}
                 </span>
               </div>
               <Input
@@ -258,7 +264,7 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="제목을 입력해 주세요."
                 required
-                maxLength={150}
+                maxLength={POST_TITLE_MAX_CHARS}
                 className="h-11"
               />
               {validationAttempted && titleError ? (
@@ -305,10 +311,11 @@ export default function PostForm({ action, defaultValues, mode, cancelHref }: Po
                   내용
                 </Label>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  텍스트 {contentLength.toLocaleString()}자
+                  {contentLength.toLocaleString()} / {POST_TEXT_MAX_CHARS.toLocaleString()}자
                 </span>
               </div>
               <Editor
+                maxLength={POST_TEXT_MAX_CHARS}
                 editorSerializedState={serializedState}
                 onChange={handleEditorStateChange}
                 onSerializedChange={(editorState) => setSerializedState(editorState)}

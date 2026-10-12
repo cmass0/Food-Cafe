@@ -16,7 +16,7 @@ import Image from "next/image";
 import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
 import { ComboFormValues } from "@/domain/combo/types";
-import { MAX_COMBO_ITEMS, MIN_COMBO_ITEMS } from "@/domain/combo/schema";
+import { COMBO_ITEM_TEXT_LIMITS, MAX_COMBO_ITEMS, MIN_COMBO_ITEMS } from "@/domain/combo/schema";
 
 type CombinationFieldsProps = {
   itemsArray: UseFieldArrayReturn<ComboFormValues, "items">;
@@ -161,6 +161,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                               <FormControl>
                                 <Input
                                   placeholder="제품명"
+                                  maxLength={COMBO_ITEM_TEXT_LIMITS.productName}
                                   aria-label={`상품 ${index + 1} 이름`}
                                   {...field}
                                 />
@@ -174,6 +175,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                                     <FormControl>
                                       <Input
                                         placeholder="요약"
+                                        maxLength={COMBO_ITEM_TEXT_LIMITS.summary}
                                         aria-label={`상품 ${index + 1} 요약`}
                                         {...summaryField}
                                         value={summaryField.value ?? ""}

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { COMMENT_MAX_CHARS } from "@/domain/comment/schema";
 
 type CommentFormProps = {
   content: string;
@@ -12,7 +13,7 @@ type CommentFormProps = {
 };
 
 export function CommentForm({ content, submitting, error, onChange, onSubmit }: CommentFormProps) {
-  const maxLength = 1000;
+  const maxLength = COMMENT_MAX_CHARS;
 
   return (
     <div className="space-y-3">
