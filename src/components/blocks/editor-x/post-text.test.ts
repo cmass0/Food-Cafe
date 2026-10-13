@@ -165,6 +165,41 @@ const DOCUMENTS = [
     "앞뒤 공백과 빈 문단",
     [paragraph(text("  가  ")), paragraph(), paragraph(), paragraph(text("나 "))],
   ],
+  [
+    "문단 안 줄바꿈",
+    [paragraph(text("가"), $createLineBreakNode, $createLineBreakNode, text("나"))],
+  ],
+  ["줄바꿈만 있는 문단", [paragraph($createLineBreakNode), paragraph(text("뒤"))]],
+  [
+    "빈 제목·인용·목록 항목",
+    [
+      make(() => $createHeadingNode("h3")),
+      make($createQuoteNode),
+      make(() => $createListNode("bullet"), make($createListItemNode), make($createListItemNode)),
+    ],
+  ],
+  [
+    "임베드·수평선이 연달아 있을 때",
+    [
+      () => $createTweetNode("1111111111"),
+      () => $createTweetNode("2222222222"),
+      () => $createYouTubeNode("abcdefghijk"),
+      $createHorizontalRuleNode,
+      $createHorizontalRuleNode,
+      paragraph(text("끝")),
+    ],
+  ],
+  [
+    "유튜브 주소만 있는 문단(카드로 바뀜)",
+    [
+      paragraph(
+        make(
+          () => $createAutoLinkNode("https://youtu.be/abcdefghijk"),
+          text("https://youtu.be/abcdefghijk")
+        )
+      ),
+    ],
+  ],
 ] as const;
 
 describe("본문 글자 — 에디터와 서버가 같은 글자를 센다", () => {

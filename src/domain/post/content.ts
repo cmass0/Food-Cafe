@@ -13,7 +13,7 @@ import {
 } from "./schema";
 
 // 게시글 본문 HTML은 브라우저 에디터가 만들어 보낸다(components/blocks/editor-x/export-html.ts).
-// 글쓴이가 Supabase API로 DB에 직접 쓸 수도 있는 값이라 믿지 않고, 저장할 때와 보여 줄 때 모두
+// 글쓴이가 요청을 직접 꾸며 보낼 수 있는 값이라 믿지 않고(DB 직접 쓰기는 RLS가 막는다), 저장할 때와 보여 줄 때 모두
 // 이 허용 목록으로 정제한다. 허용 목록이 곧 보안 경계이므로 태그·속성·클래스·스타일·주소를 하나씩 좁혀 연다.
 // 서버는 DOM을 쓰지 않는다. 문자열 파서(sanitize-html) 한 번으로 정제와 이미지 주소 처리를 함께 한다.
 
@@ -187,16 +187,74 @@ export function sanitizePostHtmlForStorage(html: string): string {
   return sanitized;
 }
 
-// 정제한 HTML에서 화면에 보이는 글자 수를 센다. 태그·속성은 빼고, 정제가 다시 적은 문자 참조(&amp; 등)는 한 글자로 센다.
+// 정제한 HTML에서 화면에 보이는 글자 수를 에디터(Lexical getTextContent)보다 많지 않게 센다.
+//   - 글자: 태그·속성은 빼고, 정제가 다시 적은 문자 참조(&amp; 등)는 한 글자
+//   - <br>: 한 글자(에디터의 줄바꿈 노드). 빈 블록에 에디터가 자리 표시로 넣는 <br> 하나는 세지 않는다
+//   - 블록 사이: 한 글자(에디터는 빈 줄 두 글자). 에디터의 요소 노드가 되는 태그 뒤에 형제가 올 때만 센다.
+//     div는 단 나누기(요소)일 수도, 트윗·유튜브 카드(꾸밈 노드, 뒤에 빈 줄 없음)일 수도 있어 세지 않는다
+//   - <hr>: 한 글자, 유튜브 영상: 영상 주소 글자 수(에디터의 꾸밈 노드 글자)
+// 글자만 세면 짧은 JSON에 <br>·빈 문단·영상만 수천 개 붙인 HTML로 아주 긴 본문을 만들 수 있다.
 const ESCAPED_CHARACTER = /&(?:amp|lt|gt|quot);/g;
+const SEPARATED_BLOCK_TAGS = new Set([
+  "p",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "blockquote",
+  "pre",
+  "ul",
+  "ol",
+  "li",
+  "table",
+  "tr",
+  "th",
+  "td",
+]);
+const YOUTUBE_EMBED_ID = /\/embed\/([A-Za-z0-9_-]{11})$/;
+
+type OpenElement = { children: number; onlyLineBreaks: boolean; separatorPending: boolean };
 
 function visibleTextLength(sanitizedHtml: string): number {
   let length = 0;
+  const open: OpenElement[] = [{ children: 0, onlyLineBreaks: true, separatorPending: false }];
+  const current = () => open[open.length - 1]!;
+  const addChild = (isLineBreak: boolean) => {
+    const parent = current();
+    if (parent.separatorPending) {
+      length += 1;
+      parent.separatorPending = false;
+    }
+    parent.children += 1;
+    if (!isLineBreak) parent.onlyLineBreaks = false;
+  };
+
   sanitizeHtml(sanitizedHtml, {
     allowedTags: [],
     allowedAttributes: {},
+    onOpenTag: (tag, attribs) => {
+      addChild(tag === "br");
+      if (tag === "br" || tag === "hr") length += 1;
+      if (tag === "iframe") {
+        const videoId = YOUTUBE_EMBED_ID.exec(attribs.src ?? "")?.[1];
+        if (videoId) length += youtubeWatchUrl(videoId).length;
+      }
+      open.push({ children: 0, onlyLineBreaks: true, separatorPending: false });
+    },
+    onCloseTag: (tag) => {
+      const element = open.pop()!;
+      if (!SEPARATED_BLOCK_TAGS.has(tag)) return;
+      if (element.children === 1 && element.onlyLineBreaks) length -= 1;
+      current().separatorPending = true;
+    },
     textFilter: (text) => {
-      length += text.replace(ESCAPED_CHARACTER, "_").length;
+      const visible = text.replace(ESCAPED_CHARACTER, "_");
+      if (visible) {
+        addChild(false);
+        length += visible.length;
+      }
       return "";
     },
   });

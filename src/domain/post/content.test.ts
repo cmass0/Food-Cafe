@@ -212,10 +212,11 @@ describe("저장할 HTML 길이", () => {
   });
 
   test("정제 후 20만 자까지는 저장한다", () => {
-    // 보이는 글자는 상한(5,000자) 안이고, 나머지는 빈 문단 태그로 크기만 채운다.
-    const html = "<p></p>".repeat(27_856) + `<p>${"가".repeat(POST_TEXT_MAX_CHARS)}</p>`;
+    // 보이는 글자는 상한(5,000자) 안이고, 나머지는 빈 span으로 크기만 채운다.
+    // 빈 문단은 블록 사이 글자로 세므로 쓰지 않는다.
+    const html = `<p>${"<span></span>".repeat(14_999)}${"가".repeat(POST_TEXT_MAX_CHARS)}</p>`;
 
-    expect(content.sanitizePostHtmlForStorage(html)).toHaveLength(199_999);
+    expect(content.sanitizePostHtmlForStorage(html)).toHaveLength(199_994);
   });
 });
 
@@ -250,6 +251,63 @@ describe("저장할 HTML의 보이는 글자 수", () => {
     const html = `<p>${"&amp;".repeat(POST_TEXT_MAX_CHARS + 1)}</p>`;
 
     expect(() => content.sanitizePostHtmlForStorage(html)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+});
+
+// 에디터는 줄바꿈을 한 글자, 블록 사이를 빈 줄 두 글자, 유튜브 영상을 주소 글자, 수평선을 줄바꿈 한 글자로 센다.
+// 서버가 글자만 세면 짧은 JSON에 <br>·빈 문단·영상만 수천 개 붙인 HTML로 아주 긴 본문을 만들 수 있다.
+describe("저장할 HTML의 보이는 글자 수 — 줄바꿈·블록·임베드", () => {
+  const youtube = '<iframe src="https://www.youtube-nocookie.com/embed/abcdefghijk"></iframe>';
+  const fill = (count: number) => "가".repeat(count);
+
+  test("문단 안 줄바꿈은 한 글자로 센다", () => {
+    const fits = `<p>${fill(POST_TEXT_MAX_CHARS - 1)}<br></p>`;
+    const over = `<p>${fill(POST_TEXT_MAX_CHARS - 1)}<br><br></p>`;
+
+    expect(content.sanitizePostHtmlForStorage(fits)).toContain(fill(POST_TEXT_MAX_CHARS - 1));
+    expect(() => content.sanitizePostHtmlForStorage(over)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("글자 없이 줄바꿈만 상한보다 많으면 거절한다", () => {
+    const html = "<br>".repeat(POST_TEXT_MAX_CHARS + 1);
+
+    expect(() => content.sanitizePostHtmlForStorage(html)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("블록 사이는 한 글자씩 세서 빈 문단만 이어 붙여도 상한에서 막는다", () => {
+    const fits = "<p><br></p>".repeat(POST_TEXT_MAX_CHARS + 1);
+    const over = "<p><br></p>".repeat(POST_TEXT_MAX_CHARS + 2);
+
+    expect(content.sanitizePostHtmlForStorage(fits).match(/<p>/g)).toHaveLength(
+      POST_TEXT_MAX_CHARS + 1
+    );
+    expect(() => content.sanitizePostHtmlForStorage(over)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("빈 블록에 에디터가 자리 표시로 넣는 줄바꿈 하나는 글자로 세지 않는다", () => {
+    const html = `<p><br></p><p>${fill(POST_TEXT_MAX_CHARS - 1)}</p>`;
+
+    expect(content.sanitizePostHtmlForStorage(html)).toContain(fill(POST_TEXT_MAX_CHARS - 1));
+  });
+
+  test("수평선은 한 글자로 센다", () => {
+    const fits = "<hr>".repeat(POST_TEXT_MAX_CHARS);
+    const over = "<hr>".repeat(POST_TEXT_MAX_CHARS + 1);
+
+    expect(content.sanitizePostHtmlForStorage(fits).match(/<hr/g)).toHaveLength(
+      POST_TEXT_MAX_CHARS
+    );
+    expect(() => content.sanitizePostHtmlForStorage(over)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
+  });
+
+  test("유튜브 영상은 에디터처럼 영상 주소 글자 수(43자)로 센다", () => {
+    const fits = youtube.repeat(Math.floor(POST_TEXT_MAX_CHARS / 43));
+    const over = youtube.repeat(Math.floor(POST_TEXT_MAX_CHARS / 43) + 1);
+
+    expect(content.sanitizePostHtmlForStorage(fits).match(/<iframe/g)).toHaveLength(
+      Math.floor(POST_TEXT_MAX_CHARS / 43)
+    );
+    expect(() => content.sanitizePostHtmlForStorage(over)).toThrow(POST_TEXT_TOO_LONG_MESSAGE);
   });
 });
 
