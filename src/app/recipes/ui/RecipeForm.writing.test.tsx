@@ -90,7 +90,7 @@ test("AI 반영 확인 후 텍스트만 바꾸고 이미지는 보존하며 자�
     expect(element.querySelector<HTMLInputElement>('input[name="title"]')?.value).toBe(
       "직접 쓴 제목"
     );
-    await click("확인하고 반영");
+    await click("확인");
     expect(element.querySelector<HTMLInputElement>('input[name="title"]')?.value).toBe("AI 계란찜");
     expect(element.querySelector<HTMLInputElement>('input[name="ingredients.0.name"]')?.value).toBe(
       "계란"

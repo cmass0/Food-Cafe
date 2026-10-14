@@ -137,7 +137,7 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={assistant.apply}>확인하고 반영</AlertDialogAction>
+            <AlertDialogAction onClick={assistant.apply}>확인</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -132,7 +132,7 @@ test("조합 초안을 반영해도 기존 대표·상품 이미지는 유지한
     expect(sent.formContext).toContain("직접 적은 조합");
     expect(sent.formContext).not.toContain(".jpg");
     await click("폼에 반영하기");
-    await click("확인하고 반영");
+    await click("확인");
     expect(element.querySelector<HTMLInputElement>('input[name="title"]')?.value).toBe(
       "컵라면과 밥"
     );
@@ -175,7 +175,7 @@ test("레시피 항목은 AI가 쓴 이름·설명 대신 폼에 불러온 레�
   try {
     await click("아이디어 없이 시작");
     await click("폼에 반영하기");
-    await click("확인하고 반영");
+    await click("확인");
     await click("수정");
     expect(submit).toHaveBeenCalledTimes(1);
     expect(submit.mock.calls[0]?.[0].items[0]).toEqual(recipe);
