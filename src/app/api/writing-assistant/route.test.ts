@@ -1,3 +1,4 @@
+import { format } from "node:util";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { MockLanguageModelV4 } from "ai/test";
 import { POST } from "./route";
@@ -94,6 +95,19 @@ describe("작성 도우미 API 연결", () => {
       const response = await POST(request());
       expect(response.status).toBe(500);
       expect(await response.text()).not.toContain("외부 제공사 원문");
+    } finally {
+      log.mockRestore();
+    }
+  });
+  test("모델 실패는 모델 원문 없이 오류 이름만 로그에 남긴다", async () => {
+    login();
+    boundary.model.mockReturnValue(modelReply({ secret: "외부 제공사 원문" }));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await POST(request());
+      const printed = log.mock.calls.map((args) => format(...args)).join("\n");
+      expect(printed).toContain("작성 도우미 생성 실패");
+      expect(printed).not.toContain("외부 제공사 원문");
     } finally {
       log.mockRestore();
     }
