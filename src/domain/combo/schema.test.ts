@@ -38,6 +38,19 @@ describe("조합 레시피 ID 검증", () => {
       })
     );
   });
+  test("비어 있는 레시피 ID는 입력 안내를 첫 오류로 반환한다", () => {
+    const result = ComboInsertSchema.safeParse({
+      ...BASE_COMBO,
+      items: [
+        { type: "recipe", recipeid: "" },
+        { type: "product", productName: "물" },
+      ],
+    });
+    const issues = result.error?.issues.filter(
+      (issue) => issue.path.join(".") === "items.0.recipeid"
+    );
+    expect(issues?.[0]?.message).toBe("레시피 ID 또는 링크를 입력해 주세요.");
+  });
 });
 
 function expectItemsFailure(result: {

@@ -41,7 +41,7 @@ function input() {
 
 async function load() {
   const button = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "레시피 가져오기"
+    (button) => button.textContent === "불러오기"
   )!;
   await act(async () => button.click());
 }
@@ -68,7 +68,7 @@ function reply(status: number) {
               chefTip: null,
               steps: [],
               ingredients: [],
-              image: "/recipe.png",
+              image: null,
               images: [],
               category: "한식",
               tags: [],

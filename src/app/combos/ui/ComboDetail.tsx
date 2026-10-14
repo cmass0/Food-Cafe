@@ -20,17 +20,9 @@ import { CopyClipButton } from "@/components/share/CopyClipButton";
 import KakaoShareButton from "@/components/share/KakaoShareButton";
 import type { Combos } from "@/domain/combo/types";
 import { formatInKoreanTime } from "@/lib/format-date";
+import { formatMinutes } from "@/lib/format-duration";
 import { capImageDensity } from "@/lib/image-sizes";
 import ComboToolsPanel from "./ComboToolsPanel";
-
-function formatMinutes(value: number | null | undefined) {
-  if (!value || value <= 0) return null;
-  const hours = Math.floor(value / 60);
-  const minutes = value % 60;
-  if (hours && minutes) return `${hours}시간 ${minutes}분`;
-  if (hours) return `${hours}시간`;
-  return `${minutes}분`;
-}
 
 function formatDate(value: Date) {
   return formatInKoreanTime(value, { month: "long", day: "numeric" });

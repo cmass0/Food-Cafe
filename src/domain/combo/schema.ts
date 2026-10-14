@@ -3,13 +3,19 @@ import { z } from "zod";
 import { imageFileSchema } from "./../../lib/domain/schema";
 import { COMBO_RECIPE_REFERENCE_ERRORS } from "./messages";
 
-export const comboRecipeIdSchema = z.string().uuid(COMBO_RECIPE_REFERENCE_ERRORS.invalid);
+// 비어 있으면 입력 안내, 형식이 틀리면 형식 안내를 먼저 보여준다(폼은 경로마다 첫 오류만 표시).
+export const comboRecipeIdSchema = z
+  .string()
+  .min(1, COMBO_RECIPE_REFERENCE_ERRORS.required)
+  .uuid(COMBO_RECIPE_REFERENCE_ERRORS.invalid);
 
 export const MIN_COMBO_ITEMS = 2;
 export const MAX_COMBO_ITEMS = 10;
 // 조리 단계 상한. 레시피(domain/recipe/schema.ts)와 같은 값이고, 작성 화면과 DB 제약도 이 값을 따른다.
 export const MAX_COMBO_STEPS = 50;
 export const MAX_COMBO_STEP_CHARS = 500;
+export const MAX_COMBO_TAGS = 20;
+export const MAX_COMBO_TOOLS = 20;
 // 글자 수 상한. 작성 화면 입력칸과 DB 제약(combos_*_length)도 이 값을 따른다.
 export const COMBO_TEXT_LIMITS = { title: 200, summary: 500, difficulty: 50 } as const;
 export const COMBO_ITEM_TEXT_LIMITS = { title: 200, summary: 500, productName: 200 } as const;
@@ -104,8 +110,11 @@ export const ComboInsertSchema = z.object({
     .optional(),
   steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요."),
   items: ComboItemsSchema,
-  tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-  tools: z.array(tagSchema).max(20).nullable().optional(),
+  tags: z
+    .array(tagSchema)
+    .max(MAX_COMBO_TAGS, `태그는 최대 ${MAX_COMBO_TAGS}개까지 추가할 수 있습니다.`)
+    .optional(),
+  tools: z.array(tagSchema).max(MAX_COMBO_TOOLS).nullable().optional(),
   difficulty: z
     .string()
     .min(1, "난이도를 입력해주세요.")
@@ -151,8 +160,11 @@ export const ComboUpdateSchema = z
       .optional(),
     steps: ComboStepsSchema.min(1, "조리 단계를 한 개 이상 입력해주세요.").optional(),
     items: ComboItemsSchema.optional(),
-    tags: z.array(tagSchema).max(20, "태그는 최대 20개까지 추가할 수 있습니다.").optional(),
-    tools: z.array(tagSchema).max(20).nullable().optional(),
+    tags: z
+      .array(tagSchema)
+      .max(MAX_COMBO_TAGS, `태그는 최대 ${MAX_COMBO_TAGS}개까지 추가할 수 있습니다.`)
+      .optional(),
+    tools: z.array(tagSchema).max(MAX_COMBO_TOOLS).nullable().optional(),
     difficulty: z
       .string()
       .min(1, "난이도를 입력해주세요.")
