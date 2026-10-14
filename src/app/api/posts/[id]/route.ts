@@ -5,13 +5,11 @@ import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
   notFound,
-  respondWithSupabaseError,
+  respondWithError,
   validationError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(_: Request, props: contentParams) {
@@ -23,11 +21,7 @@ export async function GET(_: Request, props: contentParams) {
 
     return json({ data: item });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("게시글을 가져오지 못했습니다", error);
-    return internalError();
+    return respondWithError(error, "게시글을 가져오지 못했습니다");
   }
 }
 
@@ -57,11 +51,7 @@ export async function PUT(req: Request, props: contentParams) {
 
     return json({ data: updated });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("게시글을 수정에 실패하였습니다.", error);
-    return internalError();
+    return respondWithError(error, "게시글을 수정에 실패하였습니다.");
   }
 }
 
@@ -78,10 +68,6 @@ export async function DELETE(_: Request, props: contentParams) {
     clearTrendingCache();
     return json({ message: "게시글이 삭제되었습니다." }, 200);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("게시글 삭제에 실패하였습니다.", error);
-    return internalError();
+    return respondWithError(error, "게시글 삭제에 실패하였습니다.");
   }
 }

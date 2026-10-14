@@ -1,16 +1,8 @@
 import * as postService from "@/domain/post/service";
 import { PostSearchField } from "@/domain/post/types";
 import { normalizePostCategory } from "@/domain/post/category";
-import {
-  AuthErrorHelper,
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { AuthErrorHelper, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ZodError } from "zod";
 
 export async function GET(req: Request) {
   try {
@@ -37,11 +29,7 @@ export async function GET(req: Request) {
     });
     return json({ data: posts });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("게시글 조회 실패", error);
-    return internalError();
+    return respondWithError(error, "게시글 조회 실패");
   }
 }
 
@@ -56,14 +44,6 @@ export async function POST(req: Request) {
     const created = await postService.createPost(supabase, body, { uid: user.id });
     return Response.json({ data: created }, { status: 201 });
   } catch (error) {
-    if (error instanceof ZodError) {
-      console.error("게시글 생성 실패 - zod검증 오류", error);
-      return validationError(error);
-    }
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("게시글 생성 실패", error);
-    return internalError();
+    return respondWithError(error, "게시글 생성 실패");
   }
 }

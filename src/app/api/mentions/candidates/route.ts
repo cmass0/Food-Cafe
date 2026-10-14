@@ -1,12 +1,6 @@
 import { mentionCandidateQuerySchema } from "@/domain/follow/schema";
 import * as followService from "@/domain/follow/service";
-import {
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { json, respondWithError, validationError } from "@/lib/errors/api-response";
 import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -41,8 +35,6 @@ export async function GET(request: Request) {
     });
     return json(result);
   } catch (error) {
-    if (isPostgrestError(error)) return respondWithSupabaseError(error);
-    console.error("멘션 후보 조회 실패", error);
-    return internalError("멘션 후보를 불러오지 못했습니다.");
+    return respondWithError(error, "멘션 후보 조회 실패", "멘션 후보를 불러오지 못했습니다.");
   }
 }
