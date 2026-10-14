@@ -3,12 +3,10 @@ import * as userService from "@/domain/user/service";
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
-  respondWithSupabaseError,
+  respondWithError,
   validationError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +21,7 @@ export async function GET(_: Request, props: Ctx) {
 
     return json({ data: user });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("사용자 정보를 가져오는데 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "사용자 정보를 가져오는데 실패했습니다.");
   }
 }
 
@@ -52,12 +46,7 @@ export async function PUT(req: Request, props: Ctx) {
     const updated = await userService.updateSelf(parsed.data);
     return json({ data: updated });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-
-    console.error("사용자 정보 수정에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "사용자 정보 수정에 실패했습니다.");
   }
 }
 
@@ -70,11 +59,6 @@ export async function DELETE(_: Request, props: Ctx) {
     await userService.deleteUserById();
     return new Response(null, { status: 204 });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-
-    console.error("사용자 삭제에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "사용자 삭제에 실패했습니다.");
   }
 }

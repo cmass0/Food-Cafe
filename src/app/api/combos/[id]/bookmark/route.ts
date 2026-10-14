@@ -3,12 +3,10 @@ import { readRelationState } from "@/lib/api/relation-state";
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
   notFound,
-  respondWithSupabaseError,
+  respondWithError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function POST(req: Request, props: contentParams) {
@@ -24,19 +22,11 @@ export async function POST(req: Request, props: contentParams) {
     const { data, error } = await supabase
       .rpc("set_combo_bookmark", { p_combo_id: params.id, p_bookmarked: bookmarked })
       .maybeSingle();
-    if (error) {
-      console.error("조합 북마크 처리 실패", error);
-      return respondWithSupabaseError(error);
-    }
+    if (error) throw error;
     if (!data) return notFound();
 
     return json({ bookmarked: data.bookmarked, bookmarkCount: data.bookmark_count });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("조합 북마크 처리 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("조합 북마크 처리 실패", error);
-    return internalError();
+    return respondWithError(error, "조합 북마크 처리 실패");
   }
 }

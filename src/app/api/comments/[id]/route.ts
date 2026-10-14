@@ -3,16 +3,11 @@ import { contentParams } from "@/lib/api/prams-type";
 import {
   AuthErrorHelper,
   badRequest,
-  internalError,
   json,
   notFound,
-  respondWithSupabaseError,
-  validationError,
+  respondWithError,
 } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
 import { getServerSupabase } from "@/lib/supabase/server";
-
-import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +21,7 @@ export async function GET(_req: Request, props: contentParams) {
     }
     return json({ data: comment });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("댓글을 가져오는데 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "댓글을 가져오는데 실패했습니다.");
   }
 }
 
@@ -55,14 +46,7 @@ export async function PUT(req: Request, props: contentParams) {
 
     return json({ data: updated });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return validationError(error);
-    }
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("댓글 수정에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "댓글 수정에 실패했습니다.");
   }
 }
 
@@ -80,10 +64,6 @@ export async function DELETE(_req: Request, props: contentParams) {
     // 갱신된 부모 카운트 + parent 정보 함께 응답 — 클라이언트가 setState로 즉시 갱신
     return json({ data: result }, 200);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("댓글 삭제에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "댓글 삭제에 실패했습니다.");
   }
 }

@@ -1,15 +1,6 @@
 import * as commentService from "@/domain/comment/service";
-import {
-  AuthErrorHelper,
-  badRequest,
-  internalError,
-  json,
-  respondWithSupabaseError,
-  validationError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { AuthErrorHelper, badRequest, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ZodError } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -37,15 +28,7 @@ export async function GET(req: Request) {
     });
     return json({ data });
   } catch (error) {
-    // page=0, 부모 누락처럼 잘못된 요청은 서버 오류(500)가 아니라 입력 오류(400)로 응답한다.
-    if (error instanceof ZodError) {
-      return validationError(error.errors);
-    }
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("댓글을 가져오는데 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "댓글을 가져오는데 실패했습니다.");
   }
 }
 
@@ -69,13 +52,6 @@ export async function POST(req: Request) {
     // 새 댓글 + 부모의 갱신된 comment_count를 함께 응답 (like/bookmark와 동일 패턴)
     return json({ data: { comment, parentCommentCount } }, 201);
   } catch (error) {
-    if (error instanceof ZodError) {
-      return validationError(error.errors);
-    }
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("댓글 생성에 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "댓글 생성에 실패했습니다.");
   }
 }

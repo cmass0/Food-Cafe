@@ -1,7 +1,6 @@
 // src/app/api/users/route.ts
 import * as userService from "@/domain/user/service";
-import { internalError, json, respondWithSupabaseError } from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { json, respondWithError } from "@/lib/errors/api-response";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +20,6 @@ export async function GET(req: Request) {
     const data = await userService.listUsers({ limit, page });
     return json({ data });
   } catch (error) {
-    if (isPostgrestError(error)) {
-      return respondWithSupabaseError(error);
-    }
-    console.error("사용자 목록을 가져오는데 실패했습니다.", error);
-    return internalError();
+    return respondWithError(error, "사용자 목록을 가져오는데 실패했습니다.");
   }
 }

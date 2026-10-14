@@ -1,3 +1,4 @@
+import { respondWithServerQueryError } from "@/lib/errors/api-response";
 import { cleanupOrphanedStorage } from "@/lib/storage/server";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,10 @@ export async function GET(request: Request) {
     const result = await cleanupOrphanedStorage();
     return Response.json({ data: result });
   } catch (error) {
-    console.error("[storage-cleanup] 고아 이미지 정리에 실패했습니다.", error);
-    return Response.json({ message: "스토리지 정리에 실패했습니다." }, { status: 500 });
+    return respondWithServerQueryError(
+      error,
+      "[storage-cleanup] 고아 이미지 정리에 실패했습니다.",
+      "스토리지 정리에 실패했습니다."
+    );
   }
 }

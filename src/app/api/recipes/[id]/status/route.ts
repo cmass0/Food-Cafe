@@ -1,13 +1,7 @@
 import { isBookmarkedRecipe } from "@/domain/recipe/recipe_bookmark/service";
 import { isLikedRecipe } from "@/domain/recipe/recipe_like/service";
 import { contentParams } from "@/lib/api/prams-type";
-import {
-  AuthErrorHelper,
-  internalError,
-  json,
-  respondWithSupabaseError,
-} from "@/lib/errors/api-response";
-import { isPostgrestError } from "@/lib/errors/supabase";
+import { AuthErrorHelper, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export async function GET(_: Request, props: contentParams) {
@@ -24,11 +18,6 @@ export async function GET(_: Request, props: contentParams) {
 
     return json({ liked, bookmarked }, 200);
   } catch (error) {
-    if (isPostgrestError(error)) {
-      console.error("레시피 상태 조회 실패", error);
-      return respondWithSupabaseError(error);
-    }
-    console.error("레시피 상태 조회 실패", error);
-    return internalError();
+    return respondWithError(error, "레시피 상태 조회 실패");
   }
 }
