@@ -25,7 +25,15 @@ type CombinationFieldsProps = {
 
 export default function CombinationFields({ itemsArray, form }: CombinationFieldsProps) {
   const [tabValue, setTabValue] = React.useState<"product" | "recipe">("product");
-  const [imgPreview, setImagePreview] = React.useState<Record<string, string>>({});
+  // 초안을 적용하면 field-array의 임시 id가 바뀐다. 실제 File을 키로 삼아 미리보기를 유지한다.
+  const [imgPreview, setImagePreview] = React.useState<Map<File, string>>(new Map());
+  const previewUrls = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    const urls = previewUrls.current;
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
+  }, []);
   const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
 
   const fetchRecipeByid = async (input: string, index: number) => {
@@ -59,11 +67,12 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     if (!id) return null;
     return id;
   };
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, itemId: string, index: number) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setImagePreview((prev) => ({ ...prev, [itemId]: url }));
+      previewUrls.current.add(url);
+      setImagePreview((prev) => new Map(prev).set(file, url));
       form.setValue(`items.${index}.image`, file, {
         shouldDirty: true,
         shouldValidate: form.formState.submitCount > 0,
@@ -135,6 +144,13 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                         // 필드 값 가져오기
                         const productName = form.getValues(`items.${index}.productName`);
                         const summary = form.getValues(`items.${index}.summary`);
+                        const itemImage = form.getValues(`items.${index}.image`);
+                        const preview =
+                          itemImage instanceof File
+                            ? imgPreview.get(itemImage)
+                            : typeof itemImage === "string"
+                              ? itemImage
+                              : undefined;
                         return (
                           <FormItem className="flex flex-col md:flex-row justify-between w-full pt-4 pb-4 ">
                             <div className="space-y-5">
@@ -151,7 +167,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                                         ref={imageField.ref}
                                         onBlur={imageField.onBlur}
                                         aria-label={`상품 ${index + 1} 이미지`}
-                                        onChange={(e) => handleFileChange(e, item.id, index)}
+                                        onChange={(e) => handleFileChange(e, index)}
                                       />
                                     </FormControl>
                                     <FormMessage />
@@ -190,11 +206,10 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                             <div className="space-y-5 rounded-md border border-muted-foreground/30 bg-background p-4 shadow-lg  w-[300px] h-[270px] ">
                               <div className="relative h-[150px] w-[200px] border-[2px] ">
                                 {/* 새 파일 미리보기 또는 기존 string URL (update) */}
-                                {imgPreview[item.id] ||
-                                (typeof item.image === "string" && item.image) ? (
+                                {preview ? (
                                   <Image
                                     className="rounded-md "
-                                    src={imgPreview[item.id] || (item.image as string)}
+                                    src={preview}
                                     alt="previewimg"
                                     fill
                                   ></Image>
@@ -274,11 +289,6 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                     variant="ghost"
                     onClick={() => {
                       itemsArray.remove(index);
-                      setImagePreview((prev) => {
-                        const newPreview = { ...prev };
-                        delete newPreview[item.id];
-                        return newPreview;
-                      });
                     }}
                   >
                     삭제

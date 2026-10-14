@@ -2,6 +2,7 @@ import { getRecipeById } from "@/domain/recipe/service";
 import { requireOwnedContent } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import UpdateRecipeForm from "../components/UpdateRecipeForm";
+import { WritingAssistantWorkspace } from "@/components/writing-assistant/WritingAssistantWorkspace";
 
 export default async function RecipeEditPage(props: { searchParams: Promise<{ id?: string }> }) {
   const searchParams = await props.searchParams;
@@ -28,8 +29,10 @@ export default async function RecipeEditPage(props: { searchParams: Promise<{ id
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      <UpdateRecipeForm recipeId={recipe.id} defaultValues={defaultValues} />
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <WritingAssistantWorkspace kind="recipe">
+        <UpdateRecipeForm recipeId={recipe.id} defaultValues={defaultValues} />
+      </WritingAssistantWorkspace>
     </div>
   );
 }
