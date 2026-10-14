@@ -10,6 +10,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import FoodCardFacts from "@/components/food-card/FoodCardFacts";
 import FoodCardFooter, { FoodCardReactions } from "@/components/food-card/FoodCardFooter";
 import FoodImagePlaceholder from "@/components/FoodImagePlaceholder";
+import ListPageHeader from "@/components/ListPageHeader";
 import Section from "@/components/status/Section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -479,26 +480,19 @@ function CombosPageInner() {
 
   return (
     <main className="min-h-screen bg-white text-zinc-950">
-      <section className="border-b border-zinc-100 bg-[#fbfaf7]">
-        <div className="mx-auto w-full max-w-7xl px-5 py-10 md:py-12 lg:px-8">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#3f914b]">Combos</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 md:text-4xl">
-                레시피 조합
-              </h1>
-              <p className="mt-2 text-sm text-zinc-500">여러 레시피를 하나로 조합해보세요.</p>
-            </div>
-            <Button
-              className="h-11 self-start rounded-full bg-[#34783f] px-6 text-sm font-bold text-white shadow-sm shadow-[#34783f]/20 hover:bg-[#2f6f39] md:self-auto"
-              onClick={handleCreate}
-            >
-              <Plus className="mr-1.5 h-4 w-4" />
-              조합 만들기
-            </Button>
-          </div>
-        </div>
-      </section>
+      <ListPageHeader
+        title="레시피 조합"
+        description="여러 레시피를 하나로 조합해보세요."
+        action={
+          <Button
+            className="h-10 self-start rounded-lg bg-[#34783f] px-4 text-sm font-semibold text-white hover:bg-[#2f6f39] md:self-auto"
+            onClick={handleCreate}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            조합 만들기
+          </Button>
+        }
+      />
 
       <div className="mx-auto w-full max-w-7xl px-5 py-8 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
