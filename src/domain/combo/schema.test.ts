@@ -18,6 +18,28 @@ const BASE_COMBO = {
   difficulty: "쉬움",
 };
 
+describe("조합 레시피 ID 검증", () => {
+  test.each([
+    ["저장", ComboInsertSchema, BASE_COMBO],
+    ["폼", ComboFormSchema, { ...BASE_COMBO, image: "/combos/cover.png" }],
+  ] as const)("%s에서 잘못된 레시피 ID의 오류를 한글로 반환한다", (_label, schema, base) => {
+    const result = schema.safeParse({
+      ...base,
+      items: [
+        { type: "recipe", recipeid: "invalid" },
+        { type: "product", productName: "물" },
+      ],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({
+        path: ["items", 0, "recipeid"],
+        message: "올바른 레시피 ID 또는 링크를 입력해 주세요.",
+      })
+    );
+  });
+});
+
 function expectItemsFailure(result: {
   success: boolean;
   error?: { issues: Array<{ path: Array<string | number> }> };

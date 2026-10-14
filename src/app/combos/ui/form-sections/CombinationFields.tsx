@@ -16,7 +16,14 @@ import Image from "next/image";
 import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
 import { ComboFormValues } from "@/domain/combo/types";
-import { COMBO_ITEM_TEXT_LIMITS, MAX_COMBO_ITEMS, MIN_COMBO_ITEMS } from "@/domain/combo/schema";
+import {
+  comboRecipeIdSchema,
+  COMBO_ITEM_TEXT_LIMITS,
+  MAX_COMBO_ITEMS,
+  MIN_COMBO_ITEMS,
+} from "@/domain/combo/schema";
+import { COMBO_RECIPE_REFERENCE_ERRORS } from "@/domain/combo/messages";
+import type { ApiError } from "@/lib/errors/api-client";
 
 type CombinationFieldsProps = {
   itemsArray: UseFieldArrayReturn<ComboFormValues, "items">;
@@ -37,32 +44,63 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
   const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
 
   const fetchRecipeByid = async (input: string, index: number) => {
-    const id = parseComboId(input);
-    if (!id) return null;
-    form.setValue(`items.${index}.recipeid`, id, {
+    const fieldName = `items.${index}.recipeid` as const;
+    form.clearErrors(fieldName);
+    if (!input.trim()) {
+      form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.required });
+      return;
+    }
+    const parsed = comboRecipeIdSchema.safeParse(parseComboId(input));
+    if (!parsed.success) {
+      form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.invalid });
+      return;
+    }
+    const id = parsed.data;
+    form.setValue(fieldName, id, {
       shouldDirty: true,
-      shouldValidate: form.formState.submitCount > 0,
     });
-    const req = await getRecipe(id);
-    if (!req) return null;
-
-    form.setValue(`items.${index}.image`, req.image ?? null, {
-      shouldDirty: true,
-      shouldValidate: form.formState.submitCount > 0,
-    });
-    form.setValue(`items.${index}.title`, req.title ?? undefined, {
-      shouldDirty: true,
-      shouldValidate: form.formState.submitCount > 0,
-    });
-    form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
-      shouldDirty: true,
-      shouldValidate: form.formState.submitCount > 0,
-    });
-    setRecipeRef((prev) => ({ ...prev, [id]: req }));
+    // 입력 변경·항목 삭제 뒤 도착한 응답이 다른 항목의 값이나 오류를 덮어쓰지 않게 한다.
+    const current = () =>
+      form.getValues(`items.${index}.type`) === "recipe" && form.getValues(fieldName) === id;
+    try {
+      const req = await getRecipe(id);
+      if (!current()) return;
+      if (!req) {
+        form.setError(fieldName, {
+          type: "manual",
+          message: COMBO_RECIPE_REFERENCE_ERRORS.notFound,
+        });
+        return;
+      }
+      form.clearErrors(fieldName);
+      form.setValue(`items.${index}.image`, req.image ?? null, {
+        shouldDirty: true,
+        shouldValidate: form.formState.submitCount > 0,
+      });
+      form.setValue(`items.${index}.title`, req.title ?? undefined, {
+        shouldDirty: true,
+        shouldValidate: form.formState.submitCount > 0,
+      });
+      form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
+        shouldDirty: true,
+        shouldValidate: form.formState.submitCount > 0,
+      });
+      setRecipeRef((prev) => ({ ...prev, [id]: req }));
+    } catch (error) {
+      if (!current()) return;
+      form.setError(fieldName, {
+        type: "manual",
+        message:
+          (error as ApiError | null)?.status === 404
+            ? COMBO_RECIPE_REFERENCE_ERRORS.notFound
+            : COMBO_RECIPE_REFERENCE_ERRORS.unavailable,
+      });
+    }
   };
 
   const parseComboId = (input: string) => {
-    const parts = input.split("/").filter(Boolean);
+    const path = input.trim().split(/[?#]/)[0] ?? "";
+    const parts = path.split("/").filter(Boolean);
     const id = parts[parts.length - 1];
     if (!id) return null;
     return id;
@@ -243,9 +281,20 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                           <div className="space-y-5">
                             <FormControl>
                               <Input
-                                placeholder="레시피 ID"
+                                placeholder="레시피 ID 또는 레시피 링크"
                                 aria-label={`조합 항목 ${index + 1} 레시피 ID`}
                                 {...field}
+                                onChange={(event) => {
+                                  if (
+                                    parseComboId(event.target.value) !== parseComboId(field.value)
+                                  ) {
+                                    form.setValue(`items.${index}.title`, undefined);
+                                    form.setValue(`items.${index}.summary`, undefined);
+                                    form.setValue(`items.${index}.image`, undefined);
+                                  }
+                                  field.onChange(event);
+                                  form.clearErrors(`items.${index}.recipeid`);
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
