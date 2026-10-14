@@ -1,20 +1,35 @@
 import { format } from "node:util";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { MockLanguageModelV4 } from "ai/test";
+import { unavailableRecipesNotice } from "@/features/writing-assistant/selected-recipes";
 import { POST } from "./route";
 
 vi.mock("server-only", () => ({}));
-const boundary = vi.hoisted(() => ({ getUser: vi.fn(), model: vi.fn() }));
-// Auth 네트워크와 유료 모델만 대체하고 Route → 검증 → 서비스 → SDK 연결을 실행한다.
+const boundary = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  model: vi.fn(),
+  recipeRows: [] as Record<string, unknown>[],
+}));
+// Auth·DB 네트워크와 유료 모델만 대체하고 Route → 검증 → 서비스 → SDK 연결을 실행한다.
 vi.mock("@/lib/supabase/server", () => ({
-  getServerSupabase: async () => ({ auth: { getUser: boundary.getUser } }),
+  getServerSupabase: async () => ({
+    auth: { getUser: boundary.getUser },
+    from: () => ({
+      select: () => ({
+        in: async (_column: string, ids: string[]) => ({
+          data: boundary.recipeRows.filter((row) => ids.includes(row.id as string)),
+          error: null,
+        }),
+      }),
+    }),
+  }),
 }));
 vi.mock("@/lib/ai/model", () => ({ getRecommendLanguageModel: boundary.model }));
 const input = {
   kind: "recipe",
   memo: "두부가 있어",
   formContext: "{}",
-  recipeReferences: [],
+  recipeIds: [],
   turns: [],
   outline: null,
   finish: false,
@@ -22,6 +37,7 @@ const input = {
 
 afterEach(() => {
   vi.resetAllMocks();
+  boundary.recipeRows = [];
 });
 function request(body: unknown = input) {
   return new Request("http://localhost/api/writing-assistant", {
@@ -32,17 +48,20 @@ function request(body: unknown = input) {
 function login() {
   boundary.getUser.mockResolvedValue({ data: { user: { id: "user" } }, error: null });
 }
-function modelReply(value: unknown) {
+function modelReply(value: unknown, onPrompt?: (prompt: unknown) => void) {
   return new MockLanguageModelV4({
-    doGenerate: async () => ({
-      content: [{ type: "text", text: JSON.stringify(value) }],
-      finishReason: { unified: "stop", raw: undefined },
-      usage: {
-        inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined },
-        outputTokens: { total: 1, text: 1, reasoning: undefined },
-      },
-      warnings: [],
-    }),
+    doGenerate: async (options) => {
+      onPrompt?.(options.prompt);
+      return {
+        content: [{ type: "text", text: JSON.stringify(value) }],
+        finishReason: { unified: "stop", raw: undefined },
+        usage: {
+          inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined },
+          outputTokens: { total: 1, text: 1, reasoning: undefined },
+        },
+        warnings: [],
+      };
+    },
   });
 }
 describe("작성 도우미 API 연결", () => {
@@ -86,6 +105,60 @@ describe("작성 도우미 API 연결", () => {
       question: { text: "담백하게 먹을까요?" },
       draft: null,
     });
+  });
+  test("조합은 고른 레시피를 DB에서 읽어 AI에 넘기고, AI가 빼도 초안에 남기며 못 읽은 레시피는 알린다", async () => {
+    login();
+    const rice = "00000000-0000-4000-8000-000000000001";
+    const deleted = "00000000-0000-4000-8000-000000000002";
+    boundary.recipeRows = [
+      {
+        id: rice,
+        title: "김치볶음밥",
+        summary: "매콤한 볶음밥",
+        steps: [{ description: "밥과 김치를 센 불에 볶는다." }],
+        ingredients: [{ name: "김치", amount: "1", unit: "컵" }],
+        time_minutes: 15,
+        created_at: "2026-10-01T00:00:00Z",
+        updated_at: "2026-10-01T00:00:00Z",
+      },
+    ];
+    let prompt = "";
+    boundary.model.mockReturnValue(
+      modelReply(
+        {
+          kind: "combo",
+          outline: { title: "볶음밥 한 끼", points: ["볶음밥", "단무지"] },
+          question: null,
+          suggestions: [],
+          draft: {
+            title: "볶음밥 한 끼",
+            summary: "",
+            difficulty: "쉬움",
+            time_minutes: 15,
+            tags: [],
+            tools: [],
+            steps: [{ description: "볶음밥에 단무지를 곁들인다." }],
+            items: [
+              { type: "product", productName: "단무지", summary: "" },
+              { type: "product", productName: "보리차", summary: "" },
+            ],
+          },
+        },
+        (value) => (prompt = JSON.stringify(value))
+      )
+    );
+    const response = await POST(
+      request({ ...input, kind: "combo", recipeIds: [rice, deleted], finish: true })
+    );
+    expect(response.status).toBe(200);
+    expect(prompt).toContain("밥과 김치를 센 불에 볶는다.");
+    const body = await response.json();
+    expect(body.draft.items).toContainEqual({
+      type: "recipe",
+      recipeid: rice,
+      title: "김치볶음밥",
+    });
+    expect(body.notices).toEqual([unavailableRecipesNotice(1)]);
   });
   test("규격 밖 AI 응답은 초안으로 전달하지 않고 안전한 오류를 반환한다", async () => {
     login();

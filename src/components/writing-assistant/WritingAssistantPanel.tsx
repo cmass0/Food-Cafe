@@ -97,6 +97,19 @@ export function WritingAssistantPanel({
           <WritingAssistantIntro kind={kind} pending={pending} onUseExample={onInputChange} />
         ) : (
           <>
+            {session.response?.notices.length ? (
+              <section
+                aria-label="도우미 안내"
+                className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+              >
+                <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden="true" />
+                <div className="min-w-0 space-y-1">
+                  {session.response.notices.map((notice, index) => (
+                    <p key={index}>{notice}</p>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             {question ? (
               <section aria-label="현재 질문">
                 <div className="flex items-center justify-between gap-3">

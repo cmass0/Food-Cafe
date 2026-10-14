@@ -37,8 +37,9 @@ function comboResponse(items: unknown[]) {
   };
 }
 
-// AI 응답은 네트워크 경계에서 대체하고, 도우미가 보낸 폼 내용을 돌려준다.
-function stubBrowser(aiResponse: unknown) {
+// AI 응답은 네트워크 경계에서 대체하고, 도우미가 보낸 요청을 돌려준다.
+// 응답을 여러 개 주면 요청마다 차례로 쓰고, 마지막 응답을 계속 쓴다.
+function stubBrowser(...aiResponses: unknown[]) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
@@ -53,12 +54,25 @@ function stubBrowser(aiResponse: unknown) {
       disconnect() {}
     }
   );
-  const sent = { formContext: "" };
+  const sent = { formContext: "", recipeIds: [] as string[][] };
   vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    sent.formContext = JSON.parse(init.body as string).formContext;
-    return new Response(JSON.stringify(aiResponse));
+    const body = JSON.parse(init.body as string);
+    sent.formContext = body.formContext;
+    sent.recipeIds.push(body.recipeIds);
+    const reply = aiResponses[Math.min(sent.recipeIds.length, aiResponses.length) - 1];
+    return new Response(JSON.stringify(reply));
   });
   return sent;
+}
+
+function questionResponse() {
+  return {
+    kind: "combo",
+    outline: { title: "볶음밥 한 끼", points: ["볶음밥"] },
+    question: { topic: "곁들임", text: "무엇을 곁들일까요?", options: [] },
+    draft: null,
+    suggestions: [],
+  };
 }
 
 async function renderForm(initial: Partial<ComboFormValues>) {
@@ -179,6 +193,71 @@ test("레시피 항목은 AI가 쓴 이름·설명 대신 폼에 불러온 레�
     await click("수정");
     expect(submit).toHaveBeenCalledTimes(1);
     expect(submit.mock.calls[0]?.[0].items[0]).toEqual(recipe);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("대화 중 폼에서 지운 레시피는 다음 질문부터 AI에 보내지 않는다", async () => {
+  const sent = stubBrowser(questionResponse());
+  const { element, cleanup } = await renderForm({
+    title: "직접 적은 조합",
+    image: "https://example.com/main.jpg",
+    items: [
+      { type: "recipe" as const, recipeid: RECIPE_ID, title: "김치볶음밥" },
+      { type: "product" as const, productName: "단무지", summary: "" },
+    ],
+  });
+  try {
+    await click("아이디어 없이 시작");
+    await click("삭제");
+    expect(element.querySelector('[aria-label="조합 항목 1 레시피 ID"]')).toBeNull();
+    await click("AI에게 맡기기");
+    expect(sent.recipeIds).toEqual([[RECIPE_ID], []]);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영 확인창에 알린다", async () => {
+  const recipe = {
+    type: "recipe" as const,
+    recipeid: RECIPE_ID,
+    title: "김치볶음밥",
+    summary: "원래 레시피 설명",
+    image: "https://example.com/recipe.jpg",
+  };
+  stubBrowser(
+    comboResponse([
+      { type: "product", productName: "신라면", summary: "" },
+      { type: "product", productName: "단무지", summary: "" },
+    ])
+  );
+  const { submit, cleanup } = await renderForm({
+    title: "직접 적은 조합",
+    image: "https://example.com/main.jpg",
+    items: [
+      recipe,
+      {
+        type: "product" as const,
+        productName: "신라면 컵",
+        summary: "",
+        image: "https://example.com/cup.jpg",
+      },
+    ],
+  });
+  try {
+    await click("아이디어 없이 시작");
+    await click("폼에 반영하기");
+    const warning = document.querySelector('[aria-label="반영하면 빠지는 항목"]');
+    expect(warning?.textContent).toContain("신라면 컵 (사진 포함)");
+    await click("확인");
+    await click("수정");
+    expect(submit.mock.calls[0]?.[0].items).toEqual([
+      { type: "product", productName: "신라면", summary: "" },
+      { type: "product", productName: "단무지", summary: "" },
+      recipe,
+    ]);
   } finally {
     await cleanup();
   }

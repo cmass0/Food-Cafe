@@ -110,17 +110,19 @@ export const comboWritingResponseSchema = z.object({
   kind: z.literal("combo"),
   draft: comboDraftSchema.nullable(),
 });
+// 서버가 덧붙이는 안내. 모델 출력 규격에는 넣지 않아서 모델은 만들 수 없다.
+const serverFields = { notices: z.array(text(300)).max(5).default([]) };
 export const writingResponseSchema = z.discriminatedUnion("kind", [
-  recipeWritingResponseSchema,
-  comboWritingResponseSchema,
+  recipeWritingResponseSchema.extend(serverFields),
+  comboWritingResponseSchema.extend(serverFields),
 ]);
+export const writingRecipeIdSchema = z.string().uuid();
 export const writingRequestSchema = z.object({
   kind: z.enum(["recipe", "combo"]),
   memo: z.string().trim().max(2000),
   formContext: z.string().max(24000),
-  recipeReferences: z
-    .array(z.object({ id: z.string().uuid(), title: text(200) }))
-    .max(MAX_COMBO_ITEMS),
+  // 조합 폼에 넣어 둔 레시피 ID. 제목·내용은 브라우저 값을 믿지 않고 서버가 DB에서 다시 읽는다.
+  recipeIds: z.array(writingRecipeIdSchema).max(MAX_COMBO_ITEMS),
   turns: z.array(z.object({ question: text(300), answer: text(2000) })).max(MAX_WRITING_QUESTIONS),
   outline: writingOutlineSchema.nullable(),
   finish: z.boolean(),

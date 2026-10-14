@@ -53,7 +53,7 @@ export function useWritingAssistant(
   }
 
   function start() {
-    const snapshot = binding.current?.snapshot() ?? { formContext: "{}", recipeReferences: [] };
+    const snapshot = binding.current?.snapshot() ?? { formContext: "{}", recipeIds: [] };
     void send({ kind, memo: input.trim(), ...snapshot, turns: [], outline: null, finish: false });
   }
 
@@ -65,7 +65,9 @@ export function useWritingAssistant(
           { question: session.response.question.text, answer: value.trim() },
         ]
       : session.request.turns;
-    void send({ ...session.request, turns, outline: session.response.outline, finish });
+    // 고른 레시피는 대화 중에도 폼에서 넣고 뺄 수 있으므로 질문마다 다시 읽는다.
+    const recipeIds = binding.current?.snapshot().recipeIds ?? session.request.recipeIds;
+    void send({ ...session.request, recipeIds, turns, outline: session.response.outline, finish });
   }
 
   function reset() {
@@ -99,6 +101,8 @@ export function useWritingAssistant(
     reset,
     apply,
     finish: () => answer(input, true),
+    removedOnApply: () =>
+      session?.response ? (binding.current?.removedOnApply?.(session.response) ?? []) : [],
     retry: () => {
       if (failedRequest.current) void send(failedRequest.current);
     },

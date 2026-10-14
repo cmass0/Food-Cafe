@@ -134,7 +134,7 @@ export default function RecipeForm({
           tags: normalizeTags(tagsInput),
           tools: normalizeTools(toolsInput),
         }),
-        recipeReferences: [],
+        recipeIds: [],
       };
     },
     apply: (response) => {

@@ -186,6 +186,19 @@ export async function getRecipeById(
   return row ? mapRowToRecipe(row) : null;
 }
 
+// 요청한 ID 순서대로 돌려준다. 삭제됐거나 읽을 권한이 없는 레시피는 빠진다.
+export async function getRecipesByIds(
+  client: SupabaseClient<Database>,
+  ids: string[]
+): Promise<Recipe[]> {
+  const rows = await repo.selectRecipesByIds(client, ids);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return ids.flatMap((id) => {
+    const row = byId.get(id);
+    return row ? [mapRowToRecipe(row)] : [];
+  });
+}
+
 export async function createRecipe(
   client: SupabaseClient<Database>,
   input: RecipeInsertDB

@@ -33,6 +33,8 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
   const binding = useRef<WritingFormBinding | null>(null);
   const assistant = useWritingAssistant(kind, binding);
   const [confirmApply, setConfirmApply] = useState(false);
+  // 확인창을 여는 순간의 폼 기준으로, 반영하면 빠지는 항목을 계산해 둔다.
+  const [removedOnApply, setRemovedOnApply] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const preview = WRITING_ASSISTANT_COPY[kind];
 
@@ -59,7 +61,10 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
       onFinish={assistant.finish}
       onReset={assistant.reset}
       onRetry={assistant.retry}
-      onApply={() => setConfirmApply(true)}
+      onApply={() => {
+        setRemovedOnApply(assistant.removedOnApply());
+        setConfirmApply(true);
+      }}
     />
   );
 
@@ -132,9 +137,24 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
             <AlertDialogDescription>
               현재 제목·재료 또는 조합 구성·조리 단계 등 텍스트 입력을 초안으로 바꿉니다. 대화 중
               직접 수정한 내용도 바뀌니 먼저 확인해 주세요. 대표 이미지와 유지되는 조합 항목의
-              이미지는 보존합니다. 자동으로 저장하지 않습니다.
+              이미지는 보존합니다.
+              {kind === "combo" ? " 조합에 넣어 둔 레시피는 그대로 남아요." : ""} 자동으로 저장하지
+              않습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {removedOnApply.length > 0 ? (
+            <section
+              aria-label="반영하면 빠지는 항목"
+              className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+            >
+              <h3 className="font-semibold">초안에 없어서 폼에서 빠지는 상품</h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {removedOnApply.map((name, index) => (
+                  <li key={index}>{name}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction onClick={assistant.apply}>확인</AlertDialogAction>

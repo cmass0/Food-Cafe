@@ -6,6 +6,7 @@ import {
   respondWithError,
 } from "@/lib/errors/api-response";
 import { getRecommendLanguageModel } from "@/lib/ai/model";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { writingRequestSchema } from "@/features/writing-assistant/schema";
 import { generateWritingTurn } from "@/features/writing-assistant/service";
 
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     const result = await generateWritingTurn(parsed.data, {
       model: getRecommendLanguageModel(),
       signal: request.signal,
+      client: await getServerSupabase(),
     });
     return json(result);
   } catch (error) {
