@@ -118,6 +118,8 @@ export const writingResponseSchema = z.discriminatedUnion("kind", [
 ]);
 export const writingRecipeIdSchema = z.string().uuid();
 export const writingRequestSchema = z.object({
+  // "작성 도우미 시작하기"로 받은 오늘의 대화 ID. 서버가 이 대화의 AI 호출 수를 센다.
+  sessionId: z.string().uuid(),
   kind: z.enum(["recipe", "combo"]),
   memo: z.string().trim().max(2000),
   formContext: z.string().max(24000),

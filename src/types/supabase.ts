@@ -533,6 +533,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_writing_assistant_sessions_today: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_recommendation_document_states: {
         Args: never
         Returns: {
@@ -670,6 +674,10 @@ export type Database = {
       }
       increment_recipe_view: { Args: { p_recipe_id: string }; Returns: number }
       is_current_user_admin: { Args: never; Returns: boolean }
+      refund_writing_assistant_call: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: undefined
+      }
       search_recommendations: {
         Args: {
           p_category?: string | null
@@ -743,8 +751,16 @@ export type Database = {
           liked: boolean
         }[]
       }
+      start_writing_assistant_session: {
+        Args: { p_max_sessions: number; p_user_id: string }
+        Returns: string
+      }
       upsert_recommendation_documents: {
         Args: { p_documents: Json }
+        Returns: number
+      }
+      use_writing_assistant_call: {
+        Args: { p_max_calls: number; p_session_id: string; p_user_id: string }
         Returns: number
       }
     }

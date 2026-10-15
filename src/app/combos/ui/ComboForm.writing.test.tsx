@@ -55,8 +55,17 @@ function stubBrowser(...aiResponses: unknown[]) {
     }
   );
   const sent = { formContext: "", recipeIds: [] as string[][] };
-  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    const body = JSON.parse(init.body as string);
+  vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/api/writing-assistant/session")) {
+      return new Response(
+        JSON.stringify(
+          init?.method === "POST"
+            ? { sessionId: "00000000-0000-4000-8000-0000000000aa", remaining: 1, limit: 2 }
+            : { remaining: 2, limit: 2 }
+        )
+      );
+    }
+    const body = JSON.parse(init!.body as string);
     sent.formContext = body.formContext;
     sent.recipeIds.push(body.recipeIds);
     const reply = aiResponses[Math.min(sent.recipeIds.length, aiResponses.length) - 1];
@@ -142,6 +151,8 @@ test("조합 초안을 반영해도 기존 대표·상품 이미지는 유지한
       value: [new File(["image"], "product.png", { type: "image/png" })],
     });
     await act(async () => upload.dispatchEvent(new Event("change", { bubbles: true })));
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     expect(sent.formContext).toContain("직접 적은 조합");
     expect(sent.formContext).not.toContain(".jpg");
@@ -187,6 +198,8 @@ test("레시피 항목은 AI가 쓴 이름·설명 대신 폼에 불러온 레�
     items: [recipe, { type: "product" as const, productName: "계란국", summary: "", image: null }],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("폼에 반영하기");
     await click("확인");
@@ -209,6 +222,8 @@ test("대화 중 폼에서 지운 레시피는 다음 질문부터 AI에 보내�
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("삭제");
     expect(element.querySelector('[aria-label="조합 항목 1 레시피 ID"]')).toBeNull();
@@ -247,6 +262,8 @@ test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("폼에 반영하기");
     const warning = document.querySelector('[aria-label="반영하면 빠지는 항목"]');

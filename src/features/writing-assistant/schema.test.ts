@@ -10,6 +10,7 @@ import type { WritingResponse } from "./types";
 import { finalizeWritingResponse } from "./workflow";
 
 const request = {
+  sessionId: "00000000-0000-4000-8000-0000000000aa",
   kind: "recipe" as const,
   memo: "계란으로 만들어줘",
   formContext: "{}",
@@ -70,6 +71,10 @@ describe("작성 도우미 요청과 초안", () => {
     expect(writingRequestSchema.parse({ ...request, memo: "우주선 ㅋㅋ" }).memo).toBe(
       "우주선 ㅋㅋ"
     );
+  });
+  test("작성 도우미 대화 ID가 없는 요청은 거부한다", () => {
+    const result = writingRequestSchema.safeParse({ ...request, sessionId: undefined });
+    expect(result.error?.issues[0]?.path).toEqual(["sessionId"]);
   });
   test("다섯 답변은 허용하고 여섯 답변은 거부한다", () => {
     const turn = { question: "원하는 맛은?", answer: "알아서" };

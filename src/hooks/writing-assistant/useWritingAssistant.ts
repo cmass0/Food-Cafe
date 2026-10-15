@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { requestWritingTurn } from "@/features/writing-assistant/api";
+import {
+  fetchWritingUsage,
+  requestWritingTurn,
+  startWritingSession,
+  WritingDailyLimitError,
+  type WritingUsage,
+} from "@/features/writing-assistant/api";
+import { MAX_DAILY_SESSIONS } from "@/features/writing-assistant/limits";
 import type {
   WritingAssistantKind,
   WritingFormBinding,
@@ -18,10 +25,51 @@ export function useWritingAssistant(
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
+  // "작성 도우미 시작하기"로 받은 오늘의 대화 ID. 새로고침하면 사라지고, 그날 사용 1번은 이미 쓴 것이다.
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [usage, setUsage] = useState<WritingUsage | null>(null);
+  const [activating, setActivating] = useState(false);
+  const [limitOpen, setLimitOpen] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const failedRequest = useRef<WritingRequest | null>(null);
 
   useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    let ignore = false;
+    // 남은 횟수는 안내용이다. 불러오지 못해도 시작할 때 서버가 다시 확인한다.
+    fetchWritingUsage()
+      .then((value) => {
+        if (!ignore) setUsage(value);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  async function activate() {
+    if (sessionId || activating) return;
+    if (usage?.remaining === 0) {
+      setLimitOpen(true);
+      return;
+    }
+    setActivating(true);
+    setError(null);
+    try {
+      const started = await startWritingSession();
+      setSessionId(started.sessionId);
+      setUsage({ remaining: started.remaining, limit: started.limit });
+    } catch (cause) {
+      if (cause instanceof WritingDailyLimitError) {
+        setUsage({ remaining: 0, limit: usage?.limit ?? MAX_DAILY_SESSIONS });
+        setLimitOpen(true);
+      } else {
+        setError(cause instanceof Error ? cause.message : "작성 도우미를 시작하지 못했어요.");
+      }
+    } finally {
+      setActivating(false);
+    }
+  }
 
   async function send(request: WritingRequest) {
     if (controller.current) return;
@@ -53,8 +101,17 @@ export function useWritingAssistant(
   }
 
   function start() {
+    if (!sessionId) return;
     const snapshot = binding.current?.snapshot() ?? { formContext: "{}", recipeIds: [] };
-    void send({ kind, memo: input.trim(), ...snapshot, turns: [], outline: null, finish: false });
+    void send({
+      sessionId,
+      kind,
+      memo: input.trim(),
+      ...snapshot,
+      turns: [],
+      outline: null,
+      finish: false,
+    });
   }
 
   function answer(value: string, finish = false) {
@@ -70,6 +127,7 @@ export function useWritingAssistant(
     void send({ ...session.request, recipeIds, turns, outline: session.response.outline, finish });
   }
 
+  // 같은 대화 ID 안에서 처음부터 다시 한다. 오늘 사용 횟수는 더 쓰지 않고, 대화별 AI 호출 상한은 그대로다.
   function reset() {
     controller.current?.abort();
     controller.current = null;
@@ -91,6 +149,12 @@ export function useWritingAssistant(
 
   return {
     session,
+    activated: Boolean(sessionId),
+    usage,
+    activating,
+    activate,
+    limitOpen,
+    setLimitOpen,
     input,
     setInput,
     pending,

@@ -24,8 +24,17 @@ test("AI 반영 확인 후 텍스트만 바꾸고 이미지는 보존하며 자�
     }
   );
   let sentContext = "";
-  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    sentContext = JSON.parse(init.body as string).formContext;
+  vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/api/writing-assistant/session")) {
+      return new Response(
+        JSON.stringify(
+          init?.method === "POST"
+            ? { sessionId: "00000000-0000-4000-8000-0000000000aa", remaining: 1, limit: 2 }
+            : { remaining: 2, limit: 2 }
+        )
+      );
+    }
+    sentContext = JSON.parse(init!.body as string).formContext;
     return new Response(
       JSON.stringify({
         kind: "recipe",
@@ -83,6 +92,8 @@ test("AI 반영 확인 후 텍스트만 바꾸고 이미지는 보존하며 자�
         </AppRouterContext.Provider>
       )
     );
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     expect(sentContext).toContain("직접 쓴 제목");
     expect(sentContext).not.toContain("original.jpg");
