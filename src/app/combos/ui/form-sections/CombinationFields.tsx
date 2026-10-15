@@ -26,6 +26,7 @@ import {
   MIN_COMBO_ITEMS,
 } from "@/domain/combo/schema";
 import { COMBO_RECIPE_REFERENCE_ERRORS } from "@/domain/combo/messages";
+import { parseRecipeReference } from "@/domain/combo/recipe-reference";
 import type { ApiError } from "@/lib/errors/api-client";
 
 type CombinationFieldsProps = {
@@ -67,7 +68,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.required });
       return;
     }
-    const parsed = comboRecipeIdSchema.safeParse(parseComboId(input));
+    const parsed = comboRecipeIdSchema.safeParse(parseRecipeReference(input));
     if (!parsed.success) {
       form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.invalid });
       return;
@@ -115,13 +116,6 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     }
   };
 
-  const parseComboId = (input: string) => {
-    const path = input.trim().split(/[?#]/)[0] ?? "";
-    const parts = path.split("/").filter(Boolean);
-    const id = parts[parts.length - 1];
-    if (!id) return null;
-    return id;
-  };
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -348,7 +342,8 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                                   {...field}
                                   onChange={(event) => {
                                     if (
-                                      parseComboId(event.target.value) !== parseComboId(field.value)
+                                      parseRecipeReference(event.target.value) !==
+                                      parseRecipeReference(field.value)
                                     ) {
                                       form.setValue(`items.${index}.title`, undefined);
                                       form.setValue(`items.${index}.summary`, undefined);
