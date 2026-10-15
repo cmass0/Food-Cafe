@@ -1,4 +1,4 @@
-import { ArrowRight, ChefHat, Lightbulb } from "lucide-react";
+import { ArrowRight, ChefHat, Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MAX_WRITING_QUESTIONS } from "@/features/writing-assistant/schema";
 import { WRITING_ASSISTANT_COPY } from "./copy";
@@ -62,6 +62,11 @@ export function WritingAssistantIntro({ kind, pending, onUseExample }: WritingAs
           예시 넣기 <ArrowRight className="size-3" aria-hidden="true" />
         </span>
       </Button>
+
+      <p className="flex items-start gap-1.5 text-[11px] leading-4 text-muted-foreground">
+        <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" />
+        메모·답변과 시작 시점의 폼 텍스트를 AI에 전달해요. 이미지는 보내지 않아요.
+      </p>
     </div>
   );
 }
