@@ -10,7 +10,6 @@ import {
   FileText,
   LoaderCircle,
   RotateCcw,
-  ShieldCheck,
   Sparkles,
   WandSparkles,
 } from "lucide-react";
@@ -41,7 +40,6 @@ export function WritingAssistantPanel({
 }: WritingAssistantPanelProps) {
   const preview = WRITING_ASSISTANT_COPY[kind];
   const inputId = useId();
-  const noticeId = useId();
   const scrollArea = useRef<HTMLDivElement>(null);
   const status = useRef<HTMLHeadingElement>(null);
   const question = session?.response?.question;
@@ -278,7 +276,6 @@ export function WritingAssistantPanel({
             <div className="rounded-2xl border border-input bg-background shadow-xs transition-colors focus-within:border-green-500 focus-within:ring-3 focus-within:ring-green-500/15">
               <Textarea
                 id={inputId}
-                aria-describedby={noticeId}
                 value={input}
                 disabled={pending}
                 onChange={(event) => onInputChange(event.target.value)}
@@ -290,25 +287,7 @@ export function WritingAssistantPanel({
                 maxLength={2000}
                 className="max-h-40 min-h-20 resize-none border-0 bg-transparent px-4 pt-3 text-sm leading-6 shadow-none focus-visible:ring-0"
               />
-              <div className="flex items-center justify-between gap-2 px-2 pb-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 rounded-lg border-green-200 bg-green-50/60 px-2.5 text-xs font-semibold text-green-700 hover:bg-green-100 hover:text-green-800 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/60"
-                  onClick={() => {
-                    if (started) onAnswer("AI에게 맡겼어요.");
-                    else onStart();
-                  }}
-                  disabled={pending}
-                >
-                  {started ? (
-                    <WandSparkles className="size-3.5" aria-hidden="true" />
-                  ) : (
-                    <Sparkles className="size-3.5" aria-hidden="true" />
-                  )}
-                  {started ? "AI에게 맡기기" : "아이디어 없이 시작"}
-                </Button>
+              <div className="flex justify-end px-2 pb-2">
                 <Button
                   type="submit"
                   size="sm"
@@ -324,13 +303,25 @@ export function WritingAssistantPanel({
                 </Button>
               </div>
             </div>
-            <p
-              id={noticeId}
-              className="flex items-start gap-1.5 text-[11px] leading-4 text-muted-foreground"
+            {/* 메모 없이 시작하거나 답을 AI에 맡기는 보조 동작. 입력칸 버튼과 겹치지 않게 아래 한 줄에 둔다. */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 w-full gap-1.5 rounded-xl border-green-200 bg-green-50/60 text-xs font-semibold text-green-700 hover:bg-green-100 hover:text-green-800 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/60"
+              onClick={() => {
+                if (started) onAnswer("AI에게 맡겼어요.");
+                else onStart();
+              }}
+              disabled={pending}
             >
-              <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" />
-              메모·답변과 시작 시점의 폼 텍스트를 AI에 전달해요. 이미지는 보내지 않아요.
-            </p>
+              {started ? (
+                <WandSparkles className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Sparkles className="size-3.5" aria-hidden="true" />
+              )}
+              {started ? "AI에게 맡기기" : "아이디어 없이 시작"}
+            </Button>
           </form>
         )}
       </footer>
