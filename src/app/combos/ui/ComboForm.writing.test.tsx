@@ -219,6 +219,40 @@ test("대화 중 폼에서 지운 레시피는 다음 질문부터 AI에 보내�
   }
 });
 
+test("답을 받은 뒤 폼에서 지운 레시피는 반영 확인창에 알리고 다시 넣는다", async () => {
+  stubBrowser(
+    comboResponse([
+      { type: "recipe", recipeid: RECIPE_ID, title: "김치볶음밥" },
+      { type: "product", productName: "단무지", summary: "" },
+    ])
+  );
+  const { element, submit, cleanup } = await renderForm({
+    title: "직접 적은 조합",
+    image: "https://example.com/main.jpg",
+    items: [
+      { type: "recipe" as const, recipeid: RECIPE_ID, title: "김치볶음밥" },
+      { type: "product" as const, productName: "단무지", summary: "", image: null },
+    ],
+  });
+  try {
+    await click("아이디어 없이 시작");
+    await click("삭제");
+    expect(element.querySelector('[aria-label="조합 항목 1 레시피 ID"]')).toBeNull();
+    await click("폼에 반영하기");
+    const notice = document.querySelector('[aria-label="반영하면 다시 넣는 레시피"]');
+    expect(notice?.textContent).toContain("김치볶음밥");
+    await click("확인");
+    await click("수정");
+    expect(submit.mock.calls[0]?.[0].items[0]).toMatchObject({
+      type: "recipe",
+      recipeid: RECIPE_ID,
+      title: "김치볶음밥",
+    });
+  } finally {
+    await cleanup();
+  }
+});
+
 test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영 확인창에 알린다", async () => {
   const recipe = {
     type: "recipe" as const,

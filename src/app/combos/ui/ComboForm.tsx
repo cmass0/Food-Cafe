@@ -119,10 +119,14 @@ export default function ComboForm({
       setToolsInput(response.draft.tools.join(", "));
       return true;
     },
-    removedOnApply: (response) =>
-      response.kind === "combo" && response.draft
-        ? mergeComboDraftItems(form.getValues().items, response.draft.items).removed
-        : [],
+    changesOnApply: (response) => {
+      if (response.kind !== "combo" || !response.draft) return { removed: [], restored: [] };
+      const { removed, restored } = mergeComboDraftItems(
+        form.getValues().items,
+        response.draft.items
+      );
+      return { removed, restored };
+    },
   });
   // 조리 단계 필드 배열 훅
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });

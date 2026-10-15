@@ -42,12 +42,27 @@ describe("mergeComboDraftItems", () => {
     );
     expect(items).toEqual([riceRow, { ...draftProduct("단무지"), image: null }, soupRow]);
   });
-  test("대화 뒤 폼에서 지운 레시피는 초안에 있어도 넣지 않는다", () => {
+  test("답을 받은 뒤 폼에서 지운 레시피가 초안에 있으면 초안 자리에 다시 넣는다", () => {
     const { items } = mergeComboDraftItems(
       [riceRow],
       [draftRecipe(RICE), draftRecipe(SOUP), draftProduct("단무지")]
     );
-    expect(items.filter((item) => item.type === "recipe")).toEqual([riceRow]);
+    expect(items).toEqual([
+      riceRow,
+      { type: "recipe", recipeid: SOUP, title: "AI 이름", summary: "", image: null },
+      { ...draftProduct("단무지"), image: null },
+    ]);
+  });
+  test("다시 넣은 레시피는 반영 확인창에 보여 줄 이름으로 알린다", () => {
+    const { restored } = mergeComboDraftItems([riceRow], [draftRecipe(RICE), draftRecipe(SOUP)]);
+    expect(restored).toEqual(["AI 이름"]);
+  });
+  test("폼에 남아 있는 레시피는 다시 넣은 레시피로 알리지 않는다", () => {
+    const { restored } = mergeComboDraftItems(
+      [riceRow, soupRow],
+      [draftRecipe(RICE), draftRecipe(SOUP)]
+    );
+    expect(restored).toEqual([]);
   });
   test("레시피 ID를 비워 둔 칸은 남기지 않는다", () => {
     const empty: FormItem = { type: "recipe", recipeid: "  " };
