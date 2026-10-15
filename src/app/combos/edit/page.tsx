@@ -2,6 +2,7 @@ import { getComboById } from "@/domain/combo/service";
 import { requireOwnedContent } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import UpdateComboForm from "../components/UpdateComboForm";
+import { WritingAssistantWorkspace } from "@/components/writing-assistant/WritingAssistantWorkspace";
 
 export default async function ComboEditPage(props: { searchParams: Promise<{ id?: string }> }) {
   const searchParams = await props.searchParams;
@@ -24,8 +25,10 @@ export default async function ComboEditPage(props: { searchParams: Promise<{ id?
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      <UpdateComboForm comboId={combo.id} defaultValues={defaultValues} />
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <WritingAssistantWorkspace kind="combo">
+        <UpdateComboForm comboId={combo.id} defaultValues={defaultValues} />
+      </WritingAssistantWorkspace>
     </div>
   );
 }

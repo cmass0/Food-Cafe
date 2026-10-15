@@ -17,6 +17,7 @@ import { ImageUploadField } from "./form-sections/ImageUploadField";
 import { IngredientsFields } from "./form-sections/IngredientsFields";
 import { StepsFields } from "./form-sections/StepsFields";
 import { SummaryField } from "./form-sections/SummaryField";
+import { useWritingFormBinding } from "@/hooks/writing-assistant/useWritingFormBinding";
 
 type ImageItem = {
   value: File | string;
@@ -114,6 +115,37 @@ export default function RecipeForm({
     reValidateMode: "onChange",
     shouldFocusError: true,
     defaultValues: defaultValuesForForm,
+  });
+
+  useWritingFormBinding({
+    snapshot: () => {
+      const values = form.getValues();
+      return {
+        formContext: JSON.stringify({
+          title: values.title,
+          summary: values.summary,
+          chef_tip: values.chef_tip,
+          category: values.category,
+          difficulty: values.difficulty,
+          time_minutes: values.time_minutes,
+          servings: values.servings,
+          ingredients: values.ingredients,
+          steps: values.steps,
+          tags: normalizeTags(tagsInput),
+          tools: normalizeTools(toolsInput),
+        }),
+        recipeReferences: [],
+      };
+    },
+    apply: (response) => {
+      if (form.formState.isSubmitting || response.kind !== "recipe" || !response.draft)
+        return false;
+      // 이미지와 기존 기본값은 유지한다. AI 반영도 미저장 변경으로 취급한다.
+      form.reset({ ...form.getValues(), ...response.draft }, { keepDefaultValues: true });
+      setTagsInput(response.draft.tags.join(", "));
+      setToolsInput(response.draft.tools.join(", "));
+      return true;
+    },
   });
 
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });

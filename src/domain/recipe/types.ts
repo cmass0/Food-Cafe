@@ -1,6 +1,7 @@
 import type { Database } from "@/types/supabase";
 import { z } from "zod";
 import type { RecipeCategoryKey } from "./category";
+import type { IngredientUnit } from "./ingredient-unit";
 import { recipeFormSchema } from "./schema";
 
 //repo 용
@@ -129,18 +130,7 @@ export type RecipeStep = {
   description: string;
 };
 
-export type IngredientUnit =
-  | "g"
-  | "kg"
-  | "ml"
-  | "L"
-  | "개"
-  | "장"
-  | "컵"
-  | "큰술"
-  | "작은술"
-  | "꼬집"
-  | "custom";
+export type { IngredientUnit };
 
 export type IngredientInput = {
   name: string;

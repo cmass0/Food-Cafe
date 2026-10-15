@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form";
 import { INGREDIENT_TEXT_LIMITS } from "@/domain/recipe/schema";
+import { INGREDIENT_UNITS } from "@/domain/recipe/ingredient-unit";
 import { type FormValues } from "@/domain/recipe/types";
 
 type IngredientsFieldsProps = {
@@ -140,18 +141,11 @@ export function IngredientsFields({ form, ingredientsArray }: IngredientsFieldsP
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
-                                  <SelectItem value="g">g</SelectItem>
-                                  <SelectItem value="kg">kg</SelectItem>
-                                  <SelectItem value="ml">ml</SelectItem>
-                                  <SelectItem value="L">L</SelectItem>
-                                  <SelectItem value="컵">컵</SelectItem>
-                                  <SelectItem value="큰술">큰술</SelectItem>
-                                  <SelectItem value="작은술">작은술</SelectItem>
-                                  <SelectItem value="꼬집">꼬집</SelectItem>
-                                  <SelectItem value="줌">줌</SelectItem>
-                                  <SelectItem value="개">개</SelectItem>
-                                  <SelectItem value="마리">마리</SelectItem>
-                                  <SelectItem value="custom">직접 입력</SelectItem>
+                                  {INGREDIENT_UNITS.map((unit) => (
+                                    <SelectItem key={unit} value={unit}>
+                                      {unit === "custom" ? "직접 입력" : unit}
+                                    </SelectItem>
+                                  ))}
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
