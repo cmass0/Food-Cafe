@@ -1,6 +1,9 @@
 ﻿import { imageFieldSchema, tagSchema } from "@/lib/domain/schema";
 import { z } from "zod";
 import { imageFileSchema } from "./../../lib/domain/schema";
+import { COMBO_RECIPE_REFERENCE_ERRORS } from "./messages";
+
+export const comboRecipeIdSchema = z.string().uuid(COMBO_RECIPE_REFERENCE_ERRORS.invalid);
 
 export const MIN_COMBO_ITEMS = 2;
 export const MAX_COMBO_ITEMS = 10;
@@ -40,7 +43,7 @@ export const ComboItemsSchema = z
     z.union([
       z.object({
         type: z.literal("recipe"),
-        recipeid: z.string().uuid(),
+        recipeid: comboRecipeIdSchema,
         title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
         summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: imageFieldSchema,
@@ -70,7 +73,7 @@ export const ComboItemsSchemaAtForm = z
     z.union([
       z.object({
         type: z.literal("recipe"),
-        recipeid: z.string().uuid(),
+        recipeid: comboRecipeIdSchema,
         title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
         summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
         image: imageFieldSchema,
