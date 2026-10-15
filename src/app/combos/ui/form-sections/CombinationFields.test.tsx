@@ -12,9 +12,9 @@ let root: Root | undefined;
 let container: HTMLDivElement;
 let form: UseFormReturn<ComboFormValues>;
 
-function Harness({ reference }: { reference: string }) {
+function Harness({ reference, title }: { reference: string; title?: string }) {
   const methods = useForm<ComboFormValues>({
-    defaultValues: { items: [{ type: "recipe", recipeid: reference }] },
+    defaultValues: { items: [{ type: "recipe", recipeid: reference, title }] },
   });
   useEffect(() => {
     form = methods;
@@ -27,12 +27,12 @@ function Harness({ reference }: { reference: string }) {
   );
 }
 
-async function mount(reference: string) {
+async function mount(reference: string, title?: string) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () => root!.render(<Harness reference={reference} />));
+  await act(async () => root!.render(<Harness reference={reference} title={title} />));
 }
 
 function input() {
@@ -190,5 +190,63 @@ describe("조합 레시피 불러오기 안내", () => {
     await act(async () => resolve(reply(200)));
     expect(input().value).toBe("다른 잘못된 ID");
     expect(form.getValues("items.0.title")).toBeUndefined();
+  });
+});
+
+describe("조합 레시피 자동 불러오기", () => {
+  test("레시피 주소를 붙여 넣으면 불러오기를 누르지 않아도 불러온다", async () => {
+    vi.stubGlobal("fetch", async () => reply(200));
+    await mount("");
+    await edit(`https://food.example/recipes/${RECIPE_ID}`);
+    expect(input().value).toBe(RECIPE_ID);
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+    expect(container.textContent).toContain("‘김치볶음밥’ 레시피를 불러왔어요");
+  });
+
+  test("형식이 맞지 않는 값을 치는 중에는 불러오지도 오류를 보이지도 않는다", async () => {
+    const fetcher = vi.fn(async () => reply(200));
+    vi.stubGlobal("fetch", fetcher);
+    await mount("");
+    await edit(RECIPE_ID.slice(0, 20));
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(input().getAttribute("aria-invalid")).toBe("false");
+  });
+
+  test("불러오는 동안 진행 상태를 보여주고 끝나면 불러온 레시피 이름을 보여준다", async () => {
+    let resolve!: (response: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      () =>
+        new Promise<Response>((done) => {
+          resolve = done;
+        })
+    );
+    await mount("");
+    await edit(RECIPE_ID);
+    expect(container.textContent).toContain("레시피를 불러오는 중이에요");
+    await act(async () => resolve(reply(200)));
+    expect(container.textContent).not.toContain("레시피를 불러오는 중이에요");
+    expect(container.textContent).toContain("‘김치볶음밥’ 레시피를 불러왔어요");
+  });
+
+  test("제목 없이 저장돼 있던 레시피 칸은 화면을 열 때 불러온다", async () => {
+    vi.stubGlobal("fetch", async () => reply(200));
+    await mount(RECIPE_ID);
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+  });
+
+  test("제목이 있는 레시피 칸은 화면을 열 때 다시 불러오지 않는다", async () => {
+    const fetcher = vi.fn(async () => reply(200));
+    vi.stubGlobal("fetch", fetcher);
+    await mount(RECIPE_ID, "김치볶음밥");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  test("형식이 맞지 않는 ID로 저장돼 있던 칸은 화면을 열 때 불러오지 않는다", async () => {
+    const fetcher = vi.fn(async () => reply(200));
+    vi.stubGlobal("fetch", fetcher);
+    await mount("틀린아이디");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(input().getAttribute("aria-invalid")).toBe("false");
   });
 });

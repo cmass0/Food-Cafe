@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { COMBO_RECIPE_REFERENCE_ERRORS } from "./messages";
 import { ComboFormSchema, ComboInsertSchema, ComboUpdateSchema } from "./schema";
 
 const COMBO_ID = "00000000-0000-4000-8000-000000000001";
@@ -50,6 +51,40 @@ describe("조합 레시피 ID 검증", () => {
       (issue) => issue.path.join(".") === "items.0.recipeid"
     );
     expect(issues?.[0]?.message).toBe("레시피 ID 또는 링크를 입력해 주세요.");
+  });
+});
+
+describe("폼의 레시피 칸 불러오기 확인", () => {
+  const RECIPE_ID = "00000000-0000-4000-8000-0000000000a1";
+  const FORM_BASE = { ...BASE_COMBO, image: "/combos/cover.png" };
+  const withRecipe = (title?: string) => [
+    { type: "recipe" as const, recipeid: RECIPE_ID, title },
+    { type: "product" as const, productName: "물" },
+  ];
+
+  test.each([
+    ["제목이 없는", undefined],
+    ["제목이 빈", ""],
+    ["제목이 공백뿐인", "   "],
+  ] as const)("폼에서 %s 레시피 칸은 그 칸에 불러오기 안내로 거부한다", (_label, title) => {
+    const result = ComboFormSchema.safeParse({ ...FORM_BASE, items: withRecipe(title) });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["items", 0, "recipeid"],
+        message: COMBO_RECIPE_REFERENCE_ERRORS.notLoaded,
+      }),
+    ]);
+  });
+
+  test("폼에서 불러와 제목이 있는 레시피 칸은 받는다", () => {
+    expect(
+      ComboFormSchema.safeParse({ ...FORM_BASE, items: withRecipe("김치볶음밥") }).success
+    ).toBe(true);
+  });
+
+  test("저장 요청은 제목이 없는 레시피 칸도 받는다(서버가 DB 값으로 채운다)", () => {
+    expect(ComboInsertSchema.safeParse({ ...BASE_COMBO, items: withRecipe() }).success).toBe(true);
   });
 });
 

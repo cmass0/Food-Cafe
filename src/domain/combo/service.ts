@@ -1,13 +1,17 @@
 import { resolveLimit, resolveOffset } from "@/lib/pagination";
 import { safePruneContentImages, safeRemoveContentImages } from "@/lib/storage/server";
 import { syncComboRecommendationDocument } from "@/domain/recommend/recommendation-index";
+import { getRecipesByIds } from "@/domain/recipe/service";
 import { Database } from "@/types/supabase";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { ZodError } from "zod";
 
 import { normalizeStoredImageReference, resolveStorageImageUrl } from "@/lib/storage/paths";
 import { buildBookmarkedSetCombo } from "./combo_bookmark/service";
 import { buildLikedSetCombo } from "./combo_like/service";
+import { COMBO_RECIPE_REFERENCE_ERRORS } from "./messages";
 import { toArrayItems, toArraySteps } from "./normalization";
+import { fillRecipeItems } from "./recipe-reference";
 import * as repo from "./repository";
 import { ComboInsertSchema, comboListOptionsSchema, ComboUpdateSchema } from "./schema";
 import {
@@ -174,16 +178,39 @@ export async function getComboById(
   return mapRowToCombination(row);
 }
 
+// 레시피 항목에는 요청자가 읽을 수 있는 레시피만 넣고, 제목·설명·사진은 DB의 레시피 값으로 저장한다.
+// 브라우저가 보낸 값은 비어 있거나(불러오기 전 저장) 조작됐을 수 있다. 찾지 못한 레시피는 그 칸의 입력 오류로 돌린다.
+async function withStoredRecipeDetails<T extends ComboItems>(
+  client: SupabaseClient<Database>,
+  items: T[]
+) {
+  const ids = [
+    ...new Set(items.flatMap((item) => (item.type === "recipe" ? [item.recipeid] : []))),
+  ];
+  const { items: filled, missing } = fillRecipeItems(items, await getRecipesByIds(client, ids));
+  if (missing.length > 0) {
+    throw new ZodError(
+      missing.map((index) => ({
+        code: "custom" as const,
+        path: ["items", index, "recipeid"],
+        message: COMBO_RECIPE_REFERENCE_ERRORS.notFound,
+      }))
+    );
+  }
+  return filled;
+}
+
 export async function createCombo(
   client: SupabaseClient<Database>,
   input: ComboInsertDb
 ): Promise<Combos> {
   const parsed = ComboInsertSchema.parse(input);
+  const items = await withStoredRecipeDetails(client, parsed.items);
 
   const row = await repo.insertCombo(client, {
     ...parsed,
     image: normalizeStoredImageReference(parsed.image),
-    items: normalizeStoredComboItems(parsed.items),
+    items: normalizeStoredComboItems(items),
   });
   await syncComboRecommendationDocument(row);
   return mapRowToCombination(row);
@@ -195,11 +222,13 @@ export async function updateCombo(
   patch: ComboUpdateDb
 ): Promise<Combos | null> {
   const parsed = ComboUpdateSchema.parse(patch);
+  const items =
+    parsed.items === undefined ? undefined : await withStoredRecipeDetails(client, parsed.items);
 
   const storedPatch = {
     ...parsed,
     ...(parsed.image === undefined ? {} : { image: normalizeStoredImageReference(parsed.image) }),
-    ...(parsed.items === undefined ? {} : { items: normalizeStoredComboItems(parsed.items) }),
+    ...(items === undefined ? {} : { items: normalizeStoredComboItems(items) }),
   };
   const row = await repo.updateCombo(client, id, writerUid, storedPatch);
   if (!row) return null;

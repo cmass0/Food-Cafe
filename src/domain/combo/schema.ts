@@ -77,13 +77,20 @@ const comboItemImageFormSchema = z.preprocess(
 export const ComboItemsSchemaAtForm = z
   .array(
     z.union([
-      z.object({
-        type: z.literal("recipe"),
-        recipeid: comboRecipeIdSchema,
-        title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
-        summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
-        image: imageFieldSchema,
-      }),
+      z
+        .object({
+          type: z.literal("recipe"),
+          recipeid: comboRecipeIdSchema,
+          title: z.string().max(COMBO_ITEM_TEXT_LIMITS.title).optional(),
+          summary: z.string().max(COMBO_ITEM_TEXT_LIMITS.summary).optional(),
+          image: imageFieldSchema,
+        })
+        // 폼에서는 레시피를 불러와 제목이 채워진 칸만 저장한다. 없는 레시피를 저장 전에 그 칸에서 알리려는 것이고,
+        // 저장할 때는 서버가 제목·설명·사진을 DB 값으로 다시 채운다.
+        .refine((item) => Boolean(item.title?.trim()), {
+          path: ["recipeid"],
+          message: COMBO_RECIPE_REFERENCE_ERRORS.notLoaded,
+        }),
       z.object({
         type: z.literal("product"),
         productName: z
