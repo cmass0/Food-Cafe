@@ -303,15 +303,14 @@ export function WritingAssistantPanel({
               <div className="flex justify-end px-2 pb-2">
                 <Button
                   type="submit"
-                  size="sm"
                   disabled={pending || !input.trim()}
-                  className="h-8 gap-1.5 rounded-lg px-3"
+                  className="h-10 gap-2 rounded-xl px-5 text-sm font-semibold"
                 >
                   {started ? "답변 보내기" : "질문으로 정리하기"}
                   {started ? (
-                    <ArrowUp className="size-3.5" aria-hidden="true" />
+                    <ArrowUp className="size-4" aria-hidden="true" />
                   ) : (
-                    <ArrowRight className="size-3.5" aria-hidden="true" />
+                    <ArrowRight className="size-4" aria-hidden="true" />
                   )}
                 </Button>
               </div>
