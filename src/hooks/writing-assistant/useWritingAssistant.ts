@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { requestWritingTurn } from "@/features/writing-assistant/api";
 import type {
+  WritingApplyChanges,
   WritingAssistantKind,
   WritingFormBinding,
   WritingRequest,
@@ -101,8 +102,11 @@ export function useWritingAssistant(
     reset,
     apply,
     finish: () => answer(input, true),
-    removedOnApply: () =>
-      session?.response ? (binding.current?.removedOnApply?.(session.response) ?? []) : [],
+    changesOnApply: (): WritingApplyChanges =>
+      (session?.response && binding.current?.changesOnApply?.(session.response)) || {
+        removed: [],
+        restored: [],
+      },
     retry: () => {
       if (failedRequest.current) void send(failedRequest.current);
     },
