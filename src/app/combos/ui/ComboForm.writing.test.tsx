@@ -296,3 +296,30 @@ test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영
     await cleanup();
   }
 });
+
+test("실패한 요청을 다시 시도할 때는 그사이 폼에서 바꾼 레시피 목록을 보낸다", async () => {
+  stubBrowser(questionResponse());
+  const sentRecipeIds: string[][] = [];
+  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+    sentRecipeIds.push(JSON.parse(init.body as string).recipeIds);
+    return sentRecipeIds.length === 1
+      ? new Response("error", { status: 503 })
+      : new Response(JSON.stringify(questionResponse()));
+  });
+  const { cleanup } = await renderForm({
+    title: "직접 적은 조합",
+    image: "https://example.com/main.jpg",
+    items: [
+      { type: "recipe" as const, recipeid: RECIPE_ID, title: "김치볶음밥" },
+      { type: "product" as const, productName: "단무지", summary: "" },
+    ],
+  });
+  try {
+    await click("아이디어 없이 시작");
+    await click("삭제");
+    await click("다시 시도");
+    expect(sentRecipeIds).toEqual([[RECIPE_ID], []]);
+  } finally {
+    await cleanup();
+  }
+});

@@ -20,6 +20,12 @@ import {
 import { finalizeWritingResponse } from "./workflow";
 import type { WritingModelOptions, WritingRequest } from "./types";
 
+// 고른 레시피를 DB에서 읽지 못한 오류. 모델 오류와 달리 프롬프트·모델 원문이 없으므로
+// 라우트가 공통 DB 오류 처리로 상태(연결 실패면 503)를 정하고 원인을 로그에 남긴다.
+export class WritingRecipeLookupError extends Error {
+  override name = "WritingRecipeLookupError";
+}
+
 const instructions = `당신은 FoodCafe 레시피/조합 작성 도우미입니다. 한국어로 답합니다.
 사용자 입력에서 실제로 제공한 재료, 인분, 조리도구, 시간, 맛, 요리 의도를 파악하세요.
 formContext는 사용자가 현재 폼에 적은 내용입니다. 빈 문자열, 빈 항목, 시간 0은 정보가 아닙니다.
@@ -52,7 +58,9 @@ export async function generateWritingTurn(
   const { recipeIds, ...request } = writingRequestSchema.parse(input);
   // 고른 레시피는 브라우저가 보낸 값을 믿지 않고 DB에서 다시 읽는다. 삭제·비공개 레시피는 빠진다.
   const requestedIds = request.kind === "combo" ? [...new Set(recipeIds)] : [];
-  const selected = await getRecipesByIds(client, requestedIds);
+  const selected = await getRecipesByIds(client, requestedIds).catch((cause: unknown) => {
+    throw new WritingRecipeLookupError("고른 레시피를 읽지 못했습니다.", { cause });
+  });
   const finished = request.finish || request.turns.length >= MAX_WRITING_QUESTIONS;
   const promptInput = { ...request, selectedRecipes: selected.map(toSelectedRecipePrompt) };
   const settings = {
