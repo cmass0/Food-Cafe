@@ -9,6 +9,11 @@ type FormItem = ComboFormValues["items"][number];
 //   답을 받은 뒤 폼에서 지운 레시피가 초안에 있으면 초안 자리에 다시 넣는다. 조리 단계가 그 레시피를 함께 쓰기 때문이다.
 // - 상품은 초안을 따르고, 이름이 같은 폼 상품에 올려 둔 이미지를 이어받는다.
 // removed는 반영하면 폼에서 빠지는 상품, restored는 다시 넣는 레시피 이름이다. 반영 확인창에 보여준다.
+// 서버는 레시피 ID를 DB처럼 소문자로 돌려주고, 폼에는 사용자가 붙여 넣은 대문자가 남아 있을 수 있다.
+function sameRecipeId(a: string, b: string) {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
 export function mergeComboDraftItems(current: FormItem[], draft: ComboWritingDraft["items"]) {
   const used = new Set<FormItem>();
   const entries: { item: FormItem; row?: FormItem }[] = [];
@@ -18,7 +23,7 @@ export function mergeComboDraftItems(current: FormItem[], draft: ComboWritingDra
       (entry) =>
         !used.has(entry) &&
         (item.type === "recipe"
-          ? entry.type === "recipe" && entry.recipeid === item.recipeid
+          ? entry.type === "recipe" && sameRecipeId(entry.recipeid, item.recipeid)
           : entry.type === "product" && entry.productName === item.productName)
     );
     if (row) used.add(row);
