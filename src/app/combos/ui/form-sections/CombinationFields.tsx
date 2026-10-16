@@ -14,7 +14,7 @@ import { getRecipe } from "@/domain/recipe/api";
 
 import { Recipe } from "@/domain/recipe/types";
 import { cn } from "@/lib/utils";
-import { ChefHat, ShoppingBag } from "lucide-react";
+import { CheckCircle2, ChefHat, Loader2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import React, { ChangeEvent } from "react";
 import { UseFieldArrayReturn, UseFormReturn } from "react-hook-form";
@@ -37,7 +37,7 @@ type CombinationFieldsProps = {
 const ITEM_KINDS = {
   recipe: {
     label: "사이트 레시피",
-    description: "FoodCafe에 올라온 레시피를 ID로 불러와요",
+    description: "FoodCafe에 올라온 레시피를 ID나 주소로 불러와요",
     icon: ChefHat,
     badge: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400",
   },
@@ -60,10 +60,21 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     };
   }, []);
   const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
+  // 칸마다 지금 불러오는 레시피 ID. 입력칸 아래에 진행 상태를 보여준다.
+  // ID가 아니라 칸 기준이라, 같은 레시피를 가진 다른 칸이나 바뀌기 전 ID의 표시가 섞이지 않는다.
+  const [loadingFor, setLoadingFor] = React.useState<ReadonlyMap<string, string>>(new Map());
+  const setLoading = (fieldName: string, id: string | null) =>
+    setLoadingFor((prev) => {
+      const next = new Map(prev);
+      if (id) next.set(fieldName, id);
+      else next.delete(fieldName);
+      return next;
+    });
   // 항목마다 가장 최근에 보낸 조회 번호. 같은 ID를 연달아 불러와도 마지막 요청의 응답만 반영한다.
   const latestLookup = React.useRef(new Map<string, number>());
 
-  const fetchRecipeByid = async (input: string, index: number) => {
+  // markDirty가 false면 화면을 열 때 저장된 값을 다시 확인하는 경우다. 사용자가 바꾼 게 아니므로 미저장 변경으로 치지 않는다.
+  const fetchRecipeByid = async (input: string, index: number, markDirty = true) => {
     const fieldName = `items.${index}.recipeid` as const;
     form.clearErrors(fieldName);
     if (!input.trim()) {
@@ -76,9 +87,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       return;
     }
     const id = parsed.data;
-    form.setValue(fieldName, id, {
-      shouldDirty: true,
-    });
+    form.setValue(fieldName, id, { shouldDirty: markDirty });
     // 입력 변경·항목 삭제·다시 불러오기 뒤 도착한 응답이 다른 항목이나 새 결과를 덮어쓰지 않게 한다.
     const lookup = (latestLookup.current.get(fieldName) ?? 0) + 1;
     latestLookup.current.set(fieldName, lookup);
@@ -86,41 +95,85 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       latestLookup.current.get(fieldName) === lookup &&
       form.getValues(`items.${index}.type`) === "recipe" &&
       form.getValues(fieldName) === id;
+    // 없는 레시피는 불러온 정보를 지워, 저장 전 확인(제목 없는 레시피 칸 거부)에도 걸리게 한다.
+    // 빈 값은 undefined가 아니라 명시한다. undefined면 폼을 다시 채울 때 처음 불러온 값이 되살아난다.
+    const markNotFound = () => {
+      form.setValue(`items.${index}.title`, "", { shouldDirty: markDirty });
+      form.setValue(`items.${index}.summary`, "", { shouldDirty: markDirty });
+      form.setValue(`items.${index}.image`, null, { shouldDirty: markDirty });
+      form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.notFound });
+      // 전에 불러온 결과도 지운다. 남아 있으면 같은 주소를 다시 붙여 넣을 때 확인한 레시피로 보고 건너뛴다.
+      setRecipeRef((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    };
+    setLoading(fieldName, id);
     try {
       const req = await getRecipe(id);
       if (!current()) return;
       if (!req) {
-        form.setError(fieldName, {
-          type: "manual",
-          message: COMBO_RECIPE_REFERENCE_ERRORS.notFound,
-        });
+        markNotFound();
         return;
       }
       form.clearErrors(fieldName);
       form.setValue(`items.${index}.image`, req.image ?? null, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       form.setValue(`items.${index}.title`, req.title ?? undefined, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       setRecipeRef((prev) => ({ ...prev, [id]: req }));
     } catch (error) {
       if (!current()) return;
-      form.setError(fieldName, {
-        type: "manual",
-        message:
-          (error as ApiError | null)?.status === 404
-            ? COMBO_RECIPE_REFERENCE_ERRORS.notFound
-            : COMBO_RECIPE_REFERENCE_ERRORS.unavailable,
-      });
+      // 연결 문제로 확인하지 못한 경우는 저장된 제목을 남긴다. 저장할 때 서버가 다시 확인한다.
+      if ((error as ApiError | null)?.status === 404) markNotFound();
+      else
+        form.setError(fieldName, {
+          type: "manual",
+          message: COMBO_RECIPE_REFERENCE_ERRORS.unavailable,
+        });
+    } finally {
+      // 같은 칸에 더 최근 요청이 있으면 그 요청이 끝날 때 진행 표시를 지운다.
+      if (latestLookup.current.get(fieldName) === lookup) setLoading(fieldName, null);
     }
   };
+
+  // 레시피 칸에 입력할 때. 다른 레시피를 가리키면 불러온 정보를 지우고, 올바른 ID·주소면 바로 불러온다.
+  // 한 글자씩 치는 중에는 형식이 맞지 않아 부르지 않는다. 이 화면에서 이미 확인한 같은 레시피의 주소는 다시 조회하지 않고 ID로만 바꾼다.
+  const handleRecipeInput = (next: string, previous: string, index: number) => {
+    const fieldName = `items.${index}.recipeid` as const;
+    const changed = parseRecipeReference(next) !== parseRecipeReference(previous);
+    if (changed) {
+      form.setValue(`items.${index}.title`, undefined);
+      form.setValue(`items.${index}.summary`, undefined);
+      form.setValue(`items.${index}.image`, undefined);
+    }
+    form.clearErrors(fieldName);
+    const parsed = comboRecipeIdSchema.safeParse(parseRecipeReference(next));
+    if (!parsed.success) return;
+    // 저장된 제목이 아니라 이 화면에서 실제로 확인한 레시피인지로 판단한다(열 때 확인이 실패했을 수 있다).
+    if (changed || !recipeRef[parsed.data]) void fetchRecipeByid(next, index);
+    else if (next !== parsed.data) form.setValue(fieldName, parsed.data, { shouldDirty: true });
+  };
+
+  // 수정 화면을 열 때 저장된 레시피 칸을 한 번씩 다시 확인한다. 제목 없이 저장된 예전 칸은 채우고,
+  // 저장한 뒤 삭제된 레시피는 저장하기 전에 그 칸에서 알린다.
+  const loadSavedRecipes = React.useEffectEvent(() => {
+    form.getValues("items").forEach((item, index) => {
+      if (item.type === "recipe" && comboRecipeIdSchema.safeParse(item.recipeid).success) {
+        void fetchRecipeByid(item.recipeid, index, false);
+      }
+    });
+  });
+  React.useEffect(() => loadSavedRecipes(), []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
@@ -336,27 +389,21 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                     name={`items.${index}.recipeid`}
                     render={({ field }) => {
                       const card = recipeCard(index, field.value);
+                      const loading = loadingFor.get(field.name) === field.value;
                       return (
                         <FormItem className="flex flex-col gap-4 md:flex-row md:items-start">
                           <div className="min-w-0 flex-1 space-y-2">
-                            <FormLabel>레시피 ID</FormLabel>
+                            <FormLabel>레시피 ID 또는 레시피 주소</FormLabel>
                             <div className="flex gap-2">
                               <FormControl>
                                 <Input
-                                  placeholder="레시피 ID 또는 레시피 링크"
+                                  placeholder="복사한 레시피 ID나 레시피 주소를 붙여 넣어 주세요"
                                   aria-label={`조합 항목 ${index + 1} 레시피 ID`}
                                   {...field}
                                   onChange={(event) => {
-                                    if (
-                                      parseRecipeReference(event.target.value) !==
-                                      parseRecipeReference(field.value)
-                                    ) {
-                                      form.setValue(`items.${index}.title`, undefined);
-                                      form.setValue(`items.${index}.summary`, undefined);
-                                      form.setValue(`items.${index}.image`, undefined);
-                                    }
+                                    const previous = field.value;
                                     field.onChange(event);
-                                    form.clearErrors(`items.${index}.recipeid`);
+                                    handleRecipeInput(event.target.value, previous, index);
                                   }}
                                 />
                               </FormControl>
@@ -364,15 +411,29 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                                 type="button"
                                 variant="outline"
                                 className="shrink-0"
+                                disabled={loading}
                                 onClick={() => fetchRecipeByid(field.value, index)}
                               >
                                 불러오기
                               </Button>
                             </div>
                             <FormDescription>
-                              레시피 상세 화면의 &lsquo;레시피 ID 복사&rsquo;로 복사한 값을 붙여
-                              넣고 불러오기를 눌러 주세요.
+                              레시피 상세 화면의 &lsquo;레시피 ID 복사&rsquo; 버튼으로 복사한 ID나
+                              레시피 페이지 주소를 붙여 넣으면 자동으로 불러와요.
                             </FormDescription>
+                            <div aria-live="polite">
+                              {loading ? (
+                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                                  레시피를 불러오는 중이에요
+                                </p>
+                              ) : card && !form.getFieldState(`items.${index}.recipeid`).error ? (
+                                <p className="flex items-center gap-1.5 text-xs font-medium text-green-700 dark:text-green-400">
+                                  <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                                  &lsquo;{card.title}&rsquo; 레시피를 불러왔어요
+                                </p>
+                              ) : null}
+                            </div>
                             <FormMessage />
                           </div>
                           {/* 미리보기 */}

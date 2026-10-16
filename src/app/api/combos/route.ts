@@ -1,5 +1,6 @@
 import * as comboService from "@/domain/combo/service";
 import { ComboSearchField, ComboSort } from "@/domain/combo/types";
+import * as comboSave from "@/features/combo-save/service";
 import { AuthErrorHelper, badRequest, json, respondWithError } from "@/lib/errors/api-response";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
   if (error) return error;
 
   try {
-    const combo = await comboService.createCombo(supabase, {
+    const combo = await comboSave.createCombo(supabase, {
       ...body,
       writer_uid: user.id,
     });

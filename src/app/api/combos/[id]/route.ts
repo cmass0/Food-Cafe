@@ -1,5 +1,6 @@
 import { ComboUpdateSchema } from "@/domain/combo/schema";
 import * as comboService from "@/domain/combo/service";
+import * as comboSave from "@/features/combo-save/service";
 import { clearTrendingCache } from "@/features/trending/cache";
 import { contentParams } from "@/lib/api/prams-type";
 import {
@@ -46,7 +47,7 @@ export async function PUT(req: Request, props: contentParams) {
     if (error) return error;
 
     const comboId = params.id;
-    const updated = await comboService.updateCombo(supabase, comboId, user.id, parse.data);
+    const updated = await comboSave.updateCombo(supabase, comboId, user.id, parse.data);
     if (!updated) return notFound("수정할 수 있는 조합");
     return json({ data: updated });
   } catch (error) {
