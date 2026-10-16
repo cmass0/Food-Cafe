@@ -30,6 +30,11 @@ export function WritingAssistantIntro({ kind, pending, onUseExample }: WritingAs
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {copy.label}의 구성을 함께 잡고, 질문으로 조금씩 구체화해 볼게요.
         </p>
+        {copy.formNote ? (
+          <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-xs leading-5 text-green-900 dark:bg-green-950/40 dark:text-green-200">
+            {copy.formNote}
+          </p>
+        ) : null}
       </div>
 
       <ol className="space-y-3.5 rounded-xl bg-muted/50 p-4">
@@ -65,7 +70,7 @@ export function WritingAssistantIntro({ kind, pending, onUseExample }: WritingAs
 
       <p className="flex items-start gap-1.5 text-[11px] leading-4 text-muted-foreground">
         <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" />
-        메모·답변과 시작 시점의 폼 텍스트를 AI에 전달해요. 이미지는 보내지 않아요.
+        메모·답변과 폼 내용을 AI에 전달해요. 이미지는 보내지 않아요.
       </p>
     </div>
   );
