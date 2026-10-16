@@ -164,6 +164,40 @@ describe("작성 도우미 API 연결", () => {
     });
     expect(body.notices).toEqual([unavailableRecipesNotice(1)]);
   });
+  test("같은 레시피를 대소문자만 다르게 두 번 보내도 AI에는 한 번만 넘기고 못 읽었다고 알리지 않는다", async () => {
+    login();
+    const rice = "f76c7a5f-8e6d-58aa-826a-5752329b215c";
+    boundary.recipeRows = [
+      {
+        id: rice,
+        title: "김치볶음밥",
+        summary: null,
+        steps: [{ description: "밥과 김치를 센 불에 볶는다." }],
+        ingredients: [],
+        created_at: "2026-10-01T00:00:00Z",
+        updated_at: "2026-10-01T00:00:00Z",
+      },
+    ];
+    let prompt = "";
+    boundary.model.mockReturnValue(
+      modelReply(
+        {
+          kind: "combo",
+          outline: { title: "볶음밥 한 끼", points: ["볶음밥"] },
+          question: { topic: "곁들임", text: "곁들일 것을 정할까요?", options: [] },
+          suggestions: [],
+          draft: null,
+        },
+        (value) => (prompt = JSON.stringify(value))
+      )
+    );
+    const response = await POST(
+      request({ ...input, kind: "combo", recipeIds: [rice.toUpperCase(), rice] })
+    );
+    expect(response.status).toBe(200);
+    expect(prompt.split("밥과 김치를 센 불에 볶는다.")).toHaveLength(2);
+    expect((await response.json()).notices).toEqual([]);
+  });
   test("고른 레시피를 읽다 DB에 닿지 못하면 AI를 부르지 않고 503을 반환한다", async () => {
     login();
     boundary.recipeError = { message: "fetch failed", code: "" };

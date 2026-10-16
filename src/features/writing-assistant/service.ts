@@ -57,7 +57,9 @@ export async function generateWritingTurn(
 ) {
   const { recipeIds, ...request } = writingRequestSchema.parse(input);
   // 고른 레시피는 브라우저가 보낸 값을 믿지 않고 DB에서 다시 읽는다. 삭제·비공개 레시피는 빠진다.
-  const requestedIds = request.kind === "combo" ? [...new Set(recipeIds)] : [];
+  // 같은 레시피를 대소문자만 다르게 두 번 보내도 한 번만 읽고 센다.
+  const requestedIds =
+    request.kind === "combo" ? [...new Set(recipeIds.map((id) => id.toLowerCase()))] : [];
   const selected = await getRecipesByIds(client, requestedIds).catch((cause: unknown) => {
     throw new WritingRecipeLookupError("고른 레시피를 읽지 못했습니다.", { cause });
   });
