@@ -44,9 +44,11 @@ export function keepSelectedRecipes(
   const seen = new Set<string>();
   const items = response.draft.items.flatMap<ComboWritingDraft["items"][number]>((item) => {
     if (item.type !== "recipe") return [item];
-    if (seen.has(item.recipeid)) return [];
-    seen.add(item.recipeid);
-    return [{ ...item, title: titles.get(item.recipeid) ?? item.title }];
+    // 고른 레시피 ID는 DB처럼 소문자다. AI가 대문자로 돌려줘도 같은 레시피로 짝짓는다.
+    const recipeid = item.recipeid.toLowerCase();
+    if (seen.has(recipeid)) return [];
+    seen.add(recipeid);
+    return [{ ...item, recipeid, title: titles.get(recipeid) ?? item.title }];
   });
   for (const recipe of selected) {
     if (!seen.has(recipe.id)) {

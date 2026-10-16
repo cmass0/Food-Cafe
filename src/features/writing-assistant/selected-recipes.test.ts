@@ -67,6 +67,14 @@ describe("keepSelectedRecipes", () => {
     );
     expect(itemsOf(result)).toEqual([recipe(RICE, "김치볶음밥"), recipe(SOUP, "계란국")]);
   });
+  test("AI가 고른 레시피 ID를 대문자로 돌려줘도 같은 레시피로 보고 원본 제목으로 한 번만 남긴다", () => {
+    const lettered = RICE.replace("0000", "abcd");
+    const result = keepSelectedRecipes(
+      combo([recipe(lettered.toUpperCase(), "매콤 김치볶음밥"), product("단무지")]),
+      [{ id: lettered, title: "김치볶음밥" }]
+    );
+    expect(itemsOf(result)).toEqual([recipe(lettered, "김치볶음밥"), product("단무지")]);
+  });
   test("두 번 넣은 레시피를 하나로 줄여 항목이 2개보다 적으면 초안을 쓰지 않는다", () => {
     expect(() =>
       keepSelectedRecipes(
