@@ -60,6 +60,8 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     };
   }, []);
   const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
+  // 항목마다 가장 최근에 보낸 조회 번호. 같은 ID를 연달아 불러와도 마지막 요청의 응답만 반영한다.
+  const latestLookup = React.useRef(new Map<string, number>());
 
   const fetchRecipeByid = async (input: string, index: number) => {
     const fieldName = `items.${index}.recipeid` as const;
@@ -77,9 +79,13 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     form.setValue(fieldName, id, {
       shouldDirty: true,
     });
-    // 입력 변경·항목 삭제 뒤 도착한 응답이 다른 항목의 값이나 오류를 덮어쓰지 않게 한다.
+    // 입력 변경·항목 삭제·다시 불러오기 뒤 도착한 응답이 다른 항목이나 새 결과를 덮어쓰지 않게 한다.
+    const lookup = (latestLookup.current.get(fieldName) ?? 0) + 1;
+    latestLookup.current.set(fieldName, lookup);
     const current = () =>
-      form.getValues(`items.${index}.type`) === "recipe" && form.getValues(fieldName) === id;
+      latestLookup.current.get(fieldName) === lookup &&
+      form.getValues(`items.${index}.type`) === "recipe" &&
+      form.getValues(fieldName) === id;
     try {
       const req = await getRecipe(id);
       if (!current()) return;

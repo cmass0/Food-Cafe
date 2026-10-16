@@ -191,4 +191,23 @@ describe("조합 레시피 불러오기 안내", () => {
     expect(input().value).toBe("다른 잘못된 ID");
     expect(form.getValues("items.0.title")).toBeUndefined();
   });
+
+  test("같은 레시피를 연달아 불러오면 먼저 보낸 요청의 늦은 실패가 결과를 덮어쓰지 않는다", async () => {
+    const pending: ((response: Response) => void)[] = [];
+    vi.stubGlobal(
+      "fetch",
+      () =>
+        new Promise<Response>((done) => {
+          pending.push(done);
+        })
+    );
+    await mount(RECIPE_ID);
+    await load();
+    await load();
+    await act(async () => pending.at(-1)!(reply(200)));
+    await act(async () => pending.at(-2)!(reply(500)));
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+    expect(container.textContent).not.toContain("레시피를 불러오지 못했어요");
+    expect(input().getAttribute("aria-invalid")).toBe("false");
+  });
 });
