@@ -80,6 +80,17 @@ export async function fetchRecipes(
   };
 }
 
+// 없거나 RLS로 읽을 수 없는 레시피는 결과에서 빠진다. 반환 순서는 보장하지 않는다.
+export async function selectRecipesByIds(
+  client: SupabaseClient<Database>,
+  ids: string[]
+): Promise<RecipeRow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await client.from("recipes").select("*").in("id", ids);
+  throwIfError(error);
+  return data ?? [];
+}
+
 export async function selectRecipeById(
   client: SupabaseClient<Database>,
   id: string

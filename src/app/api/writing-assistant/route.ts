@@ -6,8 +6,12 @@ import {
   respondWithError,
 } from "@/lib/errors/api-response";
 import { getRecommendLanguageModel } from "@/lib/ai/model";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { writingRequestSchema } from "@/features/writing-assistant/schema";
-import { generateWritingTurn } from "@/features/writing-assistant/service";
+import {
+  generateWritingTurn,
+  WritingRecipeLookupError,
+} from "@/features/writing-assistant/service";
 
 export const maxDuration = 60;
 
@@ -31,9 +35,13 @@ export async function POST(request: Request) {
     const result = await generateWritingTurn(parsed.data, {
       model: getRecommendLanguageModel(),
       signal: request.signal,
+      client: await getServerSupabase(),
     });
     return json(result);
   } catch (error) {
+    if (error instanceof WritingRecipeLookupError) {
+      return respondWithError(error.cause, "작성 도우미 레시피 조회 실패");
+    }
     // respondWithError는 오류 객체를 통째로 기록한다. SDK 오류에는 메모·폼 내용이 담긴 프롬프트와 모델 원문이
     // 들어 있을 수 있어 여기서는 이름만 남긴다. 모델 응답 검증 실패(ZodError)도 사용자 입력 문제가 아니므로 500이다.
     console.error("작성 도우미 생성 실패", error instanceof Error ? error.name : "UnknownError");

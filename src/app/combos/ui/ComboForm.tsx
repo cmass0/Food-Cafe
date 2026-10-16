@@ -17,6 +17,8 @@ import { ComboImageUploadField } from "./form-sections/ImageUploadField";
 import { ComboStepsFields } from "./form-sections/StepsFields";
 import { ComboSummaryField } from "./form-sections/SummaryFiled";
 import { useWritingFormBinding } from "@/hooks/writing-assistant/useWritingFormBinding";
+import { mergeComboDraftItems } from "@/features/writing-assistant/combo-draft";
+import { writingRecipeIdSchema } from "@/features/writing-assistant/schema";
 
 type ComboFormProps = {
   defaultValues?: Partial<ComboFormValues>;
@@ -85,10 +87,14 @@ export default function ComboForm({
   useWritingFormBinding({
     snapshot: () => {
       const values = form.getValues();
-      const textItems = values.items.map((item) =>
-        item.type === "recipe"
-          ? { type: item.type, recipeid: item.recipeid, title: item.title, summary: item.summary }
-          : { type: item.type, productName: item.productName, summary: item.summary }
+      // 레시피는 ID만 보낸다. 제목·내용은 서버가 DB에서 다시 읽는다.
+      const products = values.items.flatMap((item) =>
+        item.type === "product" ? [{ productName: item.productName, summary: item.summary }] : []
+      );
+      const recipeIds = values.items.flatMap((item) =>
+        item.type === "recipe" && writingRecipeIdSchema.safeParse(item.recipeid).success
+          ? [item.recipeid]
+          : []
       );
       return {
         formContext: JSON.stringify({
@@ -97,35 +103,26 @@ export default function ComboForm({
           difficulty: values.difficulty,
           time_minutes: values.time_minutes,
           steps: values.steps,
-          items: textItems,
+          products,
           tags: normalizeTags(tagsInput),
           tools: normalizeTools(toolsInput),
         }),
-        recipeReferences: values.items.flatMap((item) =>
-          item.type === "recipe" && item.title ? [{ id: item.recipeid, title: item.title }] : []
-        ),
+        recipeIds: [...new Set(recipeIds)],
       };
     },
     apply: (response) => {
       if (form.formState.isSubmitting || response.kind !== "combo" || !response.draft) return false;
       const current = form.getValues();
-      const items = response.draft.items.map((item) => {
-        if (item.type === "recipe") {
-          // 레시피 항목은 "레시피 가져오기"로 불러온 제목·설명·이미지를 그대로 둔다.
-          const existing = current.items.find(
-            (entry) => entry.type === "recipe" && entry.recipeid === item.recipeid
-          );
-          return existing ?? item;
-        }
-        const existing = current.items.find(
-          (entry) => entry.type === "product" && entry.productName === item.productName
-        );
-        return { ...item, image: existing?.image };
-      });
+      const { items } = mergeComboDraftItems(current.items, response.draft.items);
       form.reset({ ...current, ...response.draft, items }, { keepDefaultValues: true });
       setTagsInput(response.draft.tags.join(", "));
       setToolsInput(response.draft.tools.join(", "));
       return true;
+    },
+    changesOnApply: (response) => {
+      if (response.kind !== "combo" || !response.draft) return { restored: [] };
+      const { restored } = mergeComboDraftItems(form.getValues().items, response.draft.items);
+      return { restored };
     },
   });
   // 조리 단계 필드 배열 훅

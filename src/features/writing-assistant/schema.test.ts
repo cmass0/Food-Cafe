@@ -13,7 +13,7 @@ const request = {
   kind: "recipe" as const,
   memo: "계란으로 만들어줘",
   formContext: "{}",
-  recipeReferences: [],
+  recipeIds: [],
   turns: [],
   outline: null,
   finish: false,
@@ -42,7 +42,7 @@ const RECIPE_ID = "00000000-0000-4000-8000-000000000001";
 const comboRequest = {
   ...request,
   kind: "combo" as const,
-  recipeReferences: [{ id: RECIPE_ID, title: "계란찜" }],
+  recipeIds: [RECIPE_ID],
 };
 const comboResponse = {
   kind: "combo" as const,
@@ -148,13 +148,27 @@ describe("작성 도우미 종료 규칙", () => {
     );
     expect(finalizeWritingResponse(comboRequest, comboResponse).draft?.title).toBe("계란찜과 밥");
   });
-  test("레시피 항목에는 AI가 쓴 이름·설명 대신 선택한 레시피 이름만 남긴다", () => {
+  test("브라우저가 보낸 레시피 ID에 대문자가 섞여 있어도 서버가 소문자로 돌려준 같은 레시피는 받는다", () => {
+    const lettered = RECIPE_ID.replace("0000", "abcd");
+    const upper = { ...comboRequest, recipeIds: [lettered.toUpperCase()] };
+    const lowered = {
+      ...comboResponse,
+      draft: {
+        ...comboResponse.draft,
+        items: comboResponse.draft.items.map((item) =>
+          item.type === "recipe" ? { ...item, recipeid: lettered } : item
+        ),
+      },
+    };
+    expect(finalizeWritingResponse(upper, lowered).draft?.title).toBe("계란찜과 밥");
+  });
+  test("레시피 항목에는 AI가 덧붙인 설명을 남기지 않는다", () => {
     const rewritten = {
       ...comboResponse,
       draft: {
         ...comboResponse.draft,
         items: [
-          { type: "recipe", recipeid: RECIPE_ID, title: "매콤 계란찜", summary: "AI가 쓴 설명" },
+          { type: "recipe", recipeid: RECIPE_ID, title: "계란찜", summary: "AI가 쓴 설명" },
           comboResponse.draft.items[1],
         ],
       },
@@ -165,6 +179,9 @@ describe("작성 도우미 종료 규칙", () => {
       recipeid: RECIPE_ID,
       title: "계란찜",
     });
+  });
+  test("서버 안내가 없는 응답은 빈 안내 목록으로 읽는다", () => {
+    expect(finalizeWritingResponse(request, response).notices).toEqual([]);
   });
 });
 

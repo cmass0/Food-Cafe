@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { requestWritingTurn } from "@/features/writing-assistant/api";
 import type {
+  WritingApplyChanges,
   WritingAssistantKind,
   WritingFormBinding,
   WritingRequest,
@@ -53,7 +54,7 @@ export function useWritingAssistant(
   }
 
   function start() {
-    const snapshot = binding.current?.snapshot() ?? { formContext: "{}", recipeReferences: [] };
+    const snapshot = binding.current?.snapshot() ?? { formContext: "{}", recipeIds: [] };
     void send({ kind, memo: input.trim(), ...snapshot, turns: [], outline: null, finish: false });
   }
 
@@ -65,7 +66,15 @@ export function useWritingAssistant(
           { question: session.response.question.text, answer: value.trim() },
         ]
       : session.request.turns;
-    void send({ ...session.request, turns, outline: session.response.outline, finish });
+    // 대화 중에도 폼을 고칠 수 있으므로 질문마다 폼 내용과 고른 레시피를 다시 읽는다.
+    const snapshot = binding.current?.snapshot();
+    void send({
+      ...session.request,
+      ...snapshot,
+      turns,
+      outline: session.response.outline,
+      finish,
+    });
   }
 
   function reset() {
@@ -99,8 +108,15 @@ export function useWritingAssistant(
     reset,
     apply,
     finish: () => answer(input, true),
+    changesOnApply: (): WritingApplyChanges =>
+      (session?.response && binding.current?.changesOnApply?.(session.response)) || {
+        restored: [],
+      },
     retry: () => {
-      if (failedRequest.current) void send(failedRequest.current);
+      const failed = failedRequest.current;
+      if (!failed) return;
+      // 실패한 뒤 폼을 고쳤을 수 있으므로 다시 시도할 때도 지금 폼에서 다시 읽는다.
+      void send({ ...failed, ...binding.current?.snapshot() });
     },
   };
 }
