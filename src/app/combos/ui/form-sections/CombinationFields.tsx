@@ -140,7 +140,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
   };
 
   // 레시피 칸에 입력할 때. 다른 레시피를 가리키면 불러온 정보를 지우고, 올바른 ID·주소면 바로 불러온다.
-  // 한 글자씩 치는 중에는 형식이 맞지 않아 부르지 않는다. 이미 불러온 같은 레시피의 주소는 다시 조회하지 않고 ID로만 바꾼다.
+  // 한 글자씩 치는 중에는 형식이 맞지 않아 부르지 않는다. 이 화면에서 이미 확인한 같은 레시피의 주소는 다시 조회하지 않고 ID로만 바꾼다.
   const handleRecipeInput = (next: string, previous: string, index: number) => {
     const fieldName = `items.${index}.recipeid` as const;
     const changed = parseRecipeReference(next) !== parseRecipeReference(previous);
@@ -152,7 +152,8 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     form.clearErrors(fieldName);
     const parsed = comboRecipeIdSchema.safeParse(parseRecipeReference(next));
     if (!parsed.success) return;
-    if (changed || !form.getValues(`items.${index}.title`)) void fetchRecipeByid(next, index);
+    // 저장된 제목이 아니라 이 화면에서 실제로 확인한 레시피인지로 판단한다(열 때 확인이 실패했을 수 있다).
+    if (changed || !recipeRef[parsed.data]) void fetchRecipeByid(next, index);
     else if (next !== parsed.data) form.setValue(fieldName, parsed.data, { shouldDirty: true });
   };
 

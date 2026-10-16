@@ -272,6 +272,16 @@ describe("조합 레시피 자동 불러오기", () => {
     expect(form.getValues("items.0.title")).toBe("김치볶음밥");
   });
 
+  test("열 때 확인이 실패한 저장된 레시피는 같은 주소를 붙여 넣으면 다시 확인한다", async () => {
+    vi.stubGlobal("fetch", async () => reply(500));
+    await mount(RECIPE_ID, "김치볶음밥");
+    const fetcher = vi.fn(async () => reply(200));
+    vi.stubGlobal("fetch", fetcher);
+    await edit(`https://food.example/recipes/${RECIPE_ID}`);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("‘김치볶음밥’ 레시피를 불러왔어요");
+  });
+
   test("아직 불러오지 못한 레시피는 같은 주소를 붙여 넣어도 다시 불러온다", async () => {
     vi.stubGlobal("fetch", async () => reply(500));
     await mount(RECIPE_ID);
