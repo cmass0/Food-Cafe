@@ -128,6 +128,23 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     }
   };
 
+  // 레시피 칸에 입력할 때. 다른 레시피를 가리키면 불러온 정보를 지우고, 올바른 ID·주소면 바로 불러온다.
+  // 한 글자씩 치는 중에는 형식이 맞지 않아 부르지 않는다. 이미 불러온 같은 레시피의 주소는 다시 조회하지 않고 ID로만 바꾼다.
+  const handleRecipeInput = (next: string, previous: string, index: number) => {
+    const fieldName = `items.${index}.recipeid` as const;
+    const changed = parseRecipeReference(next) !== parseRecipeReference(previous);
+    if (changed) {
+      form.setValue(`items.${index}.title`, undefined);
+      form.setValue(`items.${index}.summary`, undefined);
+      form.setValue(`items.${index}.image`, undefined);
+    }
+    form.clearErrors(fieldName);
+    const parsed = comboRecipeIdSchema.safeParse(parseRecipeReference(next));
+    if (!parsed.success) return;
+    if (changed || !form.getValues(`items.${index}.title`)) void fetchRecipeByid(next, index);
+    else if (next !== parsed.data) form.setValue(fieldName, parsed.data, { shouldDirty: true });
+  };
+
   // 수정 화면에서 제목 없이 저장돼 있던 레시피 칸(불러오기 전에 저장한 예전 조합)은 열 때 한 번 불러온다.
   const loadSavedRecipes = React.useEffectEvent(() => {
     form.getValues("items").forEach((item, index) => {
@@ -368,25 +385,9 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                                   aria-label={`조합 항목 ${index + 1} 레시피 ID`}
                                   {...field}
                                   onChange={(event) => {
-                                    const next = event.target.value;
-                                    const changed =
-                                      parseRecipeReference(next) !==
-                                      parseRecipeReference(field.value);
-                                    if (changed) {
-                                      form.setValue(`items.${index}.title`, undefined);
-                                      form.setValue(`items.${index}.summary`, undefined);
-                                      form.setValue(`items.${index}.image`, undefined);
-                                    }
+                                    const previous = field.value;
                                     field.onChange(event);
-                                    form.clearErrors(`items.${index}.recipeid`);
-                                    // 붙여 넣은 값이 올바른 ID·주소면 바로 불러온다. 한 글자씩 치는 중에는 형식이 맞지 않아 부르지 않는다.
-                                    if (
-                                      changed &&
-                                      comboRecipeIdSchema.safeParse(parseRecipeReference(next))
-                                        .success
-                                    ) {
-                                      void fetchRecipeByid(next, index);
-                                    }
+                                    handleRecipeInput(event.target.value, previous, index);
                                   }}
                                 />
                               </FormControl>

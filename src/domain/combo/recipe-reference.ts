@@ -1,4 +1,3 @@
-import type { Recipe } from "@/domain/recipe/types";
 import type { ComboItems } from "./types";
 
 // 조합 레시피 칸에 넣은 레시피 ID나 레시피 링크에서 ID 자리를 꺼낸다.
@@ -9,7 +8,16 @@ export function parseRecipeReference(input: string) {
   return parts.at(-1) ?? null;
 }
 
-export type ComboRecipeSource = Pick<Recipe, "id" | "title" | "summary" | "image">;
+// 레시피 항목을 채울 레시피 값. 레시피를 읽는 쪽(features/combo-save)이 넘겨준다.
+export type ComboRecipeSource = {
+  id: string;
+  title: string;
+  summary: string | null;
+  image: string | null;
+};
+
+// 레시피 ID들로 요청자가 읽을 수 있는 레시피를 돌려주는 함수. 읽지 못한 레시피는 빠진다.
+export type LoadComboRecipes = (ids: string[]) => Promise<ComboRecipeSource[]>;
 
 // 조합의 레시피 항목은 브라우저가 보낸 제목·설명·사진 대신 DB에서 읽은 레시피 값으로 채운다.
 // missing은 찾지 못한 레시피 항목의 위치다. 저장하는 쪽이 이 위치로 오류를 알린다.

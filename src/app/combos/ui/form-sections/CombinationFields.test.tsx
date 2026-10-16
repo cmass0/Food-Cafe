@@ -229,6 +229,26 @@ describe("조합 레시피 자동 불러오기", () => {
     expect(container.textContent).toContain("‘김치볶음밥’ 레시피를 불러왔어요");
   });
 
+  test("불러온 레시피의 주소를 다시 붙여 넣으면 다시 조회하지 않고 ID로 바꿔 둔다", async () => {
+    const fetcher = vi.fn(async () => reply(200));
+    vi.stubGlobal("fetch", fetcher);
+    await mount(RECIPE_ID, "김치볶음밥");
+    await edit(`https://food.example/recipes/${RECIPE_ID}?from=list`);
+    expect(input().value).toBe(RECIPE_ID);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+  });
+
+  test("아직 불러오지 못한 레시피는 같은 주소를 붙여 넣어도 다시 불러온다", async () => {
+    vi.stubGlobal("fetch", async () => reply(500));
+    await mount(RECIPE_ID);
+    expect(form.getValues("items.0.title")).toBeUndefined();
+    vi.stubGlobal("fetch", async () => reply(200));
+    await edit(`https://food.example/recipes/${RECIPE_ID}`);
+    expect(input().value).toBe(RECIPE_ID);
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+  });
+
   test("제목 없이 저장돼 있던 레시피 칸은 화면을 열 때 불러온다", async () => {
     vi.stubGlobal("fetch", async () => reply(200));
     await mount(RECIPE_ID);
