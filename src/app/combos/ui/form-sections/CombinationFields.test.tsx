@@ -203,6 +203,18 @@ describe("조합 레시피 자동 불러오기", () => {
     expect(container.textContent).toContain("‘김치볶음밥’ 레시피를 불러왔어요");
   });
 
+  test("대문자가 섞인 레시피 ID를 붙여 넣으면 소문자로 맞춰 불러온다", async () => {
+    let requested = "";
+    vi.stubGlobal("fetch", async (url: string) => {
+      requested = url;
+      return reply(200);
+    });
+    await mount("");
+    await edit(RECIPE_ID.toUpperCase().replace("0000", "ABCD"));
+    expect(input().value).toBe(RECIPE_ID.replace("0000", "abcd"));
+    expect(requested).toBe(`/api/recipes/${RECIPE_ID.replace("0000", "abcd")}`);
+  });
+
   test("형식이 맞지 않는 값을 치는 중에는 불러오지도 오류를 보이지도 않는다", async () => {
     const fetcher = vi.fn(async () => reply(200));
     vi.stubGlobal("fetch", fetcher);

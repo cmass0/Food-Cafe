@@ -4,10 +4,12 @@ import { imageFileSchema } from "./../../lib/domain/schema";
 import { COMBO_RECIPE_REFERENCE_ERRORS } from "./messages";
 
 // 비어 있으면 입력 안내, 형식이 틀리면 형식 안내를 먼저 보여준다(폼은 경로마다 첫 오류만 표시).
+// UUID는 대소문자를 가리지 않지만 DB는 소문자로 돌려준다. 짝을 지을 때 어긋나지 않게 소문자로 맞춘다.
 export const comboRecipeIdSchema = z
   .string()
   .min(1, COMBO_RECIPE_REFERENCE_ERRORS.required)
-  .uuid(COMBO_RECIPE_REFERENCE_ERRORS.invalid);
+  .uuid(COMBO_RECIPE_REFERENCE_ERRORS.invalid)
+  .toLowerCase();
 
 export const MIN_COMBO_ITEMS = 2;
 export const MAX_COMBO_ITEMS = 10;

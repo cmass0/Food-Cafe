@@ -39,6 +39,25 @@ describe("조합 레시피 ID 검증", () => {
       })
     );
   });
+  test.each([
+    ["저장", ComboInsertSchema, BASE_COMBO],
+    ["폼", ComboFormSchema, { ...BASE_COMBO, image: "/combos/cover.png" }],
+  ] as const)(
+    "%s에서 대문자가 섞인 레시피 ID는 DB와 같은 소문자로 맞춘다",
+    (_label, schema, base) => {
+      const id = "F76C7A5F-8E6D-58AA-826A-5752329B215C";
+      const result = schema.safeParse({
+        ...base,
+        items: [
+          { type: "recipe", recipeid: id, title: "김치볶음밥" },
+          { type: "product", productName: "물" },
+        ],
+      });
+      expect(result.success && result.data.items?.[0]).toMatchObject({
+        recipeid: id.toLowerCase(),
+      });
+    }
+  );
   test("비어 있는 레시피 ID는 입력 안내를 첫 오류로 반환한다", () => {
     const result = ComboInsertSchema.safeParse({
       ...BASE_COMBO,
