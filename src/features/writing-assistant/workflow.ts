@@ -9,9 +9,12 @@ export function finalizeWritingResponse(request: WritingRequest, value: unknown)
     request.finish || request.turns.length >= MAX_WRITING_QUESTIONS || !response.question;
   if (finished && !response.draft) throw new Error("완성 초안이 없습니다.");
   if (response.kind === "combo" && response.draft) {
-    const selected = new Set(request.recipeIds);
+    // 서버는 레시피 ID를 DB처럼 소문자로 돌려준다. 브라우저 요청에는 붙여 넣은 대문자가 남아 있을 수 있다.
+    const selected = new Set(request.recipeIds.map((id) => id.toLowerCase()));
     if (
-      response.draft.items.some((item) => item.type === "recipe" && !selected.has(item.recipeid))
+      response.draft.items.some(
+        (item) => item.type === "recipe" && !selected.has(item.recipeid.toLowerCase())
+      )
     ) {
       throw new Error("선택하지 않은 레시피를 참조할 수 없습니다.");
     }
