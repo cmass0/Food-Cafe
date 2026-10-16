@@ -187,14 +187,15 @@ export async function getRecipeById(
 }
 
 // 요청한 ID 순서대로 돌려준다. 삭제됐거나 읽을 권한이 없는 레시피는 빠진다.
+// DB는 UUID를 대소문자 구분 없이 찾고 소문자로 돌려주므로, 짝을 지을 때도 소문자로 맞춘다.
 export async function getRecipesByIds(
   client: SupabaseClient<Database>,
   ids: string[]
 ): Promise<Recipe[]> {
   const rows = await repo.selectRecipesByIds(client, ids);
-  const byId = new Map(rows.map((row) => [row.id, row]));
+  const byId = new Map(rows.map((row) => [row.id.toLowerCase(), row]));
   return ids.flatMap((id) => {
-    const row = byId.get(id);
+    const row = byId.get(id.toLowerCase());
     return row ? [mapRowToRecipe(row)] : [];
   });
 }
