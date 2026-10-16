@@ -260,6 +260,10 @@ export function WritingAssistantPanel({
         ) : null}
         {completed ? (
           <>
+            <p className="text-xs leading-5 text-muted-foreground">
+              이 초안은 마지막으로 요청할 때의 폼 내용으로 만들었어요. 그 뒤에 폼에서 바꾼 내용은
+              초안에 반영되지 않아요.
+            </p>
             <Button
               type="button"
               disabled={pending || applied}

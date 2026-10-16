@@ -118,12 +118,9 @@ export default function ComboForm({
       return true;
     },
     changesOnApply: (response) => {
-      if (response.kind !== "combo" || !response.draft) return { removed: [], restored: [] };
-      const { removed, restored } = mergeComboDraftItems(
-        form.getValues().items,
-        response.draft.items
-      );
-      return { removed, restored };
+      if (response.kind !== "combo" || !response.draft) return { restored: [] };
+      const { restored } = mergeComboDraftItems(form.getValues().items, response.draft.items);
+      return { restored };
     },
   });
   // 조리 단계 필드 배열 훅
