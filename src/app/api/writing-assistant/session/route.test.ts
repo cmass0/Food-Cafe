@@ -49,14 +49,13 @@ describe("작성 도우미 시작 API", () => {
   test("오늘 횟수가 남았으면 서버 세션의 사용자로 새 대화를 만들고 대화 ID와 남은 횟수를 돌려준다", async () => {
     login();
     rpcReturns({
-      start_writing_assistant_session: SESSION_ID,
-      count_writing_assistant_sessions_today: 1,
+      start_writing_assistant_session: [{ session_id: SESSION_ID, remaining: 1 }],
     });
     const response = await POST();
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       sessionId: SESSION_ID,
-      remaining: MAX_DAILY_SESSIONS - 1,
+      remaining: 1,
       limit: MAX_DAILY_SESSIONS,
     });
     expect(boundary.rpc).toHaveBeenCalledWith("start_writing_assistant_session", {
@@ -67,13 +66,28 @@ describe("작성 도우미 시작 API", () => {
 
   test("오늘 횟수를 다 썼으면 429와 한글 안내를 돌려준다", async () => {
     login();
-    rpcReturns({ start_writing_assistant_session: null });
+    rpcReturns({ start_writing_assistant_session: [{ session_id: null, remaining: 0 }] });
     const response = await POST();
     expect(response.status).toBe(429);
     expect(await response.json()).toMatchObject({
       message: WRITING_LIMIT_MESSAGES.daily,
       remaining: 0,
     });
+  });
+
+  test("시작은 남은 횟수를 시작과 함께 받아, 따로 세는 조회가 실패해도 대화 ID를 잃지 않는다", async () => {
+    login();
+    boundary.rpc.mockImplementation(async (name: string) =>
+      name === "start_writing_assistant_session"
+        ? { data: [{ session_id: SESSION_ID, remaining: 0 }], error: null }
+        : {
+            data: null,
+            error: { code: "08006", message: "connection failure", details: "", hint: "" },
+          }
+    );
+    const response = await POST();
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ sessionId: SESSION_ID, remaining: 0 });
   });
 
   test("서버 전용 RPC의 DB 오류 내용은 응답에 싣지 않는다", async () => {

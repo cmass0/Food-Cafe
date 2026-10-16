@@ -753,7 +753,10 @@ export type Database = {
       }
       start_writing_assistant_session: {
         Args: { p_max_sessions: number; p_user_id: string }
-        Returns: string
+        Returns: {
+          remaining: number
+          session_id: string
+        }[]
       }
       upsert_recommendation_documents: {
         Args: { p_documents: Json }

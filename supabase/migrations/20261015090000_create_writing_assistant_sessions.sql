@@ -48,19 +48,22 @@ as $function$
     and started_on = (now() at time zone 'Asia/Seoul')::date;
 $function$;
 
--- 오늘 시작한 대화가 상한(p_max_sessions)보다 적으면 새 대화를 만들어 ID를 돌려주고, 아니면 null.
+-- 오늘 시작한 대화가 상한(p_max_sessions)보다 적으면 새 대화를 만들고, 그 대화 ID와 오늘 남은 시작 횟수를
+-- 한 행으로 돌려준다. 상한이면 대화 ID는 null, 남은 횟수는 0이다. 시작과 남은 횟수를 한 번에 돌려줘서,
+-- 시작한 뒤 따로 세다가 실패해 하루 사용만 줄고 대화 ID를 잃는 일이 없게 한다.
 -- 같은 사용자의 동시 요청은 advisory lock으로 하나씩 처리해 상한을 넘지 않는다.
 create or replace function public.start_writing_assistant_session(
   p_user_id uuid,
   p_max_sessions integer
 )
-returns uuid
+returns table (session_id uuid, remaining integer)
 language plpgsql
 security definer
 set search_path to ''
 as $function$
 declare
   v_today date := (now() at time zone 'Asia/Seoul')::date;
+  v_started integer;
   v_session_id uuid;
 begin
   if p_user_id is null or p_max_sessions is null or p_max_sessions < 1 then
@@ -72,20 +75,22 @@ begin
     hashtextextended('writing_assistant_session:' || p_user_id::text, 0)
   );
 
-  if (
-    select count(*)
-    from private.writing_assistant_sessions
-    where user_id = p_user_id
-      and started_on = v_today
-  ) >= p_max_sessions then
-    return null;
+  select count(*)::integer
+  into v_started
+  from private.writing_assistant_sessions as s
+  where s.user_id = p_user_id
+    and s.started_on = v_today;
+
+  if v_started >= p_max_sessions then
+    return query select null::uuid, 0;
+    return;
   end if;
 
   insert into private.writing_assistant_sessions (user_id, started_on)
   values (p_user_id, v_today)
   returning id into v_session_id;
 
-  return v_session_id;
+  return query select v_session_id, p_max_sessions - v_started - 1;
 end;
 $function$;
 

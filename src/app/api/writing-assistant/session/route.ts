@@ -45,15 +45,14 @@ export async function POST() {
     return respondWithError(error, "작성 도우미 로그인 확인 실패");
   }
   try {
-    const admin = getAdminSupabase();
-    const sessionId = await startWritingSession(admin, userId);
+    // 시작과 남은 횟수를 한 번에 받는다. 따로 세다 실패하면 하루 사용만 줄고 대화 ID를 잃기 때문이다.
+    const { sessionId, remaining } = await startWritingSession(getAdminSupabase(), userId);
     if (!sessionId) {
       return json(
         { error: "WRITING_DAILY_LIMIT", message: WRITING_LIMIT_MESSAGES.daily, remaining: 0 },
         429
       );
     }
-    const remaining = await countRemainingSessions(admin, userId);
     return json({ sessionId, remaining, limit: MAX_DAILY_SESSIONS });
   } catch (error) {
     return respondWithServerQueryError(error, "작성 도우미 시작 실패");

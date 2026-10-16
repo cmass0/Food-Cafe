@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(17);
+select extensions.plan(18);
 
 -- 권한: 사용자 ID를 인자로 받는 RPC라 브라우저 역할이 부르면 남의 사용 횟수를 바꿀 수 있다. 서버만 실행한다.
 select extensions.ok(
@@ -62,12 +62,12 @@ values (
   0
 );
 
-create temporary table started (label text primary key, session_id uuid);
+create temporary table started (label text primary key, session_id uuid, remaining integer);
 
 insert into started
-values
-  ('a1', public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2)),
-  ('a2', public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2));
+select 'a1', * from public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2);
+insert into started
+select 'a2', * from public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2);
 
 -- 하루 시작 횟수: 상한까지는 새 대화를 만들고, 넘으면 null이며 행도 늘지 않는다.
 select extensions.ok(
@@ -76,9 +76,18 @@ select extensions.ok(
 );
 
 select extensions.is(
-  public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2),
-  null::uuid,
-  '같은 날 세 번째 시작은 null을 돌려준다'
+  (select array_agg(remaining order by label) from started where label in ('a1', 'a2')),
+  array[1, 0],
+  '시작할 때마다 오늘 남은 시작 횟수를 함께 돌려준다'
+);
+
+select extensions.is(
+  (
+    select row(session_id, remaining)::text
+    from public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 2)
+  ),
+  row(null::uuid, 0)::text,
+  '같은 날 세 번째 시작은 대화 ID 없이 남은 횟수 0을 돌려준다'
 );
 
 select extensions.is(
@@ -98,7 +107,7 @@ select extensions.ok(
 
 -- 다른 사용자와 지난 날짜는 섞이지 않는다.
 insert into started
-values ('b1', public.start_writing_assistant_session('15000000-0000-4000-8000-000000000002', 2));
+select 'b1', * from public.start_writing_assistant_session('15000000-0000-4000-8000-000000000002', 2);
 
 select extensions.is(
   public.count_writing_assistant_sessions_today('15000000-0000-4000-8000-000000000002'),
@@ -107,7 +116,7 @@ select extensions.is(
 );
 
 select extensions.throws_ok(
-  $$ select public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 0) $$,
+  $$ select * from public.start_writing_assistant_session('15000000-0000-4000-8000-000000000001', 0) $$,
   '22023',
   '작성 도우미 사용 조건이 올바르지 않습니다.',
   '하루 상한이 1보다 작으면 거부한다'

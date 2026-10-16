@@ -21,15 +21,21 @@ export async function countRemainingSessions(admin: AdminClient, userId: string)
   return Math.max(0, MAX_DAILY_SESSIONS - (data ?? 0));
 }
 
-// 오늘 시작 횟수가 남았으면 새 대화 ID를, 아니면 null을 돌려준다.
-export async function startWritingSession(admin: AdminClient, userId: string) {
-  if (isWritingLimitDisabled()) return crypto.randomUUID();
+// 오늘 시작 횟수가 남았으면 새 대화 ID를, 아니면 null을 오늘 남은 시작 횟수와 함께 돌려준다.
+export async function startWritingSession(
+  admin: AdminClient,
+  userId: string
+): Promise<{ sessionId: string | null; remaining: number }> {
+  if (isWritingLimitDisabled()) {
+    return { sessionId: crypto.randomUUID(), remaining: MAX_DAILY_SESSIONS };
+  }
   const { data, error } = await admin.rpc("start_writing_assistant_session", {
     p_user_id: userId,
     p_max_sessions: MAX_DAILY_SESSIONS,
   });
   if (error) throw error;
-  return data ?? null;
+  const row = data?.[0];
+  return { sessionId: row?.session_id ?? null, remaining: Math.max(0, row?.remaining ?? 0) };
 }
 
 // 대화에서 AI를 한 번 더 부를 수 있으면 호출 수를 올리고 true를 돌려준다.
