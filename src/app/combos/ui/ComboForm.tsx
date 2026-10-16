@@ -3,7 +3,6 @@
 import { FormActionBar, type FormMode } from "@/components/forms/FormActionBar";
 import { FormStatusAlert } from "@/components/forms/FormStatusAlert";
 import { useLockedSubmit } from "@/components/forms/useLockedSubmit";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -12,10 +11,9 @@ import { ComboFormSchema } from "@/domain/combo/schema";
 import { ComboFormValues, ComboSteps } from "@/domain/combo/types";
 import { ComboBasicInfoFields } from "./form-sections/BasicInfoFields";
 import CombinationFields from "./form-sections/CombinationFields";
-
+import { ComboCookingInfoFields } from "./form-sections/CookingInfoFields";
 import { ComboImageUploadField } from "./form-sections/ImageUploadField";
 import { ComboStepsFields } from "./form-sections/StepsFields";
-import { ComboSummaryField } from "./form-sections/SummaryFiled";
 import { useWritingFormBinding } from "@/hooks/writing-assistant/useWritingFormBinding";
 import { mergeComboDraftItems } from "@/features/writing-assistant/combo-draft";
 import { writingRecipeIdSchema } from "@/features/writing-assistant/schema";
@@ -127,12 +125,8 @@ export default function ComboForm({
   });
   // 조리 단계 필드 배열 훅
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });
-  // 요약글 길이
-  const summary = useWatch({ control: form.control, name: "summary" });
   const image = useWatch({ control: form.control, name: "image" });
   const items = useWatch({ control: form.control, name: "items" });
-  const summaryLength = (summary ?? "").length;
-  //
   const itemsArray = useFieldArray({ control: form.control, name: "items" });
   const showSubmitError =
     form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
@@ -178,43 +172,35 @@ export default function ComboForm({
         <fieldset
           disabled={form.formState.isSubmitting}
           inert={form.formState.isSubmitting}
-          className="min-w-0"
+          className="min-w-0 space-y-5"
         >
-          <Card className="border border-muted-foreground/10 shadow-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-semibold">
-                조합 {mode === "edit" ? "수정" : "작성"}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                레시피와 상품, 이미지, 조리 단계를 차례로 입력해 주세요.
-              </p>
-            </CardHeader>
-
-            <CardContent className="space-y-8">
-              <ComboBasicInfoFields
-                form={form}
-                tagsInput={tagsInput}
-                setTagsInput={setTagsInput}
-                normalizeTags={normalizeTags}
-                toolsInput={toolsInput}
-                setToolsInput={setToolsInput}
-                normalizeTools={normalizeTools}
-              />
-              <ComboImageUploadField form={form} />
-              <CombinationFields form={form} itemsArray={itemsArray} />
-              <ComboStepsFields form={form} stepsArray={stepsArray} />
-              <ComboSummaryField form={form} summaryLength={summaryLength} />
-            </CardContent>
-          </Card>
+          <ComboBasicInfoFields
+            form={form}
+            tagsInput={tagsInput}
+            setTagsInput={setTagsInput}
+            normalizeTags={normalizeTags}
+          />
+          <ComboImageUploadField form={form} />
+          <CombinationFields form={form} itemsArray={itemsArray} />
+          <ComboCookingInfoFields
+            form={form}
+            toolsInput={toolsInput}
+            setToolsInput={setToolsInput}
+            normalizeTools={normalizeTools}
+          />
+          <ComboStepsFields form={form} stepsArray={stepsArray} />
         </fieldset>
-        <FormStatusAlert message={showSubmitError ? "입력 내용을 확인해 주세요." : error} />
-        <FormActionBar
-          mode={mode}
-          resourceLabel="조합"
-          pending={form.formState.isSubmitting}
-          dirty={dirty}
-          cancelHref={cancelHref}
-        />
+        {/* 긴 폼에서도 저장 버튼이 보이도록 화면 아래에 붙인다. */}
+        <div className="sticky bottom-0 z-10 space-y-3 border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <FormStatusAlert message={showSubmitError ? "입력 내용을 확인해 주세요." : error} />
+          <FormActionBar
+            mode={mode}
+            resourceLabel="조합"
+            pending={form.formState.isSubmitting}
+            dirty={dirty}
+            cancelHref={cancelHref}
+          />
+        </div>
       </form>
     </Form>
   );

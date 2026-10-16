@@ -2,6 +2,7 @@ import {
   ChefHat,
   ChevronRight,
   Clock3,
+  Hash,
   Lightbulb,
   Link2,
   MoreHorizontal,
@@ -21,19 +22,11 @@ import KakaoShareButton from "@/components/share/KakaoShareButton";
 import { getRecipeCategoryKey, getRecipeCategoryLabel } from "@/domain/recipe/category";
 import type { Recipe } from "@/domain/recipe/types";
 import { formatInKoreanTime } from "@/lib/format-date";
+import { formatMinutes } from "@/lib/format-duration";
 import { capImageDensity } from "@/lib/image-sizes";
 import RecipeImageGallery from "./RecipeImageGallery";
 import RecipeIngredientsPanel from "./RecipeIngredientsPanel";
 import RecipeToolsPanel from "./RecipeToolsPanel";
-
-function formatMinutes(value: number | null | undefined) {
-  if (!value || value <= 0) return null;
-  const hours = Math.floor(value / 60);
-  const minutes = value % 60;
-  if (hours && minutes) return `${hours}시간 ${minutes}분`;
-  if (hours) return `${hours}시간`;
-  return `${minutes}분`;
-}
 
 function formatDate(value: Date) {
   return formatInKoreanTime(value, { month: "long", day: "numeric" });
@@ -297,6 +290,15 @@ export default function RecipeDetail({
           >
             <Link2 className="h-5 w-5" />
             URL 복사
+          </CopyClipButton>
+          {/* 조합 작성 화면의 "레시피 ID" 칸에 붙여 넣는 값 */}
+          <CopyClipButton
+            currentUrl={recipe.id}
+            label="레시피 ID"
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-5 text-sm font-bold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+          >
+            <Hash className="h-5 w-5" />
+            레시피 ID 복사
           </CopyClipButton>
         </div>
       </section>
