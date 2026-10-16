@@ -265,6 +265,7 @@ describe("조합 레시피 자동 불러오기", () => {
     const fetcher = vi.fn(async () => reply(200));
     vi.stubGlobal("fetch", fetcher);
     await mount(RECIPE_ID, "김치볶음밥");
+    fetcher.mockClear();
     await edit(`https://food.example/recipes/${RECIPE_ID}?from=list`);
     expect(input().value).toBe(RECIPE_ID);
     expect(fetcher).not.toHaveBeenCalled();
@@ -287,11 +288,35 @@ describe("조합 레시피 자동 불러오기", () => {
     expect(form.getValues("items.0.title")).toBe("김치볶음밥");
   });
 
-  test("제목이 있는 레시피 칸은 화면을 열 때 다시 불러오지 않는다", async () => {
+  test("제목이 저장된 레시피 칸도 화면을 열 때 다시 확인한다", async () => {
     const fetcher = vi.fn(async () => reply(200));
     vi.stubGlobal("fetch", fetcher);
+    await mount(RECIPE_ID, "예전 제목");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
+  });
+
+  test("화면을 열 때 다시 확인한 것만으로는 저장 안 한 변경이 생기지 않는다", async () => {
+    vi.stubGlobal("fetch", async () => reply(200));
+    await mount(RECIPE_ID, "예전 제목");
+    expect(form.getFieldState("items").isDirty).toBe(false);
+  });
+
+  test("저장 뒤 삭제된 레시피는 열 때 찾을 수 없다고 알리고 저장 전 확인에 걸리게 불러온 정보를 지운다", async () => {
+    vi.stubGlobal("fetch", async () => reply(404));
     await mount(RECIPE_ID, "김치볶음밥");
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("레시피를 찾을 수 없어요. ID를 다시 확인해 주세요.");
+    expect(container.textContent).not.toContain("레시피를 불러왔어요");
+    expect(form.getValues("items.0.title")).toBe("");
+  });
+
+  test("열 때 확인이 연결 문제로 실패하면 저장된 제목은 그대로 둔다", async () => {
+    vi.stubGlobal("fetch", async () => reply(500));
+    await mount(RECIPE_ID, "김치볶음밥");
+    expect(container.textContent).toContain(
+      "레시피를 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
+    );
+    expect(form.getValues("items.0.title")).toBe("김치볶음밥");
   });
 
   test("형식이 맞지 않는 ID로 저장돼 있던 칸은 화면을 열 때 불러오지 않는다", async () => {

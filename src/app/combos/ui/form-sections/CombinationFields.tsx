@@ -72,7 +72,8 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
   // 항목마다 가장 최근에 보낸 조회 번호. 같은 ID를 연달아 불러와도 마지막 요청의 응답만 반영한다.
   const latestLookup = React.useRef(new Map<string, number>());
 
-  const fetchRecipeByid = async (input: string, index: number) => {
+  // markDirty가 false면 화면을 열 때 저장된 값을 다시 확인하는 경우다. 사용자가 바꾼 게 아니므로 미저장 변경으로 치지 않는다.
+  const fetchRecipeByid = async (input: string, index: number, markDirty = true) => {
     const fieldName = `items.${index}.recipeid` as const;
     form.clearErrors(fieldName);
     if (!input.trim()) {
@@ -85,9 +86,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       return;
     }
     const id = parsed.data;
-    form.setValue(fieldName, id, {
-      shouldDirty: true,
-    });
+    form.setValue(fieldName, id, { shouldDirty: markDirty });
     // 입력 변경·항목 삭제·다시 불러오기 뒤 도착한 응답이 다른 항목이나 새 결과를 덮어쓰지 않게 한다.
     const lookup = (latestLookup.current.get(fieldName) ?? 0) + 1;
     latestLookup.current.set(fieldName, lookup);
@@ -95,40 +94,45 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       latestLookup.current.get(fieldName) === lookup &&
       form.getValues(`items.${index}.type`) === "recipe" &&
       form.getValues(fieldName) === id;
+    // 없는 레시피는 불러온 정보를 지워, 저장 전 확인(제목 없는 레시피 칸 거부)에도 걸리게 한다.
+    // 빈 값은 undefined가 아니라 명시한다. undefined면 폼을 다시 채울 때 처음 불러온 값이 되살아난다.
+    const markNotFound = () => {
+      form.setValue(`items.${index}.title`, "", { shouldDirty: markDirty });
+      form.setValue(`items.${index}.summary`, "", { shouldDirty: markDirty });
+      form.setValue(`items.${index}.image`, null, { shouldDirty: markDirty });
+      form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.notFound });
+    };
     setLoading(id, true);
     try {
       const req = await getRecipe(id);
       if (!current()) return;
       if (!req) {
-        form.setError(fieldName, {
-          type: "manual",
-          message: COMBO_RECIPE_REFERENCE_ERRORS.notFound,
-        });
+        markNotFound();
         return;
       }
       form.clearErrors(fieldName);
       form.setValue(`items.${index}.image`, req.image ?? null, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       form.setValue(`items.${index}.title`, req.title ?? undefined, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       form.setValue(`items.${index}.summary`, req.summary ?? undefined, {
-        shouldDirty: true,
+        shouldDirty: markDirty,
         shouldValidate: form.formState.submitCount > 0,
       });
       setRecipeRef((prev) => ({ ...prev, [id]: req }));
     } catch (error) {
       if (!current()) return;
-      form.setError(fieldName, {
-        type: "manual",
-        message:
-          (error as ApiError | null)?.status === 404
-            ? COMBO_RECIPE_REFERENCE_ERRORS.notFound
-            : COMBO_RECIPE_REFERENCE_ERRORS.unavailable,
-      });
+      // 연결 문제로 확인하지 못한 경우는 저장된 제목을 남긴다. 저장할 때 서버가 다시 확인한다.
+      if ((error as ApiError | null)?.status === 404) markNotFound();
+      else
+        form.setError(fieldName, {
+          type: "manual",
+          message: COMBO_RECIPE_REFERENCE_ERRORS.unavailable,
+        });
     } finally {
       // 같은 칸에 더 최근 요청이 있으면 그 요청이 끝날 때 진행 표시를 지운다.
       if (latestLookup.current.get(fieldName) === lookup) setLoading(id, false);
@@ -152,15 +156,12 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     else if (next !== parsed.data) form.setValue(fieldName, parsed.data, { shouldDirty: true });
   };
 
-  // 수정 화면에서 제목 없이 저장돼 있던 레시피 칸(불러오기 전에 저장한 예전 조합)은 열 때 한 번 불러온다.
+  // 수정 화면을 열 때 저장된 레시피 칸을 한 번씩 다시 확인한다. 제목 없이 저장된 예전 칸은 채우고,
+  // 저장한 뒤 삭제된 레시피는 저장하기 전에 그 칸에서 알린다.
   const loadSavedRecipes = React.useEffectEvent(() => {
     form.getValues("items").forEach((item, index) => {
-      if (
-        item.type === "recipe" &&
-        !item.title?.trim() &&
-        comboRecipeIdSchema.safeParse(item.recipeid).success
-      ) {
-        void fetchRecipeByid(item.recipeid, index);
+      if (item.type === "recipe" && comboRecipeIdSchema.safeParse(item.recipeid).success) {
+        void fetchRecipeByid(item.recipeid, index, false);
       }
     });
   });
