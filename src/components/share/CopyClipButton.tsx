@@ -9,9 +9,11 @@ type Props = {
   currentUrl: string;
   className?: string;
   children?: ReactNode;
+  // 무엇을 복사하는지. 버튼 설명과 실패 안내에 쓴다(예: "레시피 ID").
+  label?: string;
 };
 
-export function CopyClipButton({ currentUrl, className, children }: Props) {
+export function CopyClipButton({ currentUrl, className, children, label = "URL" }: Props) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const resetTimer = useRef<number | null>(null);
@@ -47,7 +49,7 @@ export function CopyClipButton({ currentUrl, className, children }: Props) {
       <ErrorModal
         open={copyFailed}
         onOpenChange={setCopyFailed}
-        title="URL 복사에 실패했습니다"
+        title={`${label} 복사에 실패했습니다`}
         description="브라우저가 클립보드 사용을 허용하지 않았습니다. 권한을 확인한 뒤 다시 시도해 주세요."
       />
       <button
@@ -58,9 +60,9 @@ export function CopyClipButton({ currentUrl, className, children }: Props) {
         type="button"
         onClick={copyClip}
         disabled={copied}
-        aria-label={copied ? "URL 복사 완료" : "URL 복사"}
+        aria-label={copied ? `${label} 복사 완료` : `${label} 복사`}
         aria-live="polite"
-        title={copied ? "복사 완료" : "URL 복사"}
+        title={copied ? "복사 완료" : `${label} 복사`}
       >
         {copied ? (
           <>

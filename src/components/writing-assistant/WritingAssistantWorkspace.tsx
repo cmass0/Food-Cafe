@@ -14,7 +14,7 @@ import {
 import { WritingAssistantPanel } from "./WritingAssistantPanel";
 import { WRITING_ASSISTANT_COPY } from "./copy";
 import type { WritingAssistantWorkspaceProps } from "./types";
-import type { WritingFormBinding } from "@/features/writing-assistant/types";
+import type { WritingApplyChanges, WritingFormBinding } from "@/features/writing-assistant/types";
 import { MAX_DAILY_SESSIONS, WRITING_LIMIT_MESSAGES } from "@/features/writing-assistant/limits";
 import { WritingFormContext } from "@/hooks/writing-assistant/useWritingFormBinding";
 import { useWritingAssistant } from "@/hooks/writing-assistant/useWritingAssistant";
@@ -36,8 +36,8 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
   const [confirmApply, setConfirmApply] = useState(false);
   // 하루 사용 1번을 쓰기 전에 한 번 묻는다. 남은 횟수가 없으면 묻지 않고 바로 안내 창을 띄운다.
   const [confirmStart, setConfirmStart] = useState(false);
-  // 확인창을 여는 순간의 폼 기준으로, 반영하면 빠지는 항목을 계산해 둔다.
-  const [removedOnApply, setRemovedOnApply] = useState<string[]>([]);
+  // 확인창을 여는 순간의 폼 기준으로, 반영하면 다시 들어가는 항목을 계산해 둔다.
+  const [changesOnApply, setChangesOnApply] = useState<WritingApplyChanges>({ restored: [] });
   const [open, setOpen] = useState(false);
   const preview = WRITING_ASSISTANT_COPY[kind];
 
@@ -72,7 +72,7 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
         else setConfirmStart(true);
       }}
       onApply={() => {
-        setRemovedOnApply(assistant.removedOnApply());
+        setChangesOnApply(assistant.changesOnApply());
         setConfirmApply(true);
       }}
     />
@@ -148,18 +148,22 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
               현재 제목·재료 또는 조합 구성·조리 단계 등 텍스트 입력을 초안으로 바꿉니다. 대화 중
               직접 수정한 내용도 바뀌니 먼저 확인해 주세요. 대표 이미지와 유지되는 조합 항목의
               이미지는 보존합니다.
-              {kind === "combo" ? " 조합에 넣어 둔 레시피는 그대로 남아요." : ""} 자동으로 저장하지
-              않습니다.
+              {kind === "combo" ? " 조합에 넣어 둔 레시피와 상품은 그대로 남아요." : ""} 자동으로
+              저장하지 않습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {removedOnApply.length > 0 ? (
+          {changesOnApply.restored.length > 0 ? (
             <section
-              aria-label="반영하면 빠지는 항목"
-              className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
+              aria-label="반영하면 다시 넣는 레시피"
+              className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100"
             >
-              <h3 className="font-semibold">초안에 없어서 폼에서 빠지는 상품</h3>
+              <h3 className="font-semibold">폼에서 지웠지만 다시 넣는 레시피</h3>
+              <p className="mt-1 text-xs">
+                초안의 조리 단계가 이 레시피를 함께 쓰고 있어요. 빼려면 반영한 뒤 삭제하고 조리
+                단계도 고쳐 주세요.
+              </p>
               <ul className="mt-2 list-disc space-y-1 pl-5">
-                {removedOnApply.map((name, index) => (
+                {changesOnApply.restored.map((name, index) => (
                   <li key={index}>{name}</li>
                 ))}
               </ul>

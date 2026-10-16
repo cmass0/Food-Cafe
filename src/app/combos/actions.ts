@@ -1,6 +1,7 @@
 "use server";
 
 import * as comboService from "@/domain/combo/service";
+import * as comboSave from "@/features/combo-save/service";
 import type { ComboInsertDb, ComboUpdateDb } from "@/domain/combo/types";
 import { clearTrendingCache } from "@/features/trending/cache";
 import { requireAuthContext } from "@/lib/auth/session";
@@ -27,7 +28,7 @@ export async function createComboAction(input: ComboInsertDb, uploadedPaths: str
   try {
     const { supabase, user } = await requireAuthContext();
     userId = user.id;
-    const combo = await comboService.createCombo(supabase, {
+    const combo = await comboSave.createCombo(supabase, {
       ...input,
       writer_uid: user.id,
     });
@@ -58,7 +59,7 @@ export async function updateComboAction(
   try {
     const { supabase, user } = await requireAuthContext();
     userId = user.id;
-    const combo = await comboService.updateCombo(supabase, id, user.id, patch);
+    const combo = await comboSave.updateCombo(supabase, id, user.id, patch);
     if (!combo) throw new Error("수정할 수 있는 조합을 찾지 못했습니다.");
     persisted = true;
     revalidatePath(`/combos/${id}`);

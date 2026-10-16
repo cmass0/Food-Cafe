@@ -1,4 +1,4 @@
-import { MAX_COMBO_ITEMS } from "@/domain/combo/schema";
+import { MAX_COMBO_ITEMS, MIN_COMBO_ITEMS } from "@/domain/combo/schema";
 import type { Recipe } from "@/domain/recipe/types";
 import type { ComboWritingDraft, WritingResponse } from "./types";
 
@@ -44,9 +44,11 @@ export function keepSelectedRecipes(
   const seen = new Set<string>();
   const items = response.draft.items.flatMap<ComboWritingDraft["items"][number]>((item) => {
     if (item.type !== "recipe") return [item];
-    if (seen.has(item.recipeid)) return [];
-    seen.add(item.recipeid);
-    return [{ ...item, title: titles.get(item.recipeid) ?? item.title }];
+    // 고른 레시피 ID는 DB처럼 소문자다. AI가 대문자로 돌려줘도 같은 레시피로 짝짓는다.
+    const recipeid = item.recipeid.toLowerCase();
+    if (seen.has(recipeid)) return [];
+    seen.add(recipeid);
+    return [{ ...item, recipeid, title: titles.get(recipeid) ?? item.title }];
   });
   for (const recipe of selected) {
     if (!seen.has(recipe.id)) {
@@ -56,6 +58,11 @@ export function keepSelectedRecipes(
   // 다시 넣어 상한을 넘으면 AI가 제안한 상품을 뒤에서부터 뺀다.
   for (let index = items.length - 1; items.length > MAX_COMBO_ITEMS && index >= 0; index--) {
     if (items[index]?.type === "product") items.splice(index, 1);
+  }
+  // 같은 레시피를 두 번 넣어 최소 개수를 채운 초안은 중복을 지우면 조합이 되지 않는다.
+  // 1개짜리 초안을 내보내지 않고 생성 실패로 돌려 다시 시도하게 한다.
+  if (items.length < MIN_COMBO_ITEMS) {
+    throw new Error(`조합 항목이 ${MIN_COMBO_ITEMS}개보다 적습니다.`);
   }
   return { ...response, draft: { ...response.draft, items } };
 }

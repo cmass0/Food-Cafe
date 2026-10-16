@@ -2,21 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { recipeFormSchema } from "@/domain/recipe/schema";
 import type { FormValues, IngredientUnit, RecipeInsertDB, RecipeStep } from "@/domain/recipe/types";
 
 import { FormActionBar, type FormMode } from "@/components/forms/FormActionBar";
 import { FormStatusAlert } from "@/components/forms/FormStatusAlert";
 import { useLockedSubmit } from "@/components/forms/useLockedSubmit";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { BasicInfoFields } from "./form-sections/BasicInfoFields";
 import { ChefTipField } from "./form-sections/ChefTipField";
+import { CookingInfoFields } from "./form-sections/CookingInfoFields";
 import { ImageUploadField } from "./form-sections/ImageUploadField";
 import { IngredientsFields } from "./form-sections/IngredientsFields";
 import { StepsFields } from "./form-sections/StepsFields";
-import { SummaryField } from "./form-sections/SummaryField";
 import { useWritingFormBinding } from "@/hooks/writing-assistant/useWritingFormBinding";
 
 type ImageItem = {
@@ -150,10 +149,6 @@ export default function RecipeForm({
 
   const stepsArray = useFieldArray({ control: form.control, name: "steps" });
   const ingredientsArray = useFieldArray({ control: form.control, name: "ingredients" });
-  const summaryValue = useWatch({ control: form.control, name: "summary" });
-  const chefTipValue = useWatch({ control: form.control, name: "chef_tip" });
-  const summaryLength = (summaryValue ?? "").length;
-  const chefTipLength = (chefTipValue ?? "").length;
   const showSubmitError =
     form.formState.submitCount > 0 && Object.keys(form.formState.errors).length > 0;
 
@@ -262,49 +257,41 @@ export default function RecipeForm({
         <fieldset
           disabled={form.formState.isSubmitting}
           inert={form.formState.isSubmitting}
-          className="min-w-0"
+          className="min-w-0 space-y-5"
         >
-          <Card className="border border-muted-foreground/10 shadow-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-semibold">
-                레시피 {mode === "edit" ? "수정" : "작성"}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                재료와 이미지, 조리 단계를 차례로 입력해 주세요.
-              </p>
-            </CardHeader>
-
-            <CardContent className="space-y-8">
-              <BasicInfoFields
-                form={form}
-                tagsInput={tagsInput}
-                setTagsInput={setTagsInput}
-                normalizeTags={normalizeTags}
-                toolsInput={toolsInput}
-                setToolsInput={setToolsInput}
-                normalizeTools={normalizeTools}
-              />
-              <ImageUploadField
-                form={form}
-                imagePreviews={imageItems.map((item) => item.preview)}
-                handleFileChange={handleFileChange}
-                handleRemoveImage={handleRemoveImage}
-              />
-              <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
-              <StepsFields form={form} stepsArray={stepsArray} />
-              <SummaryField form={form} summaryLength={summaryLength} />
-              <ChefTipField form={form} chefTipLength={chefTipLength} />
-            </CardContent>
-          </Card>
+          <BasicInfoFields
+            form={form}
+            tagsInput={tagsInput}
+            setTagsInput={setTagsInput}
+            normalizeTags={normalizeTags}
+          />
+          <ImageUploadField
+            form={form}
+            imagePreviews={imageItems.map((item) => item.preview)}
+            handleFileChange={handleFileChange}
+            handleRemoveImage={handleRemoveImage}
+          />
+          <CookingInfoFields
+            form={form}
+            toolsInput={toolsInput}
+            setToolsInput={setToolsInput}
+            normalizeTools={normalizeTools}
+          />
+          <IngredientsFields form={form} ingredientsArray={ingredientsArray} />
+          <StepsFields form={form} stepsArray={stepsArray} />
+          <ChefTipField form={form} />
         </fieldset>
-        <FormStatusAlert message={showSubmitError ? "입력 내용을 확인해 주세요." : error} />
-        <FormActionBar
-          mode={mode}
-          resourceLabel="레시피"
-          pending={form.formState.isSubmitting}
-          dirty={dirty}
-          cancelHref={cancelHref}
-        />
+        {/* 긴 폼에서도 저장 버튼이 보이도록 화면 아래에 붙인다. */}
+        <div className="sticky bottom-0 z-10 space-y-3 border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <FormStatusAlert message={showSubmitError ? "입력 내용을 확인해 주세요." : error} />
+          <FormActionBar
+            mode={mode}
+            resourceLabel="레시피"
+            pending={form.formState.isSubmitting}
+            dirty={dirty}
+            cancelHref={cancelHref}
+          />
+        </div>
       </form>
     </Form>
   );

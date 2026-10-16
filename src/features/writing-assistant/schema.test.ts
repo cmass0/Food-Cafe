@@ -153,6 +153,20 @@ describe("작성 도우미 종료 규칙", () => {
     );
     expect(finalizeWritingResponse(comboRequest, comboResponse).draft?.title).toBe("계란찜과 밥");
   });
+  test("브라우저가 보낸 레시피 ID에 대문자가 섞여 있어도 서버가 소문자로 돌려준 같은 레시피는 받는다", () => {
+    const lettered = RECIPE_ID.replace("0000", "abcd");
+    const upper = { ...comboRequest, recipeIds: [lettered.toUpperCase()] };
+    const lowered = {
+      ...comboResponse,
+      draft: {
+        ...comboResponse.draft,
+        items: comboResponse.draft.items.map((item) =>
+          item.type === "recipe" ? { ...item, recipeid: lettered } : item
+        ),
+      },
+    };
+    expect(finalizeWritingResponse(upper, lowered).draft?.title).toBe("계란찜과 밥");
+  });
   test("레시피 항목에는 AI가 덧붙인 설명을 남기지 않는다", () => {
     const rewritten = {
       ...comboResponse,

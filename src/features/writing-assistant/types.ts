@@ -24,9 +24,10 @@ export type WritingFormBinding = {
   snapshot: () => Pick<WritingRequest, "formContext" | "recipeIds">;
   // false면 폼이 저장 중이거나 다른 종류여서 적용하지 않은 것이다.
   apply: (response: WritingResponse) => boolean;
-  // 반영하면 폼에서 빠지는 항목 이름. 반영 확인창에 보여준다.
-  removedOnApply?: (response: WritingResponse) => string[];
+  // 반영하면 폼에 다시 들어가는 항목 이름. 반영 확인창에 보여준다.
+  changesOnApply?: (response: WritingResponse) => WritingApplyChanges;
 };
+export type WritingApplyChanges = { restored: string[] };
 export type WritingSession = {
   request: WritingRequest;
   response: WritingResponse | null;

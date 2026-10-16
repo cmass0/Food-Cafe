@@ -1,10 +1,11 @@
 "use client";
 
-import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ComboFormValues } from "@/domain/combo/types";
+import { ImagePlus } from "lucide-react";
 import { ChangeEvent, useEffect, useState } from "react";
 import { type UseFormReturn } from "react-hook-form";
-import { ComboFormValues } from "@/domain/combo/types";
 
 type ImageUploadFieldProps = {
   form: UseFormReturn<ComboFormValues>;
@@ -35,56 +36,54 @@ export function ComboImageUploadField({ form }: ImageUploadFieldProps) {
     });
     setImagePreview(URL.createObjectURL(file));
   };
+
   return (
-    <div className="space-y-4 rounded-lg border border-muted-foreground/20 bg-muted/40 p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-muted-foreground">대표 이미지</h3>
-        <span className="text-xs text-muted-foreground">가로형 이미지 권장</span>
-      </div>
+    <FormSection
+      step={2}
+      title="대표 사진"
+      description="조합 목록과 상세 화면 맨 위에 보여요. 가로로 긴 사진을 추천해요."
+    >
       <FormField
         control={form.control}
         name="image"
         render={({ field }) => (
-          <FormItem className="space-y-4">
-            <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 bg-background p-4 shadow-[inset_0_1px_0_rgba(0,0,0,0.02)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                <div className="relative h-32 w-full overflow-hidden rounded-md border bg-muted/30 md:w-40">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="대표 이미지 미리보기"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                      대표 이미지 미리보기
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <FormControl>
-                    <Input
-                      type="file"
-                      aria-label="대표 이미지"
-                      accept="image/*"
-                      onChange={(event) => {
-                        handleFileChange(event);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    로컬 이미지를 올리면 미리보기가 보이고, 서버 업로드 URL도 사용할 수 있어요.
-                  </p>
-                  <FormMessage />
-                </div>
-              </div>
-            </div>
+          <FormItem>
+            <FormLabel className="sr-only">대표 사진</FormLabel>
+            <label className="relative flex aspect-[16/9] w-full max-w-xl cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors focus-within:ring-3 focus-within:ring-green-500/30 hover:border-green-400 hover:bg-green-50/50 hover:text-green-700 dark:hover:bg-green-950/30 dark:hover:text-green-400">
+              {imagePreview ? (
+                <>
+                  <img
+                    src={imagePreview}
+                    alt="대표 이미지 미리보기"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <span className="absolute bottom-3 right-3 rounded-lg bg-black/65 px-2.5 py-1 text-xs font-medium text-white">
+                    사진 바꾸기
+                  </span>
+                </>
+              ) : (
+                <span className="flex flex-col items-center gap-1.5">
+                  <ImagePlus className="size-7" aria-hidden="true" />
+                  <span className="text-sm font-medium">사진 올리기</span>
+                </span>
+              )}
+              <FormControl>
+                <input
+                  type="file"
+                  aria-label="대표 이미지"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleFileChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
+            </label>
+            <FormMessage />
           </FormItem>
         )}
       />
-    </div>
+    </FormSection>
   );
 }

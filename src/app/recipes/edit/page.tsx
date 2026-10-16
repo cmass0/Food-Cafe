@@ -2,6 +2,7 @@ import { getRecipeById } from "@/domain/recipe/service";
 import { requireOwnedContent } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import UpdateRecipeForm from "../components/UpdateRecipeForm";
+import { FormPageHeader } from "@/components/forms/FormSection";
 import { WritingAssistantWorkspace } from "@/components/writing-assistant/WritingAssistantWorkspace";
 
 export default async function RecipeEditPage(props: { searchParams: Promise<{ id?: string }> }) {
@@ -30,6 +31,10 @@ export default async function RecipeEditPage(props: { searchParams: Promise<{ id
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <FormPageHeader
+        title="레시피 수정"
+        description="바꿀 부분만 고친 뒤 아래의 수정 버튼을 눌러 주세요."
+      />
       <WritingAssistantWorkspace kind="recipe">
         <UpdateRecipeForm recipeId={recipe.id} defaultValues={defaultValues} />
       </WritingAssistantWorkspace>

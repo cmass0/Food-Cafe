@@ -11,7 +11,10 @@ import { getAdminSupabase } from "@/lib/supabase/admin";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { WRITING_LIMIT_MESSAGES } from "@/features/writing-assistant/limits";
 import { writingRequestSchema } from "@/features/writing-assistant/schema";
-import { generateWritingTurn } from "@/features/writing-assistant/service";
+import {
+  generateWritingTurn,
+  WritingRecipeLookupError,
+} from "@/features/writing-assistant/service";
 import { consumeWritingCall, refundWritingCall } from "@/features/writing-assistant/usage";
 
 export const maxDuration = 60;
@@ -62,6 +65,9 @@ export async function POST(request: Request) {
           refundError instanceof Error ? refundError.name : "UnknownError"
         )
       );
+    }
+    if (error instanceof WritingRecipeLookupError) {
+      return respondWithError(error.cause, "작성 도우미 레시피 조회 실패");
     }
     // respondWithError는 오류 객체를 통째로 기록한다. SDK 오류에는 메모·폼 내용이 담긴 프롬프트와 모델 원문이
     // 들어 있을 수 있어 여기서는 이름만 남긴다. 모델 응답 검증 실패(ZodError)도 사용자 입력 문제가 아니므로 500이다.

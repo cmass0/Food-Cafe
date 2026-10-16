@@ -67,6 +67,29 @@ describe("keepSelectedRecipes", () => {
     );
     expect(itemsOf(result)).toEqual([recipe(RICE, "김치볶음밥"), recipe(SOUP, "계란국")]);
   });
+  test("AI가 고른 레시피 ID를 대문자로 돌려줘도 같은 레시피로 보고 원본 제목으로 한 번만 남긴다", () => {
+    const lettered = RICE.replace("0000", "abcd");
+    const result = keepSelectedRecipes(
+      combo([recipe(lettered.toUpperCase(), "매콤 김치볶음밥"), product("단무지")]),
+      [{ id: lettered, title: "김치볶음밥" }]
+    );
+    expect(itemsOf(result)).toEqual([recipe(lettered, "김치볶음밥"), product("단무지")]);
+  });
+  test("두 번 넣은 레시피를 하나로 줄여 항목이 2개보다 적으면 초안을 쓰지 않는다", () => {
+    expect(() =>
+      keepSelectedRecipes(
+        combo([recipe(RICE, "김치볶음밥"), recipe(RICE, "김치볶음밥")]),
+        selected.slice(0, 1)
+      )
+    ).toThrow("조합 항목이 2개보다 적습니다.");
+  });
+  test("두 번 넣은 레시피를 하나로 줄여도 빠진 고른 레시피를 다시 넣어 2개면 그대로 쓴다", () => {
+    const result = keepSelectedRecipes(
+      combo([recipe(RICE, "김치볶음밥"), recipe(RICE, "김치볶음밥")]),
+      selected
+    );
+    expect(itemsOf(result)).toEqual([recipe(RICE, "김치볶음밥"), recipe(SOUP, "계란국")]);
+  });
   test("다시 넣어 10개를 넘으면 AI가 제안한 상품을 뒤에서부터 뺀다", () => {
     const products = Array.from({ length: 9 }, (_, index) => product(`상품 ${index + 1}`));
     const result = keepSelectedRecipes(combo([recipe(RICE, "김치볶음밥"), ...products]), selected);
