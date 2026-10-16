@@ -65,7 +65,16 @@ export async function generateWritingTurn(
     throw new WritingRecipeLookupError("고른 레시피를 읽지 못했습니다.", { cause });
   });
   const finished = request.finish || request.turns.length >= MAX_WRITING_QUESTIONS;
-  const promptInput = { ...request, selectedRecipes: selected.map(toSelectedRecipePrompt) };
+  // 모델에는 작성에 필요한 값만 넘긴다. 대화 ID처럼 사용 제한에 쓰는 값은 보내지 않는다.
+  const promptInput = {
+    kind: request.kind,
+    memo: request.memo,
+    formContext: request.formContext,
+    turns: request.turns,
+    outline: request.outline,
+    finish: request.finish,
+    selectedRecipes: selected.map(toSelectedRecipePrompt),
+  };
   const settings = {
     model,
     abortSignal: signal,

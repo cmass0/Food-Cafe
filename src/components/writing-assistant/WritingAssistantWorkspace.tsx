@@ -15,6 +15,7 @@ import { WritingAssistantPanel } from "./WritingAssistantPanel";
 import { WRITING_ASSISTANT_COPY } from "./copy";
 import type { WritingAssistantWorkspaceProps } from "./types";
 import type { WritingApplyChanges, WritingFormBinding } from "@/features/writing-assistant/types";
+import { MAX_DAILY_SESSIONS, WRITING_LIMIT_MESSAGES } from "@/features/writing-assistant/limits";
 import { WritingFormContext } from "@/hooks/writing-assistant/useWritingFormBinding";
 import { useWritingAssistant } from "@/hooks/writing-assistant/useWritingAssistant";
 import {
@@ -33,6 +34,8 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
   const binding = useRef<WritingFormBinding | null>(null);
   const assistant = useWritingAssistant(kind, binding);
   const [confirmApply, setConfirmApply] = useState(false);
+  // 하루 사용 1번을 쓰기 전에 한 번 묻는다. 남은 횟수가 없으면 묻지 않고 바로 안내 창을 띄운다.
+  const [confirmStart, setConfirmStart] = useState(false);
   // 확인창을 여는 순간의 폼 기준으로, 반영하면 다시 들어가는 항목을 계산해 둔다.
   const [changesOnApply, setChangesOnApply] = useState<WritingApplyChanges>({ restored: [] });
   const [open, setOpen] = useState(false);
@@ -61,6 +64,13 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
       onFinish={assistant.finish}
       onReset={assistant.reset}
       onRetry={assistant.retry}
+      activated={assistant.activated}
+      activating={assistant.activating}
+      usage={assistant.usage}
+      onActivate={() => {
+        if (assistant.usage?.remaining === 0) void assistant.activate();
+        else setConfirmStart(true);
+      }}
       onApply={() => {
         setChangesOnApply(assistant.changesOnApply());
         setConfirmApply(true);
@@ -162,6 +172,34 @@ export function WritingAssistantWorkspace({ kind, children }: WritingAssistantWo
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction onClick={assistant.apply}>확인</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={confirmStart} onOpenChange={setConfirmStart}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>작성 도우미를 시작할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              작성 도우미는 하루 {assistant.usage?.limit ?? MAX_DAILY_SESSIONS}번까지 쓸 수 있어요.
+              시작하면 오늘 남은 횟수가 1번 줄고, 새로고침하거나 이 화면을 떠나면 대화가 끝나요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void assistant.activate()}>
+              시작하기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={assistant.limitOpen} onOpenChange={assistant.setLimitOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{WRITING_LIMIT_MESSAGES.dailyTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{WRITING_LIMIT_MESSAGES.daily}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>확인</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

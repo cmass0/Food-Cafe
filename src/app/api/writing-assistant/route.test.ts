@@ -1,6 +1,7 @@
 import { format } from "node:util";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { MockLanguageModelV4 } from "ai/test";
+import { MAX_CALLS_PER_SESSION, WRITING_LIMIT_MESSAGES } from "@/features/writing-assistant/limits";
 import { unavailableRecipesNotice } from "@/features/writing-assistant/selected-recipes";
 import { POST } from "./route";
 
@@ -8,6 +9,7 @@ vi.mock("server-only", () => ({}));
 const boundary = vi.hoisted(() => ({
   getUser: vi.fn(),
   model: vi.fn(),
+  rpc: vi.fn(),
   recipeRows: [] as Record<string, unknown>[],
   recipeError: null as { message: string; code: string } | null,
 }));
@@ -28,7 +30,11 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 vi.mock("@/lib/ai/model", () => ({ getRecommendLanguageModel: boundary.model }));
+// 사용 횟수 RPC는 서버 전용(service_role)이다. 실제 상한·동시성은 pgTAP(rpc/writing_assistant_sessions)이 검증한다.
+vi.mock("@/lib/supabase/admin", () => ({ getAdminSupabase: () => ({ rpc: boundary.rpc }) }));
+const SESSION_ID = "00000000-0000-4000-8000-0000000000aa";
 const input = {
+  sessionId: SESSION_ID,
   kind: "recipe",
   memo: "두부가 있어",
   formContext: "{}",
@@ -51,6 +57,8 @@ function request(body: unknown = input) {
 }
 function login() {
   boundary.getUser.mockResolvedValue({ data: { user: { id: "user" } }, error: null });
+  // 기본은 이 대화에서 호출할 수 있는 상태(호출 수 1이 된다)다.
+  boundary.rpc.mockResolvedValue({ data: 1, error: null });
 }
 function modelReply(value: unknown, onPrompt?: (prompt: unknown) => void) {
   return new MockLanguageModelV4({
@@ -109,6 +117,34 @@ describe("작성 도우미 API 연결", () => {
       question: { text: "담백하게 먹을까요?" },
       draft: null,
     });
+    expect(boundary.rpc).toHaveBeenCalledTimes(1);
+    expect(boundary.rpc).toHaveBeenCalledWith("use_writing_assistant_call", {
+      p_session_id: SESSION_ID,
+      p_user_id: "user",
+      p_max_calls: MAX_CALLS_PER_SESSION,
+    });
+  });
+  test("대화의 호출 상한을 넘었거나 남의 대화면 모델을 부르지 않고 429로 안내한다", async () => {
+    login();
+    boundary.rpc.mockResolvedValue({ data: null, error: null });
+    const response = await POST(request());
+    expect(response.status).toBe(429);
+    expect((await response.json()).message).toBe(WRITING_LIMIT_MESSAGES.session);
+    expect(boundary.model).not.toHaveBeenCalled();
+  });
+  test("모델이 실패하면 그 호출을 사용 횟수에서 되돌린다", async () => {
+    login();
+    boundary.model.mockReturnValue(modelReply({ secret: "외부 제공사 원문" }));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect((await POST(request())).status).toBe(500);
+      expect(boundary.rpc).toHaveBeenLastCalledWith("refund_writing_assistant_call", {
+        p_session_id: SESSION_ID,
+        p_user_id: "user",
+      });
+    } finally {
+      log.mockRestore();
+    }
   });
   test("조합은 고른 레시피를 DB에서 읽어 AI에 넘기고, AI가 빼도 초안에 남기며 못 읽은 레시피는 알린다", async () => {
     login();

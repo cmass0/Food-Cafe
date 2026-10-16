@@ -38,6 +38,18 @@ function comboResponse(items: unknown[]) {
   };
 }
 
+// 시작 API(/session) 응답. 남은 횟수 조회(GET)와 시작(POST)을 흉내 낸다. 다른 주소면 null.
+function sessionReply(url: string, init?: RequestInit) {
+  if (!url.endsWith("/api/writing-assistant/session")) return null;
+  return new Response(
+    JSON.stringify(
+      init?.method === "POST"
+        ? { sessionId: "00000000-0000-4000-8000-0000000000aa", remaining: 1, limit: 2 }
+        : { remaining: 2, limit: 2 }
+    )
+  );
+}
+
 // AI 응답은 네트워크 경계에서 대체하고, 도우미가 보낸 요청을 돌려준다.
 // 응답을 여러 개 주면 요청마다 차례로 쓰고, 마지막 응답을 계속 쓴다.
 function stubBrowser(...aiResponses: unknown[]) {
@@ -56,8 +68,10 @@ function stubBrowser(...aiResponses: unknown[]) {
     }
   );
   const sent = { formContext: "", recipeIds: [] as string[][] };
-  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    const body = JSON.parse(init.body as string);
+  vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    const session = sessionReply(url, init);
+    if (session) return session;
+    const body = JSON.parse(init!.body as string);
     sent.formContext = body.formContext;
     sent.recipeIds.push(body.recipeIds);
     const reply = aiResponses[Math.min(sent.recipeIds.length, aiResponses.length) - 1];
@@ -143,6 +157,8 @@ test("조합 초안을 반영해도 기존 대표·상품 이미지는 유지한
       value: [new File(["image"], "product.png", { type: "image/png" })],
     });
     await act(async () => upload.dispatchEvent(new Event("change", { bubbles: true })));
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     expect(sent.formContext).toContain("직접 적은 조합");
     expect(sent.formContext).not.toContain(".jpg");
@@ -188,6 +204,8 @@ test("레시피 항목은 AI가 쓴 이름·설명 대신 폼에 불러온 레�
     items: [recipe, { type: "product" as const, productName: "계란국", summary: "", image: null }],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("폼에 반영하기");
     await click("확인");
@@ -210,6 +228,8 @@ test("대화 중 폼에서 지운 레시피는 다음 질문부터 AI에 보내�
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("삭제");
     expect(element.querySelector('[aria-label="조합 항목 1 레시피 ID"]')).toBeNull();
@@ -236,6 +256,8 @@ test("답을 받은 뒤 폼에서 지운 레시피는 반영 확인창에 알리
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("삭제");
     expect(element.querySelector('[aria-label="조합 항목 1 레시피 ID"]')).toBeNull();
@@ -280,6 +302,8 @@ test("폼에 넣은 레시피와 상품은 초안에 없어도 그대로 남기�
     items: [recipe, mine],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     expect(document.body.textContent).toContain(WRITING_ASSISTANT_COPY.combo.formNote);
     await click("아이디어 없이 시작");
     expect(document.body.textContent).toContain(
@@ -303,8 +327,10 @@ test("폼에 넣은 레시피와 상품은 초안에 없어도 그대로 남기�
 test("대화 중 폼에서 바꾼 상품은 다음 질문부터 AI에 보낸다", async () => {
   const sent = stubBrowser(questionResponse());
   const contexts: string[] = [];
-  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    const body = JSON.parse(init.body as string);
+  vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    const session = sessionReply(url, init);
+    if (session) return session;
+    const body = JSON.parse(init!.body as string);
     contexts.push(body.formContext);
     sent.recipeIds.push(body.recipeIds);
     return new Response(JSON.stringify(questionResponse()));
@@ -318,6 +344,8 @@ test("대화 중 폼에서 바꾼 상품은 다음 질문부터 AI에 보낸다"
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     const name = element.querySelector<HTMLInputElement>('input[name="items.1.productName"]')!;
     await act(async () => {
@@ -337,8 +365,10 @@ test("대화 중 폼에서 바꾼 상품은 다음 질문부터 AI에 보낸다"
 test("실패한 요청을 다시 시도할 때는 그사이 폼에서 바꾼 레시피 목록을 보낸다", async () => {
   stubBrowser(questionResponse());
   const sentRecipeIds: string[][] = [];
-  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-    sentRecipeIds.push(JSON.parse(init.body as string).recipeIds);
+  vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+    const session = sessionReply(url, init);
+    if (session) return session;
+    sentRecipeIds.push(JSON.parse(init!.body as string).recipeIds);
     return sentRecipeIds.length === 1
       ? new Response("error", { status: 503 })
       : new Response(JSON.stringify(questionResponse()));
@@ -352,6 +382,8 @@ test("실패한 요청을 다시 시도할 때는 그사이 폼에서 바꾼 레
     ],
   });
   try {
+    await click("작성 도우미 시작하기");
+    await click("시작하기");
     await click("아이디어 없이 시작");
     await click("삭제");
     await click("다시 시도");

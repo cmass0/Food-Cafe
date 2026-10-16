@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { WRITING_ASSISTANT_COPY } from "./copy";
+import { MAX_DAILY_SESSIONS } from "@/features/writing-assistant/limits";
 import { MAX_WRITING_QUESTIONS } from "@/features/writing-assistant/schema";
 import { WritingAssistantIntro } from "./WritingAssistantIntro";
 import { WritingConversationLog } from "./WritingConversationLog";
@@ -37,6 +38,10 @@ export function WritingAssistantPanel({
   onReset,
   onRetry,
   onApply,
+  activated,
+  activating,
+  usage,
+  onActivate,
 }: WritingAssistantPanelProps) {
   const preview = WRITING_ASSISTANT_COPY[kind];
   const inputId = useId();
@@ -277,6 +282,23 @@ export function WritingAssistantPanel({
               AI 제안은 저장 전에 꼭 확인해 주세요. 대표 이미지는 직접 등록해 주세요.
             </p>
           </>
+        ) : !activated ? (
+          <div className="space-y-2">
+            <Button
+              type="button"
+              onClick={onActivate}
+              disabled={activating}
+              className="h-11 w-full gap-2 rounded-xl text-sm font-semibold"
+            >
+              <Sparkles className="size-4" aria-hidden="true" />
+              {activating ? "시작하는 중…" : "작성 도우미 시작하기"}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              {usage
+                ? `오늘 남은 횟수 ${usage.remaining}/${usage.limit}`
+                : `하루 ${MAX_DAILY_SESSIONS}번까지 쓸 수 있어요`}
+            </p>
+          </div>
         ) : (
           <form
             onSubmit={(event) => {
