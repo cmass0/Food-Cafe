@@ -91,37 +91,43 @@ describe("mergeComboDraftItems", () => {
     );
     expect(items.filter((item) => item.type === "recipe")).toEqual([riceRow, twin]);
   });
-  test("상품은 초안을 따르고 이름이 같은 폼 상품의 사진을 이어받는다", () => {
+  test("폼에 넣은 상품은 초안에 같은 이름이 있으면 폼의 이름·설명·사진을 그대로 쓴다", () => {
+    const cup = formProduct("컵라면", "https://example.com/cup.jpg");
     const { items } = mergeComboDraftItems(
-      [riceRow, formProduct("컵라면", "https://example.com/cup.jpg")],
+      [riceRow, cup],
       [draftRecipe(RICE), draftProduct("컵라면")]
     );
-    expect(items[1]).toEqual({ ...draftProduct("컵라면"), image: "https://example.com/cup.jpg" });
+    expect(items[1]).toBe(cup);
   });
-  test("이름이 같은 폼 상품이 없으면 사진을 비운 값(null)으로 둔다", () => {
+  test("이름 앞뒤 공백만 다른 상품은 폼에 넣은 상품으로 본다", () => {
+    const cup = formProduct("컵라면 ");
+    const { items } = mergeComboDraftItems([cup], [draftProduct("컵라면"), draftProduct("김밥")]);
+    expect(items).toEqual([cup, { ...draftProduct("김밥"), image: null }]);
+  });
+  test("AI가 새로 제안한 상품은 사진 없이(null) 더한다", () => {
     const { items } = mergeComboDraftItems([riceRow], [draftRecipe(RICE), draftProduct("단무지")]);
     expect(items[1]).toEqual({ ...draftProduct("단무지"), image: null });
   });
-  test("초안에 없는 폼 상품은 빠지는 항목으로 알리고 사진이 있으면 함께 적는다", () => {
-    const { removed } = mergeComboDraftItems(
-      [
-        riceRow,
-        formProduct("신라면 컵", "https://example.com/cup.jpg"),
-        formProduct("김"),
-        formProduct(" "),
-      ],
+  test("초안에 없는 폼 상품도 끝에 남기고 이름이 빈 상품 칸은 남기지 않는다", () => {
+    const cup = formProduct("신라면 컵", "https://example.com/cup.jpg");
+    const seaweed = formProduct("김");
+    const { items } = mergeComboDraftItems(
+      [riceRow, cup, seaweed, formProduct(" ")],
       [draftRecipe(RICE), draftProduct("신라면")]
     );
-    expect(removed).toEqual(["신라면 컵 (사진 포함)", "김"]);
+    expect(items).toEqual([riceRow, { ...draftProduct("신라면"), image: null }, cup, seaweed]);
   });
-  test("10개를 넘으면 상품을 뒤에서부터 빼고 그 상품의 폼 칸도 빠지는 항목으로 알린다", () => {
-    const products = Array.from({ length: 9 }, (_, index) => draftProduct(`상품 ${index + 1}`));
-    const { items, removed } = mergeComboDraftItems(
-      [riceRow, soupRow, formProduct("상품 9", "https://example.com/9.jpg")],
-      [draftRecipe(RICE), ...products]
+  test("10개를 넘으면 AI가 새로 제안한 상품만 뒤에서부터 빼고 폼에 넣은 항목은 남긴다", () => {
+    const suggested = Array.from({ length: 9 }, (_, index) => draftProduct(`제안 ${index + 1}`));
+    const mine = formProduct("내 상품", "https://example.com/mine.jpg");
+    const { items } = mergeComboDraftItems(
+      [riceRow, soupRow, mine],
+      [draftRecipe(RICE), ...suggested]
     );
     expect(items).toHaveLength(10);
-    expect(items.at(-1)).toBe(soupRow);
-    expect(removed).toEqual(["상품 9 (사진 포함)"]);
+    expect(items.slice(-2)).toEqual([soupRow, mine]);
+    expect(items.slice(1, 8)).toEqual(
+      suggested.slice(0, 7).map((product) => ({ ...product, image: null }))
+    );
   });
 });

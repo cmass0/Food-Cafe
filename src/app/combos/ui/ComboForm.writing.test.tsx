@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { WritingAssistantWorkspace } from "@/components/writing-assistant/WritingAssistantWorkspace";
+import { WRITING_ASSISTANT_COPY } from "@/components/writing-assistant/copy";
 import type { ComboFormValues } from "@/domain/combo/types";
 import ComboForm from "./ComboForm";
 
@@ -253,13 +254,19 @@ test("답을 받은 뒤 폼에서 지운 레시피는 반영 확인창에 알리
   }
 });
 
-test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영 확인창에 알린다", async () => {
+test("폼에 넣은 레시피와 상품은 초안에 없어도 그대로 남기고 AI가 제안한 상품을 더한다", async () => {
   const recipe = {
     type: "recipe" as const,
     recipeid: RECIPE_ID,
     title: "김치볶음밥",
     summary: "원래 레시피 설명",
     image: "https://example.com/recipe.jpg",
+  };
+  const mine = {
+    type: "product" as const,
+    productName: "신라면 컵",
+    summary: "내가 적은 설명",
+    image: "https://example.com/cup.jpg",
   };
   stubBrowser(
     comboResponse([
@@ -270,33 +277,63 @@ test("초안에 없는 레시피는 폼에 남기고, 빠지는 상품은 반영
   const { submit, cleanup } = await renderForm({
     title: "직접 적은 조합",
     image: "https://example.com/main.jpg",
-    items: [
-      recipe,
-      {
-        type: "product" as const,
-        productName: "신라면 컵",
-        summary: "",
-        image: "https://example.com/cup.jpg",
-      },
-    ],
+    items: [recipe, mine],
   });
   try {
+    expect(document.body.textContent).toContain(WRITING_ASSISTANT_COPY.combo.formNote);
     await click("아이디어 없이 시작");
+    expect(document.body.textContent).toContain(
+      "그 뒤에 폼에서 바꾼 내용은 초안에 반영되지 않아요."
+    );
     await click("폼에 반영하기");
-    const warning = document.querySelector('[aria-label="반영하면 빠지는 항목"]');
-    expect(warning?.textContent).toContain("신라면 컵 (사진 포함)");
+    expect(document.body.textContent).toContain("조합에 넣어 둔 레시피와 상품은 그대로 남아요.");
     await click("확인");
     await click("수정");
     expect(submit.mock.calls[0]?.[0].items).toEqual([
       { type: "product", productName: "신라면", summary: "" },
       { type: "product", productName: "단무지", summary: "" },
       recipe,
+      mine,
     ]);
   } finally {
     await cleanup();
   }
 });
 
+test("대화 중 폼에서 바꾼 상품은 다음 질문부터 AI에 보낸다", async () => {
+  const sent = stubBrowser(questionResponse());
+  const contexts: string[] = [];
+  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+    const body = JSON.parse(init.body as string);
+    contexts.push(body.formContext);
+    sent.recipeIds.push(body.recipeIds);
+    return new Response(JSON.stringify(questionResponse()));
+  });
+  const { element, cleanup } = await renderForm({
+    title: "직접 적은 조합",
+    image: "https://example.com/main.jpg",
+    items: [
+      { type: "recipe" as const, recipeid: RECIPE_ID, title: "김치볶음밥" },
+      { type: "product" as const, productName: "김", summary: "" },
+    ],
+  });
+  try {
+    await click("아이디어 없이 시작");
+    const name = element.querySelector<HTMLInputElement>('input[name="items.1.productName"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+        name,
+        "단무지"
+      );
+      name.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await click("AI에게 맡기기");
+    expect(contexts[0]).not.toContain("단무지");
+    expect(contexts[1]).toContain("단무지");
+  } finally {
+    await cleanup();
+  }
+});
 test("실패한 요청을 다시 시도할 때는 그사이 폼에서 바꾼 레시피 목록을 보낸다", async () => {
   stubBrowser(questionResponse());
   const sentRecipeIds: string[][] = [];

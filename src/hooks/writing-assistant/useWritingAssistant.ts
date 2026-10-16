@@ -66,9 +66,15 @@ export function useWritingAssistant(
           { question: session.response.question.text, answer: value.trim() },
         ]
       : session.request.turns;
-    // 고른 레시피는 대화 중에도 폼에서 넣고 뺄 수 있으므로 질문마다 다시 읽는다.
-    const recipeIds = binding.current?.snapshot().recipeIds ?? session.request.recipeIds;
-    void send({ ...session.request, recipeIds, turns, outline: session.response.outline, finish });
+    // 대화 중에도 폼을 고칠 수 있으므로 질문마다 폼 내용과 고른 레시피를 다시 읽는다.
+    const snapshot = binding.current?.snapshot();
+    void send({
+      ...session.request,
+      ...snapshot,
+      turns,
+      outline: session.response.outline,
+      finish,
+    });
   }
 
   function reset() {
@@ -104,15 +110,13 @@ export function useWritingAssistant(
     finish: () => answer(input, true),
     changesOnApply: (): WritingApplyChanges =>
       (session?.response && binding.current?.changesOnApply?.(session.response)) || {
-        removed: [],
         restored: [],
       },
     retry: () => {
       const failed = failedRequest.current;
       if (!failed) return;
-      // 실패한 뒤 폼에서 레시피를 넣고 뺐을 수 있으므로 다시 시도할 때도 지금 폼에서 다시 읽는다.
-      const recipeIds = binding.current?.snapshot().recipeIds ?? failed.recipeIds;
-      void send({ ...failed, recipeIds });
+      // 실패한 뒤 폼을 고쳤을 수 있으므로 다시 시도할 때도 지금 폼에서 다시 읽는다.
+      void send({ ...failed, ...binding.current?.snapshot() });
     },
   };
 }
