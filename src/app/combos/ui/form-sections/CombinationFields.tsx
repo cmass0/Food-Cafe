@@ -101,6 +101,12 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
       form.setValue(`items.${index}.summary`, "", { shouldDirty: markDirty });
       form.setValue(`items.${index}.image`, null, { shouldDirty: markDirty });
       form.setError(fieldName, { type: "manual", message: COMBO_RECIPE_REFERENCE_ERRORS.notFound });
+      // 전에 불러온 결과도 지운다. 남아 있으면 같은 주소를 다시 붙여 넣을 때 확인한 레시피로 보고 건너뛴다.
+      setRecipeRef((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     };
     setLoading(id, true);
     try {
