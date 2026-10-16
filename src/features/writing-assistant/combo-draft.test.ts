@@ -53,6 +53,17 @@ describe("mergeComboDraftItems", () => {
       { ...draftProduct("단무지"), image: null },
     ]);
   });
+  test("폼의 레시피 ID에 대문자가 섞여 있어도 초안의 같은 레시피와 짝지어 두 번 넣지 않는다", () => {
+    const upper: FormItem = { ...riceRow, recipeid: RICE.toUpperCase().replace("0000", "ABCD") };
+    const draftRice: DraftItem = {
+      type: "recipe",
+      recipeid: RICE.replace("0000", "abcd"),
+      title: "김치볶음밥",
+    };
+    const { items, restored } = mergeComboDraftItems([upper], [draftRice, draftProduct("단무지")]);
+    expect(items).toEqual([upper, { ...draftProduct("단무지"), image: null }]);
+    expect(restored).toEqual([]);
+  });
   test("다시 넣은 레시피는 반영 확인창에 보여 줄 이름으로 알린다", () => {
     const { restored } = mergeComboDraftItems([riceRow], [draftRecipe(RICE), draftRecipe(SOUP)]);
     expect(restored).toEqual(["AI 이름"]);
