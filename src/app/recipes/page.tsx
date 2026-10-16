@@ -1,5 +1,6 @@
 import { SearchX } from "lucide-react";
 
+import ListPageHeader from "@/components/ListPageHeader";
 import { PaginationComponent } from "@/components/Pagination";
 import Section from "@/components/status/Section";
 import { getRecipeCategoryLabel, isRecipeCategoryKey } from "@/domain/recipe/category";
@@ -110,31 +111,19 @@ export default async function RecipesPage(props: RecipesPageProps) {
 
   return (
     <main className="min-h-screen bg-white text-zinc-950">
-      <section className="border-b border-zinc-100 bg-[#fbfaf7]">
-        <div className="mx-auto w-full max-w-7xl px-5 pb-6 pt-10 md:pt-12 lg:px-8">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#3f914b]">Recipes</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 md:text-4xl">
-                {categoryLabel ? `${categoryLabel} 레시피` : "레시피"}
-              </h1>
-              <p className="mt-2 text-sm text-zinc-500">
-                다양한 레시피를 찾아보고, 나만의 레시피도 공유해보세요!
-              </p>
-            </div>
-            <ShareRecipeButton />
-          </div>
-
-          <RecipeCategoryChips
-            className="mt-8"
-            category={category}
-            sort={sort}
-            search={searchQuery}
-            searchField={searchField}
-            limit={pageSize}
-          />
-        </div>
-      </section>
+      <ListPageHeader
+        title={categoryLabel ? `${categoryLabel} 레시피` : "레시피"}
+        description="다양한 레시피를 찾아보고, 나만의 레시피도 공유해보세요!"
+        action={<ShareRecipeButton />}
+      >
+        <RecipeCategoryChips
+          category={category}
+          sort={sort}
+          search={searchQuery}
+          searchField={searchField}
+          limit={pageSize}
+        />
+      </ListPageHeader>
 
       <div className="mx-auto w-full max-w-7xl px-5 py-8 lg:px-8">
         <RecipesToolbar

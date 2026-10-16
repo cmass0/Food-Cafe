@@ -23,7 +23,7 @@ export default function ShareRecipeButton() {
 
   return (
     <Button
-      className="h-11 self-start rounded-full bg-[#34783f] px-6 text-sm font-bold text-white shadow-sm shadow-[#34783f]/20 hover:bg-[#2f6f39] md:self-auto"
+      className="h-10 self-start rounded-lg bg-[#34783f] px-4 text-sm font-semibold text-white hover:bg-[#2f6f39] md:self-auto"
       onClick={handleShare}
     >
       <Plus className="mr-1.5 h-4 w-4" />

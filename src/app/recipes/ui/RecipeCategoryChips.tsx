@@ -32,7 +32,8 @@ export default function RecipeCategoryChips({
         className
       )}
     >
-      <ul className="flex w-max gap-2 pb-1">
+      {/* 머리말 아래 선에 붙는 밑줄 탭. 고른 카테고리만 초록 밑줄을 긋는다. */}
+      <ul className="flex w-max gap-6">
         {CHIPS.map(({ key, label }) => {
           const params = new URLSearchParams(toRecipeListQuery({ ...query, category: key }));
           const href = params.size ? `/recipes?${params.toString()}` : "/recipes";
@@ -43,10 +44,10 @@ export default function RecipeCategoryChips({
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold whitespace-nowrap transition",
+                  "relative inline-flex h-11 items-center text-sm whitespace-nowrap transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full",
                   active
-                    ? "bg-[#34783f] text-white shadow-sm"
-                    : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:text-zinc-900 hover:ring-zinc-300"
+                    ? "font-semibold text-zinc-900 after:bg-[#34783f]"
+                    : "font-medium text-zinc-500 hover:text-zinc-900"
                 )}
               >
                 {label}
