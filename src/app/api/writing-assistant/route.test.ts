@@ -9,6 +9,7 @@ const boundary = vi.hoisted(() => ({
   getUser: vi.fn(),
   model: vi.fn(),
   recipeRows: [] as Record<string, unknown>[],
+  recipeError: null as { message: string; code: string } | null,
 }));
 // Auth·DB 네트워크와 유료 모델만 대체하고 Route → 검증 → 서비스 → SDK 연결을 실행한다.
 vi.mock("@/lib/supabase/server", () => ({
@@ -17,8 +18,10 @@ vi.mock("@/lib/supabase/server", () => ({
     from: () => ({
       select: () => ({
         in: async (_column: string, ids: string[]) => ({
-          data: boundary.recipeRows.filter((row) => ids.includes(row.id as string)),
-          error: null,
+          data: boundary.recipeError
+            ? null
+            : boundary.recipeRows.filter((row) => ids.includes(row.id as string)),
+          error: boundary.recipeError,
         }),
       }),
     }),
@@ -38,6 +41,7 @@ const input = {
 afterEach(() => {
   vi.resetAllMocks();
   boundary.recipeRows = [];
+  boundary.recipeError = null;
 });
 function request(body: unknown = input) {
   return new Request("http://localhost/api/writing-assistant", {
@@ -159,6 +163,26 @@ describe("작성 도우미 API 연결", () => {
       title: "김치볶음밥",
     });
     expect(body.notices).toEqual([unavailableRecipesNotice(1)]);
+  });
+  test("고른 레시피를 읽다 DB에 닿지 못하면 AI를 부르지 않고 503을 반환한다", async () => {
+    login();
+    boundary.recipeError = { message: "fetch failed", code: "" };
+    const prompts: unknown[] = [];
+    boundary.model.mockReturnValue(modelReply({}, (prompt) => prompts.push(prompt)));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const response = await POST(
+        request({
+          ...input,
+          kind: "combo",
+          recipeIds: ["00000000-0000-4000-8000-000000000001"],
+        })
+      );
+      expect(response.status).toBe(503);
+      expect(prompts).toEqual([]);
+    } finally {
+      log.mockRestore();
+    }
   });
   test("규격 밖 AI 응답은 초안으로 전달하지 않고 안전한 오류를 반환한다", async () => {
     login();

@@ -108,7 +108,11 @@ export function useWritingAssistant(
         restored: [],
       },
     retry: () => {
-      if (failedRequest.current) void send(failedRequest.current);
+      const failed = failedRequest.current;
+      if (!failed) return;
+      // 실패한 뒤 폼에서 레시피를 넣고 뺐을 수 있으므로 다시 시도할 때도 지금 폼에서 다시 읽는다.
+      const recipeIds = binding.current?.snapshot().recipeIds ?? failed.recipeIds;
+      void send({ ...failed, recipeIds });
     },
   };
 }
