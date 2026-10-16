@@ -12,10 +12,8 @@ let root: Root | undefined;
 let container: HTMLDivElement;
 let form: UseFormReturn<ComboFormValues>;
 
-function Harness({ reference, title }: { reference: string; title?: string }) {
-  const methods = useForm<ComboFormValues>({
-    defaultValues: { items: [{ type: "recipe", recipeid: reference, title }] },
-  });
+function Harness({ items }: { items: ComboFormValues["items"] }) {
+  const methods = useForm<ComboFormValues>({ defaultValues: { items } });
   useEffect(() => {
     form = methods;
   }, [methods]);
@@ -27,16 +25,22 @@ function Harness({ reference, title }: { reference: string; title?: string }) {
   );
 }
 
-async function mount(reference: string, title?: string) {
+async function mountItems(items: ComboFormValues["items"]) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () => root!.render(<Harness reference={reference} title={title} />));
+  await act(async () => root!.render(<Harness items={items} />));
 }
 
-function input() {
-  return container.querySelector<HTMLInputElement>('[aria-label="조합 항목 1 레시피 ID"]')!;
+function mount(reference: string, title?: string) {
+  return mountItems([{ type: "recipe", recipeid: reference, title }]);
+}
+
+function input(position = 1) {
+  return container.querySelector<HTMLInputElement>(
+    `[aria-label="조합 항목 ${position} 레시피 ID"]`
+  )!;
 }
 
 async function load() {
@@ -46,13 +50,13 @@ async function load() {
   await act(async () => button.click());
 }
 
-async function edit(reference: string) {
+async function edit(reference: string, position = 1) {
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
-      input(),
+      input(position),
       reference
     );
-    input().dispatchEvent(new Event("input", { bubbles: true }));
+    input(position).dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
 
@@ -348,5 +352,27 @@ describe("조합 레시피 자동 불러오기", () => {
     await mount("틀린아이디");
     expect(fetcher).not.toHaveBeenCalled();
     expect(input().getAttribute("aria-invalid")).toBe("false");
+  });
+
+  test("한 칸에서 불러오던 레시피를 다른 레시피로 바꿔도 같은 레시피를 가진 다른 칸에 진행 표시가 남지 않는다", async () => {
+    const other = "00000000-0000-4000-8000-000000000002";
+    vi.stubGlobal("fetch", async () => reply(200));
+    await mountItems([
+      { type: "recipe", recipeid: "" },
+      { type: "recipe", recipeid: RECIPE_ID, title: "김치볶음밥" },
+    ]);
+    const pending: ((response: Response) => void)[] = [];
+    vi.stubGlobal(
+      "fetch",
+      () =>
+        new Promise<Response>((done) => {
+          pending.push(done);
+        })
+    );
+    await edit(RECIPE_ID, 1);
+    await edit(other, 1);
+    await act(async () => pending[1]!(reply(200)));
+    await act(async () => pending[0]!(reply(200)));
+    expect(container.textContent).not.toContain("레시피를 불러오는 중이에요");
   });
 });

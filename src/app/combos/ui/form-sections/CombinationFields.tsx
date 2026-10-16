@@ -60,13 +60,14 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
     };
   }, []);
   const [recipeRef, setRecipeRef] = React.useState<Record<string, Recipe>>({});
-  // 불러오는 중인 레시피 ID. 입력칸 아래에 진행 상태를 보여준다.
-  const [loadingIds, setLoadingIds] = React.useState<ReadonlySet<string>>(new Set());
-  const setLoading = (id: string, loading: boolean) =>
-    setLoadingIds((prev) => {
-      const next = new Set(prev);
-      if (loading) next.add(id);
-      else next.delete(id);
+  // 칸마다 지금 불러오는 레시피 ID. 입력칸 아래에 진행 상태를 보여준다.
+  // ID가 아니라 칸 기준이라, 같은 레시피를 가진 다른 칸이나 바뀌기 전 ID의 표시가 섞이지 않는다.
+  const [loadingFor, setLoadingFor] = React.useState<ReadonlyMap<string, string>>(new Map());
+  const setLoading = (fieldName: string, id: string | null) =>
+    setLoadingFor((prev) => {
+      const next = new Map(prev);
+      if (id) next.set(fieldName, id);
+      else next.delete(fieldName);
       return next;
     });
   // 항목마다 가장 최근에 보낸 조회 번호. 같은 ID를 연달아 불러와도 마지막 요청의 응답만 반영한다.
@@ -108,7 +109,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
         return next;
       });
     };
-    setLoading(id, true);
+    setLoading(fieldName, id);
     try {
       const req = await getRecipe(id);
       if (!current()) return;
@@ -141,7 +142,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
         });
     } finally {
       // 같은 칸에 더 최근 요청이 있으면 그 요청이 끝날 때 진행 표시를 지운다.
-      if (latestLookup.current.get(fieldName) === lookup) setLoading(id, false);
+      if (latestLookup.current.get(fieldName) === lookup) setLoading(fieldName, null);
     }
   };
 
@@ -388,7 +389,7 @@ export default function CombinationFields({ itemsArray, form }: CombinationField
                     name={`items.${index}.recipeid`}
                     render={({ field }) => {
                       const card = recipeCard(index, field.value);
-                      const loading = loadingIds.has(field.value);
+                      const loading = loadingFor.get(field.name) === field.value;
                       return (
                         <FormItem className="flex flex-col gap-4 md:flex-row md:items-start">
                           <div className="min-w-0 flex-1 space-y-2">
