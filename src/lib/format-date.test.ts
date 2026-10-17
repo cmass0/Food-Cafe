@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { formatInKoreanTime } from "./format-date";
 
@@ -15,6 +15,10 @@ beforeAll(() => {
 afterAll(() => {
   if (originalTimeZone === undefined) delete process.env.TZ;
   else process.env.TZ = originalTimeZone;
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("formatInKoreanTime", () => {
@@ -40,5 +44,37 @@ describe("formatInKoreanTime", () => {
 
   test("부른 쪽이 다른 시간대를 넘겨도 한국 시간을 쓴다", () => {
     expect(formatInKoreanTime(EARLY_MORNING_KST, { day: "numeric", timeZone: "UTC" })).toBe("30일");
+  });
+
+  test.each([
+    ["한국 시간 새해 직전", "2026-12-31T14:59:59Z", "2026년 12월 31일"],
+    ["한국 시간 새해 시작", "2026-12-31T15:00:00Z", "2027년 1월 1일"],
+  ] as const)("%s에도 해당 한국 날짜를 표시한다", (_label, value, expected) => {
+    expect(
+      formatInKoreanTime(new Date(value), { year: "numeric", month: "long", day: "numeric" })
+    ).toBe(expected);
+  });
+
+  test("연도와 월일 표시를 번갈아 호출해도 각 표시 옵션을 유지한다", () => {
+    expect(formatInKoreanTime(EARLY_MORNING_KST, { year: "numeric" })).toBe("2026년");
+    expect(formatInKoreanTime(EARLY_MORNING_KST, { month: "long", day: "numeric" })).toBe(
+      "9월 30일"
+    );
+    expect(formatInKoreanTime(new Date("2027-01-01T00:00:00Z"), { year: "numeric" })).toBe(
+      "2027년"
+    );
+  });
+
+  test("같은 표시 옵션은 속성 순서가 달라도 포맷터를 중복 생성하지 않는다", async () => {
+    vi.resetModules();
+    const { formatInKoreanTime: format } = await import("./format-date");
+    const constructor = vi.spyOn(Intl, "DateTimeFormat");
+
+    expect(format(EARLY_MORNING_KST, { month: "long", day: "numeric" })).toBe("9월 30일");
+    expect(format(new Date("2026-10-01T00:00:00Z"), { day: "numeric", month: "long" })).toBe(
+      "10월 1일"
+    );
+    expect(format(EARLY_MORNING_KST, { month: "long", day: "numeric" })).toBe("9월 30일");
+    expect(constructor.mock.calls.length).toBeLessThanOrEqual(1);
   });
 });
