@@ -5,6 +5,7 @@ import Section from "@/components/status/Section";
 import type { Post, PostListResult } from "@/domain/post/types";
 import { PaginationComponent } from "@/components/Pagination";
 import { formatInKoreanTime } from "@/lib/format-date";
+import { formatKoreanNumber } from "@/lib/format-number";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -20,7 +21,7 @@ type Props = {
 };
 
 function formatCount(value: number | null | undefined): string {
-  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
+  return formatKoreanNumber(value ?? 0);
 }
 
 function formatTime(value: Date | string): string {

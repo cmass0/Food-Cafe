@@ -10,6 +10,7 @@ import {
 } from "@/domain/post/post_bookmark/api";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/errors/api-client";
+import { formatKoreanNumber } from "@/lib/format-number";
 
 type PostBookmarkButtonProps = {
   postId: string;
@@ -22,7 +23,7 @@ function getReturnPath() {
 }
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("ko-KR").format(value);
+  return formatKoreanNumber(value);
 }
 
 export default function PostBookmarkButton({ postId, initialCount }: PostBookmarkButtonProps) {

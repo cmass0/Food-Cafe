@@ -52,6 +52,7 @@ import * as trendingService from "@/features/trending/service";
 import type { TrendingContentItem, TrendingRecipeTag } from "@/features/trending/types";
 import { loadSection } from "@/lib/errors/section";
 import { capImageDensity } from "@/lib/image-sizes";
+import { formatKoreanNumber } from "@/lib/format-number";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +111,7 @@ function fallbackImage(index: number): StaticImageData {
 }
 
 function formatCount(value: number | null | undefined): string {
-  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
+  return formatKoreanNumber(value ?? 0);
 }
 
 function compactCount(value: number | null | undefined): string {

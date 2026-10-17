@@ -6,6 +6,7 @@ import * as React from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { isUnauthorizedApiError } from "@/lib/errors/api-client";
+import { formatKoreanNumber } from "@/lib/format-number";
 
 import { fetchPostLikeStatus, setPostLike } from "@/domain/post/post_like/api";
 
@@ -20,7 +21,7 @@ function getReturnPath() {
 }
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("ko-KR").format(value);
+  return formatKoreanNumber(value);
 }
 
 export default function PostLikeButton({ postId, initialCount }: PostLikeButtonProps) {
