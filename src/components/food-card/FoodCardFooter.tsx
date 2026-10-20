@@ -2,6 +2,7 @@ import { Eye } from "lucide-react";
 
 import ReactionCount from "@/components/reactions/ReactionCount";
 import { cn } from "@/lib/utils";
+import { formatKoreanNumber } from "@/lib/format-number";
 
 type FoodCardReactionsProps = {
   likeCount: number | null | undefined;
@@ -40,7 +41,7 @@ export function FoodCardReactions({
       <span className="inline-flex items-center gap-1">
         <Eye className="h-3.5 w-3.5" aria-hidden="true" />
         <span className="sr-only">조회수</span>
-        {new Intl.NumberFormat("ko-KR").format(viewCount ?? 0)}
+        {formatKoreanNumber(viewCount ?? 0)}
       </span>
     </div>
   );

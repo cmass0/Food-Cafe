@@ -7,6 +7,7 @@ import Section from "@/components/status/Section";
 import type { Recipe, RecipeListResult } from "@/domain/recipe/types";
 import { PaginationComponent } from "@/components/Pagination";
 import { capImageDensity } from "@/lib/image-sizes";
+import { formatKoreanNumber } from "@/lib/format-number";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "grid" | "list";
@@ -22,7 +23,7 @@ type Props = {
 };
 
 function formatCount(value: number | null | undefined): string {
-  return new Intl.NumberFormat("ko-KR").format(value ?? 0);
+  return formatKoreanNumber(value ?? 0);
 }
 
 function writerLabel(recipe: Recipe): string {

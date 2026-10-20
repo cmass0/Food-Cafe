@@ -2,6 +2,8 @@
 
 import { Bookmark, Heart } from "lucide-react";
 
+import { formatKoreanNumber } from "@/lib/format-number";
+
 // 레시피·조합 상세 화면이 함께 쓰는 북마크·좋아요 버튼 모양. 상태와 요청은 부르는 쪽이 맡는다.
 type Props = {
   liked: boolean;
@@ -15,7 +17,7 @@ type Props = {
 };
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("ko-KR").format(value);
+  return formatKoreanNumber(value);
 }
 
 export default function LikeBookmarkButtons({
