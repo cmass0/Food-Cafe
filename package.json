@@ -16,8 +16,6 @@
     "test:e2e:seed": "tsx tools/e2e/seed-accounts.ts",
     "test:db": "supabase test db --local",
     "recommend:backfill": "tsx tools/recommend/backfill.ts",
-    "supabase:list-users": "tsx tools/supabase/list-users.ts",
-    "supabase:list-users:pg": "tsx tools/supabase/list-users-pg.ts",
     "supabase:types": "npx supabase gen types typescript --project-id vtkcngubofjqddqvcufp > src/types/supabase.ts"
   },
   "dependencies": {

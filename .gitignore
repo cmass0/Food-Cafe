@@ -95,5 +95,10 @@ node_modules/
 # Playwright CLI로 브라우저를 점검할 때 남는 임시 스냅샷·콘솔 로그
 /.playwright-cli/
 
-# 문서 산출물은 로컬에서만 관리
-/docs/*.pdf
+# 작업 문서·에이전트 설정·CI는 로컬에서만 관리 (공개 저장소에 올리지 않음)
+/docs/
+/.claude/
+/.github/
+/AGENTS.md
+/CLAUDE.md
+/scripts/*.bat
