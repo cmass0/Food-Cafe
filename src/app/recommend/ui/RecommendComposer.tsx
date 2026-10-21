@@ -2,6 +2,7 @@ import { ArrowUp, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MAX_RECOMMEND_MESSAGE_LENGTH } from "@/features/recommend/limits";
 import type { RecommendComposerProps } from "./types";
 
 export function RecommendComposer({
@@ -18,6 +19,7 @@ export function RecommendComposer({
       <Textarea
         value={value}
         disabled={disabled}
+        maxLength={MAX_RECOMMEND_MESSAGE_LENGTH}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
