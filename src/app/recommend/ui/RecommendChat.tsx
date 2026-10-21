@@ -10,6 +10,7 @@ import Section from "@/components/status/Section";
 import type { RecommendationCardItem } from "@/domain/recommend/types";
 import { parseViewHistory, VIEW_HISTORY_STORAGE_KEY } from "@/domain/recommend/view-history";
 import type { RecommendAgentUIMessage } from "@/features/recommend/agent";
+import { readRecommendLimitMessage } from "@/features/recommend/limits";
 import { RecommendComposer } from "./RecommendComposer";
 import { RecommendMessageList } from "./RecommendMessageList";
 import { RecommendSidebar } from "./RecommendSidebar";
@@ -173,7 +174,8 @@ export function RecommendChat() {
           ) : null}
           {error ? (
             <p className="mb-3 text-sm text-red-600" role="alert">
-              추천을 불러오지 못했어요. 잠시 후 다시 보내주세요.
+              {readRecommendLimitMessage(error) ??
+                "추천을 불러오지 못했어요. 잠시 후 다시 보내주세요."}
             </p>
           ) : null}
           <RecommendComposer

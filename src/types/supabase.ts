@@ -762,6 +762,10 @@ export type Database = {
         Args: { p_documents: Json }
         Returns: number
       }
+      use_recommend_chat_call: {
+        Args: { p_max_calls: number; p_subject: string }
+        Returns: number | null
+      }
       use_writing_assistant_call: {
         Args: { p_max_calls: number; p_session_id: string; p_user_id: string }
         Returns: number
