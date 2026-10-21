@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ProfileRow } from "@/domain/user/types";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
+import ProfileListSkeleton from "../../ProfileListSkeleton";
 import type { ProfileSort, ProfileView } from "../../profile-types";
 import ProfileRecipeTab from "./ProfileRecipeTab";
 
@@ -14,6 +15,8 @@ type Props = {
   sort?: ProfileSort;
   view?: ProfileView;
   me: ProfileRow;
+  /** 보고 있는 사용자. 이미 알면 넘겨서 로그인 확인 요청을 아낀다(null은 비로그인). */
+  viewerId?: string | null;
   toolbar?: ReactNode;
   showActivityTabs?: boolean;
 };
@@ -29,6 +32,7 @@ export default function RecipeTabContainer({
   sort = "recent",
   view = "grid",
   me,
+  viewerId,
   toolbar,
   showActivityTabs = true,
 }: Props) {
@@ -43,6 +47,10 @@ export default function RecipeTabContainer({
     }
     return `?${params.toString()}`;
   }
+
+  // 조건이 바뀔 때마다 목록 자리를 새로 기다리게 해, 이전 목록에 멈춰 있지 않고 뼈대 화면을 바로 보여 준다.
+  const listKey = [activeTab, currentPage, search ?? "", sort, view].join("|");
+  const fallback = <ProfileListSkeleton view={view} />;
 
   return (
     <div>
@@ -64,43 +72,52 @@ export default function RecipeTabContainer({
         {toolbar}
         <TabsContent value="written" className="mt-8">
           {activeTab === "written" ? (
-            <ProfileRecipeTab
-              type="written"
-              page={currentPage}
-              limit={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-              id={me.id}
-            />
+            <Suspense key={listKey} fallback={fallback}>
+              <ProfileRecipeTab
+                type="written"
+                page={currentPage}
+                limit={pageSize}
+                search={search}
+                sort={sort}
+                view={view}
+                id={me.id}
+                viewerId={viewerId}
+              />
+            </Suspense>
           ) : null}
         </TabsContent>
         {showActivityTabs ? (
           <>
             <TabsContent value="bookmark" className="mt-8">
               {activeTab === "bookmark" ? (
-                <ProfileRecipeTab
-                  type="bookmark"
-                  page={currentPage}
-                  limit={pageSize}
-                  search={search}
-                  sort={sort}
-                  view={view}
-                  id={me.id}
-                />
+                <Suspense key={listKey} fallback={fallback}>
+                  <ProfileRecipeTab
+                    type="bookmark"
+                    page={currentPage}
+                    limit={pageSize}
+                    search={search}
+                    sort={sort}
+                    view={view}
+                    id={me.id}
+                    viewerId={viewerId}
+                  />
+                </Suspense>
               ) : null}
             </TabsContent>
             <TabsContent value="like" className="mt-8">
               {activeTab === "like" ? (
-                <ProfileRecipeTab
-                  type="like"
-                  page={currentPage}
-                  limit={pageSize}
-                  search={search}
-                  sort={sort}
-                  view={view}
-                  id={me.id}
-                />
+                <Suspense key={listKey} fallback={fallback}>
+                  <ProfileRecipeTab
+                    type="like"
+                    page={currentPage}
+                    limit={pageSize}
+                    search={search}
+                    sort={sort}
+                    view={view}
+                    id={me.id}
+                    viewerId={viewerId}
+                  />
+                </Suspense>
               ) : null}
             </TabsContent>
           </>

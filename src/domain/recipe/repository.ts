@@ -249,3 +249,16 @@ export async function deleteRecipe(client: SupabaseClient<Database>, id: string)
   throwIfError(error);
   return Boolean(data);
 }
+
+// 작성 수만 필요할 때 쓴다. 행은 받지 않고 개수만 센다.
+export async function countRecipesByWriter(
+  client: SupabaseClient<Database>,
+  writerUid: string
+): Promise<number> {
+  const { count, error } = await client
+    .from("recipes")
+    .select("id", { count: "exact", head: true })
+    .eq("writer_uid", writerUid);
+  throwIfError(error);
+  return count ?? 0;
+}

@@ -60,32 +60,39 @@ function normalizeStoredComboItems(items: ComboItems[] | null | undefined): Comb
   })) as ComboItems[];
 }
 
+/** viewerId를 이미 알면 넘겨서 로그인 확인 요청을 아낀다(null은 비로그인). */
 export async function listCombos(
   client: SupabaseClient<Database>,
-  options?: ComboListOptions
+  options?: ComboListOptions,
+  viewerId?: string | null
 ): Promise<ComboListResult> {
-  const {
-    data: { user },
-  } = await client.auth.getUser();
   const parsed = comboListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
 
-  const { items: rows, total: rowtotal } = await repo.fetchCombos(client, {
-    limit,
-    offset,
-    search: parsed.search,
-    writerUid: parsed.writerUid,
-    searchField: parsed.searchField,
-    sort: parsed.sort,
-  });
+  // 목록 조회와 로그인 확인은 서로 기다릴 필요가 없어 함께 보낸다.
+  const [{ items: rows, total: rowtotal }, userId] = await Promise.all([
+    repo.fetchCombos(client, {
+      limit,
+      offset,
+      search: parsed.search,
+      writerUid: parsed.writerUid,
+      searchField: parsed.searchField,
+      sort: parsed.sort,
+    }),
+    viewerId === undefined
+      ? client.auth.getUser().then(({ data }) => data.user?.id ?? null)
+      : viewerId,
+  ]);
 
   let items = rows.map(mapRowToCombination);
   const hasMore = offset + items.length < rowtotal;
-  if (user) {
+  if (userId && items.length > 0) {
     const ids = items.map((combo) => combo.id);
-    const bookmarkedSet = await buildBookmarkedSetCombo(client, ids);
-    const likedSet = await buildLikedSetCombo(client, ids);
+    const [bookmarkedSet, likedSet] = await Promise.all([
+      buildBookmarkedSetCombo(client, userId, ids),
+      buildLikedSetCombo(client, userId, ids),
+    ]);
     items = items.map((combo) => ({
       ...combo,
       bookmarked: bookmarkedSet.has(combo.id),
@@ -255,4 +262,11 @@ export async function removeCombo(client: SupabaseClient<Database>, id: string):
     await safeRemoveContentImages("combos", existing.writer_uid, existing.id);
   }
   return deleted;
+}
+
+export async function countCombosByWriter(
+  client: SupabaseClient<Database>,
+  writerUid: string
+): Promise<number> {
+  return repo.countCombosByWriter(client, writerUid);
 }
