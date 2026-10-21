@@ -205,6 +205,7 @@ export default async function ProfilePage(props: {
                 sort={sort}
                 view={view}
                 me={another_user}
+                viewerId={viewer?.id ?? null}
                 showActivityTabs={false}
               />
             ) : null}
@@ -222,6 +223,7 @@ export default async function ProfilePage(props: {
                 sort={sort}
                 view={view}
                 me={another_user}
+                viewerId={viewer?.id ?? null}
                 showActivityTabs={false}
               />
             ) : null}

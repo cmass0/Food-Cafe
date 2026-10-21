@@ -1,7 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
+import ProfileListSkeleton from "../../ProfileListSkeleton";
 import type { ProfileSort, ProfileTab, ProfileView } from "../../profile-types";
 import ProfilePostTab from "./ProfilePostTab";
 
@@ -52,15 +53,21 @@ export default function PostTabContainer({
       {(["written", "bookmark", "like"] as const).map((tab) => (
         <TabsContent key={tab} value={tab} className="mt-8">
           {activeTab === tab ? (
-            <ProfilePostTab
-              type={tab}
-              userId={userId}
-              page={currentPage}
-              limit={pageSize}
-              search={search}
-              sort={sort}
-              view={view}
-            />
+            // 조건이 바뀔 때마다 목록 자리를 새로 기다리게 해, 이전 목록에 멈춰 있지 않고 뼈대 화면을 바로 보여 준다.
+            <Suspense
+              key={[tab, currentPage, search ?? "", sort, view].join("|")}
+              fallback={<ProfileListSkeleton view={view} />}
+            >
+              <ProfilePostTab
+                type={tab}
+                userId={userId}
+                page={currentPage}
+                limit={pageSize}
+                search={search}
+                sort={sort}
+                view={view}
+              />
+            </Suspense>
           ) : null}
         </TabsContent>
       ))}

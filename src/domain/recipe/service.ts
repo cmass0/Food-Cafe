@@ -127,15 +127,17 @@ export async function listLikedRecipes(
   };
 }
 
+/** viewerId를 이미 알면 넘겨서 로그인 확인 요청을 아낀다(null은 비로그인). */
 export async function listRecipes(
   client: SupabaseClient<Database>,
-  options?: RecipeListOptions
+  options?: RecipeListOptions,
+  viewerId?: string | null
 ): Promise<RecipeListResult> {
   const parsed = recipeListOptionsSchema.parse(options ?? {});
   const limit = resolveLimit(parsed.limit, DEFAULT_LIMIT, MAX_LIMIT);
   const offset = resolveOffset(parsed.page, limit);
   // 목록 조회와 로그인 확인은 서로 기다릴 필요가 없어 함께 보낸다.
-  const [{ items: rows, total: rowtotal }, auth] = await Promise.all([
+  const [{ items: rows, total: rowtotal }, userId] = await Promise.all([
     repo.fetchRecipes(client, {
       limit,
       offset,
@@ -145,7 +147,9 @@ export async function listRecipes(
       searchField: parsed.searchField,
       sort: parsed.sort,
     }),
-    client.auth.getUser(),
+    viewerId === undefined
+      ? client.auth.getUser().then(({ data }) => data.user?.id ?? null)
+      : viewerId,
   ]);
 
   let items = rows.map(mapRowToRecipe);
@@ -154,13 +158,12 @@ export async function listRecipes(
   const hasMore = offset + items.length < total;
   let likedSet = new Set<string>();
   let bookmarkedSet = new Set<string>();
-  const user = auth.data.user;
 
-  if (user && rows.length > 0) {
+  if (userId && rows.length > 0) {
     const ids = rows.map((row) => row.id);
     [likedSet, bookmarkedSet] = await Promise.all([
-      buildLikedSetRecipe(client, user.id, ids),
-      buildBookmarkedSetRecipe(client, user.id, ids),
+      buildLikedSetRecipe(client, userId, ids),
+      buildBookmarkedSetRecipe(client, userId, ids),
     ]);
   }
   items = items.map((item) => ({
@@ -255,4 +258,11 @@ export async function removeRecipe(client: SupabaseClient<Database>, id: string)
     await safeRemoveContentImages("recipes", existing.writer_uid, existing.id);
   }
   return deleted;
+}
+
+export async function countRecipesByWriter(
+  client: SupabaseClient<Database>,
+  writerUid: string
+): Promise<number> {
+  return repo.countRecipesByWriter(client, writerUid);
 }

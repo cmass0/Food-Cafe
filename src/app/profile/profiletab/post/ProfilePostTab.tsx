@@ -57,9 +57,11 @@ export default async function ProfilePostTab({
   );
 
   // 내가 누른 좋아요·북마크는 카드 아이콘을 채워 표시한다.
+  // 게시글 활동은 마이페이지 전용이라 목록 주인이 곧 보는 사람이다.
   const reactions = await loadMyReactions(
     supabase,
-    result.data.items.map(({ id }) => ({ type: "post", id }))
+    result.data.items.map(({ id }) => ({ type: "post", id })),
+    userId
   );
 
   return (

@@ -20,6 +20,8 @@ type Props = {
   sort?: ProfileSort;
   view?: ProfileView;
   id?: string;
+  /** 보고 있는 사용자. 이미 알면 넘겨서 로그인 확인 요청을 아낀다(null은 비로그인). */
+  viewerId?: string | null;
 };
 
 export default async function ProfileComboTab({
@@ -30,16 +32,16 @@ export default async function ProfileComboTab({
   sort = "recent",
   view = "grid",
   id,
+  viewerId,
 }: Props) {
   const currentUid = id ?? null;
   if (!currentUid) return notFound();
 
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const viewerUid =
+    viewerId === undefined ? ((await supabase.auth.getUser()).data.user?.id ?? null) : viewerId;
   // 인증·404 판단은 선택적 콘텐츠 조회의 오류로 바꾸지 않는다.
-  if (!user && type !== "written") {
+  if (!viewerUid && type !== "written") {
     return <div className="text-sm text-slate-600">로그인이 필요합니다.</div>;
   }
 
@@ -51,7 +53,7 @@ export default async function ProfileComboTab({
     "profile.combos",
     () => {
       if (type === "written")
-        return listCombos(supabase, { ...options, writerUid: currentUid, sort });
+        return listCombos(supabase, { ...options, writerUid: currentUid, sort }, viewerUid);
       if (type === "bookmark") return listBookmarkedCombos(supabase, currentUid, options);
       return listLikedCombos(supabase, currentUid, options);
     },
@@ -59,11 +61,19 @@ export default async function ProfileComboTab({
   );
 
   // 내가 누른 좋아요는 카드 아이콘을 채워 표시한다.
-  const reactions = await loadMyReactions(
-    supabase,
-    result.data.items.map(({ id }) => ({ type: "combo", id })),
-    user?.id ?? null
-  );
+  // 작성 목록은 목록 서비스가 이미 붙여 오므로 다시 조회하지 않는다.
+  const items =
+    type === "written"
+      ? result.data.items
+      : withMyReactions(
+          result.data.items,
+          "combo",
+          await loadMyReactions(
+            supabase,
+            result.data.items.map(({ id }) => ({ type: "combo", id })),
+            viewerUid
+          )
+        );
 
   return (
     <Section
@@ -73,10 +83,7 @@ export default async function ProfileComboTab({
       title="조합을 불러오지 못했습니다."
       resetKeys={[currentUid, type, currentPage, safeLimit, trimmedSearch, sort, view]}
     >
-      <ProfileComboGrid
-        combos={withMyReactions(result.data.items, "combo", reactions)}
-        view={view}
-      />
+      <ProfileComboGrid combos={items} view={view} />
       <ProfileComboPagination
         type={type}
         page={currentPage}

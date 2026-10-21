@@ -8,6 +8,7 @@ import * as postService from "@/domain/post/service";
 import * as recipeService from "@/domain/recipe/service";
 import * as userService from "@/domain/user/service";
 import { loadSection } from "@/lib/errors/section";
+import { isAuthSessionMissingError } from "@/lib/errors/supabase";
 import { cn } from "@/lib/utils";
 import {
   BookOpenCheck,
@@ -116,7 +117,36 @@ function buildProfileNext(searchParams: ProfileSearchParams | undefined): string
 
 export default async function ProfilePage(props: { searchParams?: Promise<ProfileSearchParams> }) {
   const searchParams = await props.searchParams;
-  const me = await userService.getSelf();
+  const supabase = await getServerSupabase();
+  // 로그인 확인은 인증 서버를 거치므로 한 번만 하고, 그 결과(ID·이메일)를 아래 조회에 그대로 쓴다.
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError && !isAuthSessionMissingError(authError)) throw authError;
+  if (!authUser) {
+    return <AuthRequiredModal next={buildProfileNext(searchParams)} />;
+  }
+
+  // 프로필과 작성 수는 서로 기다릴 필요가 없어 함께 보낸다.
+  const [me, recipeTotalResult, comboTotalResult, postTotalResult] = await Promise.all([
+    userService.getUserById(authUser.id),
+    loadSection<number | null>(
+      "profile.recipe-total",
+      () => recipeService.countRecipesByWriter(supabase, authUser.id),
+      null
+    ),
+    loadSection<number | null>(
+      "profile.combo-total",
+      () => comboService.countCombosByWriter(supabase, authUser.id),
+      null
+    ),
+    loadSection<number | null>(
+      "profile.post-total",
+      () => postService.countPostsByWriter(supabase, authUser.id),
+      null
+    ),
+  ]);
   if (!me) {
     return <AuthRequiredModal next={buildProfileNext(searchParams)} />;
   }
@@ -131,31 +161,8 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
   const searchParam = normalizeParam(searchParams?.search);
   const search = searchParam?.trim() || undefined;
   const pageSize = 6;
-  const supabase = await getServerSupabase();
-  const [authUserResult, recipeTotalResult, comboTotalResult, postTotalResult] = await Promise.all([
-    supabase.auth.getUser(),
-    loadSection<number | null>(
-      "profile.recipe-total",
-      async () =>
-        (await recipeService.listRecipes(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
-      null
-    ),
-    loadSection<number | null>(
-      "profile.combo-total",
-      async () =>
-        (await comboService.listCombos(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
-      null
-    ),
-    loadSection<number | null>(
-      "profile.post-total",
-      async () =>
-        (await postService.listPosts(supabase, { writerUid: me.id, page: 1, limit: 1 })).total,
-      null
-    ),
-  ]);
-  if (authUserResult.error) throw authUserResult.error;
-  const currentEmail = authUserResult.data.user?.email ?? "";
-  const currentPhone = authUserResult.data.user?.phone ?? null;
+  const currentEmail = authUser.email ?? "";
+  const currentPhone = authUser.phone ?? null;
   const recipeTotal = recipeTotalResult.data;
   const comboTotal = comboTotalResult.data;
   const postTotal = postTotalResult.data;
@@ -415,6 +422,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
               sort={sort}
               view={view}
               me={me}
+              viewerId={me.id}
               toolbar={toolbar}
             />
           ) : activeSection === "combo" ? (
@@ -426,6 +434,7 @@ export default async function ProfilePage(props: { searchParams?: Promise<Profil
               sort={sort}
               view={view}
               me={me}
+              viewerId={me.id}
               toolbar={toolbar}
             />
           ) : (

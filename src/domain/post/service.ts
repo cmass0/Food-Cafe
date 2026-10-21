@@ -282,3 +282,10 @@ export async function removePost(client: SupabaseClient<Database>, id: string): 
   }
   return deleted;
 }
+
+export async function countPostsByWriter(
+  client: SupabaseClient<Database>,
+  writerUid: string
+): Promise<number> {
+  return repository.countPostsByWriter(client, writerUid);
+}
