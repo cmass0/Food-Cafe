@@ -52,17 +52,6 @@ function parseSort(value: string): ComboSort {
   return "recent";
 }
 
-function formatAge(value: Date | string | null | undefined): string {
-  if (!value) return "날짜 없음";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "날짜 없음";
-  const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000));
-  if (days < 1) return "오늘";
-  if (days < 7) return `${days}일 전`;
-  if (days < 31) return `${Math.floor(days / 7)}주 전`;
-  return `${Math.floor(days / 30)}개월 전`;
-}
-
 function itemTitle(item: ComboItem): string {
   return item.type === "recipe" ? item.title || "레시피" : item.productName || "상품";
 }
@@ -79,7 +68,7 @@ function ItemNames({ items }: { items: ComboItem[] }) {
         <Fragment key={`${item.type}-${index}`}>
           {index > 0 ? (
             <>
-              <span className="mx-1 font-semibold text-[#34783f]" aria-hidden="true">
+              <span className="mx-1 text-[#34783f]" aria-hidden="true">
                 +
               </span>
               <span className="sr-only">, </span>
@@ -98,6 +87,7 @@ type PreviewHandlers = Pick<
 >;
 
 // 카드를 누르면 상세 화면으로 가고, 올려 두거나 키보드로 고르면 옆 미리보기가 바뀐다.
+// 카드는 사진·제목·구성·작성자만 보여준다. 조리 시간·난이도는 미리보기와 상세 화면에서, 작성일은 상세 화면에서 본다.
 // 목록 카드와 미리보기는 보여주기만 한다. 좋아요·저장은 상세 화면에서 누른다.
 function ComboGridCard({
   combo,
@@ -112,7 +102,7 @@ function ComboGridCard({
   const items = combo.items ?? [];
 
   return (
-    <article className="group @container">
+    <article className="group">
       <Link
         href={`/combos/${combo.id}`}
         prefetch={false}
@@ -121,7 +111,7 @@ function ComboGridCard({
       >
         <div
           className={cn(
-            "relative aspect-[4/3] overflow-hidden rounded-lg bg-[#f3efe8] transition-shadow",
+            "relative aspect-[4/3] overflow-hidden rounded-lg bg-[#f3efe8]",
             // 미리보기는 넓은 화면에서만 카드 옆에 보이므로 선택 표시도 그때만 둔다.
             isActive && "lg:ring-2 lg:ring-[#34783f] lg:ring-offset-2"
           )}
@@ -132,39 +122,26 @@ function ComboGridCard({
               alt={combo.title || "레시피 조합 이미지"}
               fill
               sizes={capImageDensity("(max-width: 1024px) 50vw, 300px")}
-              className="object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
+              className="object-cover"
             />
           ) : (
             <FoodImagePlaceholder />
           )}
         </div>
 
-        <div className="mt-3 px-0.5">
-          <FoodCardFacts
-            lead={
-              items.length ? (
-                <span className="font-semibold text-[#34783f]">{items.length}가지 조합</span>
-              ) : null
-            }
-            timeMinutes={combo.timeMinutes}
-            difficulty={combo.difficulty}
-          />
-          <h2 className="mt-1 line-clamp-1 text-[15px] font-semibold tracking-tight text-zinc-900 transition-colors group-hover:text-[#34783f] sm:text-base">
+        <div className="mt-3">
+          <h2 className="line-clamp-1 text-[15px] font-semibold tracking-tight text-zinc-900 decoration-zinc-300 underline-offset-4 group-hover:underline sm:text-base">
             {combo.title}
           </h2>
-          <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-zinc-500 sm:text-sm sm:leading-6">
+          <p className="mt-1 line-clamp-1 text-xs text-zinc-500 sm:text-[13px]">
             {items.length ? <ItemNames items={items} /> : combo.summary || "구성 항목이 없습니다."}
           </p>
 
           <FoodCardFooter
-            className="mt-3"
+            className="mt-2.5"
             writerName={writerName}
-            dateLabel={formatAge(combo.createdAt)}
             likeCount={combo.likeCount}
             liked={combo.liked}
-            bookmarkCount={combo.bookmarkCount}
-            bookmarked={combo.bookmarked}
-            viewCount={combo.viewCount}
           />
         </div>
       </Link>
@@ -215,11 +192,7 @@ function ComboPreviewPanel({ combo }: { combo: Combos | null }) {
         <h2 className="mt-1.5 line-clamp-2 text-xl font-bold leading-snug tracking-tight text-zinc-900">
           {combo.title}
         </h2>
-        <p className="mt-1.5 text-xs text-zinc-400">
-          <span className="font-medium text-zinc-600">{writerName}</span>
-          <span aria-hidden="true"> · </span>
-          {formatAge(combo.createdAt)}
-        </p>
+        <p className="mt-1.5 text-xs font-medium text-zinc-600">{writerName}</p>
         {combo.summary ? (
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-600">{combo.summary}</p>
         ) : null}
@@ -589,9 +562,9 @@ function CombosPageInner() {
                   {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
                     <div key={index} className="animate-pulse">
                       <div className="aspect-[4/3] rounded-lg bg-zinc-100" />
-                      <div className="mt-3 h-3 w-1/3 rounded bg-zinc-100" />
-                      <div className="mt-2 h-4 w-2/3 rounded bg-zinc-100" />
+                      <div className="mt-3 h-4 w-2/3 rounded bg-zinc-100" />
                       <div className="mt-2 h-3.5 w-1/2 rounded bg-zinc-100" />
+                      <div className="mt-3 h-3 w-1/3 rounded bg-zinc-100" />
                     </div>
                   ))}
                 </div>
