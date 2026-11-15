@@ -1,13 +1,13 @@
 import Navbar from "@/components/navbar/nav-bar";
-import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site-config";
+// 한글 본문 글꼴. 글자 범위별로 나눈 파일이라 화면에 쓰인 글자가 든 조각만 받는다.
+// 영문도 Pretendard에 들어 있어(Inter 기반) 따로 영문 글꼴을 두지 않는다. 글꼴 이름은 globals.css의 --font-sans.
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 import Providers from "./providers";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     <html lang="ko">
-      <body className={`${inter.className} bg-background text-foreground min-h-screen antialiased`}>
+      <body className="bg-background text-foreground min-h-screen antialiased">
         <Providers initialSession={session}>
           <Navbar />
           {children}

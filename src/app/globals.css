@@ -10,6 +10,13 @@ body {
   margin: 0;
 }
 
+/* 기본 글꼴(font-sans, html 기본값). Pretendard를 못 받으면 운영체제 한글 글꼴로 대신한다. */
+@theme {
+  --font-sans:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
