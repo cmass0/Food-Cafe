@@ -3,14 +3,15 @@ import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type FoodCardFactsProps = {
-  // 맨 앞에 둘 항목. 레시피는 카테고리 링크, 조합은 구성 개수.
+  // 맨 앞에 둘 항목. 레시피는 카테고리 링크, 조합 미리보기는 구성 개수.
   lead?: ReactNode;
   timeMinutes?: number | null;
   difficulty?: string | null;
   className?: string;
 };
 
-// 레시피·조합 목록 카드 제목 위의 한 줄 정보. 사진 위에 배지를 얹지 않고 글자로 정리한다.
+// 카테고리·조리 시간·난이도를 한 줄로 잇는다. 카테고리 이름에 이미 가운뎃점(샐러드·건강식)이 있어서
+// 항목 사이는 점 대신 얇은 세로선으로 나눈다.
 export default function FoodCardFacts({
   lead,
   timeMinutes,
@@ -25,12 +26,12 @@ export default function FoodCardFacts({
   if (!facts.length) return null;
 
   return (
-    <p className={cn("flex min-w-0 items-center gap-1.5 text-xs text-zinc-500", className)}>
+    <p className={cn("flex min-w-0 items-center gap-2 text-xs text-zinc-500", className)}>
       {facts.map((fact, index) => (
         <Fragment key={index}>
           {index > 0 ? (
             <>
-              <span className="h-2.5 w-px shrink-0 bg-zinc-300" aria-hidden="true" />
+              <span className="h-2.5 w-px shrink-0 bg-zinc-200" aria-hidden="true" />
               <span className="sr-only">, </span>
             </>
           ) : null}

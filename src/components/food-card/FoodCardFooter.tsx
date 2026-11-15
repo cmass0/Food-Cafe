@@ -47,34 +47,35 @@ export function FoodCardReactions({
   );
 }
 
-type FoodCardFooterProps = FoodCardReactionsProps & {
+type FoodCardFooterProps = {
   writerName: string;
-  dateLabel: string;
+  likeCount: number | null | undefined;
+  liked?: boolean;
+  className?: string;
 };
 
-// 목록 카드 맨 아래 줄. 카드 폭이 넉넉할 때만 작성자와 반응 수를 한 줄에 두고, 좁으면 두 줄로 나눈다.
-// 화면이 넓어도 4열이면 카드가 좁으므로 화면 폭이 아니라 카드 폭(@container)을 본다.
+// 목록 카드 맨 아래 줄. 작성자와 좋아요 수만 둔다. 작성일·북마크·조회 수는 상세 화면에서 본다.
 export default function FoodCardFooter({
   writerName,
-  dateLabel,
+  likeCount,
+  liked,
   className,
-  ...reactions
 }: FoodCardFooterProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-1.5 border-t border-zinc-100 pt-2.5 text-[11px] text-zinc-400 sm:text-xs @min-[15.5rem]:flex-row @min-[15.5rem]:items-center @min-[15.5rem]:justify-between @min-[15.5rem]:gap-3",
+        "flex items-center justify-between gap-3 text-xs text-zinc-400 sm:text-[13px]",
         className
       )}
     >
-      <p className="flex w-full min-w-0 items-center gap-1 @min-[15.5rem]:w-auto">
-        <span className="truncate font-medium text-zinc-600">{writerName}</span>
-        <span className="shrink-0" aria-hidden="true">
-          ·
-        </span>
-        <span className="shrink-0">{dateLabel}</span>
-      </p>
-      <FoodCardReactions {...reactions} />
+      <span className="min-w-0 truncate text-zinc-500">{writerName}</span>
+      <ReactionCount
+        kind="like"
+        count={likeCount}
+        mine={liked}
+        className="shrink-0 gap-1 tabular-nums"
+        iconClassName="h-3.5 w-3.5"
+      />
     </div>
   );
 }
